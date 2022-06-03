@@ -1,0 +1,14 @@
+black_lower = 0,0,0
+black_upper = 180,171,235
+red_lower_l =0,18,120
+red_upper_l =19,255,255
+yellow_lower = 20,62,104
+yellow_upper = 36,255,255
+green_lower =37,40,70
+green_upper =77,255,255
+blue_lower =87,40,60
+blue_upper =134,255,255
+purple_lower = 135,20,40
+purple_upper = 169,255,225
+red_lower_h =156,40,120
+red_upper_h =180,255,255
