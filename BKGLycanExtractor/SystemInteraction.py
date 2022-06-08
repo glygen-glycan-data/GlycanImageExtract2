@@ -95,6 +95,12 @@ class TestModel(SystemInteraction):
     def delete_copy(self):
         path = os.path.join(".",self.name)
         os.remove(path)
+    def find_problems(self, problem):
+        writepath = os.path.join("./testing","probleminputs.txt")
+        printstr = self.name+": "+problem+"\n"
+        f = open(writepath,'a')
+        f.write(printstr)
+        f.close()
     def get_output(self,precrec, pad = True):
         if pad:
             path = f"{self.workdir}/precisionrecallplot_paddedborders.png"
@@ -103,7 +109,7 @@ class TestModel(SystemInteraction):
         plt.savefig(path)
         plt.close()
     def get_training_box_doc(self):
-        boxes_path = os.path.join("./training_glycans")
+        boxes_path = os.path.join("./extra")
         boxes_doc = os.path.join(boxes_path,self.item_name+".txt")
         #print(boxes_doc)
         if os.path.exists(boxes_doc):
@@ -118,7 +124,42 @@ class TestModel(SystemInteraction):
         logger.info(f"Start: {self.name}")
     def make_copy(self):
         try:
-            shutil.copyfile(os.path.join("./training_glycans", self.name), os.path.join(".",self.name))    
+            shutil.copyfile(os.path.join("./extra", self.name), os.path.join(".",self.name))    
         except FileNotFoundError:
             time.sleep(5)
-            shutil.copyfile(os.path.join("./training_glycans",self.name), os.path.join(".",self.name))
+            shutil.copyfile(os.path.join("./extra",self.name), os.path.join(".",self.name))
+class BatchTesting(SystemInteraction):
+    def __init__(self):
+        self.workdir = os.path.join("./modelPRCs")
+    def delete_copy(self, file):
+        path = os.path.join(".",file)
+        os.remove(path)
+    def get_output(self,precrec, pad = True):
+        if pad:
+            path = f"{self.workdir}/precisionrecallplot_paddedborders.png"
+        else:
+            path = f"{self.workdir}/precisionrecallplot_rawboxes.png"
+        plt.savefig(path)
+        plt.close()
+    def get_training_box_doc(self,file):
+        name = file.rsplit('.',1)[0]
+        boxes_path = os.path.join("./extra")
+        boxes_doc = os.path.join(boxes_path,name+".txt")
+        #print(boxes_doc)
+        if os.path.exists(boxes_doc):
+            return boxes_doc
+        else:
+            return None
+    def log(self):
+        annotatelogfile = f"{self.workdir}/annotated_log.txt"
+        logger = logging.getLogger("test")
+        handler = super().log(annotatelogfile)
+        logger.addHandler(handler)
+        logger.info("Start.\n")
+    def make_copy(self,file):
+        try:
+            shutil.copyfile(os.path.join("./extra", file), os.path.join(".",file))    
+        except FileNotFoundError:
+            time.sleep(5)
+            shutil.copyfile(os.path.join("./extra",file), os.path.join(".",file))
+
