@@ -4,25 +4,44 @@ import numpy as np
 logger = logging.getLogger("search")
 
 class MonoID:
-    def __init__(self,image):
-        self.image = image
-        #self.glycan = glycan
-        self.monos = {}
+    def __init__(self, **kw):
+        pass
+
+    def compare2img(self,img1,img2):
+        # return similarity between two image
+        if img1.shape == img2.shape:
+            # print("samesize")
+            # print(img1.shape)
+            pass
+        else:
+            # print("img1,img2,not same size")
+            # print(img1.shape)
+            # print(img2.shape)
+            return -1
+        score = 0
+        diff = cv2.absdiff(img1, img2)
+        r, g, b = cv2.split(diff)
+        score = cv2.countNonZero(g) / (img1.shape[0] * img1.shape[1])
+
+        # cv2.imshow("different", diff)
+        # cv2.waitKey(0)
+        return 1 - score
         
-    @staticmethod
-    def compstr(counts):
+    def compstr(self,counts):
         s = ""
         for sym,count in sorted(counts.items()):
             if count > 0:
                 s += "%s(%d)"%(sym,count)
         return s
+    def id_monos(self,**kw):
+        raise NotImplementedError
         
 class HeuristicMonos(MonoID):
-    def __init__(self,image,colors):
-        super().__init__(image)
+    def __init__(self,colors = None):
+        super().__init__()
         self.color_range = colors
-    def croplargest(self):
-        img = self.image
+    def croplargest(self,image = []):
+        img = image
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         _, gray = cv2.threshold(gray, 230, 255, cv2.THRESH_BINARY_INV)
         contours_list, _ = cv2.findContours(gray, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
@@ -38,8 +57,9 @@ class HeuristicMonos(MonoID):
 
         out2 = cv2.bitwise_or(out, img)
         return out2
-    def id_monos(self):
-        img = self.croplargest()
+    def id_monos(self,image = None):
+        monos = {}
+        img = self.croplargest(image)
 
         # print(img_file.shape[0]*img_file.shape[1])
         bigwhite = np.zeros([img.shape[0] + 30, img.shape[1] + 30, 3], dtype=np.uint8)
@@ -141,7 +161,7 @@ class HeuristicMonos(MonoID):
                         white.fill(255)
                         this_blue_img = blue_mask[y:y + h, x:x + w]
                         this_blue_img = cv2.cvtColor(this_blue_img, cv2.COLOR_GRAY2BGR)
-                        score = HeuristicMonos.compare2img(white, this_blue_img)
+                        score = self.compare2img(white, this_blue_img)
                         if score >= 0.8:  # is square
                             cv2.putText(final, "GlcNAc", (approx.ravel()[0], approx.ravel()[1]),
                                         cv2.FONT_HERSHEY_COMPLEX_SMALL, 1,
@@ -182,7 +202,7 @@ class HeuristicMonos(MonoID):
                         # this_yellow_img = cv2.resize(this_yellow_img, None, fx=1, fy=1)
                         this_yellow_img = cv2.cvtColor(this_yellow_img, cv2.COLOR_GRAY2BGR)
 
-                        score = HeuristicMonos.compare2img(white, this_yellow_img)
+                        score = self.compare2img(white, this_yellow_img)
                         if score > 0.9:  # is square
                             cv2.putText(final, "GalNAc", (approx.ravel()[0], approx.ravel()[1]),
                                         cv2.FONT_HERSHEY_COMPLEX_SMALL, 1,
@@ -210,29 +230,9 @@ class HeuristicMonos(MonoID):
         # cv2.imshow("yellow_mask",all_mask)
         # cv2.imshow("final", final)
         # cv2.waitKey(0)
-        self.monos["count_dict"] = monoCount_dict
-        self.monos["annotated"] = final
-        self.monos["mask_dict"] = mask_dict
-        self.monos["contours"] = return_contours
-        return self.monos
+        monos["count_dict"] = monoCount_dict
+        monos["annotated"] = final
+        monos["mask_dict"] = mask_dict
+        monos["contours"] = return_contours
+        return monos
     
-    @staticmethod
-    def compare2img(img1,img2):
-        # return similarity between two image
-        if img1.shape == img2.shape:
-            # print("samesize")
-            # print(img1.shape)
-            pass
-        else:
-            # print("img1,img2,not same size")
-            # print(img1.shape)
-            # print(img2.shape)
-            return -1
-        score = 0
-        diff = cv2.absdiff(img1, img2)
-        r, g, b = cv2.split(diff)
-        score = cv2.countNonZero(g) / (img1.shape[0] * img1.shape[1])
-
-        # cv2.imshow("different", diff)
-        # cv2.waitKey(0)
-        return 1 - score

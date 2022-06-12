@@ -4,17 +4,20 @@ from .pygly3.Glycan import Glycan
 from .pygly3.Monosaccharide import Linkage
 
 class glycanStructBuilder:
-    def __call__(self):
-        return self.build()
+    def __call__(self,**kw):
+        return self.build(**kw)
+    def __init__(self):
+        pass
+    def build(self,**kw):
+        raise NotImplementedError
 
 class CurrentBuilder(glycanStructBuilder):
-    def __init__(self,monos_dict):
-        self.mono_dict = monos_dict
-    def build(self):
-        mono_dict = self.mono_dict
+    def build(self,mono_dict = None):
         mf = MonoFactory()
+        #print(mono_dict)
         #aux_list = [(mono_id, mono_dict[mono_id][4:5]) for mono_id in mono_dict.keys()]
         try:
+            #print([mono_id for mono_id in mono_dict.keys()])
             root_id = [mono_id for mono_id in mono_dict.keys() if mono_dict[mono_id][5] == "root"][0]
         except IndexError:
             return None
@@ -28,7 +31,7 @@ class CurrentBuilder(glycanStructBuilder):
         #print("##########################")
         # need stop recursion here #####################
         fail_safe=0
-        root_node=self.buildtree(root_id,root_node, fail_safe)[2]
+        root_node=self.buildtree(mono_dict,root_id,root_node, fail_safe)[2]
         #unknonw root properties
 
         if root_node != None:
@@ -43,8 +46,7 @@ class CurrentBuilder(glycanStructBuilder):
             glycoCT = None
 
         return glycoCT
-    def buildtree(self,root, root_node, fail_safe):
-        mono_dict = self.mono_dict
+    def buildtree(self,mono_dict,root, root_node, fail_safe):
         # mono_dict[mono id] = {contour, point at center, radius, bounding rect, linkages, root or child}
         # variables:
         fail_safe+=1
@@ -77,7 +79,7 @@ class CurrentBuilder(glycanStructBuilder):
                 child_mono = mf.new(name_temp)
                 child_mono.set_anomer(Anomer.missing)
                 if mono_dict[child_id][4] != []:
-                    _,_,child_mono,fail_safe = self.buildtree(child_id,child_mono,fail_safe)
+                    _,_,child_mono,fail_safe = self.buildtree(mono_dict,child_id,child_mono,fail_safe)
                 if fail_safe > len(mono_dict.values())-1 or child_mono ==None or root_node ==None:
                     return None, None,None,fail_safe
                 if name_temp in ("NeuAc"):#("Glc", "Gal", "GlcNAc"):

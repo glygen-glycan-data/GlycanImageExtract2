@@ -2,18 +2,18 @@ import numpy as np
 import cv2
 
 class GlycanConnector:
-    def __init__(self, image):
-        self.image = image
+    def __init__(self):
+        pass
+    def connect(self,**kw):
+        raise NotImplementedError
 class HeuristicConnector(GlycanConnector):
-    def __init__(self, image, monos):
-        super().__init__(image)
-        self.monos = monos
-    def connect(self):
-        mask_dict = self.monos.get("mask_dict",{})
-        contours = self.monos.get("contours",{})
-        origin = self.image
+    def connect(self,image = None,monos = None):
+        mask_dict = monos.get("mask_dict",{})
+        contours = monos.get("contours",{})
+        origin = image
         mono_dict = {}  # mono id = contour, point at center, radius, bounding rect, linkages, root or child
         all_masks = list(mask_dict.keys())
+        #print(all_masks)
         all_masks_no_black = all_masks.copy()
         all_masks_no_black.remove("black_mask")
 
@@ -94,7 +94,7 @@ class HeuristicConnector(GlycanConnector):
         for point in list_center_point:
             length_list = []
             for point2 in list_center_point:
-                aux_len = HeuristicConnector.lengthLine(point, point2)
+                aux_len = self.lengthLine(point, point2)
                 length_list.append(aux_len)
             length_list.sort()
             length_list = length_list[1:]
@@ -107,6 +107,7 @@ class HeuristicConnector(GlycanConnector):
         v_count = 0  # count vertical link vs horizontal
         h_count = 0
         for id in mono_dict.keys():
+            #print(id)
             contour = mono_dict[id][0]
             mo = cv2.moments(contour)
             x, y, w, h = cv2.boundingRect(contour)
@@ -157,7 +158,7 @@ class HeuristicConnector(GlycanConnector):
                             # cv2.putText(origin, (id[-2:] + id_2[-2:]), (Cx, Cy), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (0, 0, 0))
 
                             line = ((Ax, Ay), (Cx, Cy))
-                            if HeuristicConnector.interactionLineRect(line, rectangle) and id_2 != id:
+                            if self.interactionLineRect(line, rectangle) and id_2 != id:
                                 cv2.line(origin, (Ax, Ay), (Cx, Cy),
                                              (0, 0, 255), 1, 1, 0)
                                 cv2.circle(origin, (Cx, Cy), 4, (0, 0, 255), -1)
@@ -185,6 +186,7 @@ class HeuristicConnector(GlycanConnector):
             #cv2.imshow('visual2', crop_origin)
             #cv2.waitKey(0)
             mono_dict[id].append(linked_monos)
+            #print(mono_dict[id])
 
             #print(linked_monos)
         #print(f"horizontal:{h_count}\nvertical:{v_count}")
@@ -193,6 +195,7 @@ class HeuristicConnector(GlycanConnector):
         from operator import itemgetter
         aux_list = []
         # mono id = contour, point at center, radius, bounding rect, linkages, root or child
+        root = None
         if h_count > v_count:
             aux_list = sorted([(mono_id, mono_dict[mono_id][1][0]) for mono_id in mono_dict.keys()], key=itemgetter(1),
                               reverse=True)
@@ -211,20 +214,19 @@ class HeuristicConnector(GlycanConnector):
         #print(f"root = {root}")
 
         for mono_id in mono_dict.keys():
+            #print(mono_id)
             if mono_id == root:
                 mono_dict[mono_id].append("root")
             else:
                 mono_dict[mono_id].append("child")
             #print(mono_id, mono_dict[mono_id][1:])
-        # print(mono_dict)
+        #print(mono_dict)
         # DEMO!!!
         # cv2.imshow('e', cv2.resize(origin, None, fx=1, fy=1))
         # cv2.waitKey(0)
-        self.mono_dict = mono_dict
-        return self.mono_dict
+        return mono_dict
     
-    @staticmethod
-    def interactionLineLine(A, B, C, D):
+    def interactionLineLine(self, A, B, C, D):
         Ax, Ay, Bx, By, Cx, Cy, Dx, Dy = A[0], A[1], B[0], B[1], C[0], C[1], D[0], D[1]
         # function determine whereas AB intersect with CD
 
@@ -238,9 +240,7 @@ class HeuristicConnector(GlycanConnector):
                 return True
 
         return False
-    
-    @staticmethod
-    def interactionLineRect(line, rect):
+    def interactionLineRect(self,line, rect):
         # line two points
         A, B = line[0], line[1]
         # rect x,y,w,h
@@ -249,17 +249,16 @@ class HeuristicConnector(GlycanConnector):
         bottom = ((x, y + h), (x + w, y + h))
         right = ((x + w, y), (x + w, y + h))
         left = ((x, y), (x, y + h))
-        if HeuristicConnector.interactionLineLine(A, B, top[0], top[1]) or HeuristicConnector.interactionLineLine(A, B, bottom[0],
-                                                                            bottom[1]) or HeuristicConnector.interactionLineLine(A, B,
+        if self.interactionLineLine(A, B, top[0], top[1]) or self.interactionLineLine(A, B, bottom[0],
+                                                                            bottom[1]) or self.interactionLineLine(A, B,
                                                                                                               right[0],
                                                                                                               right[
-                                                                                                                  1]) or HeuristicConnector.interactionLineLine(
+                                                                                                                  1]) or self.interactionLineLine(
             A, B, left[0], left[1]):
             return True
         return False
     
-    @staticmethod
-    def lengthLine(A, B):
+    def lengthLine(self, A, B):
         Ax, Ay, Bx, By = A[0], A[1], B[0], B[1]
         l = ((Ax - Bx) ** 2 + (By - Ay) ** 2) ** 0.5
         return l

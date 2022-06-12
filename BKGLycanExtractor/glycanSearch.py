@@ -4,29 +4,27 @@ from urllib.request import urlopen
 from urllib.parse import urlencode
 
 class GlycanSearch:
-    def __init__(self, glycan):
-        self.glycan = glycan
-        self.baseurl = ''
-    def __call__(self):
-        return self.search()
+    def __init__(self):
+        pass
+    def __call__(self,glycan):
+        return self.search(glycan)
     def request(self, target, **kwargs):
         return json.loads(urlopen(self.baseurl+target,urlencode(kwargs).encode('utf8')).read())
 
 class searchGlycoCT(GlycanSearch):
-    def __init__(self, glycan):
-        super().__init__(glycan)
+    def __init__(self):
         self.delay = 1
         self.maxretry = 10
         self.baseurl = "https://glylookup.glyomics.org/"
-    def search(self):
+    def search(self,glycan):
         params = []
         #print(params)
-        #print(self.glycan)
-        param = dict(seq=str(self.glycan).strip())
+        #print(glycan)
+        param = dict(seq=str(glycan).strip())
         # for seq in self.glycan:
         #     param = dict(seq=str(seq).strip())
         params.append(param)
-        data = self.request("submit",tasks=json.dumps(params),developer_email="email here")
+        data = self.request("submit",tasks=json.dumps(params),developer_email="mmv71@georgetown.edu")
         #print(data)
         jobids = []
         for job in data:
@@ -55,7 +53,7 @@ class searchGlycoCT(GlycanSearch):
                 break
             retval.append(result)
         #print(retval)
-        if len(self.glycan) == 1:
+        if len(glycan) == 1:
             return retval[0]
         if retval[0] is not None:
             return ''.join(retval)
@@ -63,15 +61,14 @@ class searchGlycoCT(GlycanSearch):
             return None
     
 class sendToGNOme(GlycanSearch):
-    def __init__(self, glycan):
-        super().__init__(glycan)
+    def __init__(self):
         self.baseurl = "https://subsumption.glyomics.org/"
-    def search(self):
+    def search(self,glycan):
         seqparams = dict()
-        for i,seq in enumerate(self.glycan):
+        for i,seq in enumerate(glycan):
             seqparams['Query'] = str(seq).strip()
         params = dict(seqs=seqparams)
-        data = self.request("submit",tasks=json.dumps([params]),developer_email = "email here")
+        data = self.request("submit",tasks=json.dumps([params]),developer_email = "mmv71@georgetown.edu")
         jobids = []
         #print(data)
         for job in data:

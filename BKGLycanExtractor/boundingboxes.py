@@ -91,3 +91,6 @@ class Training(BoundingBox):
         self.cen_y = int(self.rel_cen_y*self.imheight)
         self.w = int(self.rel_w*self.imwidth)
         self.h = int(self.rel_h*self.imheight)
+    def toList(self):
+        [glycan,rel_cen_x,rel_cen_y,rel_w,rel_h] = [0,self.rel_cen_x,self.rel_cen_y,self.rel_w,self.rel_h]
+        return [glycan,rel_cen_x,rel_cen_y,rel_w,rel_h]
