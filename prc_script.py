@@ -214,9 +214,9 @@ for file in os.scandir(search_direc):
         print('File %s had an Unsupported file extension: %s.'%(item,extn))
         logger.warning('File %s had an Unsupported file extension: %s.'%(item,extn))
         continue
+    logger.info("%s Finished", item)
     
 prc = plotprecisionrecall(padded_results_dict_new,raw_results_dict_new,padded_results_dict_old,raw_results_dict_old)    
 framework.save_output(file = item, image = prc)
 
-logger.info("%s Finished", item)
 framework.close_log()

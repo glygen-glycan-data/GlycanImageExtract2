@@ -15,6 +15,34 @@ import BKGLycanExtractor.modelTests as mt
 
 import sys, logging, cv2, os
 
+def get_results(image,training,confidence,method,padded_comparison_method,raw_comparison_method):
+    #compare padded boxes
+    logger.info("Padded boxes (default):\n")
+    padded_boxes = method.getRects(image = image, threshold = confidence)
+    padded_results = glycan_checker.compare(padded_boxes, training, padded_comparison_method)
+    if j == 0:
+        if training == []:
+            if len(padded_boxes) > 0:
+                issue = f"False positive: No training glycans for image {str(item)}."
+                logger.warning(issue)
+                framework.find_problems("False positive: No training glycans.")
+            else:
+                issue = f"No training glycans for image {str(item)}."
+                logger.warning(issue)
+            logger.info("%s Finished", str(item))
+            framework.close_log()
+            return False
+        else:
+            if padded_results[0] == "FN" and len(set(padded_results)) == 1:
+                issue = f"False negative: No detected glycans for image {str(item)}."
+                logger.warning(issue)
+                framework.find_problems("False negative: No detected glycans.")
+    #compare raw boxes
+    logger.info("Raw boxes:\n")
+    raw_boxes = annotator.getRects(image = image, threshold = confidence, pad = False)
+    raw_results = glycan_checker.compare(raw_boxes,training,raw_comparison_method)
+    return padded_results,raw_results
+
 def plotprecisionrecall(*args):
     #args is dictionaries of precision/recall values at different confidences; dictionaries differ by some alg
     for dictionary in args:
@@ -69,6 +97,7 @@ file = os.path.join(search_direc,item)
 print(item, "Start")
 
 weight=base_configs+"yolov3_training_final.weights"
+weight2=base_configs+"Glycan_300img_5000iterations.weights"
 coreyolo=base_configs+"coreyolo.cfg"
 #colors_range=base_configs+"colors_range.txt"
 
@@ -87,12 +116,13 @@ workdir = framework.get_directory(name = item)
 framework.log(name = item, logger = logger)
 
 annotator = rectID.originalYOLO(weights = weight, net = coreyolo)
+annotator2 = rectID.originalYOLO(weights = weight2, net = coreyolo)
 training_box_interpreter = rectID.TrainingData()
 padded_box_comparer = cb.ComparePaddedBox()
 raw_box_comparer = cb.CompareRawBox()
 glycan_checker = mt.TestModel()
 
-padded_results_dict = {
+padded_results_dict_new = {
     "0": [],
     "1": [],
     "2": [],
@@ -103,10 +133,10 @@ padded_results_dict = {
     "7": [],
     "8": [],
     "9": [],
-    "name": "padded borders"
+    "name": "padded borders new weights"
     }
 
-raw_results_dict = {
+raw_results_dict_new = {
     "0": [],
     "1": [],
     "2": [],
@@ -117,7 +147,35 @@ raw_results_dict = {
     "7": [],
     "8": [],
     "9": [],
-    "name": "raw borders"
+    "name": "raw borders new weights"
+    }
+
+padded_results_dict_old = {
+    "0": [],
+    "1": [],
+    "2": [],
+    "3": [],
+    "4": [],
+    "5": [],
+    "6": [],
+    "7": [],
+    "8": [],
+    "9": [],
+    "name": "padded borders old weights"
+    }
+
+raw_results_dict_old = {
+    "0": [],
+    "1": [],
+    "2": [],
+    "3": [],
+    "4": [],
+    "5": [],
+    "6": [],
+    "7": [],
+    "8": [],
+    "9": [],
+    "name": "raw borders old weights"
     }
 
 if framework.check_file(file):
@@ -135,33 +193,20 @@ if framework.check_file(file):
         training = training_box_interpreter.getRects(image=image,coord_file = training_box_doc)
         for j,confidence in enumerate([x*0.1 for x in range(0,10,1)]):
             logger.info(f'Confidence: {confidence}')
-            #compare padded boxes
-            logger.info("Padded boxes (default):\n")
-            padded_boxes = annotator.getRects(image = image, threshold = confidence)
-            padded_results = glycan_checker.compare(padded_boxes, training, padded_box_comparer)
-            if j == 0:
-                if training == []:
-                    if len(padded_boxes) > 0:
-                        issue = f"False positive: No training glycans for image {str(item)}."
-                        logger.warning(issue)
-                        framework.find_problems("False positive: No training glycans.")
-                    else:
-                        issue = f"No training glycans for image {str(item)}."
-                        logger.warning(issue)
-                    logger.info("%s Finished", str(item))
-                    framework.close_log()
-                    sys.exit(1)
-                else:
-                    if padded_results[0] == "FN" and len(set(padded_results)) == 1:
-                        issue = f"False negative: No detected glycans for image {str(item)}."
-                        logger.warning(issue)
-                        framework.find_problems("False negative: No detected glycans.")
-            [padded_results_dict[str(j)].append(result) for result in padded_results]
-            #compare raw boxes
-            logger.info("Raw boxes:\n")
-            raw_boxes = annotator.getRects(image = image, threshold = confidence, pad = False)
-            raw_results = glycan_checker.compare(raw_boxes,training,raw_box_comparer)
-            [raw_results_dict[str(j)].append(result) for result in raw_results]
+            logger.info("New weights")
+            results = get_results(image, training, confidence, annotator, padded_box_comparer, raw_box_comparer)
+            if not results:
+                sys.exit(1)
+            padded_results, raw_results = results
+            [padded_results_dict_new[str(j)].append(result) for result in padded_results]
+            [raw_results_dict_new[str(j)].append(result) for result in raw_results]
+            logger.info("Old weights")
+            results = get_results(image, training, confidence, annotator2, padded_box_comparer, raw_box_comparer)
+            if not results:
+                sys.exit(1)
+            padded_results, raw_results = results
+            [padded_results_dict_old[str(j)].append(result) for result in padded_results]
+            [raw_results_dict_old[str(j)].append(result) for result in raw_results]
             
     else:
         print('File %s had an Unsupported file extension: %s.'%(item,extn))
@@ -172,7 +217,7 @@ else:
     logger.warning('Image %s is not a file.'%(item))
     sys.exit(1)
 
-prc = plotprecisionrecall(padded_results_dict,raw_results_dict)    
+prc = plotprecisionrecall(padded_results_dict_new,raw_results_dict_new,padded_results_dict_old,raw_results_dict_old)    
 framework.save_output(file = item, image = prc)
 
 logger.info("%s Finished", item)
