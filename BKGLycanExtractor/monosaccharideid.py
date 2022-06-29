@@ -40,7 +40,7 @@ class HeuristicMonos(MonoID):
     def __init__(self,colors = None):
         super().__init__()
         self.color_range = colors
-    def croplargest(self,image = []):
+    def crop_largest(self,image = []):
         img = image
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         _, gray = cv2.threshold(gray, 230, 255, cv2.THRESH_BINARY_INV)
@@ -59,7 +59,7 @@ class HeuristicMonos(MonoID):
         return out2
     def id_monos(self,image = None):
         monos = {}
-        img = self.croplargest(image)
+        img = self.crop_largest(image)
 
         # print(img_file.shape[0]*img_file.shape[1])
         bigwhite = np.zeros([img.shape[0] + 30, img.shape[1] + 30, 3], dtype=np.uint8)

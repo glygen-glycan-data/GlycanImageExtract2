@@ -10,6 +10,8 @@ from BKGLycanExtractor import modeltests
 
 import sys, logging, cv2, os, random
 
+import numpy as np
+
 
 #get training box file
 def get_training_box_doc(file = None, direc = '.'):
@@ -24,7 +26,6 @@ def get_training_box_doc(file = None, direc = '.'):
 def plotprecisionrecall(*args):
     #args is dictionaries of precision/recall values at different confidences; dictionaries differ by some alg
     for dictionary in args:
-        print(dictionary)
         precision = []
         recall = []
         name = dictionary.get("name",'')
@@ -47,11 +48,25 @@ def plotprecisionrecall(*args):
             logger.info(f"Confidence 0.{conf}: Precision {prec}, recall {rec}")
             
         recall, precision = zip(*sorted(zip(recall, precision)))
-        
+        plt.figure(1)
         if len(set(recall)) == 1 and len(set(precision)) == 1:
             plt.plot(recall,precision, ".", label = name)
         else:
             plt.plot(recall,precision, ".-",label = name)
+        plt.figure(2)
+        if len(set(recall)) == 1 and len(set(precision)) == 1:
+            plt.plot(recall,precision, ".", label = name)
+        else:
+            plt.plot(recall,precision, ".-",label = name)
+    plt.figure(1)
+    plt.ylabel('Precision')
+    plt.xlabel('Recall')
+    plt.xlim([0.0,1.1])
+    plt.ylim([0.0,1.1])
+    plt.axhline(y=1, color='k', linestyle='--')
+    plt.axvline(x=1, color='k', linestyle='--')
+    plt.legend(loc="best")
+    plt.figure(2)
     plt.ylabel('Precision')
     plt.xlabel('Recall')
     plt.xlim([0.5,1.1])
@@ -59,8 +74,10 @@ def plotprecisionrecall(*args):
     plt.axhline(y=1, color='k', linestyle='--')
     plt.axvline(x=1, color='k', linestyle='--')
     plt.legend(loc="best")
-    pr = plt.gcf()
-    return pr
+    
+    pr = plt.figure(1)
+    pr_zoom = plt.figure(2)
+    return pr, pr_zoom
 
 
 #location for yolo configuration files
@@ -148,13 +165,18 @@ for desc, annotator in annotator_dict.items():
                 }
     results_dicts.append(unpadded_dict)
     results_dicts.append(padded_dict)
-    
 
-#scan through each png
-for file in os.scandir(search_direc):
+# list all files in dir
+glycan_files = [file for file in os.scandir(search_direc) if os.path.isfile(file) and file.name.endswith("png")]
+
+# select 100 of the files randomly 
+random_files = np.random.choice(glycan_files, 100)
+
+
+for glycan_file in random_files:
     break_flag = False
     
-    name = file.name        
+    name = glycan_file.name        
     if name.endswith("png"):
         print(name, "Start")
         logger.info(f"{name}: Start")
@@ -215,15 +237,25 @@ for file in os.scandir(search_direc):
 
 
 #make plot    
-prc = plotprecisionrecall(*results_dicts)    
+prc, zoomprc = plotprecisionrecall(*results_dicts)    
 
 
-#save plot
+#save plots
+
 path = f"{output_direc}/precisionrecallplot.png"
 if os.path.isfile(path):
     path = f"{output_direc}/precisionrecallplot"+tag+".png"
     print("Directory already contains prc curve file - check")
+plt.figure(1)
 plt.savefig(path)
+plt.close()
+
+zoompath = f"{output_direc}/precisionrecallplot_zoomed.png"
+if os.path.isfile(zoompath):
+    path = f"{output_direc}/precisionrecallplot_zoomed"+tag+".png"
+    print("Directory already contains zoomed prc curve file - check")
+plt.figure(2)
+plt.savefig(zoompath)
 plt.close()
 
 #close handlers

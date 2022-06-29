@@ -10,17 +10,21 @@ logger = logging.getLogger("test")
 class TestModel:
     def __init__(self):
         pass
-    def isGlycan(self,boxes,con_threshold = 0.5):
+    def is_glycan(self,boxes,con_threshold = 0.5):
         for i in boxes:
             confidence = boxes[4]
             if confidence >= con_threshold:
                 return True
         return False
-    def compare(self, boxes, training, comparison_alg):
-        [box.toFourCorners() for box in boxes]
+    def compare(self, boxes, training, comparison_alg,conf_threshold = 0.0):
+        for box in boxes:
+            if box.confidence < conf_threshold:
+                boxes.remove(box)
+        [box.to_four_corners() for box in boxes]
         compare_dict = {}
         #annotate_image = self.image.copy()
         for idx,dbox in enumerate(boxes):
+                
             # p1 = (dbox.x,dbox.y)
             # p2 = (dbox.x2,dbox.y2)
             # cv2.rectangle(annotate_image,p1,p2,(0,255,0),3)

@@ -158,7 +158,7 @@ class HeuristicConnector(GlycanConnector):
                             # cv2.putText(origin, (id[-2:] + id_2[-2:]), (Cx, Cy), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (0, 0, 0))
 
                             line = ((Ax, Ay), (Cx, Cy))
-                            if self.interactionLineRect(line, rectangle) and id_2 != id:
+                            if self.interaction_line_rect(line, rectangle) and id_2 != id:
                                 cv2.line(origin, (Ax, Ay), (Cx, Cy),
                                              (0, 0, 255), 1, 1, 0)
                                 cv2.circle(origin, (Cx, Cy), 4, (0, 0, 255), -1)
@@ -226,7 +226,7 @@ class HeuristicConnector(GlycanConnector):
         # cv2.waitKey(0)
         return mono_dict
     
-    def interactionLineLine(self, A, B, C, D):
+    def interaction_line_line(self, A, B, C, D):
         Ax, Ay, Bx, By, Cx, Cy, Dx, Dy = A[0], A[1], B[0], B[1], C[0], C[1], D[0], D[1]
         # function determine whereas AB intersect with CD
 
@@ -240,7 +240,8 @@ class HeuristicConnector(GlycanConnector):
                 return True
 
         return False
-    def interactionLineRect(self,line, rect):
+    
+    def interaction_line_rect(self, line, rect):
         # line two points
         A, B = line[0], line[1]
         # rect x,y,w,h
@@ -249,16 +250,16 @@ class HeuristicConnector(GlycanConnector):
         bottom = ((x, y + h), (x + w, y + h))
         right = ((x + w, y), (x + w, y + h))
         left = ((x, y), (x, y + h))
-        if self.interactionLineLine(A, B, top[0], top[1]) or self.interactionLineLine(A, B, bottom[0],
-                                                                            bottom[1]) or self.interactionLineLine(A, B,
-                                                                                                              right[0],
-                                                                                                              right[
-                                                                                                                  1]) or self.interactionLineLine(
-            A, B, left[0], left[1]):
+        if (self.interaction_line_line(A, B, top[0], top[1]) 
+            or self.interaction_line_line(A, B, bottom[0], bottom[1]) 
+            or self.interaction_line_line(A, B, right[0], right[1]) 
+            or self.interactionLineLine(A, B, left[0], left[1])):
+            
+            
             return True
         return False
     
-    def lengthLine(self, A, B):
+    def length_line(self,A, B):
         Ax, Ay, Bx, By = A[0], A[1], B[0], B[1]
         l = ((Ax - Bx) ** 2 + (By - Ay) ** 2) ** 0.5
         return l

@@ -11,7 +11,7 @@ class GlycanSearch:
     def request(self, target, **kwargs):
         return json.loads(urlopen(self.baseurl+target,urlencode(kwargs).encode('utf8')).read())
 
-class searchGlycoCT(GlycanSearch):
+class SearchGlycoCT(GlycanSearch):
     def __init__(self):
         self.delay = 1
         self.maxretry = 10
@@ -60,7 +60,7 @@ class searchGlycoCT(GlycanSearch):
         else:
             return None
     
-class sendToGNOme(GlycanSearch):
+class SendToGNOme(GlycanSearch):
     def __init__(self):
         self.baseurl = "https://subsumption.glyomics.org/"
     def search(self,glycan):

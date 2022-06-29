@@ -3,7 +3,7 @@ from .pygly3.Monosaccharide import Anomer
 from .pygly3.Glycan import Glycan
 from .pygly3.Monosaccharide import Linkage
 
-class glycanStructBuilder:
+class GlycanStructBuilder:
     def __call__(self,**kw):
         return self.build(**kw)
     def __init__(self):
@@ -11,7 +11,7 @@ class glycanStructBuilder:
     def build(self,**kw):
         raise NotImplementedError
 
-class CurrentBuilder(glycanStructBuilder):
+class CurrentBuilder(GlycanStructBuilder):
     def build(self,mono_dict = None):
         mf = MonoFactory()
         #print(mono_dict)
@@ -31,7 +31,7 @@ class CurrentBuilder(glycanStructBuilder):
         #print("##########################")
         # need stop recursion here #####################
         fail_safe=0
-        root_node=self.buildtree(mono_dict,root_id,root_node, fail_safe)[2]
+        root_node=self.build_tree(mono_dict,root_id,root_node, fail_safe)[2]
         #unknonw root properties
 
         if root_node != None:
@@ -46,7 +46,7 @@ class CurrentBuilder(glycanStructBuilder):
             glycoCT = None
 
         return glycoCT
-    def buildtree(self,mono_dict,root, root_node, fail_safe):
+    def build_tree(self,mono_dict,root, root_node, fail_safe):
         # mono_dict[mono id] = {contour, point at center, radius, bounding rect, linkages, root or child}
         # variables:
         fail_safe+=1

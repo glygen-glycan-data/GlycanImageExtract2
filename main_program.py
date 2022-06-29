@@ -1,21 +1,24 @@
-import BKGLycanExtractor.SystemInteraction as si
-import BKGLycanExtractor.glycanRectID as rectID
-import BKGLycanExtractor.MonoID as ms
-import BKGLycanExtractor.glycanConnections as c
-import BKGLycanExtractor.buildStructure as b
-import BKGLycanExtractor.glycanSearch as gs
+from BKGLycanExtractor import glycanrectangleid
+from BKGLycanExtractor import monosaccharideid
+from BKGLycanExtractor import glycanconnections
+from BKGLycanExtractor import buildstructure
+from BKGLycanExtractor import glycansearch
 
 from BKGLycanExtractor.pygly3.GlycanFormatter import GlycoCTFormat, GlycoCTParseError
 
-import sys, logging, fitz, cv2
+import sys, logging, fitz, cv2, os, shutil, time, pdfplumber, json
 
 import numpy as np
 
-def annotate_image(image,annotator,monos,builder,connector):
+def annotate_image(image,rectgetter,monos,builder,connector,glycoctsearch,gnomesearch):
     
     gctparser = GlycoCTFormat()
     
-    boxes = annotator.getRects(image = image)
+    #gets initial yolo output boxes and boxes with added border padding, confidence threshold of 0.5
+    unpadded_boxes,padded_boxes = rectgetter.get_rects(image = image, threshold = 0.5)
+    
+    #choose one set of output boxes - this is without border padding
+    boxes = unpadded_boxes
 
     logger.info("\nGlycans Found")
     
@@ -28,41 +31,43 @@ def annotate_image(image,annotator,monos,builder,connector):
         if box.y<0:
             box.y = 0
             
-        box.toFourCorners()
+        box.to_four_corners()
 
-
-        #print(y, y + h, x, x + w)
+        #visually annotate image
         p1 = (box.x,box.y)
         p2 = (box.x2,box.y2)
         cv2.rectangle(detected_glycans,p1,p2,(0,255,0),3)
+        
+        #identify monosaccharides in each glycan, get an image of glycan with annotated monos
         aux_cropped = image[box.y:box.y2,box.x:box.x2].copy()
-       # print(aux_cropped)
         count += 1
         mono_id_dict = monos.id_monos(image = aux_cropped)
         final = mono_id_dict.get("annotated")
         count_dictionary = mono_id_dict.get("count_dict")
+        
+        #connect monos to extract structure
         connect_dict = connector.connect(image = aux_cropped,monos = mono_id_dict)
-        #print(connect_dict)
+        
+        #build structure
         if connect_dict!={}:
             glycoCT = builder(mono_dict = connect_dict)
-
         else:
             glycoCT = None
-            
-        box.toPDFCoords()
-        glycan_id = str(count)
         
+        #format for results
+        box.to_pdf_coords()
+        glycan_id = str(count)
         logger.info(f"\nImageRef: {str(count)}")
 
-    
         total_count = count_dictionary['Glc']+count_dictionary['GlcNAc']+\
                       count_dictionary['GalNAc']+count_dictionary['NeuAc']+\
                       count_dictionary['Man']+count_dictionary['Gal']+count_dictionary['Fuc']
 
+        #attempt to use structure to get accession by submitting to database
         accession = None
         if glycoCT:
             try:
-                g = gctparser.toGlycan(glycoCT)
+                g = gctparser.to_glycan(glycoCT)
             except GlycoCTParseError:
                 g = None
             if g:
@@ -79,7 +84,7 @@ def annotate_image(image,annotator,monos,builder,connector):
             else:
                 glycoCT = None
         
-
+        #more formatting for result
         result = dict(name=monos.compstr(count_dictionary), 
                       accession = accession,
                       origimage=origin_image,
@@ -92,6 +97,8 @@ def annotate_image(image,annotator,monos,builder,connector):
         if glycoCT:
             result['glycoct'] = glycoCT
 
+
+        #get url to link to accession, if found
         uri_base="https://gnome.glyomics.org/StructureBrowser.html?"
         if not accession:
             logger.info("\nfound: None")
@@ -117,26 +124,47 @@ def annotate_image(image,annotator,monos,builder,connector):
         if total_count > 0:
             results.append(result)
 
-    return results, detected_glycans    
+    return results, detected_glycans 
+
+def extract_img_from_pdf(pdf_path):
+    pdf_file = pdfplumber.open(pdf_path)
+    array=[]
+    count=0
+   # print("Loading pages:")
+    for i, page in enumerate(pdf_file.pages):
+        page_h = page.height
+      #  print(f"-- page {i} --")
+        for j, image in enumerate(page.images):
+         #   print(image)
+            box = (image['x0'], page_h - image['y1'], image['x1'], page_h - image['y0'])
+            image_id=f"p{image['page_number']}-{image['name']}-{image['x0']}-{image['y0']}"
+            image_id =f"iid_{count}"
+            image_xref=image['stream'].objid
+            image_page = image['page_number']
+            array.append((image_page,image_id,image_xref,box))
+            count+=1
+    return array
 
 
-logger = logging.getLogger("search")
-logger.setLevel(logging.INFO)
-
-framework = si.FindGlycans()
+#location of configuration files - includes yolo weights and colors for heuristic mono id
 base_configs = "./BKGLycanExtractor/configs/"
 
-item = sys.argv[1]
+glycan_file = sys.argv[1]
 
+print(glycan_file, "Start")
 
-
-print(item, "Start")
-
-weight=base_configs+"yolov3_training_final.weights"
+weight=base_configs+"retrain_v2.weights"
 coreyolo=base_configs+"coreyolo.cfg"
 colors_range=base_configs+"colors_range.txt"
 
-color_range_dict = framework.get_color_range(colors_range)
+#read in color ranges for mono id
+color_range_file = open(colors_range)
+color_range_dict = {}
+for line in color_range_file.readlines():
+    line = line.strip()
+    name = line.split("=")[0].strip()
+    color_range = line.split("=")[1].strip()
+    color_range_dict[name] = np.array(list(map(int, color_range.split(","))))
 
 # configs = {
 #     "weights" : weight,
@@ -144,28 +172,51 @@ color_range_dict = framework.get_color_range(colors_range)
 #     "colors_range": color_range_dict}
 
 
-framework.initialize_directory(name = item)
+#initialize directory for output
+workdir = os.path.join("./files", glycan_file)
+if os.path.isdir(os.path.join(workdir)):
+    shutil.rmtree(os.path.join(workdir))
+    time.sleep(5)
+os.makedirs(os.path.join(workdir))
+os.makedirs(os.path.join(workdir, "input"))
+os.makedirs(os.path.join(workdir, "output")) 
 
-workdir = framework.get_directory(name = item)
+#start logging
+logger = logging.getLogger("search")
+logger.setLevel(logging.INFO)
 
-framework.log(name = item)
+annotatelogfile = f"{workdir}/output/annotated_{glycan_file}_log.txt"
+handler = logging.FileHandler(annotatelogfile)
+handler.setLevel(logging.INFO)
+handler.setFormatter(logging.Formatter('%(message)s'))
+logger.addHandler(handler)
+logger.info(f"Start: {glycan_file}")
 
-annotator = rectID.originalYOLO(weights = weight, net = coreyolo)
-monos = ms.HeuristicMonos(colors = color_range_dict)
-connector = c.HeuristicConnector()
-builder = b.CurrentBuilder()
-glycoctsearch = gs.searchGlycoCT()
-gnomesearch = gs.sendToGNOme()
+
+#set up methods to get boxes / id monos / extract topology / get accession
+boxgetter = glycanrectangleid.OriginalYOLO(weights = weight, net = coreyolo)
+monos = monosaccharideid.HeuristicMonos(colors = color_range_dict)
+connector = glycanconnections.HeuristicConnector()
+builder = buildstructure.CurrentBuilder()
+glycoctsearch = glycansearch.SearchGlycoCT()
+gnomesearch = glycansearch.SendToGNOme()
 
 annotated_doc = None
 annotated_img = None
 
-if framework.check_file(item):
-    framework.make_copy(file = item)
-    extn = item.lower().rsplit('.',1)[1]
+
+#start annotation
+if os.path.isfile(glycan_file):
+    outdirec = os.path.join(workdir,"input")
+    try:
+        shutil.copyfile(os.path.join('.', glycan_file), os.path.join(outdirec,glycan_file))    
+    except FileNotFoundError:
+        time.sleep(5)
+        shutil.copyfile(os.path.join('.',glycan_file), os.path.join(outdirec,glycan_file))
+    extn = glycan_file.lower().rsplit('.',1)[1]
     if extn == "pdf":
-        pdf = fitz.open(item)
-        img_array = framework.extract_img_from_pdf(item)
+        pdf = fitz.open(glycan_file)
+        img_array = extract_img_from_pdf(glycan_file)
         
         results = []
     
@@ -201,7 +252,7 @@ if framework.check_file(item):
                     nparray = np.frombuffer(imagedata, np.uint8)
                     image = cv2.imdecode(nparray,cv2.IMREAD_COLOR)
                     
-                    output,z = annotate_image(image,annotator,monos,builder,connector)
+                    output,z = annotate_image(image,boxgetter,monos,builder,connector, glycoctsearch, gnomesearch)
    
                     for result in output:
                         coordinates = result["coordinates"]
@@ -232,17 +283,61 @@ if framework.check_file(item):
         annotated_doc = pdf
         #output: results,pdf
     elif extn == "png":
-        image = cv2.imread(item)
-        results,annotated_img = annotate_image(image, annotator, monos, builder, connector)
+        image = cv2.imread(glycan_file)
+        results,annotated_img = annotate_image(image, boxgetter, monos, builder, connector, glycoctsearch, gnomesearch)
     else:
-        print('File %s had an Unsupported file extension: %s.'%(item,extn))
-        logger.warning('File %s had an Unsupported file extension: %s.'%(item,extn))
+        print('File %s had an Unsupported file extension: %s.'%(glycan_file,extn))
+        logger.warning('File %s had an Unsupported file extension: %s.'%(glycan_file,extn))
         sys.exit(1)
 else:
-    results, annotated_img  = annotate_image(item, annotator,monos,builder,connector)
+    results, annotated_img  = annotate_image(glycan_file, boxgetter,monos,builder,connector, glycoctsearch, gnomesearch)
     extn = "Not a file" 
     
-framework.save_output(file = item, array = results, doc = annotated_doc, image = annotated_img)
+    
 
-logger.info("%s Finished", item)
-framework.close_log()
+    
+#save results and annotated pdf/png
+name = glycan_file.split('.')[0]
+if annotated_doc is not None:
+    annotated_pdf_path = f"{workdir}/output/annotated_{name}.pdf"
+    annotated_doc.save(annotated_pdf_path)
+if annotated_img is not None:
+    annotated_img_path = f"{workdir}/output/annotated_{name}.png"
+    cv2.imwrite(annotated_img_path,annotated_img)
+for idx,result in enumerate(results):
+    original = result["origimage"]
+    final = result["annotatedimage"]
+    try:
+        os.makedirs(f"{workdir}/test/{idx}/originals")
+    except FileExistsError:
+        pass
+    try:
+        os.makedirs(f"{workdir}/test/{idx}/annotated")
+    except FileExistsError:
+        pass
+    orig_path = f"{workdir}/test/{idx}/originals/save_original.png"
+    final_path = f"{workdir}/test/{idx}/annotated/annotated_glycan.png"
+    cv2.imwrite(orig_path, original)
+    cv2.imwrite(final_path, final)
+    result["origimage"] = orig_path
+    result["annotatedimage"] = final_path
+res = {
+    "glycans": results,
+    "rename": "annotated_"+glycan_file,
+    "output_file_abs_path": os.path.join(workdir, "output", "annotated_" + glycan_file),
+    "inputtype": extn
+}
+res = dict(id=glycan_file,result=res,finished=True)
+wh = open(f"{workdir}/output/results.json",'w')
+wh.write(json.dumps(res))
+wh.close()  
+
+
+#shut down logger
+
+logger.info("%s Finished", glycan_file)
+
+handlers = logger.handlers[:]
+for handler in handlers:
+    logger.removeHandler(handler)
+    handler.close()

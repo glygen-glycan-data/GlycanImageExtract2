@@ -4,7 +4,7 @@ class CompareBoxes:
     def __init__(self):
         pass
     def detection_sufficient(self, training, detected):
-        if self.iou(training, detected) > 0.75:
+        if self.iou(training, detected) > 0.95:
             return True
         else:
             return False
@@ -34,7 +34,7 @@ class CompareBoxes:
         u = self.union_area(training, detected)
         return float(i/u)
     def is_overlapping(self, training, detected):
-        if self.iou(training, detected) > 0.5:
+        if self.iou(training, detected) > 0.95:
             return True
         else:
             return False
