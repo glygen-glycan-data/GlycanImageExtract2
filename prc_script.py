@@ -24,7 +24,6 @@ def get_training_box_doc(file = None, direc = '.'):
 def plotprecisionrecall(*args):
     #args is dictionaries of precision/recall values at different confidences; dictionaries differ by some alg
     for dictionary in args:
-        print(dictionary)
         precision = []
         recall = []
         name = dictionary.get("name",'')
@@ -83,10 +82,10 @@ glycan_checker = modeltests.TestModel()
 
 
 #methods for comparison    
-annotator = glycanrectangleid.originalYOLO(weights = weight1, net = coreyolo)
-annotator2 = glycanrectangleid.originalYOLO(weights = weight2, net = coreyolo)
-annotator3 = glycanrectangleid.originalYOLO(weights = weight3, net = coreyolo)
-annotator4 = glycanrectangleid.originalYOLO(weights = weight4, net = coreyolo)
+annotator = glycanrectangleid.OriginalYOLO(weights = weight1, net = coreyolo)
+annotator2 = glycanrectangleid.OriginalYOLO(weights = weight2, net = coreyolo)
+annotator3 = glycanrectangleid.OriginalYOLO(weights = weight3, net = coreyolo)
+annotator4 = glycanrectangleid.OriginalYOLO(weights = weight4, net = coreyolo)
 
 annotator_dict = {
     "original weights" : annotator2,

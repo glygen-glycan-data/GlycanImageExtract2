@@ -67,7 +67,7 @@ def annotate_image(image,rectgetter,monos,builder,connector,glycoctsearch,gnomes
         accession = None
         if glycoCT:
             try:
-                g = gctparser.to_glycan(glycoCT)
+                g = gctparser.toGlycan(glycoCT)
             except GlycoCTParseError:
                 g = None
             if g:
@@ -153,7 +153,7 @@ glycan_file = sys.argv[1]
 
 print(glycan_file, "Start")
 
-weight=base_configs+"retrain_v2.weights"
+weight=base_configs+"yolov3_training_final.weights"
 coreyolo=base_configs+"coreyolo.cfg"
 colors_range=base_configs+"colors_range.txt"
 

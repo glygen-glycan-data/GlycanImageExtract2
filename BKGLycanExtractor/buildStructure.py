@@ -79,7 +79,7 @@ class CurrentBuilder(GlycanStructBuilder):
                 child_mono = mf.new(name_temp)
                 child_mono.set_anomer(Anomer.missing)
                 if mono_dict[child_id][4] != []:
-                    _,_,child_mono,fail_safe = self.buildtree(mono_dict,child_id,child_mono,fail_safe)
+                    _,_,child_mono,fail_safe = self.build_tree(mono_dict,child_id,child_mono,fail_safe)
                 if fail_safe > len(mono_dict.values())-1 or child_mono ==None or root_node ==None:
                     return None, None,None,fail_safe
                 if name_temp in ("NeuAc"):#("Glc", "Gal", "GlcNAc"):

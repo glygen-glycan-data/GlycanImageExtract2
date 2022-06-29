@@ -94,7 +94,7 @@ class HeuristicConnector(GlycanConnector):
         for point in list_center_point:
             length_list = []
             for point2 in list_center_point:
-                aux_len = self.lengthLine(point, point2)
+                aux_len = self.length_line(point, point2)
                 length_list.append(aux_len)
             length_list.sort()
             length_list = length_list[1:]
@@ -253,7 +253,7 @@ class HeuristicConnector(GlycanConnector):
         if (self.interaction_line_line(A, B, top[0], top[1]) 
             or self.interaction_line_line(A, B, bottom[0], bottom[1]) 
             or self.interaction_line_line(A, B, right[0], right[1]) 
-            or self.interactionLineLine(A, B, left[0], left[1])):
+            or self.interaction_line_line(A, B, left[0], left[1])):
             
             
             return True

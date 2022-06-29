@@ -28,7 +28,7 @@ class TestModel:
             # p1 = (dbox.x,dbox.y)
             # p2 = (dbox.x2,dbox.y2)
             # cv2.rectangle(annotate_image,p1,p2,(0,255,0),3)
-            dbox.setName(str(idx))
+            dbox.set_name(str(idx))
             compare_dict[dbox.name] = (dbox, None)
             max_int = 0
             for tbox in training:

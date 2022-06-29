@@ -100,10 +100,10 @@ glycan_checker = modeltests.TestModel()
 
 
 #methods for comparison    
-annotator = glycanrectangleid.originalYOLO(weights = weight1, net = coreyolo)
-annotator2 = glycanrectangleid.originalYOLO(weights = weight2, net = coreyolo)
-annotator3 = glycanrectangleid.originalYOLO(weights = weight3, net = coreyolo)
-annotator4 = glycanrectangleid.originalYOLO(weights = weight4, net = coreyolo)
+annotator = glycanrectangleid.OriginalYOLO(weights = weight1, net = coreyolo)
+annotator2 = glycanrectangleid.OriginalYOLO(weights = weight2, net = coreyolo)
+annotator3 = glycanrectangleid.OriginalYOLO(weights = weight3, net = coreyolo)
+annotator4 = glycanrectangleid.OriginalYOLO(weights = weight4, net = coreyolo)
 
 annotator_dict = {
     "original weights" : annotator2,
