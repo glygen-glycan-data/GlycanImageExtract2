@@ -3,25 +3,27 @@ import numpy as np
 import BKGLycanExtractor.boundingboxes as boundingboxes
 
 class GlycanRectID:
-    def __init__(self,**kw):
+    def __init__(self, configs = None):
         pass
     def get_rects(self,**kw):
         raise NotImplementedError
     
 class OriginalYOLO(GlycanRectID):
-    def __init__(self,**kw):
+    def __init__(self, configs):
 
         super().__init__()
-        weights=kw.get("weights",)
-        net=kw.get("net",)
+        weights=configs.get("glycanfinder_weights",)
+        net=configs.get("glycanfinder_cfg",)
         
         self.net = cv2.dnn.readNet(weights,net)
         
         layer_names = self.net.getLayerNames()
         #print(layer_names)
         #compatibility with new opencv versions
+        #print(self.net.getUnconnectedOutLayers())
         try:
             self.output_layers = [layer_names[i[0] - 1] for i in self.net.getUnconnectedOutLayers()]
+            #print(self.output_layers)
         except IndexError:
             self.output_layers = [layer_names[i - 1] for i in self.net.getUnconnectedOutLayers()]
         
@@ -44,27 +46,44 @@ class OriginalYOLO(GlycanRectID):
         bigwhite[half_white_space:(half_white_space + image.shape[0]), half_white_space:(half_white_space+image.shape[1])] = image
         image = bigwhite.copy()
         #detected_glycan = image.copy()
-        #cv2.imshow("bigwhite", bigwhite)
-        #cv2.waitKey(0)
+        # cv2.imshow("bigwhite", bigwhite)
+        # cv2.waitKey(0)
+        # cv2.destroyAllWindows()
 
         ############################################################################################
         blob = cv2.dnn.blobFromImage(image, 0.00392, (416, 416), (0, 0, 0), True, crop=False)
         self.net.setInput(blob)
         outs = self.net.forward(self.output_layers)
+        #print(outs)
         # loop through results and print them on images
         class_ids = []
         confidences = []
         padded_boxes = []
         unpadded_boxes = []
         for out in outs:
+            #print(out)
             for detection in out:
                 #print(detection)
                 scores = detection[5:]
+                #print(scores)
                 class_id = np.argmax(scores)
                 confidence = scores[class_id]
+                coords = detection[:4]
+                #print(coords)
+                # if np.isnan(coords).any():
+                #       continue
+                # #print(coords)
+                # if any(n < 0 for n in coords):
+                #     continue
+                # if detection[0] > 1 or detection[1] > 1:
+                #     continue
+                # if detection[2] > 1:
+                #     detection[2] = 1
+                # if detection[3] > 1:
+                #     detection[3] = 1
                 
-                unpadded_box = boundingboxes.Detected(origin_image, confidence, white_space, rel_cen_x = detection[0],rel_cen_y = detection[1], rel_w = detection[2],rel_h = detection[3])
-                padded_box = boundingboxes.Detected(origin_image, confidence, white_space, rel_cen_x = detection[0],rel_cen_y = detection[1], rel_w = detection[2],rel_h = detection[3])
+                unpadded_box = boundingboxes.Detected(origin_image, confidence, class_=class_id,white_space=white_space, rel_cen_x = detection[0],rel_cen_y = detection[1], rel_w = detection[2],rel_h = detection[3])
+                padded_box = boundingboxes.Detected(origin_image, confidence, class_ = class_id,white_space=white_space, rel_cen_x = detection[0],rel_cen_y = detection[1], rel_w = detection[2],rel_h = detection[3])
                 
                 unpadded_box.rel_to_abs()
                 padded_box.rel_to_abs()
@@ -82,6 +101,13 @@ class OriginalYOLO(GlycanRectID):
                 
                 unpadded_box.is_entire_image()
                 padded_box.is_entire_image()
+                
+                if unpadded_box.y<0:
+                    unpadded_box.y = 0
+                unpadded_box.to_four_corners()
+                if padded_box.y<0:
+                    padded_box.y = 0
+                padded_box.to_four_corners()
 
     #BOXES FORMAT IS A PROBLEM
                 unpadded_boxes.append(unpadded_box)
@@ -92,9 +118,11 @@ class OriginalYOLO(GlycanRectID):
         #cv.dnn.NMSBoxesRotated(bboxes, scores, score_threshold, nms_threshold[, eta[, top_k]])
         #print(boxes)
         unpaddedboxesfornms = [bbox.to_list() for bbox in unpadded_boxes]
+        #print(unpaddedboxesfornms)
         paddedboxesfornms = [bbox.to_list() for bbox in padded_boxes]
         
         unpadded_indexes = cv2.dnn.NMSBoxes(unpaddedboxesfornms, confidences, threshold, 0.4)
+        #print(unpadded_indexes)
         padded_indexes = cv2.dnn.NMSBoxes(paddedboxesfornms, confidences, threshold, 0.4)
         
         unpadded_indexes = [index[0] for index in unpadded_indexes]
@@ -129,8 +157,9 @@ class OriginalYOLOPreFix(OriginalYOLO):
         bigwhite[0:image.shape[0], 0:image.shape[1]] = image
         image = bigwhite.copy()
         #detected_glycan = image.copy()
-        #cv2.imshow("bigwhite", bigwhite)
-        #cv2.waitKey(0)
+        # cv2.imshow("bigwhite", bigwhite)
+        # cv2.waitKey(0)
+        # cv2.destroyAllWindows()
 
         ############################################################################################
         blob = cv2.dnn.blobFromImage(image, 0.00392, (416, 416), (0, 0, 0), True, crop=False)
@@ -148,8 +177,8 @@ class OriginalYOLOPreFix(OriginalYOLO):
                 class_id = np.argmax(scores)
                 confidence = scores[class_id]
                 
-                unpadded_box = boundingboxes.Detected(origin_image, confidence, white_space, rel_cen_x = detection[0],rel_cen_y = detection[1], rel_w = detection[2],rel_h = detection[3])
-                padded_box = boundingboxes.Detected(origin_image, confidence, white_space, rel_cen_x = detection[0],rel_cen_y = detection[1], rel_w = detection[2],rel_h = detection[3])
+                unpadded_box = boundingboxes.Detected(origin_image, confidence, white_space=white_space, rel_cen_x = detection[0],rel_cen_y = detection[1], rel_w = detection[2],rel_h = detection[3])
+                padded_box = boundingboxes.Detected(origin_image, confidence, white_space=white_space, rel_cen_x = detection[0],rel_cen_y = detection[1], rel_w = detection[2],rel_h = detection[3])
                 
                 unpadded_box.rel_to_abs()
                 padded_box.rel_to_abs()
@@ -164,6 +193,13 @@ class OriginalYOLOPreFix(OriginalYOLO):
                 
                 unpadded_box.is_entire_image()
                 padded_box.is_entire_image()
+                
+                if unpadded_box.y<0:
+                    unpadded_box.y = 0
+                unpadded_box.to_four_corners()
+                if padded_box.y<0:
+                    padded_box.y = 0
+                padded_box.to_four_corners()
 
     #BOXES FORMAT IS A PROBLEM
                 unpadded_boxes.append(unpadded_box)
@@ -202,7 +238,7 @@ class TrainingData(GlycanRectID):
                 continue
             split_line = line.split(' ')
             
-            box = boundingboxes.Training(image, rel_cen_x = float(split_line[1]), rel_cen_y = float(split_line[2]), rel_w = float(split_line[3]), rel_h = float(split_line[4]))
+            box = boundingboxes.Training(image, class_ = int(float(split_line[0])), rel_cen_x = float(split_line[1]), rel_cen_y = float(split_line[2]), rel_w = float(split_line[3]), rel_h = float(split_line[4]))
             
             box.rel_to_abs()
             

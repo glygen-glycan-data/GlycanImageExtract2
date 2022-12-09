@@ -52,21 +52,21 @@ class SearchGlycoCT(GlycanSearch):
                 result = gtc
                 break
             retval.append(result)
-        #print(retval)
-        if len(glycan) == 1:
-            return retval[0]
+
         if retval[0] is not None:
-            return ''.join(retval)
+            return retval[0]["accession"]
         else:
             return None
     
 class SendToGNOme(GlycanSearch):
     def __init__(self):
         self.baseurl = "https://subsumption.glyomics.org/"
+        self.delay = 1
+        self.maxretry = 10
     def search(self,glycan):
+        #print(glycan)
         seqparams = dict()
-        for i,seq in enumerate(glycan):
-            seqparams['Query'] = str(seq).strip()
+        seqparams['Query'] = glycan.strip()
         params = dict(seqs=seqparams)
         data = self.request("submit",tasks=json.dumps([params]),developer_email = "mmv71@georgetown.edu")
         jobids = []
@@ -74,4 +74,39 @@ class SendToGNOme(GlycanSearch):
         for job in data:
             #print(job)
             jobids.append(job["id"])
-        return jobids[-1]
+            
+        nretries = 0
+        while True:
+            data = self.request("retrieve",list_ids=json.dumps(jobids))
+            #print(data)
+            done = True
+            for job in data:
+                if not job.get('finished'):
+                    done = False
+                    break
+            if done:
+                break
+            if nretries >= self.maxretry:
+                break
+            time.sleep(self.delay)
+            nretries += 1
+
+        retval = []
+        for job in data:
+            result = None
+            result_dict = job.get("result",None)
+            #print(result_dict)
+            if result_dict is None:
+                return None
+            result = result_dict.get("equivalent",None)
+            if result == {}:
+                return None
+            
+            
+            retval.append(result)
+        #print(retval)
+        if retval[0] is not None:
+            return retval[0]["Query"]
+        else:
+            return None
+        #return jobids[-1]

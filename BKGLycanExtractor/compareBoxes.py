@@ -1,18 +1,26 @@
 #from BKGLycanExtractor.boundingboxes import BoundingBox
 
 class CompareBoxes:
-    def __init__(self):
-        pass
+    def __init__(self,**kwargs):
+        self.detection_threshold = kwargs.get("detection_threshold", 0.5)
+        self.overlap_threshold = kwargs.get("overlap_threshold", 0.5)
+        self.containment_threshold = kwargs.get("containment_threshold",0.5)
+    def compare_class(self,training,detected):
+        if detected.class_ == training.class_:
+            return True
+        else:
+            return False
     def detection_sufficient(self, training, detected):
-        if self.iou(training, detected) > 0.95:
+        if self.iou(training, detected) > self.detection_threshold:
             return True
         else:
             return False
     def have_intersection(self,training,detected):
-        assert training.x < training.x2
-        assert detected.x < detected.x2
-        assert training.y < training.y2
-        assert detected.y < detected.y2
+        assert training.x <= training.x2
+        #print(detected.x,detected.x2)
+        assert detected.x <= detected.x2
+        assert training.y <= training.y2
+        assert detected.y <= detected.y2
         
         if detected.x > training.x2:
             return False
@@ -34,7 +42,7 @@ class CompareBoxes:
         u = self.union_area(training, detected)
         return float(i/u)
     def is_overlapping(self, training, detected):
-        if self.iou(training, detected) > 0.95:
+        if self.iou(training, detected) > self.overlap_threshold:
             return True
         else:
             return False
@@ -52,15 +60,28 @@ class CompareBoxes:
         return float(d_area + t_area - intersection)
         
 class ComparePaddedBox(CompareBoxes):
-    def __init__(self):
-        super().__init__()
-        self.containment_threshold = 0.25
-    # def training_contained(self, training, detected):
-    #     super().training_contained(training, detected)
+    def __init__(self,**kwargs):
+        detection_threshold = kwargs.get("detection_threshold", 0.95)
+        overlap_threshold = kwargs.get("overlap_threshold", 0.95)
+        containment_threshold = kwargs.get("containment_threshold",0.25)
+        super().__init__(detection_threshold = detection_threshold,
+                         overlap_threshold = overlap_threshold, 
+                         containment_threshold = containment_threshold)
         
 class CompareRawBox(CompareBoxes):
-    def __init__(self):
-        super().__init__()
-        self.containment_threshold = 0.5
-    # def training_contained(self, training, detected):
-    #     super().training_contained(training, detected)
+    def __init__(self,**kwargs):
+        detection_threshold = kwargs.get("detection_threshold", 0.95)
+        overlap_threshold = kwargs.get("overlap_threshold", 0.95)
+        containment_threshold = kwargs.get("containment_threshold",0.5)
+        super().__init__(detection_threshold = detection_threshold, 
+                         overlap_threshold = overlap_threshold, 
+                         containment_threshold = containment_threshold)
+        
+class CompareDetectedClass(CompareBoxes):
+    def __init__(self,**kwargs):
+       detection_threshold = kwargs.get("detection_threshold", 0.5)
+       overlap_threshold = kwargs.get("overlap_threshold", 0.5)
+       containment_threshold = kwargs.get("containment_threshold",0.5)
+       super().__init__(detection_threshold = detection_threshold, 
+                        overlap_threshold = overlap_threshold, 
+                        containment_threshold = containment_threshold)
