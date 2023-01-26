@@ -1,14 +1,19 @@
+import os
 import cv2, math, logging
 import numpy as np
 
 import BKGLycanExtractor.boundingboxes as boundingboxes
 
-logger = logging.getLogger("search")
 
+### base class, all classes to find and identify monosaccharides should be subclasses of MonoID
+### all subclasses expect to be initialised with a file describing the range of colors which define yellow/purple/redl/redh/red/green/blue/black
+### base class has a compstr method to create a formatted string of monosaccharide composition
+### all subclasses should have a find_monos method which is followed by a format_monos method to return a formatted dictionary of monosaccharids, color masks, and composition
+### base class has a get_masks method to use the color ranges to create cv2 masks and save them into an array and dictionary
 class MonoID:
     def __init__(self, configs):
         #read in color ranges for mono id
-        color_range = configs.get("colors_range",)
+        color_range = configs.get("color_range",)
         color_range_file = open(color_range)
         color_range_dict = {}
         for line in color_range_file.readlines():
@@ -18,6 +23,7 @@ class MonoID:
             color_range_dict[name] = np.array(list(map(int, color_range.split(","))))
         color_range_file.close()
         self.color_range = color_range_dict
+    #expects a dictionary of monosaccharide counts, returns a formatted string
     def compstr(self,counts):
         s = ""
         for sym,count in sorted(counts.items()):
@@ -28,16 +34,10 @@ class MonoID:
         raise NotImplementedError
     def format_monos(self,image = None, **kw):
         raise NotImplementedError
+    #expects an hsv-formatted image, returns masks based on the image and color ranges
     def get_masks(self,hsv_image=None):
         color_range_dict = self.color_range
         hsv = hsv_image
-        # color_range_file = open(colors_range)
-        # color_range_dict = {}
-        # for line in color_range_file.readlines():
-        #     line = line.strip()
-        #     name = line.split("=")[0].strip()
-        #     color_range = line.split("=")[1].strip()
-        #     color_range_dict[name] = np.array(list(map(int, color_range.split(","))))
 
         # create mask for each color
         yellow_mask = cv2.inRange(hsv, color_range_dict['yellow_lower'], color_range_dict['yellow_upper'])
@@ -54,10 +54,18 @@ class MonoID:
         mask_array_name = ("red_mask", "yellow_mask", "green_mask", "blue_mask", "purple_mask", "black_mask")
         mask_dict = dict(zip(mask_array_name, mask_array))
         return mask_array,mask_array_name,mask_dict        
+    
+# class to use heuristic color matching methods to find and identify monosaccharides in glycan images
+# expects to be initiated with a configs dictionary containing the color range file
+# the box flag should not be used directly - box=True when you want to return bounding boxes based on the contours of the monosaccharides
+#   in this case you should be using the BoxMonos subclass which sets box=True itself
+#   this can be used for creating training data but should not be used in a glycan extraction pipeline
+#find_monos should be used before format_monos, which takes the value returned from find_monos
 class HeuristicMonos(MonoID):
     def __init__(self, configs, box = False):
         super().__init__(configs)
         self.box_flag = box
+    #expects 2 images, returns a similarity score for comparison
     def compare2img(self,img1,img2):
         # return similarity between two image
         if img1.shape == img2.shape:
@@ -77,7 +85,7 @@ class HeuristicMonos(MonoID):
         # cv2.imshow("different", diff)
         # cv2.waitKey(0)
         return 1 - score
-    
+    #expects an image and crops it to contain the largest continuous contour, removing extraneous aspects of the image
     def crop_largest(self,image = None):
         img = image
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
@@ -95,10 +103,16 @@ class HeuristicMonos(MonoID):
 
         out2 = cv2.bitwise_or(out, img)
         return out2
-    def find_monos(self,image = None):
+    
+    #method to find monosaccharides in a glycan image
+    #requires an image and the name of the parent logger
+    #returns a dictionary containing a mask dictionary, monosaccharide boundaries and identifications, and the cropped image with monosaccharides annotated
+    def find_monos(self,image = None, logger_name=''):
+        logger = logging.getLogger(logger_name+'.monosaccharideid')
         monos = {}
         image = self.crop_largest(image)
         image = self.resize_image(image)
+        #save original image, and then format it for masking
         monos["original"] = image
         img = self.format_image(image)
         
@@ -110,10 +124,10 @@ class HeuristicMonos(MonoID):
         #origin = img.copy()
         final = img.copy()  # final annotated pieces
 
-        #d = {}
         mask_array, mask_array_name, mask_dict = self.get_masks(hsv)
 
         # loop through each countors
+        # sets up contours and bounding boxes, chooses at the end based on the box_flag which should be set automatically by class choice
         boxes = []
         return_contours = []
         for color in mask_array_name:
@@ -132,20 +146,23 @@ class HeuristicMonos(MonoID):
                 if squareness < 2 and arearatio > 100 and arearatio1 > 200:
                     #logger.info(f"{x,y,w,h,area,round(squareness,2),round(arearatio,2),round(arearatio1,2),color} ")
                     if squareness > 0.25 or arearatio < 1000.0 or arearatio1 < 500:
-                        #logger.info("BAD")
+                        logger.info("BAD")
                         continue
                     box = boundingboxes.Training(img,x = x, y = y, width = w, height = h)
                     box.corner_to_center()
                     box.abs_to_rel()
                     if color == "red_mask":
                         return_contours.append(("Fuc", contour))
+                        logger.info("Fuc")
                         box.set_class(2)
                         boxes.append(box)
 
                     elif color == "purple_mask":
                         return_contours.append(("NeuAc", contour))
+                        logger.info("NeuAc")
                         box.set_class(1)
                         boxes.append(box)
+                        
                     elif color == "blue_mask":
                         white = np.zeros([h, w, 3], dtype=np.uint8)
                         white.fill(255)
@@ -154,20 +171,23 @@ class HeuristicMonos(MonoID):
                         score = self.compare2img(white, this_blue_img)
                         if score >= 0.8:  # is square
                             return_contours.append(("GlcNAc", contour))
+                            logger.info("GlcNAc")
                             box.set_class(0)
                             boxes.append(box)
-                        elif 0.5 < score < 0.8:
+                        elif 0.5 < score < 0.8: # is circle
 
                             return_contours.append(("Glc", contour))
+                            logger.info("Glc")
                             box.set_class(6)
                             boxes.append(box)
 
                         else:
-                            logger.info("???")
+                            logger.info("???", score)
 
                     elif color == "green_mask":
 
                         return_contours.append(("Man", contour))
+                        logger.info("Man")
                         box.set_class(3)
                         boxes.append(box)
 
@@ -184,12 +204,14 @@ class HeuristicMonos(MonoID):
                         if score > 0.9:  # is square
 
                             return_contours.append(("GalNAc", contour))
+                            logger.info("GalNAc")
                             box.set_class(4)
                             boxes.append(box)
 
-                        elif 0.5 < score < 0.9:
+                        elif 0.5 < score < 0.9: # is circle
 
                             return_contours.append(("Gal", contour))
+                            logger.info("Gal")
                             box.set_class(5)
                             boxes.append(box)
                         else:
@@ -203,6 +225,9 @@ class HeuristicMonos(MonoID):
         else:
             monos["contours"] = return_contours
         return monos
+    
+    #formats image for mask usage
+    #expects an image, returns a blurred and filtered image
     def format_image(self,img = None):
 
         img = cv2.GaussianBlur(img, (11, 11), 0)
@@ -210,7 +235,11 @@ class HeuristicMonos(MonoID):
         kernel = np.array([[-1, -1, -1], [-1, 9, -1], [-1, -1, -1]])
         img = cv2.filter2D(img, -1, kernel)
         return img
-    def format_monos(self,image= None,monos_dict = None):
+    
+    #method to format the monosaccharide contours returned by find_monos
+    #requires an image and the dictionary returned by find_monos
+    #returns a formatted dictionary with monosaccharide counts and an annotated final image
+    def format_monos(self,image= None,monos_dict = None, **kw):
         monos = monos_dict
         monos_list = monos["contours"]
         final = monos["annotated"]
@@ -235,6 +264,8 @@ class HeuristicMonos(MonoID):
         monos["count_dict"] = monoCount_dict
         monos["annotated"] = final
         return monos
+    #resizes image for optimised monosaccharide id
+    #takes an image, returns it resized
     def resize_image(self, img = None):
         # print(img_file.shape[0]*img_file.shape[1])
         bigwhite = np.zeros([img.shape[0] + 30, img.shape[1] + 30, 3], dtype=np.uint8)
@@ -248,10 +279,18 @@ class HeuristicMonos(MonoID):
         img = cv2.resize(img, None, fx=mag, fy=mag)
         return img
 
+#Subclass of HeuristicMonos which creates bounding boxes for monosaccharides found through heuristic image-matching methods
+#Can be used to create training data for YOLO models
+#expects to be initialised with a configs dictionary containig the color range file
+#uses the HeuristicMonos find_monos method, has its own format_monos method which overrides the superclass method
 class BoxMonos(HeuristicMonos):
     def __init__(self, configs):
         super().__init__(configs, box = True) 
-    def format_monos(self, image= None, monos_dict = None):
+    
+    #format the monosaccharide dictionary returned by find_monos by counting monosaccharides
+    #requires an image and the find_monos output
+    #returns the formatted monosaccharide dictionary
+    def format_monos(self, image= None, monos_dict = None, **kw):
         monos = monos_dict
         monos_boxes = monos["contours"]
         monoCount_dict = {"GlcNAc": 0, "NeuAc": 0, "Fuc": 0, "Man": 0, "GalNAc": 0, "Gal": 0,"Glc": 0, "NeuGc": 0,}
@@ -260,19 +299,8 @@ class BoxMonos(HeuristicMonos):
         #final_boxes = []
         final = img.copy()
         for mono in monos_boxes:
-            # new_x = mono.rel_cen_x
-            # new_y = mono.rel_cen_y
-            # new_w = mono.rel_w
-            # new_h = mono.rel_h
             new_class = mono.class_
             
-            # finalbox = boundingboxes.Training(final,class_ = new_class, rel_cen_x = new_x, rel_cen_y = new_y, rel_w = new_w, rel_h = new_h, white_space = 30)
-            
-            # finalbox.rel_to_abs()
-            
-            # finalbox.fix_image()
-            
-            # finalbox.center_to_corner()
 
             mono.pad_borders()
 
@@ -280,13 +308,8 @@ class BoxMonos(HeuristicMonos):
             mono.fix_borders()
             mono.corner_to_center()
             mono.abs_to_rel()
-            # final_boxes.append(finalbox)
-            
-            # p1 = (finalbox.x,finalbox.y)
-            # p2 = (finalbox.x2,finalbox.y2)            
-            # cv2.rectangle(final, p1, p2, (0, 255, 0), 1)
-            # cv2.putText(final, new_class, p1, cv2.FONT_HERSHEY_COMPLEX_SMALL, 1,
-            #             (0, 0, 255))
+
+
             if new_class == 0:
                 monoCount_dict["GlcNAc"] += 1
             elif new_class == 1:
@@ -306,11 +329,18 @@ class BoxMonos(HeuristicMonos):
         monos["contours"] = monos_boxes
         
         return monos
+    
+### Subclass to use a trained YOLO / darknet model to find and classify monosaccharides
+#expects to be initiated with a configs dictionary containing the color_range file and the weights and .cfg file for the YOLO model
 class YOLOMonos(MonoID):
     def __init__(self,configs):
         super().__init__(configs)
-        weights=configs.get("monoid_weights",)
-        net=configs.get("monoid_cfg",)
+        weights=configs.get("weights",)
+        net=configs.get("config",)
+        if not os.path.isfile(weights):
+            raise FileNotFoundError()
+        if not os.path.isfile(net):
+            raise FileNotFoundError()
         
         self.net = cv2.dnn.readNet(weights,net)
         
@@ -324,9 +354,10 @@ class YOLOMonos(MonoID):
         except IndexError:
             self.output_layers = [layer_names[i - 1] for i in self.net.getUnconnectedOutLayers()]
         
-
-    def find_monos(self,image=None, threshold = 0.5):
-        #extract location of all glycan from image
+    # method to use the YOLO model to find monosaccharides
+    # expects an image and a confidence threshold below which monosaccharides are thrown out and not returned; defaults to threshold of 0.5
+    #returns a dictionary with monosaccharide bounding boxes, a mask dictionary, and the original image
+    def find_monos(self,image=None, threshold = 0.5, **kw):
         monos = {}
         
         hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
@@ -335,9 +366,9 @@ class YOLOMonos(MonoID):
         
         origin_image = image.copy()
         monos["original"] = origin_image
-        # cv2.imshow('image',self.origin_image)
-        # cv2.waitKey(0)
-        # cv2.destroyAllWindows()
+        
+        #use the YOLO model to get bounding boxes
+
         height, width, channels = image.shape
         ############################################################################################
         #fix issue with
@@ -408,7 +439,12 @@ class YOLOMonos(MonoID):
         monos["contours"] = monos_list
         return monos
     
-    def format_monos(self, image = None, monos_dict = None,conf_threshold = 0.0):
+    #method to format the monosaccharide dictionary and annotate the final image, to be used after find_monos
+    #requires an image, the dictionary returned by find_monos, a confidence threshold for class identification (separate from the find_monos confidence threshold)
+    #requires the parent logger name to be passed
+    #returns the formatted dictionary with annotated image
+    def format_monos(self, image = None, monos_dict = None,conf_threshold = 0.0, logger_name=''):
+        logger = logging.getLogger(logger_name+'.monosaccharideid')
         monos_list = monos_dict["contours"]
         
         for mono in monos_list:

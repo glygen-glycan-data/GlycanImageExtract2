@@ -3,6 +3,10 @@ from .pygly3.Monosaccharide import Anomer
 from .pygly3.Glycan import Glycan
 from .pygly3.Monosaccharide import Linkage
 
+
+
+### class to take a dictionary of monosaccharide connections and return a glycoCT for the glycan
+#any subclasses should have a build method
 class GlycanStructBuilder:
     def __call__(self,**kw):
         return self.build(**kw)
@@ -11,6 +15,7 @@ class GlycanStructBuilder:
     def build(self,**kw):
         raise NotImplementedError
 
+#current subclass
 class CurrentBuilder(GlycanStructBuilder):
     def build(self,mono_dict = None):
         mf = MonoFactory()
@@ -46,6 +51,9 @@ class CurrentBuilder(GlycanStructBuilder):
             glycoCT = None
 
         return glycoCT
+    
+    ## takes monosaccharide connection dictionary, root and root node, failsafe state
+    ## returns these back unless failsafe is activated
     def build_tree(self,mono_dict,root, root_node, fail_safe):
         # mono_dict[mono id] = {contour, point at center, radius, bounding rect, linkages, root or child}
         # variables:

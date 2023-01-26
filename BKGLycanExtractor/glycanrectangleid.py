@@ -1,19 +1,30 @@
+import os
 import cv2
 import numpy as np
 import BKGLycanExtractor.boundingboxes as boundingboxes
 
+
+#### base class, all classes to identify or draw glycan rectangles should be subclasses of GlycanRectID
+#### all should have a get_rects method which returns the glycan rectangles
 class GlycanRectID:
     def __init__(self, configs = None):
         pass
     def get_rects(self,**kw):
         raise NotImplementedError
-    
+
+#The original and current subclass, uses a trained YOLO model / darknet to find glycans in an image
+#expects to be initialised with the weights and .cfg file for the YOLO model
+#get_rects method expects an image and a confidence threshold below which bounding boxes should be thrown out and not returned    
 class OriginalYOLO(GlycanRectID):
     def __init__(self, configs):
 
         super().__init__()
-        weights=configs.get("glycanfinder_weights",)
-        net=configs.get("glycanfinder_cfg",)
+        weights=configs.get("weights",)
+        net=configs.get("config",)
+        if not os.path.isfile(weights):
+            raise FileNotFoundError()
+        if not os.path.isfile(net):
+            raise FileNotFoundError()
         
         self.net = cv2.dnn.readNet(weights,net)
         
@@ -69,18 +80,7 @@ class OriginalYOLO(GlycanRectID):
                 class_id = np.argmax(scores)
                 confidence = scores[class_id]
                 coords = detection[:4]
-                #print(coords)
-                # if np.isnan(coords).any():
-                #       continue
-                # #print(coords)
-                # if any(n < 0 for n in coords):
-                #     continue
-                # if detection[0] > 1 or detection[1] > 1:
-                #     continue
-                # if detection[2] > 1:
-                #     detection[2] = 1
-                # if detection[3] > 1:
-                #     detection[3] = 1
+
                 
                 unpadded_box = boundingboxes.Detected(origin_image, confidence, class_=class_id,white_space=white_space, rel_cen_x = detection[0],rel_cen_y = detection[1], rel_w = detection[2],rel_h = detection[3])
                 padded_box = boundingboxes.Detected(origin_image, confidence, class_ = class_id,white_space=white_space, rel_cen_x = detection[0],rel_cen_y = detection[1], rel_w = detection[2],rel_h = detection[3])
@@ -139,8 +139,10 @@ class OriginalYOLO(GlycanRectID):
         padded_class_ids = [class_ids[i] for i in padded_indexes]
         return unpadded_boxes, padded_boxes
 
-class OriginalYOLOPreFix(OriginalYOLO):
-    def get_rects(self,image=None,threshold=0.5, pad = True):
+
+#preserved to be able to test the impact of whitespace bug fix - do not use otherwise
+class PreFixYOLO(OriginalYOLO):
+    def get_rects(self,image=None,threshold=0.0):
         #extract location of all glycan from image
 
         origin_image = image.copy()
@@ -228,7 +230,9 @@ class OriginalYOLOPreFix(OriginalYOLO):
         padded_confidences = [confidences[i] for i in padded_indexes]
         padded_class_ids = [class_ids[i] for i in padded_indexes]
         return unpadded_boxes, padded_boxes
-    
+
+## class to read a file with training boxes corresponding to image coordinates and return bounding boxes for those coordinates on the image
+## get_rects method expects an image and a file with training coordinates and returns the bounding boxes    
 class TrainingData(GlycanRectID):
     def get_rects(self,image=None,coord_file=None):
         boxes = []

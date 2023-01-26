@@ -1,14 +1,102 @@
 import numpy as np
 import cv2, fitz
-import sys
+import os
 import pdfplumber
+import configparser
+import logging
+
+from BKGLycanExtractor.configs import getfromgdrive
 
 from BKGLycanExtractor.pygly3.GlycanFormatter import GlycoCTFormat, GlycoCTParseError
 
+from BKGLycanExtractor import glycanrectangleid
+from BKGLycanExtractor import monosaccharideid
+from BKGLycanExtractor import glycanorientator
+from BKGLycanExtractor import glycanconnections
+from BKGLycanExtractor import buildstructure
+from BKGLycanExtractor import glycansearch
+
+### the glycan annotator class uses the methods passed to it to extract glycans from an image/pdf and get their composition/topology
+# it has an annotate_file method to go through the complete annotation pipeline, from extracting glycans to searching for accession based on composition + topology
+# it has individual methods for each step in the pipeline which can be called directly, avoiding the annotate_file method
+# this allows its use to run one or multiple steps divorced from the full pipeline
+# logging in the glycan annotator class assumes instantiation in the main program of a per-glycan logger named after the glycanobject; it creates a child logger which logs to the same file
+#
+# the annotator class also has a read_configs method to read the configs.ini file and create the requested class instances for the steps outlined in that file
+
+
 class Annotator():
-    def __init__(self):
+    def __init__(self, **kw):
         pass
     
+    #method which goes through the complete pipeline - extract glycans, extract composition, orient the glycan, connect monosacchairdes, build topology, search for accession, format results
+    #requires a glycanobject - pdf, image file, or already extracted array representing an image
+    #requires an instance for each customisable step in the pipeline in the form of a dictionary; keys are step names and values are instances of the chosen class ready for use
+    #returns a list of results containing bounding boxes for found glycans, original and monosaccharide-annotated images for each found glycan, extracted composition/topology, coordinates of each glycan in the original file, accession if found
+    #returns annotated pdf or png, depending on original glycanobject format
+    def annotate_file(self,glycanobject, methods):
+        #set up chosen methods for each customisable step in the pipeline
+        boxgetter=methods.get("rectfinder")
+        monos=methods.get("mono_id")
+        orienter=methods.get("orienter")
+        connector=methods.get("connector")
+        builder=methods.get("builder")
+        searches=methods.get("search")
+        
+        #name glycan, create logger which should be a child of a logger created in the main program - see logging in mainprogram_example.py
+        glycan_name = os.path.basename(glycanobject)
+        logger_name=glycan_name+'.annotator'
+        logger = logging.getLogger(logger_name)
+        
+        annotated_doc = None
+        annotated_img = None
+        results = None
+        
+        #get images from the glycanobject - if a pdf, this gets a list of figures; if a png or bare image array this returns the single image, in a list
+        glycan_images = self.extract_images(glycanobject)
+        logger.info(f"Found {len(glycan_images)} Figures.")
+        if glycan_images is not None:
+            results = []
+            for image in glycan_images:
+                #pdf figures are stored with additional information (figure and page number) required for the results list; interpret_image gets the image from this figure
+                orig_image = self.interpret_image(glycanobject, image)
+                if orig_image is None:
+                    continue
+                count = 0
+                #find glycans in the image
+                unpadded_glycan_boxes,padded_glycan_boxes = self.find_glycans(orig_image, boxgetter)
+                
+                ###### choose one set of boxes - this is without border padding - depends on training and if YOLO tends to return too-cropped glycans #########
+                glycan_boxes = unpadded_glycan_boxes
+                for box in glycan_boxes:
+                    #get composition by identifying monosaccharides
+                    monos_dict, count = self.find_monos(glycanobject, orig_image, box, monos, count)
+                    #connect monosaccharides
+                    connect_dict = self.connect_monos(orig_image, box, monos_dict, connector, orienter)
+                    #use topology to build glycoCT
+                    glycoCT = self.build_glycan(connect_dict,builder)
+                    #print(glycoCT)
+                    
+                    #search glycoCT to get accession - goes through methods sequentially and breaks the loop when it finds an accession
+                    # so the preferred method should be first, etc
+                    for searchmethod in searches:
+                        glycoCT, accession = self.search(glycanobject, monos_dict, glycoCT, searchmethod)
+                        if accession:
+                            break
+                            #end search    
+                    #create formatted result for the results list
+                    result = self.format_result(glycanobject, image, box, monos_dict, glycoCT, accession, monos, count)
+                    results.append(result)
+            #box glycans on the annotated image, create notes with text annotation on the annotated pdf
+            annotated_doc, annotated_img = self.create_annotation(glycanobject,glycan_images,results)
+                
+        ### end glycan finding - remainder is saving and file handling which should be in your main program - see mainprogram_example.py
+        return results, annotated_doc, annotated_img
+
+    #method which takes extracted topology and uses PyGly to build a GlycoCT description
+    #requires the dictionary resulting from connect_monos (monosaccharides, indicating connections to other monosaccharides and root/not)
+    #requires an instance of a build class - the only current class is CurrentBuilder
+    #returns GlycoCT if it can be built
     def build_glycan(self, connectdict, buildmethod):
         if connectdict != {}:
             glycoCT = buildmethod(mono_dict = connectdict)
@@ -16,11 +104,21 @@ class Annotator():
             glycoCT = None
         return glycoCT
     
-    def connect_monos(self, glycanimage, glycanbox, monodict, connectmethod):
+    #method which takes an image, glycan bounding box, and extracted composition and connects monosaccharides to extract topology
+    #requires an image with glycan(s) and a single glycan bounding box returned by find_glycans
+    #requires the dictionary returned by find_monos (specifically the monosaccharides and IDs)
+    #requires an instance of a connect class to use - should be ConnectYOLO if using the YOLO monosaccharide finder, or OriginalConnector if using the heuristic monosaccharide finder
+    #requires an instance of an orientation class to pass to the connect method - used to determine where the root should be
+    #returns a dictionary of monosaccharides, their connections to each other, and status as the root monosaccharide
+    def connect_monos(self, glycanimage, glycanbox, monodict, connectmethod, orientmethod):
         aux_cropped = glycanimage[glycanbox.y:glycanbox.y2,glycanbox.x:glycanbox.x2].copy()
-        connect_dict = connectmethod.connect(image = aux_cropped, monos = monodict)
+        connect_dict = connectmethod.connect(image = aux_cropped, monos = monodict, orientation_method = orientmethod)
         return connect_dict
     
+    #method which takes the original glycanobject, list of images in it, and formatted results list
+    #annotates pdf with information about each glycan at the appropriate location, as well as a box around the image
+    #annotates png with a box around each glycan
+    #returns either an annotated pdf or an annotated png
     def create_annotation(self, glycanobject, glycanimages, results):
         if self.get_object_type(glycanobject) == 'pdf':
             pdf = fitz.open(glycanobject)
@@ -73,6 +171,8 @@ class Annotator():
                     cv2.rectangle(glycanimage,p1,p2,(0,255,0),3)
             return None, glycanimage
     
+    #method which gets images from the glycanobject
+    #returns a list of images which is trivial for png or image array types; non-trivial for pdf objects
     def extract_images(self,glycanobject):
         extn = self.get_object_type(glycanobject)
         if extn is None:
@@ -85,6 +185,9 @@ class Annotator():
             img_array = self.extract_img_from_pdf(glycanobject)
             return img_array
     
+    #method which extracts figures from pdfs
+    #takes the path to the pdf file so it can be opened
+    #returns a list of figures with page, id number, and location
     def extract_img_from_pdf(self,pdf_path):
         pdf_file = pdfplumber.open(pdf_path)
         array=[]
@@ -96,7 +199,7 @@ class Annotator():
             for j, image in enumerate(page.images):
              #   print(image)
                 box = (image['x0'], page_h - image['y1'], image['x1'], page_h - image['y0'])
-                image_id=f"p{image['page_number']}-{image['name']}-{image['x0']}-{image['y0']}"
+                #image_id=f"p{image['page_number']}-{image['name']}-{image['x0']}-{image['y0']}"
                 image_id =f"iid_{count}"
                 image_xref=image['stream'].objid
                 image_page = image['page_number']
@@ -104,43 +207,60 @@ class Annotator():
                 count+=1
         return array
     
-    def find_glycans(self,glycanobject,glycanimage,rectidmethod):
+    #method which takes an image and extracts location of glycans in the image
+    #requires an image and an instance of a glycanrectangleid class to be used for glycan location finding
+    #returns two lists of glycan bounding boxes - one as returned from the glycan finder and one with padded borders
+    #this is in case model training led to weights which tend to crop glycan arms/monosaccharides - padding the borders can prevent information loss
+    #if the model is well-trained the padding shouldn't be necessary - one list should be chosen in the next step
+    def find_glycans(self,glycanimage,rectidmethod):
         unpadded_boxes,padded_boxes = rectidmethod.get_rects(image = glycanimage, threshold = 0.5)
         return unpadded_boxes,padded_boxes
     
-    def find_monos(self, glycanimage, glycanbox, monoidmethod, count):
+    #method which takes the glycan image, bounding box for a single glycan, and a counter for the number of glycans processed and extracts composition
+    #requires the glycanobject for getting the appropriate logger
+    #requires an image and a bounding box for a single glycan found in the image
+    #requires an instance of a monosaccharideid class to find composition
+    #requires a counter which represents the number of glycans processed for this image
+    #returns a dictionary of monosaccharides with ids, composition counts, and original and annotated versions of the image cropped to the borders of the bounding box
+    #returns a counter representing the number of glycans processed (count+1); this is used later for saving cropped images
+    def find_monos(self, glycanobject, glycanimage, glycanbox, monoidmethod, count):
+        glycan_name = os.path.basename(glycanobject)
+        logger_name=glycan_name+'.annotator'
         aux_cropped = glycanimage[glycanbox.y:glycanbox.y2,glycanbox.x:glycanbox.x2].copy()
         count += 1
-        mono_dict = monoidmethod.find_monos(image = aux_cropped)
-        mono_id_dict = monoidmethod.format_monos(image = aux_cropped, monos_dict = mono_dict)
+        mono_dict = monoidmethod.find_monos(image = aux_cropped, logger_name=logger_name)
+        mono_id_dict = monoidmethod.format_monos(image = aux_cropped, monos_dict = mono_dict, logger_name=logger_name)
         return mono_id_dict, count
     
-    def format_result(self, glycanobject, glycanimage, glycanbox, monosdict, glycoCT, accession, monoidmethod, count, logger = None):
+    #method which takes information from multiple pipeline steps to format a complete result for an individual glycan
+    #requires the glycanobject for getting the appropriate logger and for figure/page number extraction if glycanobject is a pdf
+    #requires an image/figure and a bounding box for a single glycan found in the image
+    #requires the dictionary returned by find_monos (monosaccharides with ids and composition count; original and annotated cropped images)
+    #requires the glycoCT - if it couldn't be built, None is an acceptable input
+    #requires the accession - if not found, None is appropriate
+    #requires an instance of the method for monosaccharide id - this is to interpret the composition count into a text string
+    #requires a counter for the number of glycans processed for this image
+    #returns a single formated result dictionary for this glycan
+    def format_result(self, glycanobject, glycanfigure, glycanbox, monosdict, glycoCT, accession, monoidmethod, count):
+        glycan_name = os.path.basename(glycanobject)
+        logger_name=glycan_name+'.annotator'
+        logger = logging.getLogger(logger_name)
         
-        if not isinstance(glycanimage,np.ndarray):
-            #run the pdf handlign here - in this case the image has [0] for page and [2] for image data etc
-            pdf = fitz.open(glycanobject)
-            p = glycanimage[0]-1
-            xref = glycanimage[2]
-            fig = glycanimage[1]
-            #rectangle = (x0 - 1, y0 - 1, x1 + 1, y1 + 1)
-            #print(f"@@,xref:{xref},img_name:{img_name}, coordinate:{img[3]}")
-            #logger.info(f"\n@@,xref:{xref},img_name:{img_name}, coordinate:{img[3]}")
+        if not isinstance(glycanfigure,np.ndarray):
+            #run the pdf handling here - in this case the figure has [0] for page and [2] for image data etc
+            p = glycanfigure[0]-1
+            xref = glycanfigure[2]
+            fig = glycanfigure[1]
 
-            pixel = fitz.Pixmap(pdf, xref)
-        
-            imagedata = pixel.tobytes("png")
-            nparray = np.frombuffer(imagedata, np.uint8)
-            image = cv2.imdecode(nparray,cv2.IMREAD_COLOR)
         else:
             p = 1
             xref = 1
             fig = 1
-            image = glycanimage
         
         count_dictionary = monosdict.get("count_dict")
         glycanbox.to_pdf_coords()
         
+        #format the result as a dictionary
         result = dict(name=monoidmethod.compstr(count_dictionary), 
                       accession = accession,
                       origimage=monosdict.get("original"),
@@ -151,16 +271,14 @@ class Annotator():
                       annotatedimage = monosdict.get("annotated"), 
                       pdfcoordinates = {"x0" : glycanbox.x0, "y0" : glycanbox.y0, "x1" : glycanbox.x1, "y1": glycanbox.y1},
                       imagecoordinates = {"x": glycanbox.x, "y" : glycanbox.y, "x2" : glycanbox.x2, "y2": glycanbox.y2})
+        #add glycoCT if found
         if glycoCT:
             result['glycoct'] = glycoCT
 
         #get url to link to accession, if found
         uri_base="https://gnome.glyomics.org/StructureBrowser.html?"
         if not accession:
-            if logger:
-                logger.info("\nfound: None")
-            else:
-                print("\nfound: None")
+            logger.info("found: None")
             glycan_uri=uri_base+f"Glc={count_dictionary['Glc']}&GlcNAc={count_dictionary['GlcNAc']}&GalNAc={count_dictionary['GalNAc']}&NeuAc={count_dictionary['NeuAc']}&Man={count_dictionary['Man']}&Gal={count_dictionary['Gal']}&Fuc={count_dictionary['Fuc']}"
             result['linktype'] = 'composition'
             if glycoCT:
@@ -169,10 +287,7 @@ class Annotator():
                 result['linkexpl'] = 'composition only, topology not extracted'
             result['gnomeurl'] = glycan_uri
         else:
-            if logger:
-                logger.info(f"\nfound: {accession}")
-            else:
-                print(f"\nfound: {accession}")
+            logger.info(f"found: {accession}")
             if accession.startswith('G'):
                 glycan_uri =uri_base+"focus="+accession
             else:
@@ -182,10 +297,11 @@ class Annotator():
             result['gnomeurl'] = glycan_uri
         return result
 
-
+    #method to get the type of the object being annotated
+    #requires an object, returns its type (png file, pdf, or bare image)
     def get_object_type(self,glycanobject):
         if isinstance(glycanobject,str):
-            if glycanobject.endswith(".png") or glycanobject.endswith(".jpg"):
+            if glycanobject.endswith(".png") or glycanobject.endswith(".jpg") or glycanobject.endswith(".jpeg"):
                 return "png"
             if glycanobject.endswith(".pdf"):
                 return "pdf"
@@ -193,7 +309,10 @@ class Annotator():
             return "image"
         else:
             return None
-        
+    
+    #method to get an image from either an image array - trivial - or a pdf figure representation - nontrivial
+    #requires the object and the image representation
+    #returns the image array
     def interpret_image(self, glycanobject, glycanimage):
         if not isinstance(glycanimage,np.ndarray):
             #run the pdf handlign here - in this case the image has [0] for page and [2] for image data etc
@@ -222,7 +341,61 @@ class Annotator():
             image = glycanimage
         return image
     
-    def search(self, monosdict, glycoCT, searchmethod, logger = None):
+    #method to read the configs.ini file
+    #requires the directory and the path to the file
+    #returns a dictionary where keys are the names of the pipeline steps and values are instances of the requested class
+    ###use to automatically read in the configurations for the complete pipeline
+    ###no changes needed to this code when changing the annotator to use a different pre-set class or configuration
+    ###no changes if you add a new configuration option for an existing class
+    ###if adding a new class, be sure to give it a 'class' key-value pair in the configuration file
+    def read_configs(self, config_dir, config_file):      
+        methods = {}
+        config = configparser.ConfigParser()
+        config.read(config_file)
+        annotator_methods=config['Annotator']
+        
+        method_descriptions = {
+            "rectfinder": {"prefix": "glycanrectangleid.",
+                           "pass_configs": True,
+                           "multiple": False},
+            "mono_id"   : {"prefix": "monosaccharideid.",
+                           "pass_configs": True,
+                           "multiple": False},
+            "orienter"  : {"prefix": "glycanorientator.",
+                           "pass_configs": True,
+                           "multiple": False},
+            "connector" : {"prefix": "glycanconnections.",
+                           "pass_configs": False,
+                           "multiple": False},
+            "builder"   : {"prefix": "buildstructure.",
+                           "pass_configs": False,
+                           "multiple": False},
+            "search"    : {"prefix": "glycansearch.",
+                           "pass_configs": False,
+                           "multiple": True}
+            }
+        for method, desc in method_descriptions.items():
+            if desc.get("multiple"):
+                method_names=annotator_methods.get(method).split(",")
+                methods[method] = []
+                for method_name in method_names:
+                    methods[method].append(self.setup_method(config, desc, config_dir, method_name))
+            else:
+                method_name = annotator_methods.get(method)
+                methods[method] = self.setup_method(config, desc, config_dir, method_name)
+        return methods
+    
+    #method to search a glycoCT using a chosen search method, attempting to get an accession
+    #requires a glycanobject to get the logger
+    #requires the dictionary returned by find_monos - this contains a dictionary of monosaccharide counts
+    #requires a glycoCT - if this couldn't be build, it takes None
+    #requires an instance of the chosen search method class
+    #returns the glycoCT again, unless parsing fails or composition counts don't match up - then returns None
+    #returns the accession, if found
+    def search(self,glycanobject, monosdict, glycoCT, searchmethod):
+        glycan_name = os.path.basename(glycanobject)
+        logger_name=glycan_name+'.annotator'
+        logger = logging.getLogger(logger_name)
         gctparser = GlycoCTFormat()
         
         count_dictionary = monosdict.get("count_dict")
@@ -240,13 +413,46 @@ class Annotator():
                 comp = g.iupac_composition()
                 comptotal = sum(map(comp.get,("Glc","GlcNAc","Gal","GalNAc","NeuAc","Man","Fuc")))
                 if comptotal == total_count:
-                    if logger:
-                        logger.info(f"\nsubmitting:{glycoCT}")
-                    else:
-                        print(f"\nsubmitting:{glycoCT}")
+                    logger.info(f"\n{type(searchmethod).__name__} submitting:{glycoCT}")
                     accession = searchmethod(glycoCT)
                 else:
                     glycoCT = None
             else:
                 glycoCT = None
         return glycoCT, accession
+    
+    #method to instantiate the requested class for a pipeline step (glycan finding, monosaccharide id, etc) during reading of the configs.ini file
+    #takes the config parser, a dictionary created from the configs.ini file containing class names and whether the class requires its own configs
+    #takes the path to the directory with the configs file
+    #takes the name of the method as defined in the [Annotator] section of the configs file
+    #returns an instance of the class as defined in the configs.ini file, initialised with the specified configuration (if any)
+    def setup_method(self, configparserobject, description_dictionary, directory, method_name):
+        #these are the files available for download from the Google Drive
+        #if you have named these configs but haven't downloaded them already they will be downloaded and placed in your configs directory
+        gdrive_dict = {
+            "coreyolo.cfg": "1M2yMBkIB_VctyH01tyDe1koCHT0U8cwV",
+            "Glycan_300img_5000iterations.weights": "1xEeMF-aJnVDwbrlpTHkd-_kI0_P1XmVi",
+            "largerboxes_plusindividualglycans.weights": "16-AIvwNd-ZERcyXOf5G50qRt1ZPlku5H",
+            "monos2.cfg": "15_XxS7scXuvS_zl1QXd7OosntkyuMQuP",
+            "orientation_redo.weights": "1KipiLdlUmGSDsr0WRUdM0ocsQPEmNQXo",
+            "orientation.cfg": "1AYren1VnmB67QLDxvDNbqduU8oAnv72x",
+            "yolov3_monos_new_v2.weights": "1h-QiO2FP7fU7IbvZjoF7fPf55N0DkTPp"
+        }
+        
+        method_values = configparserobject[method_name]
+        method_class = method_values.pop("class")
+        if description_dictionary.get("pass_configs"):
+            method_configs = {}
+            for key, value in method_values.items():
+                filename = os.path.join(directory,value)
+                if os.path.isfile(filename):
+                    method_configs[key] = filename
+                else:
+                    gdrive_id = gdrive_dict.get(value)
+                    if gdrive_id is None:
+                        raise FileNotFoundError(value+"was not found in configs directory or Google Drive")
+                    getfromgdrive.download_file_from_google_drive(gdrive_id, filename)
+                    method_configs[key] = filename
+            return eval(description_dictionary.get("prefix")+method_class+"(method_configs)")
+        else:
+            return eval(description_dictionary.get("prefix")+method_class+"()")

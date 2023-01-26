@@ -3,19 +3,27 @@ import json, time
 from urllib.request import urlopen
 from urllib.parse import urlencode
 
+
+## class to submit a glycan description and return an accession
+## all subclasses need a search method
 class GlycanSearch:
     def __init__(self):
         pass
     def __call__(self,glycan):
         return self.search(glycan)
+    ## method to request and read from url
     def request(self, target, **kwargs):
         return json.loads(urlopen(self.baseurl+target,urlencode(kwargs).encode('utf8')).read())
+    def search(self, glycan):
+        raise NotImplementedError
 
+#class to search glycoCT to get accession
 class SearchGlycoCT(GlycanSearch):
     def __init__(self):
         self.delay = 1
         self.maxretry = 10
         self.baseurl = "https://glylookup.glyomics.org/"
+    #requires a glycoCT, returns an accession or else returns None
     def search(self,glycan):
         params = []
         #print(params)
@@ -57,12 +65,15 @@ class SearchGlycoCT(GlycanSearch):
             return retval[0]["accession"]
         else:
             return None
-    
+
+#classs to send glycoCT description to GNOme
+#should be subsequent to more preferred search methods    
 class SendToGNOme(GlycanSearch):
     def __init__(self):
         self.baseurl = "https://subsumption.glyomics.org/"
         self.delay = 1
         self.maxretry = 10
+    #requires glycoCT description, returns accession if found
     def search(self,glycan):
         #print(glycan)
         seqparams = dict()

@@ -2,27 +2,21 @@ import numpy as np
 import cv2
 import BKGLycanExtractor.boundingboxes as boundingboxes
 
+
+#### Class for connecting monosaccharides extracted from an image. all connectors should be subclasses of GlycanConnector
+#### all subclasses need method connect which connects the monosaccharides and returns a connection dictionary
 class GlycanConnector:
-    def __init__(self, configs):
-        orientation_weight = configs.get("orientation_weights",None)
-        orientation_cfg = configs.get("orientation_cfg",None)
-        if orientation_weight is not None and orientation_cfg is not None:
-            self.net = cv2.dnn.readNet(orientation_weight,orientation_cfg)
-            
-            layer_names = self.net.getLayerNames()
-            #print(layer_names)
-            #compatibility with new opencv versions
-            #print(self.net.getUnconnectedOutLayers())
-            try:
-                self.output_layers = [layer_names[i[0] - 1] for i in self.net.getUnconnectedOutLayers()]
-                #print(self.output_layers)
-            except IndexError:
-                self.output_layers = [layer_names[i - 1] for i in self.net.getUnconnectedOutLayers()]
-        else:
-            self.net = None
+    def __init__(self):
+        pass
     def connect(self,**kw):
         raise NotImplementedError
+        
+#Subclass which uses masking to identify black lines in the figure and uses them to connect monosaccharides
+# all subclasses of this class need method fill_mono_dict to start the connection dictionary, and method link_monos to connect monosaccharides
 class HeuristicConnector(GlycanConnector):
+    
+    #expects a monosaccharide connection dictionary and 2 monosaccharides
+    #connects the monosaccharides to each other in the connection dictionary and returns it
     def append_links(self, mono_dict, mono1, mono2):
         if len(mono_dict[mono1]) == 4:
             mono_dict[mono1].append([mono2])
@@ -35,81 +29,12 @@ class HeuristicConnector(GlycanConnector):
             if mono1 not in mono_dict[mono2][4]:
                 mono_dict[mono2][4].append(mono1)
         return mono_dict
-    def connect(self,image = None,monos = None):
-        orientation = None
-        
-        # ------------- use orientation for correct root identification -----------------
-        # if self.net is not None:
-        #     origin_image = image.copy()
-        #     height, width, channels = image.shape
-        #     ############################################################################################
-        #     #fix issue with
-        #     ############################################################################################
-        #     white_space = 200
-        #     bigwhite = np.zeros([image.shape[0] +white_space, image.shape[1] +white_space, 3], dtype=np.uint8)
-        #     bigwhite.fill(255)
-        #     half_white_space = int(white_space/2)
-        #     bigwhite[half_white_space:(half_white_space + image.shape[0]), half_white_space:(half_white_space+image.shape[1])] = image
-        #     image = bigwhite.copy()
-        #     #detected_glycan = image.copy()
-        #     # cv2.imshow("bigwhite", bigwhite)
-        #     # cv2.waitKey(0)
-        #     # cv2.destroyAllWindows()
-
-        #     ############################################################################################
-        #     blob = cv2.dnn.blobFromImage(image, 0.00392, (416, 416), (0, 0, 0), True, crop=False)
-        #     self.net.setInput(blob)
-        #     outs = self.net.forward(self.output_layers)
-        #     #print(outs)
-        #     # loop through results and print them on images
-        #     oriented_glycan_list = []
-        #     confidences = []
-        #     for out in outs:
-        #         #print(out)
-        #         for detection in out:
-        #             #print(detection)
-        #             scores = detection[5:]
-        #             #print(scores)
-        #             class_id = np.argmax(scores)
-        #             confidence = float(scores[class_id])
-                    
-        #             oriented_box = boundingboxes.Detected(origin_image, confidence, class_=class_id,white_space=white_space, rel_cen_x = detection[0],rel_cen_y = detection[1], rel_w = detection[2],rel_h = detection[3])
-
-        #             oriented_box.rel_to_abs()
-                    
-        #             oriented_box.fix_image()
-                    
-        #             oriented_box.center_to_corner()
-                    
-        #             oriented_box.fix_borders()
-                    
-        #             oriented_box.to_four_corners()
-
-        # #BOXES FORMAT IS A PROBLEM
-        #             oriented_glycan_list.append(oriented_box)
-        #             confidences.append(confidence)
-        #     if oriented_glycan_list == []:
-        #         pass
-        #     else:
-        #         #cv.dnn.NMSBoxesRotated(bboxes, scores, score_threshold, nms_threshold[, eta[, top_k]])
-        #         #print(boxes)
-        #         boxesfornms = [bbox.to_list() for bbox in oriented_glycan_list]
-        #         #print(unpaddedboxesfornms)
-                
-        #         indexes = cv2.dnn.NMSBoxes(boxesfornms, confidences, 0.0, 0.4)
-        #         #print(unpadded_indexes)
-                
-        #         indexes = [index[0] for index in indexes]
     
-        #         #print(f"\nGlycan detected: {len(boxes)}")
-        #         #cv2.imshow("Image", detected_glycan)
-        #         #cv2.waitKey(0)
-        #         oriented_glycans = [oriented_glycan_list[i] for i in indexes]
-        #         confidences = [confidences[i] for i in indexes]
-        #         best_index = np.argmax(confidences)
-        #         oriented_glycan = oriented_glycans[best_index]
-        #         orientation = oriented_glycan.class_
-        #         print(orientation)
+    #method to connect a dictionary of monosaccharides returned from a monosaccharideid class
+    #requires an image, a monosaccharide dictionary, and an orientation method to be used for finding the root monosaccharide
+    # returns a dictionary of connected monosaccharides
+    def connect(self, image, monos, orientation_method):
+
         mask_dict = monos.get("mask_dict",{})
         contours = monos.get("contours",{})
         origin = image
@@ -118,26 +43,11 @@ class HeuristicConnector(GlycanConnector):
 
         mono_dict, black_masks = self.fill_mono_dict(contours, black_masks)
 
-        #ext_origin = origin.copy()
-
-
-        #diff = cv2.bitwise_and(black_masks, empty_mask)
-        # diff=cv2.cvtColor(diff, cv2.COLOR_GRAY2BGR)
-        # DEMO!!!
-        # cv2.imshow('a', cv2.resize(origin, None, fx=1, fy=1))
-        #cv2.imshow('b', cv2.resize(all_masks_no_black, None, fx=1, fy=1))
-        #cv2.imshow('c', cv2.resize(black_masks, None, fx=1, fy=1))
-        # cv2.imshow('d', cv2.resize(empty_mask, None, fx=1, fy=1))
-
-        # cv2.imshow('e', cv2.resize(diff, None, fx=1, fy=1))
-        # cv2.imshow('visual', cv2.resize(visual, None, fx=1, fy=1))
-        #cv2.waitKey(0)
-
         average_mono_distance = self.get_average_mono_distance(mono_dict)
 
         mono_dict, v_count, h_count = self.link_monos(black_masks, mono_dict, average_mono_distance)
 
-        mono_dict = self.find_root(mono_dict, v_count, h_count, orientation)
+        mono_dict = self.find_root(mono_dict, v_count, h_count, origin, orientation_method)
         
         #print(mono_dict)
         # DEMO!!!
@@ -146,40 +56,40 @@ class HeuristicConnector(GlycanConnector):
         return mono_dict
     def fill_mono_dict(self,monos_list,black_masks):
         raise NotImplementedError
-    def find_root(self, mono_dict, v_count, h_count, orientation = None):
+        
+    #method to determine glycan orientation and use it to find the root monosaccharide
+    #requires a partially filled connection dictionary, vertical and horizontal line counts from link_monos
+    #requires a glycan image and an instance of the requested orientation class
+    #returns a complete connection dictionary with root monosaccharide chosen
+    def find_root(self, mono_dict, v_count, h_count, image, orientation_method):
         ###### find root ##########
         from operator import itemgetter
         aux_list = []
         # mono id = contour, point at center, radius, bounding rect, linkages, root or child
         root = None
+        
+        #use orientation method to get glycan orientation
+        orientation = orientation_method.get_orientation(glycanimage=image, horizontal_count=h_count, vertical_count=v_count)
+        #left-right
         if orientation == 0:
             aux_list = sorted([(mono_id, mono_dict[mono_id][1][0]) for mono_id in mono_dict.keys()], key=itemgetter(1),
                               reverse=False)
-            for mono in aux_list:
-                if mono[0].find("Fuc") == -1:
-                    root = mono[0]
-                    break
-        elif orientation == 1 or (orientation is None and h_count > v_count):
+        #right-left
+        elif orientation == 1:
             aux_list = sorted([(mono_id, mono_dict[mono_id][1][0]) for mono_id in mono_dict.keys()], key=itemgetter(1),
                               reverse=True)
-            for mono in aux_list:
-                if mono[0].find("Fuc") == -1:
-                    root = mono[0]
-                    break
+        #top-bottom
         elif orientation == 2:
             aux_list = sorted([(mono_id, mono_dict[mono_id][1][1]) for mono_id in mono_dict.keys()], key=itemgetter(1),
-                              reverse=True)
-            for mono in aux_list:
-                if mono[0].find("Fuc") == -1:
-                    root = mono[0]
-                    break
-        elif orientation == 3 or (orientation is None and v_count > h_count):
+                              reverse=False)
+        #bottom-top
+        elif orientation == 3:
             aux_list = sorted([(mono_id, mono_dict[mono_id][1][1]) for mono_id in mono_dict.keys()], key=itemgetter(1),
                               reverse=True)
-            for mono in aux_list:
-                if mono[0].find("Fuc") == -1:
-                    root = mono[0]
-                    break 
+        for mono in aux_list:
+            if mono[0].find("Fuc") == -1:
+                root = mono[0]
+                break 
         #print(aux_list)
         #print(f"root = {root}")
 
@@ -191,6 +101,10 @@ class HeuristicConnector(GlycanConnector):
                 mono_dict[mono_id].append("child")
             #print(mono_id, mono_dict[mono_id][1:])   
         return mono_dict
+    
+    #method to get the average distance betwen monosaccharides
+    #requires a partial connection dictionary from fill_mono_dict
+    #returns the average distance (number)
     def get_average_mono_distance(self,mono_dict):
         # find median distance between mono default = 100
         average_mono_distance = 100
@@ -208,34 +122,42 @@ class HeuristicConnector(GlycanConnector):
         if len(list_center_point)!=0:
             average_mono_distance = average_mono_distance / len(list_center_point)
         return average_mono_distance
-    def get_contour_limits(self, contour):
-        int_v_count = 0
-        int_h_count = 0
-        #print(contour)
-        contour_x, contour_y, contour_w, contour_h = cv2.boundingRect(contour)  
-        if contour_w == 1:
-            int_v_count += 1
-        if contour_h == 1:
-            int_h_count += 1
-        if len(contour) == 2:
-            contour_point_1 = contour[0][0]
-            contour_point_2 = contour[1][0]
-        else:
-            for point in contour:
-                [[point_x,point_y]] = point
-                if point_x == contour_x:
-                    contour_point_1 = [point_x,point_y]
-                    if point_y in range(contour_y - 2, contour_y + 3):
-                        contour_point_2 = [point_x+contour_w,point_y+contour_h]
-                        break
-                    else:
-                        for point2 in contour:
-                            [[point2_x,point2_y]] = point2
-                            if point2_y == contour_y:
-                                contour_point_2 = [point2_x, point2_y]
-                                break
-        line = ((contour_point_1[0], contour_point_1[1]), (contour_point_2[0], contour_point_2[1])) 
-        return line, int_v_count, int_h_count
+    
+    #method to get the points corresponding to limits of each contour, also count vertical and horizontal lines
+    #not in use - meant for the new connector which was worse at its job
+    #takes a contour and returns a line corresponding to it, and interim vertical and horizontal line counts
+    # def get_contour_limits(self, contour):
+    #     int_v_count = 0
+    #     int_h_count = 0
+    #     #print(contour)
+    #     contour_x, contour_y, contour_w, contour_h = cv2.boundingRect(contour)  
+    #     if contour_w == 1:
+    #         int_v_count += 1
+    #     if contour_h == 1:
+    #         int_h_count += 1
+    #     if len(contour) == 2:
+    #         contour_point_1 = contour[0][0]
+    #         contour_point_2 = contour[1][0]
+    #     else:
+    #         for point in contour:
+    #             [[point_x,point_y]] = point
+    #             if point_x == contour_x:
+    #                 contour_point_1 = [point_x,point_y]
+    #                 if point_y in range(contour_y - 2, contour_y + 3):
+    #                     contour_point_2 = [point_x+contour_w,point_y+contour_h]
+    #                     break
+    #                 else:
+    #                     for point2 in contour:
+    #                         [[point2_x,point2_y]] = point2
+    #                         if point2_y == contour_y:
+    #                             contour_point_2 = [point2_x, point2_y]
+    #                             break
+    #     line = ((contour_point_1[0], contour_point_1[1]), (contour_point_2[0], contour_point_2[1])) 
+    #     return line, int_v_count, int_h_count
+    
+    #method to get color-based masks
+    #requires the mask dictionary contained in the monosaccharide dictionary returned from the monosaccharideid class
+    #returns all masks and black masks, separately
     def get_masks(self,mask_dict):
         all_masks = list(mask_dict.keys())
         #print(all_masks)
@@ -262,8 +184,12 @@ class HeuristicConnector(GlycanConnector):
         all_masks = cv2.cvtColor(all_masks, cv2.COLOR_GRAY2BGR)
         all_masks_no_black = cv2.cvtColor(all_masks_no_black, cv2.COLOR_GRAY2BGR)
         return all_masks, black_masks
-    def get_mono_rect(self, mono, imheight, imwidth):
-        raise NotImplementedError
+        
+        
+    #method to find locations of heuristically identified monosaccharides
+    # takes a list of monosaccharides extracted from the monosaccharideid class monosaccharide dictionary
+    # takes the black masks from get_masks
+    #returns a dictionary of monosaccharide keys; contour, location, and radius values; also returns a black-masked image with monosaccharide areas removed
     def heuristic_mono_finder(self, monos_list, black_masks):
         mono_dict = {}
         count = 0
@@ -306,6 +232,9 @@ class HeuristicConnector(GlycanConnector):
             #cv2.circle(empty_mask, (centerX, centerY), int(cir_radius * 0.13) + cir_radius, (255, 0, 255), 6)
         return mono_dict, black_masks        
 
+    #method to detect if two lines intersect
+    #takes the endpoints of the lines AB and CD
+    #returns true for intersection or false for none
     def interaction_line_line(self, A, B, C, D):
         Ax, Ay, Bx, By, Cx, Cy, Dx, Dy = A[0], A[1], B[0], B[1], C[0], C[1], D[0], D[1]
         # function determine whereas AB intersect with CD
@@ -319,7 +248,8 @@ class HeuristicConnector(GlycanConnector):
                 # print(intersec_X, intersec_Y)
                 return True
         return False
-    
+    #method to detect if a line and a rectangle intersect
+    #returns true for intersection and false for none
     def interaction_line_rect(self, line, rect):
         # line two points
         A, B = line[0], line[1]
@@ -337,6 +267,7 @@ class HeuristicConnector(GlycanConnector):
             return True
         return False
     
+    #method to calculate the length of a line
     def length_line(self,A, B):
         Ax, Ay, Bx, By = A[0], A[1], B[0], B[1]
         l = ((Ax - Bx) ** 2 + (By - Ay) ** 2) ** 0.5
@@ -344,6 +275,8 @@ class HeuristicConnector(GlycanConnector):
     
     def link_monos(self, binary_img, mono_dict, avg_mono_distance):
         raise NotImplementedError
+        
+    ### unused - intended to be a new linkage method but was worse than the original
     # def new_linker(self, binary_img, mono_dict, avg_mono_distance):
     #     diff = binary_img
     #     imheight, imwidth, *channels = diff.shape
@@ -481,11 +414,23 @@ class HeuristicConnector(GlycanConnector):
     #         if len(mono) == 4:
     #             mono.append([])
     #     return mono_dict, v_count, h_count 
-    
+
+
+### Subclass of HeuristicConnect; for connecting heuristically-identified monosaccharides    
 class OriginalConnector(HeuristicConnector):
+    
+    #method to start creating the connection dictionary; calls the heuristic_mono_finder method from the superclass HeuristicConnector
+    #takes a list of monosaccharides from the dictionary returned by the monosaccharideid class
+    #takes the black masks from get_masks
+    #returns the new connection dictionary and new black masks
     def fill_mono_dict(self, monos_list, black_masks):
         mono_dict, black_masks = self.heuristic_mono_finder(monos_list, black_masks)
         return mono_dict, black_masks
+    
+    #method to connect monosaccharides
+    #takes a binary image, started connection dictionary from fill_mono_dict, and average monosaccharide distance
+    #returns dictionary with connections
+    #returns vertical and horizontal line count
     def link_monos(self, binary_img, mono_dict, avg_mono_distance):
         diff = binary_img
         imheight, imwidth, *channels = diff.shape
@@ -586,8 +531,14 @@ class OriginalConnector(HeuristicConnector):
         return mono_dict, v_count, h_count 
         return mono_dict, v_count, h_count
 
+
+# class to connect monosaccharides found with YOLO models
 class ConnectYOLO(HeuristicConnector):
 
+    #method to start the connection dictionary
+    #takes the monosaccharide list from monosaccharideid class returns
+    #takes black_masks from get_masks
+    #returns the start of the connection dictionary
     def fill_mono_dict(self, monos_list, black_masks):
         class_dict = {
             str(0): "GlcNAc",
@@ -643,6 +594,9 @@ class ConnectYOLO(HeuristicConnector):
             #cv2.circle(empty_mask, (centerX, centerY), int(cir_radius * 0.13) + cir_radius, (255, 0, 255), 6)
         return mono_dict, black_masks
 
+    #method to define the rectangle of a monosacharide
+    #requires the monosaccharide from the connection dictionary, image height and image width
+    #returns a rectangle which can be superimposed on the image
     def get_mono_rect(self, mono, imheight, imwidth):
         box = mono[0]
         radius = mono[2]
@@ -666,6 +620,12 @@ class ConnectYOLO(HeuristicConnector):
             w = imwidth-x
         mono_rect = (x,y,w,h)
         return mono_rect
+    
+    #method to link monosaccharides that should be connected
+    #takes a binary image with monosaccharides removed
+    #takes the started connection dictionary
+    #takes the average monosaccharide distance
+    #returns the linked connection dictionary, and vertical and horizontal line count
     def link_monos(self, binary_img, mono_dict, avg_mono_distance):
         diff = binary_img
         imheight, imwidth, *channels = diff.shape
@@ -764,7 +724,9 @@ class ConnectYOLO(HeuristicConnector):
             if len(mono) == 4:
                 mono.append([])
         return mono_dict, v_count, h_count   
-   
+
+    
+### unused - intended for new connection method which was worse
 # class NewConnector(HeuristicConnector):
 #     def fill_mono_dict(self, monos_list, black_masks):
 #         mono_dict, black_masks = self.heuristic_mono_finder(monos_list, black_masks)
@@ -803,6 +765,7 @@ class ConnectYOLO(HeuristicConnector):
 #         mono_dict, v_count, h_count = self.new_linker(binary_img, mono_dict, avg_mono_distance)
 #         return mono_dict, v_count, h_count         
 
+### also unused
 # class OldConnectionYOLO(ConnectYOLO):
 #     def link_monos(self, binary_img, mono_dict, avg_mono_distance):
 #         mono_dict, v_count, h_count = self.original_linker(binary_img, mono_dict, avg_mono_distance)
