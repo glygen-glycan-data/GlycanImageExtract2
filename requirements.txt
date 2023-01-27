@@ -1,0 +1,15 @@
+certifi>=2022.12.7
+configobj
+configparser
+future==0.18.2
+httplib2==0.20.4
+kiwisolver==1.0.1
+matplotlib==3.5.0
+numpy==1.19.5
+opencv-contrib-python==4.5.1.48
+pdfminer.six==20220319
+pdfplumber==0.6.2
+Pillow==9.1.0
+PyMuPDF==1.18.9
+rdflib==6.1.1
+requests

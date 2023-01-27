@@ -65,15 +65,15 @@ if results is not None:
         original = result["origimage"]
         final = result["annotatedimage"]
         try:
-            os.makedirs(os.path.join(workdir,"test",idx,"originals"))
+            os.makedirs(os.path.join(workdir,"test",str(idx),"originals"))
         except FileExistsError:
             pass
         try:
-            os.makedirs(os.path.join(workdir, "test", idx, "annotated"))
+            os.makedirs(os.path.join(workdir, "test", str(idx), "annotated"))
         except FileExistsError:
             pass
-        orig_path = os.path.join(workdir, "test", idx, "originals", "save_original.png")
-        final_path = os.path.join(workdir, "test", idx, "annotated", "annotated_glycan.png")
+        orig_path = os.path.join(workdir, "test", str(idx), "originals", "save_original.png")
+        final_path = os.path.join(workdir, "test", str(idx), "annotated", "annotated_glycan.png")
         cv2.imwrite(orig_path, original)
         cv2.imwrite(final_path, final)
         result["origimage"] = os.path.abspath(orig_path)
