@@ -17,10 +17,8 @@ def download_file_from_google_drive(id, destination):
     save_response_content(response, destination)    
 
 def get_confirm_token(response):
-    for key, value in response.cookies.items():
-        if key.startswith('download_warning'):
-            return value
-
+    if "Virus scan warning" in response.text:
+        return 1
     return None
 
 def save_response_content(response, destination):
