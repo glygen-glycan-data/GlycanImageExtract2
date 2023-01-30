@@ -1,4 +1,4 @@
-#from BKGLycanExtractor.boundingboxes import BoundingBox
+#from BKGlycanExtractor.boundingboxes import BoundingBox
 
 class CompareBoxes:
     def __init__(self,**kwargs):

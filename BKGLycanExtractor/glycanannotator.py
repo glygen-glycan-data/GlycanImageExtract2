@@ -4,17 +4,18 @@ import os
 import pdfplumber
 import configparser
 import logging
+import sys
 
-from BKGLycanExtractor.configs import getfromgdrive
+from BKGlycanExtractor.config import getfromgdrive
 
-from BKGLycanExtractor.pygly3.GlycanFormatter import GlycoCTFormat, GlycoCTParseError
+from BKGlycanExtractor.pygly3.GlycanFormatter import GlycoCTFormat, GlycoCTParseError
 
-from BKGLycanExtractor import glycanrectangleid
-from BKGLycanExtractor import monosaccharideid
-from BKGLycanExtractor import glycanorientator
-from BKGLycanExtractor import glycanconnections
-from BKGLycanExtractor import buildstructure
-from BKGLycanExtractor import glycansearch
+from BKGlycanExtractor import glycanrectangleid
+from BKGlycanExtractor import monosaccharideid
+from BKGlycanExtractor import glycanorientator
+from BKGlycanExtractor import glycanconnections
+from BKGlycanExtractor import buildstructure
+from BKGlycanExtractor import glycansearch
 
 ### the glycan annotator class uses the methods passed to it to extract glycans from an image/pdf and get their composition/topology
 # it has an annotate_file method to go through the complete annotation pipeline, from extracting glycans to searching for accession based on composition + topology
@@ -348,11 +349,20 @@ class Annotator():
     ###no changes needed to this code when changing the annotator to use a different pre-set class or configuration
     ###no changes if you add a new configuration option for an existing class
     ###if adding a new class, be sure to give it a 'class' key-value pair in the configuration file
-    def read_configs(self, config_dir, config_file):      
+    def read_configs(self, config_dir, config_file, pipeline):      
         methods = {}
         config = configparser.ConfigParser()
         config.read(config_file)
-        annotator_methods=config['Annotator']
+        pipelines = []
+        for key, value in config.items():
+            if value.get("sectiontype") == "annotator":
+                pipelines.append(key)
+        try:
+            annotator_methods=config[pipeline]
+        except KeyError:
+            print(pipeline,"is not a valid pipeline.")
+            print("Valid pipelines:", pipelines)
+            sys.exit(1)
         
         method_descriptions = {
             "rectfinder": {"prefix": "glycanrectangleid.",
@@ -453,6 +463,8 @@ class Annotator():
                         raise FileNotFoundError(value+"was not found in configs directory or Google Drive")
                     getfromgdrive.download_file_from_google_drive(gdrive_id, filename)
                     method_configs[key] = filename
+            if not method_configs:
+                return eval(description_dictionary.get("prefix")+method_class+"()")
             return eval(description_dictionary.get("prefix")+method_class+"(method_configs)")
         else:
             return eval(description_dictionary.get("prefix")+method_class+"()")

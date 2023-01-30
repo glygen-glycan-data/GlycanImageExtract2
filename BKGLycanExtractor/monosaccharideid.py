@@ -2,7 +2,7 @@ import os
 import cv2, math, logging
 import numpy as np
 
-import BKGLycanExtractor.boundingboxes as boundingboxes
+import BKGlycanExtractor.boundingboxes as boundingboxes
 
 
 ### base class, all classes to find and identify monosaccharides should be subclasses of MonoID

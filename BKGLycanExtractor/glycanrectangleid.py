@@ -1,7 +1,7 @@
 import os
 import cv2
 import numpy as np
-import BKGLycanExtractor.boundingboxes as boundingboxes
+import BKGlycanExtractor.boundingboxes as boundingboxes
 
 
 #### base class, all classes to identify or draw glycan rectangles should be subclasses of GlycanRectID

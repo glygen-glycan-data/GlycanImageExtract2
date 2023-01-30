@@ -1,6 +1,6 @@
 import numpy as np
 import cv2
-import BKGLycanExtractor.boundingboxes as boundingboxes
+import BKGlycanExtractor.boundingboxes as boundingboxes
 
 
 #### Class for connecting monosaccharides extracted from an image. all connectors should be subclasses of GlycanConnector

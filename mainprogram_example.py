@@ -1,19 +1,30 @@
 import sys, os, shutil, time, json, cv2
 import logging
 
-from BKGLycanExtractor import glycanannotator
+from BKGlycanExtractor import glycanannotator
 
 
 #set up annotator to read configs and run pipeline
 #the annotator has mix-and-match methods to run individual sections, as well as a method to run the full annotation pipeline
 annotator = glycanannotator.Annotator()
-
 #read configs file
 #provide the directory with configs file and weights, YOLO .cfg, etc as the second command line argument
-configs_dir=sys.argv[2]
+try:
+    configs_dir=sys.argv[3]
+except IndexError:
+    configs_dir="./BKGlycanExtractor/config/"
 configs_file = os.path.join(configs_dir,"configs.ini")
+
+try:
+    pipeline=sys.argv[2]
+except IndexError:
+    pipeline="YOLOMonosAnnotator"
+if os.path.isdir(pipeline):
+    pipeline="YOLOMonosAnnotator"
+
+print("Annotating using",pipeline)
 #this contains all methods set for each step, with the given configuration files (weights, YOLO .cfg, colours, etc)
-annotation_methods = annotator.read_configs(configs_dir,configs_file)
+annotation_methods = annotator.read_configs(configs_dir,configs_file, pipeline)
 
 ### from here on could be wrapped into a for loop for multiple glycans with the same annotator
 
@@ -21,9 +32,10 @@ annotation_methods = annotator.read_configs(configs_dir,configs_file)
 #get glycan file from command line - provide as the first command line argument
 glycan_file = os.path.abspath(sys.argv[1])
 glycan_name = os.path.basename(glycan_file)
+base_glycan_name = glycan_name.rsplit('.', 1)[0]
 
 #initialize directory to save output
-workdir = os.path.join("./files", glycan_name)
+workdir = os.path.join("./files", base_glycan_name+"_"+pipeline)
 if os.path.isdir(os.path.join(workdir)):
     shutil.rmtree(os.path.join(workdir))
     time.sleep(5)
@@ -35,11 +47,12 @@ os.makedirs(os.path.join(workdir, "output"))
 logger = logging.getLogger(glycan_name)
 logger.setLevel(logging.INFO)
 
-annotatelogfile = os.path.join(workdir, "output", "annotated_"+glycan_name+"_log.txt")
+annotatelogfile = os.path.join(workdir, "output", "annotated_"+base_glycan_name+"_log.txt")
 handler = logging.FileHandler(annotatelogfile)
 handler.setLevel(logging.INFO)
 handler.setFormatter(logging.Formatter('%(name)s: %(message)s'))
 logger.addHandler(handler)
+print("Start:",glycan_name)
 logger.info(f"Start: {glycan_name}")
 
 #copy the original image to an input directory for storage/recovery purposes

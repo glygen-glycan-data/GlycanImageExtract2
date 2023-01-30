@@ -2,7 +2,7 @@
 # matplotlib.use('tkagg')
 # import matplotlib.pyplot as plt
 
-# import BKGLycanExtractor.compareBoxes as cb
+# import BKGlycanExtractor.compareBoxes as cb
 import logging
 
 logger = logging.getLogger("test")

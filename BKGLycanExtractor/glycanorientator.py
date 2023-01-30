@@ -1,7 +1,7 @@
 import os
 import cv2
 import numpy as np
-import BKGLycanExtractor.boundingboxes as boundingboxes
+import BKGlycanExtractor.boundingboxes as boundingboxes
 
 #### base class, all orientation methods should be subclasses of the GlycanOrientator
 #### all orientation methods should have method get_orientation which returns an orientation 0 (left-right), 1 (right-left), 2 (top-bottom), 3 (bottom-top)
@@ -14,6 +14,8 @@ class GlycanOrientator:
 
 #Default class for orientation determination. takes counts of horizontal and vertical connecting lines and determines right-left(horizontal) or bottom-top(vertical)
 class DefaultOrientator(GlycanOrientator):
+    def __init__(self, **kw):
+        super().__init__()
     #expects keywords horizontal_count and vertical_count, returns number representing orientation
     def get_orientation(self, **kw):
         horiz_count = kw.get("horizontal_count",0)
