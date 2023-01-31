@@ -423,11 +423,15 @@ class YOLOMonos(MonoID):
         #print(boxes)
         boxesfornms = [bbox.to_list() for bbox in monos_list]
         #print(unpaddedboxesfornms)
-        
-        indexes = cv2.dnn.NMSBoxes(boxesfornms, confidences, threshold, 0.4)
-        #print(unpadded_indexes)
-        
-        indexes = [index[0] for index in indexes]
+        try:
+            indexes = cv2.dnn.NMSBoxes(boxesfornms, confidences, threshold, 0.4)
+        except TypeError:
+            boxesfornms = [bbox.to_new_list() for bbox in monos_list]
+            indexes = cv2.dnn.NMSBoxes(boxesfornms, confidences, threshold, 0.4)
+        try:
+            indexes = [index[0] for index in indexes]
+        except IndexError:
+            pass
 
         #print(f"\nGlycan detected: {len(boxes)}")
         #cv2.imshow("Image", detected_glycan)

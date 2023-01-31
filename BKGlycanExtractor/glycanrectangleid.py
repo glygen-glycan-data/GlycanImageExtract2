@@ -120,13 +120,22 @@ class OriginalYOLO(GlycanRectID):
         unpaddedboxesfornms = [bbox.to_list() for bbox in unpadded_boxes]
         #print(unpaddedboxesfornms)
         paddedboxesfornms = [bbox.to_list() for bbox in padded_boxes]
-        
-        unpadded_indexes = cv2.dnn.NMSBoxes(unpaddedboxesfornms, confidences, threshold, 0.4)
-        #print(unpadded_indexes)
-        padded_indexes = cv2.dnn.NMSBoxes(paddedboxesfornms, confidences, threshold, 0.4)
-        
-        unpadded_indexes = [index[0] for index in unpadded_indexes]
-        padded_indexes = [index[0] for index in padded_indexes]
+        try:
+            unpadded_indexes = cv2.dnn.NMSBoxes(unpaddedboxesfornms, confidences, threshold, 0.4)
+            #print(unpadded_indexes)
+            padded_indexes = cv2.dnn.NMSBoxes(paddedboxesfornms, confidences, threshold, 0.4)
+        except TypeError:
+            unpaddedboxesfornms = [bbox.to_new_list() for bbox in unpadded_boxes]
+            paddedboxesfornms = [bbox.to_new_list() for bbox in padded_boxes]
+            
+            unpadded_indexes = cv2.dnn.NMSBoxes(unpaddedboxesfornms, confidences, threshold, 0.4)
+            #print(unpadded_indexes)
+            padded_indexes = cv2.dnn.NMSBoxes(paddedboxesfornms, confidences, threshold, 0.4)
+        try:
+            unpadded_indexes = [index[0] for index in unpadded_indexes]
+            padded_indexes = [index[0] for index in padded_indexes]
+        except IndexError:
+            pass
         #print(f"\nGlycan detected: {len(boxes)}")
         #cv2.imshow("Image", detected_glycan)
         #cv2.waitKey(0)
