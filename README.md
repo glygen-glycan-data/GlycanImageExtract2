@@ -16,3 +16,5 @@ Training data used to train the YOLO models provided in the linked Google Drive 
 * plusindividuals.zip: largerboxes_plusindividualglycans.weights
 * orientation.zip: orientation_redo.weights
 * monos.zip: yolov3_monos_new_v2.weights
+
+[LabelImg](https://github.com/heartexlabs/labelImg) was used to view and create YOLO training boxes.
