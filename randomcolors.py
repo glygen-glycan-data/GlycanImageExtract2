@@ -40,6 +40,8 @@ color_range_dict = {
     "purple_upper" : np.array([163,255,225]),
     "red_lower_h" : np.array([170,111,135]),
     "red_upper_h" : np.array([180,255,255]),
+    "light_blue_lower": np.array([85,41,201]),
+    "light_blue_upper": np.array([108,121,255]),
     }
 
 image_dir = sys.argv[1]
