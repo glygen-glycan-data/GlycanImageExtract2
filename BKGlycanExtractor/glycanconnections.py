@@ -2,6 +2,8 @@ import numpy as np
 import cv2
 import BKGlycanExtractor.boundingboxes as boundingboxes
 
+import logging
+
 
 #### Class for connecting monosaccharides extracted from an image. all connectors should be subclasses of GlycanConnector
 #### all subclasses need method connect which connects the monosaccharides and returns a connection dictionary
@@ -33,11 +35,12 @@ class HeuristicConnector(GlycanConnector):
     #method to connect a dictionary of monosaccharides returned from a monosaccharideid class
     #requires an image, a monosaccharide dictionary, and an orientation method to be used for finding the root monosaccharide
     # returns a dictionary of connected monosaccharides
-    def connect(self, image, monos, orientation_method):
-
+    def connect(self, monos, orientation_method, logger_name = ''):
+        
+        logger = logging.getLogger(logger_name+'.glycanconnections')
         mask_dict = monos.get("mask_dict",{})
         contours = monos.get("contours",{})
-        origin = image
+        origin = monos.get("original",)
         mono_dict = {}  # mono id = contour, point at center, radius, bounding rect, linkages, root or child
         all_masks, black_masks = self.get_masks(mask_dict)
 
@@ -48,6 +51,15 @@ class HeuristicConnector(GlycanConnector):
         mono_dict, v_count, h_count = self.link_monos(black_masks, mono_dict, average_mono_distance)
 
         mono_dict = self.find_root(mono_dict, v_count, h_count, origin, orientation_method)
+        
+        printmonodict = "{\n"
+        for key, value in mono_dict.items():
+            printmonodict+=key+": "
+            for x in value[1:6]:
+                printmonodict += str(x) + ", "
+            printmonodict += "\n"
+        printmonodict += "}"
+        logger.info(f"Monosaccharide Connection Dictionary:\n{printmonodict}")
         
         #print(mono_dict)
         # DEMO!!!
@@ -69,7 +81,7 @@ class HeuristicConnector(GlycanConnector):
         root = None
         
         #use orientation method to get glycan orientation
-        orientation = orientation_method.get_orientation(glycanimage=image, horizontal_count=h_count, vertical_count=v_count)
+        orientation, _ = orientation_method.get_orientation(glycanimage=image, horizontal_count=h_count, vertical_count=v_count)
         #left-right
         if orientation == 0:
             aux_list = sorted([(mono_id, mono_dict[mono_id][1][0]) for mono_id in mono_dict.keys()], key=itemgetter(1),
@@ -460,6 +472,10 @@ class OriginalConnector(HeuristicConnector):
                 x2 = imwidth
             crop = diff[y1:y2,
                    x1:x2]
+            
+            cv2.imshow('fig1',crop)
+            cv2.waitKey(0)
+            cv2.destroyAllWindows()      
 
             #crop_origin = ext_origin[centerY - cir_radius:centerY + cir_radius,
                           #centerX - cir_radius:centerX + cir_radius]
@@ -585,8 +601,8 @@ class ConnectYOLO(HeuristicConnector):
 
             # remove mono
             #cv2.circle(black_masks, (centerX, centerY), int(cir_radius * 0.12) + cir_radius, (0, 0, 0), -1)
-            p11 =(int(x*0.985), int(y*0.985 ))
-            p22=(int((x + w)*1.015), int((y + h)*1.015))
+            p11 =(int(x), int(y))
+            p22=(int((x + w)), int((y + h)))
             cv2.rectangle(black_masks, p11, p22, (0, 0, 0), -1)
             
             # circle to detect lines
@@ -637,7 +653,7 @@ class ConnectYOLO(HeuristicConnector):
             boundaries = mono[0]
             
             x, y, w, h = mono[3]
-            cir_radius = int((((h ** 2 + w ** 2) ** 0.5) / 2) * 1.5)
+            cir_radius = int((((h ** 2 + w ** 2) ** 0.5) / 2) * 1.2)
             (centerX,centerY) = mono[1]
             radius = mono[2]
             
@@ -655,6 +671,10 @@ class ConnectYOLO(HeuristicConnector):
                 x2 = imwidth
             crop = diff[y1:y2,
                    x1:x2]
+            
+            cv2.imshow('fig1',crop)
+            cv2.waitKey(0)
+            cv2.destroyAllWindows()  
 
             #crop_origin = ext_origin[centerY - cir_radius:centerY + cir_radius,
                           #centerX - cir_radius:centerX + cir_radius]

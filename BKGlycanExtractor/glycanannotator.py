@@ -73,7 +73,7 @@ class Annotator():
                     #get composition by identifying monosaccharides
                     monos_dict, count = self.find_monos(glycanobject, orig_image, box, monos, count)
                     #connect monosaccharides
-                    connect_dict = self.connect_monos(orig_image, box, monos_dict, connector, orienter)
+                    connect_dict = self.connect_monos(monos_dict, connector, orienter, logger_name = logger_name)
                     #use topology to build glycoCT
                     glycoCT = self.build_glycan(connect_dict,builder)
                     #print(glycoCT)
@@ -111,9 +111,11 @@ class Annotator():
     #requires an instance of a connect class to use - should be ConnectYOLO if using the YOLO monosaccharide finder, or OriginalConnector if using the heuristic monosaccharide finder
     #requires an instance of an orientation class to pass to the connect method - used to determine where the root should be
     #returns a dictionary of monosaccharides, their connections to each other, and status as the root monosaccharide
-    def connect_monos(self, glycanimage, glycanbox, monodict, connectmethod, orientmethod):
-        aux_cropped = glycanimage[glycanbox.y:glycanbox.y2,glycanbox.x:glycanbox.x2].copy()
-        connect_dict = connectmethod.connect(image = aux_cropped, monos = monodict, orientation_method = orientmethod)
+    def connect_monos(self, monodict, connectmethod, orientmethod, **kw):
+        logger_name = kw.get("logger_name", '')
+        
+        
+        connect_dict = connectmethod.connect(monos = monodict, orientation_method = orientmethod, logger_name = logger_name)
         return connect_dict
     
     #method which takes the original glycanobject, list of images in it, and formatted results list
@@ -213,8 +215,8 @@ class Annotator():
     #returns two lists of glycan bounding boxes - one as returned from the glycan finder and one with padded borders
     #this is in case model training led to weights which tend to crop glycan arms/monosaccharides - padding the borders can prevent information loss
     #if the model is well-trained the padding shouldn't be necessary - one list should be chosen in the next step
-    def find_glycans(self,glycanimage,rectidmethod):
-        unpadded_boxes,padded_boxes = rectidmethod.get_rects(image = glycanimage, threshold = 0.5)
+    def find_glycans(self,glycanimage,rectidmethod, threshold = 0.5):
+        unpadded_boxes,padded_boxes = rectidmethod.get_rects(image = glycanimage, threshold = threshold)
         return unpadded_boxes,padded_boxes
     
     #method which takes the glycan image, bounding box for a single glycan, and a counter for the number of glycans processed and extracts composition
@@ -224,13 +226,14 @@ class Annotator():
     #requires a counter which represents the number of glycans processed for this image
     #returns a dictionary of monosaccharides with ids, composition counts, and original and annotated versions of the image cropped to the borders of the bounding box
     #returns a counter representing the number of glycans processed (count+1); this is used later for saving cropped images
-    def find_monos(self, glycanobject, glycanimage, glycanbox, monoidmethod, count):
-        glycan_name = os.path.basename(glycanobject)
-        logger_name=glycan_name+'.annotator'
+    def find_monos(self, glycanobject, glycanimage, glycanbox, monoidmethod, count, threshold = 0.5, logger_name = None):
+        if not logger_name:
+            glycan_name = os.path.basename(glycanobject)
+            logger_name=glycan_name+'.annotator'
         aux_cropped = glycanimage[glycanbox.y:glycanbox.y2,glycanbox.x:glycanbox.x2].copy()
         count += 1
         mono_dict = monoidmethod.find_monos(image = aux_cropped, logger_name=logger_name)
-        mono_id_dict = monoidmethod.format_monos(image = aux_cropped, monos_dict = mono_dict, logger_name=logger_name)
+        mono_id_dict = monoidmethod.format_monos(image = aux_cropped, monos_dict = mono_dict, conf_threshold = threshold, logger_name=logger_name)
         return mono_id_dict, count
     
     #method which takes information from multiple pipeline steps to format a complete result for an individual glycan
@@ -310,6 +313,10 @@ class Annotator():
             return "image"
         else:
             return None
+        
+    def get_orientation(self, orientationmethod, glycanimage):
+        orientation, oriented_glycan = orientationmethod.get_orientation(glycanimage = glycanimage)
+        return oriented_glycan
     
     #method to get an image from either an image array - trivial - or a pdf figure representation - nontrivial
     #requires the object and the image representation
@@ -366,22 +373,16 @@ class Annotator():
         
         method_descriptions = {
             "rectfinder": {"prefix": "glycanrectangleid.",
-                           "pass_configs": True,
                            "multiple": False},
             "mono_id"   : {"prefix": "monosaccharideid.",
-                           "pass_configs": True,
                            "multiple": False},
             "orienter"  : {"prefix": "glycanorientator.",
-                           "pass_configs": True,
                            "multiple": False},
             "connector" : {"prefix": "glycanconnections.",
-                           "pass_configs": False,
                            "multiple": False},
             "builder"   : {"prefix": "buildstructure.",
-                           "pass_configs": False,
                            "multiple": False},
             "search"    : {"prefix": "glycansearch.",
-                           "pass_configs": False,
                            "multiple": True}
             }
         for method, desc in method_descriptions.items():
@@ -389,11 +390,20 @@ class Annotator():
                 method_names=annotator_methods.get(method).split(",")
                 methods[method] = []
                 for method_name in method_names:
-                    methods[method].append(self.setup_method(config, desc, config_dir, method_name))
+                    methods[method].append(self.setup_method(config, desc.get("prefix"), config_dir, method_name))
             else:
                 method_name = annotator_methods.get(method)
-                methods[method] = self.setup_method(config, desc, config_dir, method_name)
+                methods[method] = self.setup_method(config, desc.get("prefix"), config_dir, method_name)
         return methods
+    
+    #function to take the name of a modular method (glycan finder, monosaccharide finder, etc)
+    #and return an instance of that method which can be used
+    #requires the directory, the path to the file, and the method you're searching for
+    ### use this to work with a single module without having to create a pipeline for it
+    def read_method(self, config_dir, config_file, prefix, method_name):
+        config = configparser.ConfigParser()
+        config.read(config_file)
+        return self.setup_method(config, prefix, config_dir, method_name)
     
     #method to search a glycoCT using a chosen search method, attempting to get an accession
     #requires a glycanobject to get the logger
@@ -436,7 +446,7 @@ class Annotator():
     #takes the path to the directory with the configs file
     #takes the name of the method as defined in the [Annotator] section of the configs file
     #returns an instance of the class as defined in the configs.ini file, initialised with the specified configuration (if any)
-    def setup_method(self, configparserobject, description_dictionary, directory, method_name):
+    def setup_method(self, configparserobject, prefix, directory, method_name):
         #these are the files available for download from the Google Drive
         #if you have named these configs but haven't downloaded them already they will be downloaded and placed in your configs directory
         gdrive_dict = {
@@ -446,25 +456,24 @@ class Annotator():
             "monos2.cfg": "15_XxS7scXuvS_zl1QXd7OosntkyuMQuP",
             "orientation_redo.weights": "1KipiLdlUmGSDsr0WRUdM0ocsQPEmNQXo",
             "orientation.cfg": "1AYren1VnmB67QLDxvDNbqduU8oAnv72x",
-            "yolov3_monos_new_v2.weights": "1h-QiO2FP7fU7IbvZjoF7fPf55N0DkTPp"
+            "yolov3_monos_new_v2.weights": "1h-QiO2FP7fU7IbvZjoF7fPf55N0DkTPp",
+            "yolov3_monos_random.weights": "1m4nJqxrJLl1MamIugdyzRh6td4Br7OMg",
+            "yolov3_monos_largerboxes.weights": "1WQI9UiJkqGx68wy8sfh_Hl5LX6q1xH4-"
         }
         
         method_values = configparserobject[method_name]
         method_class = method_values.pop("class")
-        if description_dictionary.get("pass_configs"):
-            method_configs = {}
-            for key, value in method_values.items():
-                filename = os.path.join(directory,value)
-                if os.path.isfile(filename):
-                    method_configs[key] = filename
-                else:
-                    gdrive_id = gdrive_dict.get(value)
-                    if gdrive_id is None:
-                        raise FileNotFoundError(value+"was not found in configs directory or Google Drive")
-                    getfromgdrive.download_file_from_google_drive(gdrive_id, filename)
-                    method_configs[key] = filename
-            if not method_configs:
-                return eval(description_dictionary.get("prefix")+method_class+"()")
-            return eval(description_dictionary.get("prefix")+method_class+"(method_configs)")
-        else:
-            return eval(description_dictionary.get("prefix")+method_class+"()")
+        method_configs = {}
+        for key, value in method_values.items():
+            filename = os.path.join(directory,value)
+            if os.path.isfile(filename):
+                method_configs[key] = filename
+            else:
+                gdrive_id = gdrive_dict.get(value)
+                if gdrive_id is None:
+                    raise FileNotFoundError(value+"was not found in configs directory or Google Drive")
+                getfromgdrive.download_file_from_google_drive(gdrive_id, filename)
+                method_configs[key] = filename
+        if not method_configs:
+            return eval(prefix+method_class+"()")
+        return eval(prefix+method_class+"(method_configs)")

@@ -79,6 +79,15 @@ class BoundingBox:
         elif list_type == "training":
             [class_,rel_cen_x,rel_cen_y,rel_w,rel_h] = [self.class_,self.rel_cen_x,self.rel_cen_y,self.rel_w,self.rel_h]
             return [class_,rel_cen_x,rel_cen_y,rel_w,rel_h]
+    def to_new_list(self, list_type=None):
+        if list_type is None:
+            list_type = self.type
+        if list_type == "detected":
+            [x,y,w,h] = [self.x, self.y, self.w, self.h]
+            return [x,y,w,h]
+        elif list_type == "training":
+            [class_,rel_cen_x,rel_cen_y,rel_w,rel_h] = [self.class_,self.rel_cen_x,self.rel_cen_y,self.rel_w,self.rel_h]
+            return [class_,rel_cen_x,rel_cen_y,rel_w,rel_h]
     #string format, to be printed as in a file
     def __str__(self):
         printdict = {"x0": str(self.x), "x2": str(self.x2), "y0": str(self.y), "y2": str(self.y2)}
@@ -98,6 +107,7 @@ class Detected(BoundingBox):
         super().__init__(image,**kwargs)
         self.confidence = confidence
         self.type = "detected"
+        self.class_options = kwargs.get("class_options", {str(self.class_), self.confidence})
     #check if the bounding box is so large that it should be adjusted to be the entire image
     def is_entire_image(self):
         assert self.w is not None
@@ -178,3 +188,5 @@ class Training(BoundingBox):
         self.cen_y = self.cen_y + half_white_space
         self.imwidth = self.imwidth + self.white_space
         self.imheight = self.imheight + self.white_space
+    def set_dummy_confidence(self,confidence):
+        self.confidence = confidence

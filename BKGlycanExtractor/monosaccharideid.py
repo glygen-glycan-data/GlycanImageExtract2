@@ -30,6 +30,24 @@ class MonoID:
             if count > 0:
                 s += "%s(%d)"%(sym,count)
         return s
+    #expects an image and leaves just the largest continuous contour, removing extraneous aspects of the image
+    def crop_largest(self,image = None):
+        img = image
+        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        _, gray = cv2.threshold(gray, 230, 255, cv2.THRESH_BINARY_INV)
+        contours_list, _ = cv2.findContours(gray, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+        #print(contours_list)
+        area_list = []
+        for i, contour in enumerate(contours_list):
+            area = cv2.contourArea(contour)
+            area_list.append((area, i))
+        (_, largest_index) = max(area_list)
+        out = np.zeros_like(img)
+        cv2.drawContours(out, contours_list, largest_index, (255, 255, 255), -1)
+        _, out = cv2.threshold(out, 230, 255, cv2.THRESH_BINARY_INV)
+
+        out2 = cv2.bitwise_or(out, img)
+        return out2
     def find_monos(self,image = None, **kw):
         raise NotImplementedError
     def format_monos(self,image = None, **kw):
@@ -53,7 +71,21 @@ class MonoID:
         mask_array = (red_mask, yellow_mask, green_mask, blue_mask, purple_mask, black_mask)
         mask_array_name = ("red_mask", "yellow_mask", "green_mask", "blue_mask", "purple_mask", "black_mask")
         mask_dict = dict(zip(mask_array_name, mask_array))
-        return mask_array,mask_array_name,mask_dict        
+        return mask_array,mask_array_name,mask_dict 
+    #resizes image for optimised monosaccharide id
+    #takes an image, returns it resized
+    def resize_image(self, img = None):
+        # print(img_file.shape[0]*img_file.shape[1])
+        bigwhite = np.zeros([img.shape[0] + 30, img.shape[1] + 30, 3], dtype=np.uint8)
+        bigwhite.fill(255)
+        bigwhite[15:15 + img.shape[0], 15:15 + img.shape[1]] = img
+        img = bigwhite.copy()
+        mag = 84000 / (img.shape[0] * img.shape[1])
+        # print(mag)
+        if mag <= 1:
+            mag = 1
+        img = cv2.resize(img, None, fx=mag, fy=mag)
+        return img       
     
 # class to use heuristic color matching methods to find and identify monosaccharides in glycan images
 # expects to be initiated with a configs dictionary containing the color range file
@@ -85,33 +117,17 @@ class HeuristicMonos(MonoID):
         # cv2.imshow("different", diff)
         # cv2.waitKey(0)
         return 1 - score
-    #expects an image and crops it to contain the largest continuous contour, removing extraneous aspects of the image
-    def crop_largest(self,image = None):
-        img = image
-        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        _, gray = cv2.threshold(gray, 230, 255, cv2.THRESH_BINARY_INV)
-        contours_list, _ = cv2.findContours(gray, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
-        #print(contours_list)
-        area_list = []
-        for i, contour in enumerate(contours_list):
-            area = cv2.contourArea(contour)
-            area_list.append((area, i))
-        (_, largest_index) = max(area_list)
-        out = np.zeros_like(img)
-        cv2.drawContours(out, contours_list, largest_index, (255, 255, 255), -1)
-        _, out = cv2.threshold(out, 230, 255, cv2.THRESH_BINARY_INV)
 
-        out2 = cv2.bitwise_or(out, img)
-        return out2
     
     #method to find monosaccharides in a glycan image
     #requires an image and the name of the parent logger
     #returns a dictionary containing a mask dictionary, monosaccharide boundaries and identifications, and the cropped image with monosaccharides annotated
-    def find_monos(self,image = None, logger_name=''):
+    def find_monos(self,image = None, logger_name='', **kw):
         logger = logging.getLogger(logger_name+'.monosaccharideid')
         monos = {}
-        image = self.crop_largest(image)
-        image = self.resize_image(image)
+        if not self.box_flag:
+            image = self.crop_largest(image)
+            image = self.resize_image(image)
         #save original image, and then format it for masking
         monos["original"] = image
         img = self.format_image(image)
@@ -217,7 +233,6 @@ class HeuristicMonos(MonoID):
                         else:
 
                             logger.info("???",score)
-
         monos["annotated"] = final
         monos["mask_dict"] = mask_dict
         if self.box_flag:
@@ -239,7 +254,7 @@ class HeuristicMonos(MonoID):
     #method to format the monosaccharide contours returned by find_monos
     #requires an image and the dictionary returned by find_monos
     #returns a formatted dictionary with monosaccharide counts and an annotated final image
-    def format_monos(self,image= None,monos_dict = None, **kw):
+    def format_monos(self, monos_dict = None, **kw):
         monos = monos_dict
         monos_list = monos["contours"]
         final = monos["annotated"]
@@ -264,20 +279,7 @@ class HeuristicMonos(MonoID):
         monos["count_dict"] = monoCount_dict
         monos["annotated"] = final
         return monos
-    #resizes image for optimised monosaccharide id
-    #takes an image, returns it resized
-    def resize_image(self, img = None):
-        # print(img_file.shape[0]*img_file.shape[1])
-        bigwhite = np.zeros([img.shape[0] + 30, img.shape[1] + 30, 3], dtype=np.uint8)
-        bigwhite.fill(255)
-        bigwhite[15:15 + img.shape[0], 15:15 + img.shape[1]] = img
-        img = bigwhite.copy()
-        mag = 84000 / (img.shape[0] * img.shape[1])
-        # print(mag)
-        if mag <= 1:
-            mag = 1
-        img = cv2.resize(img, None, fx=mag, fy=mag)
-        return img
+
 
 #Subclass of HeuristicMonos which creates bounding boxes for monosaccharides found through heuristic image-matching methods
 #Can be used to create training data for YOLO models
@@ -290,14 +292,14 @@ class BoxMonos(HeuristicMonos):
     #format the monosaccharide dictionary returned by find_monos by counting monosaccharides
     #requires an image and the find_monos output
     #returns the formatted monosaccharide dictionary
-    def format_monos(self, image= None, monos_dict = None, **kw):
+    def format_monos(self, monos_dict = None, image= None, **kw):
         monos = monos_dict
         monos_boxes = monos["contours"]
         monoCount_dict = {"GlcNAc": 0, "NeuAc": 0, "Fuc": 0, "Man": 0, "GalNAc": 0, "Gal": 0,"Glc": 0, "NeuGc": 0,}
         
-        img = self.crop_largest(image)
+        #img = self.crop_largest(image)
         #final_boxes = []
-        final = img.copy()
+        final = image.copy()
         for mono in monos_boxes:
             new_class = mono.class_
             
@@ -323,7 +325,8 @@ class BoxMonos(HeuristicMonos):
             elif new_class == 5:
                 monoCount_dict["Gal"] += 1  
             elif new_class == 6:
-                monoCount_dict["Glc"] += 1                 
+                monoCount_dict["Glc"] += 1   
+                
         monos["count_dict"] = monoCount_dict
         monos["annotated"] = final
         monos["contours"] = monos_boxes
@@ -333,7 +336,7 @@ class BoxMonos(HeuristicMonos):
 ### Subclass to use a trained YOLO / darknet model to find and classify monosaccharides
 #expects to be initiated with a configs dictionary containing the color_range file and the weights and .cfg file for the YOLO model
 class YOLOMonos(MonoID):
-    def __init__(self,configs):
+    def __init__(self,configs, **kw):
         super().__init__(configs)
         weights=configs.get("weights",)
         net=configs.get("config",)
@@ -357,32 +360,24 @@ class YOLOMonos(MonoID):
     # method to use the YOLO model to find monosaccharides
     # expects an image and a confidence threshold below which monosaccharides are thrown out and not returned; defaults to threshold of 0.5
     #returns a dictionary with monosaccharide bounding boxes, a mask dictionary, and the original image
-    def find_monos(self,image=None, threshold = 0.5, **kw):
+    def find_monos(self,image=None, threshold = 0.5, logger_name='', **kw):
+        logger = logging.getLogger(logger_name+'.monosaccharideid')
         monos = {}
+        
+        image = self.crop_largest(image)
+        image = self.resize_image(image)
+        #save original image, and then format it for masking
+        monos["original"] = image
         
         hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
         mask_array, mask_array_name, mask_dict = self.get_masks(hsv)
         monos["mask_dict"] = mask_dict
         
         origin_image = image.copy()
-        monos["original"] = origin_image
         
         #use the YOLO model to get bounding boxes
 
-        height, width, channels = image.shape
-        ############################################################################################
-        #fix issue with
-        ############################################################################################
-        white_space = 200
-        bigwhite = np.zeros([image.shape[0] +white_space, image.shape[1] +white_space, 3], dtype=np.uint8)
-        bigwhite.fill(255)
-        half_white_space = int(white_space/2)
-        bigwhite[half_white_space:(half_white_space + image.shape[0]), half_white_space:(half_white_space+image.shape[1])] = image
-        image = bigwhite.copy()
-        #detected_glycan = image.copy()
-        # cv2.imshow("bigwhite", bigwhite)
-        # cv2.waitKey(0)
-        # cv2.destroyAllWindows()
+        image, white_space = self.prep_YOLO_input(image)
 
         ############################################################################################
         blob = cv2.dnn.blobFromImage(image, 0.00392, (416, 416), (0, 0, 0), True, crop=False)
@@ -402,7 +397,22 @@ class YOLOMonos(MonoID):
                 class_id = np.argmax(scores)
                 confidence = scores[class_id]
                 
-                box = boundingboxes.Detected(origin_image, confidence, class_=class_id,white_space=white_space, rel_cen_x = detection[0],rel_cen_y = detection[1], rel_w = detection[2],rel_h = detection[3])
+                scores[class_id] = 0.
+                class_options = {str(class_id): confidence}
+                
+                while np.any(scores):
+                    #print(scores)
+                    classopt = np.argmax(scores)
+                    confopt = scores[classopt]
+                    scores[classopt] = 0.
+                    class_options[str(classopt)] = confopt
+                
+                if len(class_options) > 1:
+                    message = "WARNING: More than one class possible: "+str(class_options)
+                    print(message)
+                    logger.warning(message)
+                #print(class_options)
+                box = boundingboxes.Detected(origin_image, confidence, class_=class_id,white_space=white_space, rel_cen_x = detection[0],rel_cen_y = detection[1], rel_w = detection[2],rel_h = detection[3], class_options = class_options)
 
                 box.rel_to_abs()
                 
@@ -423,11 +433,15 @@ class YOLOMonos(MonoID):
         #print(boxes)
         boxesfornms = [bbox.to_list() for bbox in monos_list]
         #print(unpaddedboxesfornms)
-        
-        indexes = cv2.dnn.NMSBoxes(boxesfornms, confidences, threshold, 0.4)
-        #print(unpadded_indexes)
-        
-        indexes = [index[0] for index in indexes]
+        try:
+            indexes = cv2.dnn.NMSBoxes(boxesfornms, confidences, threshold, 0.4)
+        except TypeError:
+            boxesfornms = [bbox.to_new_list() for bbox in monos_list]
+            indexes = cv2.dnn.NMSBoxes(boxesfornms, confidences, threshold, 0.4)
+        try:
+            indexes = [index[0] for index in indexes]
+        except IndexError:
+            pass
 
         #print(f"\nGlycan detected: {len(boxes)}")
         #cv2.imshow("Image", detected_glycan)
@@ -443,7 +457,7 @@ class YOLOMonos(MonoID):
     #requires an image, the dictionary returned by find_monos, a confidence threshold for class identification (separate from the find_monos confidence threshold)
     #requires the parent logger name to be passed
     #returns the formatted dictionary with annotated image
-    def format_monos(self, image = None, monos_dict = None,conf_threshold = 0.0, logger_name=''):
+    def format_monos(self, monos_dict = None,conf_threshold = 0.0, logger_name='', **kw):
         logger = logging.getLogger(logger_name+'.monosaccharideid')
         monos_list = monos_dict["contours"]
         
@@ -455,6 +469,7 @@ class YOLOMonos(MonoID):
 
         # read color range in config folder
         #origin = img.copy()
+        image = monos_dict["original"]
         final = image.copy()  # final annotated pieces
 
 
@@ -526,3 +541,25 @@ class YOLOMonos(MonoID):
         monos_dict["annotated"] = final
 
         return monos_dict
+    
+    #prepare the input image for YOLO - add whitespace to borders.
+    #takes the image, returns image with whitespace borders
+    def prep_YOLO_input(self, image):
+        
+        height, width, channels = image.shape
+        ############################################################################################
+        #fix issue with
+        ############################################################################################
+        white_space = 200
+        bigwhite = np.zeros([image.shape[0] +white_space, image.shape[1] +white_space, 3], dtype=np.uint8)
+        bigwhite.fill(255)
+        half_white_space = int(white_space/2)
+        bigwhite[half_white_space:(half_white_space + image.shape[0]), half_white_space:(half_white_space+image.shape[1])] = image
+        image = bigwhite.copy()
+        #detected_glycan = image.copy()
+        # cv2.imshow("bigwhite", bigwhite)
+        # cv2.waitKey(0)
+        # cv2.destroyAllWindows()
+
+        ############################################################################################
+        return image, white_space
