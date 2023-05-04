@@ -346,8 +346,8 @@ class HeuristicConnector(GlycanConnector):
                 Ax = centerX
                 Ay = centerY
 
-                Bx = centerX - radius + point_centerX2
-                By = centerY - radius + point_centerY2
+                Bx = centerX - cir_radius + point_centerX2
+                By = centerY - cir_radius + point_centerY2
                 #################### length adjustable
                 for i in range(1, 200, 5):
                     i = i / 100
