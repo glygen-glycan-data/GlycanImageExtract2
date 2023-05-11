@@ -2,6 +2,8 @@ import numpy as np
 import cv2
 import BKGlycanExtractor.boundingboxes as boundingboxes
 
+import logging
+
 
 #### Class for connecting monosaccharides extracted from an image. all connectors should be subclasses of GlycanConnector
 #### all subclasses need method connect which connects the monosaccharides and returns a connection dictionary
@@ -33,11 +35,12 @@ class HeuristicConnector(GlycanConnector):
     #method to connect a dictionary of monosaccharides returned from a monosaccharideid class
     #requires an image, a monosaccharide dictionary, and an orientation method to be used for finding the root monosaccharide
     # returns a dictionary of connected monosaccharides
-    def connect(self, image, monos, orientation_method):
-
+    def connect(self, monos, orientation_method, logger_name = ''):
+        
+        logger = logging.getLogger(logger_name+'.glycanconnections')
         mask_dict = monos.get("mask_dict",{})
         contours = monos.get("contours",{})
-        origin = image
+        origin = monos.get("original",)
         mono_dict = {}  # mono id = contour, point at center, radius, bounding rect, linkages, root or child
         all_masks, black_masks = self.get_masks(mask_dict)
 
@@ -48,6 +51,15 @@ class HeuristicConnector(GlycanConnector):
         mono_dict, v_count, h_count = self.link_monos(black_masks, mono_dict, average_mono_distance)
 
         mono_dict = self.find_root(mono_dict, v_count, h_count, origin, orientation_method)
+        
+        printmonodict = "{\n"
+        for key, value in mono_dict.items():
+            printmonodict+=key+": "
+            for x in value[1:6]:
+                printmonodict += str(x) + ", "
+            printmonodict += "\n"
+        printmonodict += "}"
+        logger.info(f"Monosaccharide Connection Dictionary:\n{printmonodict}")
         
         #print(mono_dict)
         # DEMO!!!
@@ -69,7 +81,7 @@ class HeuristicConnector(GlycanConnector):
         root = None
         
         #use orientation method to get glycan orientation
-        orientation = orientation_method.get_orientation(glycanimage=image, horizontal_count=h_count, vertical_count=v_count)
+        orientation, _ = orientation_method.get_orientation(glycanimage=image, horizontal_count=h_count, vertical_count=v_count)
         #left-right
         if orientation == 0:
             aux_list = sorted([(mono_id, mono_dict[mono_id][1][0]) for mono_id in mono_dict.keys()], key=itemgetter(1),
@@ -101,7 +113,7 @@ class HeuristicConnector(GlycanConnector):
                 mono_dict[mono_id].append("child")
             #print(mono_id, mono_dict[mono_id][1:])   
         return mono_dict
-    
+        
     #method to get the average distance betwen monosaccharides
     #requires a partial connection dictionary from fill_mono_dict
     #returns the average distance (number)
@@ -273,8 +285,113 @@ class HeuristicConnector(GlycanConnector):
         l = ((Ax - Bx) ** 2 + (By - Ay) ** 2) ** 0.5
         return l
     
+    #method to link monosaccharides that should be connected
+    #takes a binary image with monosaccharides removed
+    #takes the started connection dictionary
+    #takes the average monosaccharide distance
+    #returns the linked connection dictionary, and vertical and horizontal line count
     def link_monos(self, binary_img, mono_dict, avg_mono_distance):
-        raise NotImplementedError
+        diff = binary_img
+        imheight, imwidth, *channels = diff.shape
+        # loop through all mono to find connection
+        v_count = 0  # count vertical link vs horizontal
+        h_count = 0
+        for id_, mono in mono_dict.items():
+            #print(id)
+            boundaries = mono[0]
+            
+            x, y, w, h = mono[3]
+            cir_radius = int((((h ** 2 + w ** 2) ** 0.5) / 2) * self.cropfactor)
+            (centerX,centerY) = mono[1]
+            radius = mono[2]
+            
+            y1 = centerY - cir_radius
+            y2 = centerY + cir_radius
+            x1 = centerX - cir_radius
+            x2 = centerX + cir_radius
+            if y1 < 0:
+                y1 = 0
+            if x1 < 0:
+                x1 = 0
+            if y2 > imheight:
+                y2 = imheight
+            if x2 > imwidth:
+                x2 = imwidth
+            crop = diff[y1:y2,
+                   x1:x2]
+            
+            #cv2.imshow('fig1',crop)
+            #cv2.waitKey(0)
+            #cv2.destroyAllWindows()  
+
+            #crop_origin = ext_origin[centerY - cir_radius:centerY + cir_radius,
+                          #centerX - cir_radius:centerX + cir_radius]
+            contours_list, _ = cv2.findContours(crop,
+                                                cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            #aux = crop.copy()
+
+            for contour in contours_list:
+                #print(contour)
+                point_mo = cv2.moments(contour)
+                stop=0
+                point_centerX2 = 0
+                point_centerY2 = 0
+                for point in contour:
+                    point_centerX2 += point[0][0]
+                    point_centerY2 += point[0][1]
+                point_centerX2 = int(point_centerX2/len(contour))
+                point_centerY2 = int(point_centerY2/len(contour))
+
+
+                Ax = centerX
+                Ay = centerY
+
+                Bx = centerX - cir_radius + point_centerX2
+                By = centerY - cir_radius + point_centerY2
+                #################### length adjustable
+                for i in range(1, 200, 5):
+                    i = i / 100
+                    length = avg_mono_distance * i
+                    lenAB = ((Ax - Bx) ** 2 + (Ay - By) ** 2) ** 0.5
+                    if lenAB==0:
+                        lenAB=1
+                    Cx = int(Bx + (Bx - Ax) / lenAB * length)
+                    Cy = int(By + (By - Ay) / lenAB * length)
+                    for id_2 in mono_dict.keys():
+
+                        rectangle = mono_dict[id_2][3]
+
+                        # need function to detect first hit
+
+
+                        # cv2.circle(crop, (Cx, Cy), 4, (0, 0, 255), -1)
+
+                        # cv2.putText(origin, (id[-2:] + id_2[-2:]), (Cx, Cy), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (0, 0, 0))
+
+                        line = ((Ax, Ay), (Cx, Cy))
+                        if self.interaction_line_rect(line, rectangle) and id_2 != id_:
+                            # cv2.line(origin, (Ax, Ay), (Cx, Cy),
+                            #              (0, 0, 255), 1, 1, 0)
+                            # cv2.circle(origin, (Cx, Cy), 4, (0, 0, 255), -1)
+                            mono_dict = self.append_links(mono_dict, id_, id_2)
+                            # cv2.putText(origin, (id_[-2:] + id_2[-2:]), (Cx, Cy), cv2.FONT_HERSHEY_COMPLEX_SMALL, 0.5,
+                            #                 (0, 0, 0))
+                            if (abs(Ax - Cx) > abs(Ay - Cy)):
+                                    h_count += 1
+                            else:
+                                    v_count += 1
+                            stop=1
+                            break
+                    if stop ==1:
+                        break
+
+                    # DEMO!!! this mess with the crop image use for demo only
+                    #cv2.line(aux, (int(crop.shape[0] / 2), int(crop.shape[1] / 2)), (point_centerX2, point_centerY2),
+                             #(255, 255, 0), 1, 1, 0)
+        for i, mono in mono_dict.items():
+            if len(mono) == 4:
+                mono.append([])
+        return mono_dict, v_count, h_count   
         
     ### unused - intended to be a new linkage method but was worse than the original
     # def new_linker(self, binary_img, mono_dict, avg_mono_distance):
@@ -419,6 +536,9 @@ class HeuristicConnector(GlycanConnector):
 ### Subclass of HeuristicConnect; for connecting heuristically-identified monosaccharides    
 class OriginalConnector(HeuristicConnector):
     
+    def __init__(self):
+        super().__init__()
+        self.cropfactor = 1.5
     #method to start creating the connection dictionary; calls the heuristic_mono_finder method from the superclass HeuristicConnector
     #takes a list of monosaccharides from the dictionary returned by the monosaccharideid class
     #takes the black masks from get_masks
@@ -427,114 +547,14 @@ class OriginalConnector(HeuristicConnector):
         mono_dict, black_masks = self.heuristic_mono_finder(monos_list, black_masks)
         return mono_dict, black_masks
     
-    #method to connect monosaccharides
-    #takes a binary image, started connection dictionary from fill_mono_dict, and average monosaccharide distance
-    #returns dictionary with connections
-    #returns vertical and horizontal line count
-    def link_monos(self, binary_img, mono_dict, avg_mono_distance):
-        diff = binary_img
-        imheight, imwidth, *channels = diff.shape
-        # loop through all mono to find connection
-        v_count = 0  # count vertical link vs horizontal
-        h_count = 0
-        for id_, mono in mono_dict.items():
-            #print(id)
-            boundaries = mono[0]
-            
-            x, y, w, h = mono[3]
-            cir_radius = int((((h ** 2 + w ** 2) ** 0.5) / 2) * 1.5)
-            (centerX,centerY) = mono[1]
-            radius = mono[2]
-            
-            y1 = centerY - cir_radius
-            y2 = centerY + cir_radius
-            x1 = centerX - cir_radius
-            x2 = centerX + cir_radius
-            if y1 < 0:
-                y1 = 0
-            if x1 < 0:
-                x1 = 0
-            if y2 > imheight:
-                y2 = imheight
-            if x2 > imwidth:
-                x2 = imwidth
-            crop = diff[y1:y2,
-                   x1:x2]
-
-            #crop_origin = ext_origin[centerY - cir_radius:centerY + cir_radius,
-                          #centerX - cir_radius:centerX + cir_radius]
-            contours_list, _ = cv2.findContours(crop,
-                                                cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-            #aux = crop.copy()
-
-            for contour in contours_list:
-                #print(contour)
-                point_mo = cv2.moments(contour)
-                stop=0
-                point_centerX2 = 0
-                point_centerY2 = 0
-                for point in contour:
-                    point_centerX2 += point[0][0]
-                    point_centerY2 += point[0][1]
-                point_centerX2 = int(point_centerX2/len(contour))
-                point_centerY2 = int(point_centerY2/len(contour))
-
-
-                Ax = centerX
-                Ay = centerY
-
-                Bx = centerX - cir_radius + point_centerX2
-                By = centerY - cir_radius + point_centerY2
-                #################### length adjustable
-                for i in range(1, 200, 5):
-                    i = i / 100
-                    length = avg_mono_distance * i
-                    lenAB = ((Ax - Bx) ** 2 + (Ay - By) ** 2) ** 0.5
-                    if lenAB==0:
-                        lenAB=1
-                    Cx = int(Bx + (Bx - Ax) / lenAB * length)
-                    Cy = int(By + (By - Ay) / lenAB * length)
-                    for id_2 in mono_dict.keys():
-
-                        rectangle = mono_dict[id_2][3]
-
-                        # need function to detect first hit
-
-
-                        # cv2.circle(crop, (Cx, Cy), 4, (0, 0, 255), -1)
-
-                        # cv2.putText(origin, (id[-2:] + id_2[-2:]), (Cx, Cy), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (0, 0, 0))
-
-                        line = ((Ax, Ay), (Cx, Cy))
-                        if self.interaction_line_rect(line, rectangle) and id_2 != id_:
-                            # cv2.line(origin, (Ax, Ay), (Cx, Cy),
-                            #              (0, 0, 255), 1, 1, 0)
-                            # cv2.circle(origin, (Cx, Cy), 4, (0, 0, 255), -1)
-                            mono_dict = self.append_links(mono_dict, id_, id_2)
-                            # cv2.putText(origin, (id_[-2:] + id_2[-2:]), (Cx, Cy), cv2.FONT_HERSHEY_COMPLEX_SMALL, 0.5,
-                            #                 (0, 0, 0))
-                            if (abs(Ax - Cx) > abs(Ay - Cy)):
-                                    h_count += 1
-                            else:
-                                    v_count += 1
-                            stop=1
-                            break
-                    if stop ==1:
-                        break
-
-                    # DEMO!!! this mess with the crop image use for demo only
-                    #cv2.line(aux, (int(crop.shape[0] / 2), int(crop.shape[1] / 2)), (point_centerX2, point_centerY2),
-                             #(255, 255, 0), 1, 1, 0)
-        for i, mono in mono_dict.items():
-            if len(mono) == 4:
-                mono.append([])
-        return mono_dict, v_count, h_count 
-        return mono_dict, v_count, h_count
-
 
 # class to connect monosaccharides found with YOLO models
 class ConnectYOLO(HeuristicConnector):
-
+    
+    def __init__(self):
+        super().__init__()
+        self.cropfactor = 1.2
+        
     #method to start the connection dictionary
     #takes the monosaccharide list from monosaccharideid class returns
     #takes black_masks from get_masks
@@ -585,8 +605,8 @@ class ConnectYOLO(HeuristicConnector):
 
             # remove mono
             #cv2.circle(black_masks, (centerX, centerY), int(cir_radius * 0.12) + cir_radius, (0, 0, 0), -1)
-            p11 =(int(x*0.985), int(y*0.985 ))
-            p22=(int((x + w)*1.015), int((y + h)*1.015))
+            p11 =(int(x), int(y))
+            p22=(int((x + w)), int((y + h)))
             cv2.rectangle(black_masks, p11, p22, (0, 0, 0), -1)
             
             # circle to detect lines
@@ -621,109 +641,6 @@ class ConnectYOLO(HeuristicConnector):
         mono_rect = (x,y,w,h)
         return mono_rect
     
-    #method to link monosaccharides that should be connected
-    #takes a binary image with monosaccharides removed
-    #takes the started connection dictionary
-    #takes the average monosaccharide distance
-    #returns the linked connection dictionary, and vertical and horizontal line count
-    def link_monos(self, binary_img, mono_dict, avg_mono_distance):
-        diff = binary_img
-        imheight, imwidth, *channels = diff.shape
-        # loop through all mono to find connection
-        v_count = 0  # count vertical link vs horizontal
-        h_count = 0
-        for id_, mono in mono_dict.items():
-            #print(id)
-            boundaries = mono[0]
-            
-            x, y, w, h = mono[3]
-            cir_radius = int((((h ** 2 + w ** 2) ** 0.5) / 2) * 1.5)
-            (centerX,centerY) = mono[1]
-            radius = mono[2]
-            
-            y1 = centerY - cir_radius
-            y2 = centerY + cir_radius
-            x1 = centerX - cir_radius
-            x2 = centerX + cir_radius
-            if y1 < 0:
-                y1 = 0
-            if x1 < 0:
-                x1 = 0
-            if y2 > imheight:
-                y2 = imheight
-            if x2 > imwidth:
-                x2 = imwidth
-            crop = diff[y1:y2,
-                   x1:x2]
-
-            #crop_origin = ext_origin[centerY - cir_radius:centerY + cir_radius,
-                          #centerX - cir_radius:centerX + cir_radius]
-            contours_list, _ = cv2.findContours(crop,
-                                                cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-            #aux = crop.copy()
-
-            for contour in contours_list:
-                #print(contour)
-                point_mo = cv2.moments(contour)
-                stop=0
-                point_centerX2 = 0
-                point_centerY2 = 0
-                for point in contour:
-                    point_centerX2 += point[0][0]
-                    point_centerY2 += point[0][1]
-                point_centerX2 = int(point_centerX2/len(contour))
-                point_centerY2 = int(point_centerY2/len(contour))
-
-
-                Ax = centerX
-                Ay = centerY
-
-                Bx = centerX - radius + point_centerX2
-                By = centerY - radius + point_centerY2
-                #################### length adjustable
-                for i in range(1, 200, 5):
-                    i = i / 100
-                    length = avg_mono_distance * i
-                    lenAB = ((Ax - Bx) ** 2 + (Ay - By) ** 2) ** 0.5
-                    if lenAB==0:
-                        lenAB=1
-                    Cx = int(Bx + (Bx - Ax) / lenAB * length)
-                    Cy = int(By + (By - Ay) / lenAB * length)
-                    for id_2 in mono_dict.keys():
-
-                        rectangle = mono_dict[id_2][3]
-
-                        # need function to detect first hit
-
-
-                        # cv2.circle(crop, (Cx, Cy), 4, (0, 0, 255), -1)
-
-                        # cv2.putText(origin, (id[-2:] + id_2[-2:]), (Cx, Cy), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (0, 0, 0))
-
-                        line = ((Ax, Ay), (Cx, Cy))
-                        if self.interaction_line_rect(line, rectangle) and id_2 != id_:
-                            # cv2.line(origin, (Ax, Ay), (Cx, Cy),
-                            #              (0, 0, 255), 1, 1, 0)
-                            # cv2.circle(origin, (Cx, Cy), 4, (0, 0, 255), -1)
-                            mono_dict = self.append_links(mono_dict, id_, id_2)
-                            # cv2.putText(origin, (id_[-2:] + id_2[-2:]), (Cx, Cy), cv2.FONT_HERSHEY_COMPLEX_SMALL, 0.5,
-                            #                 (0, 0, 0))
-                            if (abs(Ax - Cx) > abs(Ay - Cy)):
-                                    h_count += 1
-                            else:
-                                    v_count += 1
-                            stop=1
-                            break
-                    if stop ==1:
-                        break
-
-                    # DEMO!!! this mess with the crop image use for demo only
-                    #cv2.line(aux, (int(crop.shape[0] / 2), int(crop.shape[1] / 2)), (point_centerX2, point_centerY2),
-                             #(255, 255, 0), 1, 1, 0)
-        for i, mono in mono_dict.items():
-            if len(mono) == 4:
-                mono.append([])
-        return mono_dict, v_count, h_count   
 
     
 ### unused - intended for new connection method which was worse

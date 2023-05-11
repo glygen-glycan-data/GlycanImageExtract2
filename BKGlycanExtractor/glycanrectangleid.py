@@ -251,7 +251,7 @@ class TrainingData(GlycanRectID):
                 continue
             split_line = line.split(' ')
             
-            box = boundingboxes.Training(image, class_ = int(float(split_line[0])), rel_cen_x = float(split_line[1]), rel_cen_y = float(split_line[2]), rel_w = float(split_line[3]), rel_h = float(split_line[4]))
+            box = boundingboxes.Training(image, class_ = int(split_line[0]), rel_cen_x = float(split_line[1]), rel_cen_y = float(split_line[2]), rel_w = float(split_line[3]), rel_h = float(split_line[4]))
             
             box.rel_to_abs()
             

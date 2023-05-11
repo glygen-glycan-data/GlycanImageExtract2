@@ -1,3 +1,4 @@
+
 # import matplotlib
 # matplotlib.use('tkagg')
 # import matplotlib.pyplot as plt
@@ -16,6 +17,11 @@ class TestModel:
             if confidence >= con_threshold:
                 return True
         return False
+    def check_composition(self, known_comp_dict, model_comp_dict):
+        for mono in known_comp_dict.keys():
+            if int(known_comp_dict[mono]) != int(model_comp_dict[mono]):
+                return False
+        return True
     def compare(self, boxes, training, comparison_alg, conf_threshold = 0.0):
         for box in boxes:
             if box.confidence < conf_threshold:
@@ -123,6 +129,49 @@ class TestModel:
                             logger.info("FP/FN, not enough overlap.")
         #print(results)
         return results
+    def compare_one(self, box, trainingbox, comparison_alg, conf_threshold = 0.0):
+        if box.confidence < conf_threshold:
+            logger.info(f'FN, training box not detected at confidence {conf_threshold}.')
+            return False
+        box.to_four_corners()
+        if not comparison_alg.have_intersection(trainingbox,box):
+            logger.info('FN, training box not detected.')
+            return False
+        else:                                       
+            logger.info("Training box intersects with detected box(es).")
+        if not comparison_alg.compare_class(trainingbox,box):
+            logger.info("FP/FN, incorrect class")
+            return False
+        else:
+            t_area = trainingbox.area()
+            d_area = box.area()
+            inter = comparison_alg.intersection_area(trainingbox,box)
+            if inter == 0:
+                #print("no tbox")
+                logger.info("FP, detection does not intersect with training box.")
+                return False
+            elif inter == t_area:
+                #print(comparison_alg.training_contained(tbox,dbox))
+                if comparison_alg.training_contained(trainingbox,box):
+                    logger.info("TP")
+                    return True
+                else:
+                    logger.info("FP/FN, detection area too large.")
+                    return False
+            elif inter == d_area:
+                if comparison_alg.detection_sufficient(trainingbox,box):
+                    logger.info("TP")
+                    return True
+                else:
+                    logger.info("FP/FN, detection area too small.")
+                    return False
+            else:
+                if comparison_alg.is_overlapping(trainingbox,box):
+                    logger.info("TP")
+                    return True
+                else:
+                    logger.info("FP/FN, not enough overlap.")
+                    return False
 
 class MonosImprovement(TestModel):
     def compare(self, boxes, training, comparison_alg, conf_threshold = 0.0):
@@ -292,3 +341,5 @@ class MonosImprovement(TestModel):
 
         #print(results)
         return newmonos
+    
+    

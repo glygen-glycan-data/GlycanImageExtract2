@@ -10,3 +10,12 @@ If they are not manually downloaded, the program will attempt to download on req
 You can create a new configuration directory if desired; place configs.ini inside this directory with all other configuration files and give the new directory as the third argument to mainprogram_example.py.
 
 The image extractor should be run in a virtual environment. requirements.txt outlines the packages sufficient for setup of the virtual environment.
+
+Training data used to train the YOLO models provided in the linked Google Drive is available in the TrainingData folder of that same Google Drive. This is provided for examples of the training images and classes used. The classes.txt file within the zip file lists classes used.
+* glycan.zip: Glycan_300img_5000iterations.weights
+* plusindividuals.zip: largerboxes_plusindividualglycans.weights
+* orientation.zip: orientation_redo.weights
+* monos.zip: yolov3_monos_new_v2.weights
+
+[LabelImg](https://github.com/heartexlabs/labelImg) was used to view and create YOLO training boxes.
+

@@ -29,8 +29,6 @@ class SearchGlycoCT(GlycanSearch):
         #print(params)
         #print(glycan)
         param = dict(seq=str(glycan).strip())
-        # for seq in self.glycan:
-        #     param = dict(seq=str(seq).strip())
         params.append(param)
         data = self.request("submit",tasks=json.dumps(params),developer_email="mmv71@georgetown.edu")
         #print(data)
@@ -56,15 +54,12 @@ class SearchGlycoCT(GlycanSearch):
         retval = []
         for job in data:
             result = None
-            for gtc in job.get("result",[]):
-                result = gtc
+            for res in job.get("result",[]):
+                result = res['accession']
                 break
             retval.append(result)
-
-        if retval[0] is not None:
-            return retval[0]["accession"]
-        else:
-            return None
+                                                                                                                            
+        return retval[0]
 
 #classs to send glycoCT description to GNOme
 #should be subsequent to more preferred search methods    
