@@ -8,6 +8,6 @@ matplotlib
 numpy
 opencv-contrib-python
 pdfplumber
-PyMuPDF
+PyMuPDF>=1.22.5
 rdflib
 requests
