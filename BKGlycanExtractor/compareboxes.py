@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-methods to compare 2 bounding boxes
+methods to compare bounding boxes
 assess ovelap, intersection over union value, class comparison, etc
 """
 
@@ -59,6 +59,62 @@ class CompareBoxes:
             return True
         else:
             return False
+        
+    def match_to_training(self, tboxes, dboxes):
+        
+        compare_dict = {}
+        for idx, tbox in enumerate(tboxes):
+            name = str(idx)
+            tbox.set_name(name)
+            
+            intersecting_boxes = []
+            for d_idx, dbox in enumerate(dboxes):
+                dbox_name = str(d_idx)
+                dbox.set_name(dbox_name)
+                dbox.to_four_corners()
+                if self.have_intersection(tbox, dbox):
+                    iou = self.iou(tbox, dbox)
+                    intersecting_boxes.append((iou, dbox))
+            
+            # sort by first element (iou)
+            intersecting_boxes.sort(reverse=True)
+            
+            matched_boxes = []
+            iou_conf = 0
+            for iou, dbox in intersecting_boxes:
+                if not self.compare_class(tbox, dbox):
+                    continue
+                else:
+                    t_area = tbox.area()
+                    d_area = dbox.area()
+                    inter = self.intersection_area(tbox, dbox)
+                    if inter == 0:
+                        break
+                    elif inter == t_area:
+                        if not self.training_contained(tbox, dbox):
+                            continue
+                    elif inter == d_area:
+                        if not self.detection_sufficient(tbox, dbox):
+                            continue
+                    else:
+                        if not self.is_overlapping(tbox, dbox):
+                            continue
+                # in descending order of iou
+                conf = dbox.get_confidence()
+                if conf > iou_conf: 
+                    iou_conf = conf
+                    matched_boxes.append(dbox)
+                    
+            compare_dict[name] = (tbox, matched_boxes)
+            
+        
+        # compare_dict: { tboxname : (tbox, [matched list])}
+        # matched list: [dbox_1, ..., dbox_n]
+        # where iou_1 > iou_2 > ... > iou_n
+        # and conf_1 < conf_2 < ... < conf_n
+            
+        return compare_dict
+                    
         
     def training_contained(self, training, detected):
         if (self.iou(training, detected) > self.containment_threshold):

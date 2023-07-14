@@ -5,7 +5,7 @@ Various tests for YOLO models
 
 import logging
 
-class ModelTest:
+class ModelTest:               
     def compare(self, boxes, training, comparison_alg, threshold=0.0):
         for box in boxes:
             if box.get_confidence() < threshold:

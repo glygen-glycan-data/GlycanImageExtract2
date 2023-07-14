@@ -46,16 +46,16 @@ class BoundingBox:
         self.rel_w = float(self.w/self.imwidth)
         self.rel_h = float(self.h/self.imheight) 
         
-    def annotate(self, image, defaulttext=''):
+    def annotate(self, image, defaulttext='', colour=(0,255,0)):
         self.to_four_corners()
         p1 = (self.x, self.y)
         p2 = (self.x2, self.y2)
-        cv2.rectangle(image, p1, p2, (0,255,0), 3)
-        if self.class_dictionary is not None:
+        cv2.rectangle(image, p1, p2, colour, 3)
+        if hasattr(self, 'class_dictionary'):
             text = self.class_dictionary[self.get_class()]
         else:
             text = defaulttext
-        cv2.putText(image, text, p1, cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (0,255,0))
+        cv2.putText(image, text, p1, cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, colour)
         return image
 
     def area(self):
@@ -98,6 +98,9 @@ class BoundingBox:
     
     def get_confidence(self):
         return self.confidence
+    
+    def get_name(self):
+        return self.name
         
     # convert relative bounding box to absolute bounding box
     def rel_to_abs(self):
@@ -119,6 +122,12 @@ class BoundingBox:
         assert self.w is not None
         self.x2 = self.x + self.w
         self.y2 = self.y + self.h
+        if self.x2 <= self.x:
+            self.w = 1
+            self.x2 = self.x+1
+        if self.y2 <= self.y:
+            self.h = 1
+            self.y2 = self.y+1
         
     def to_image_coords(self):
         p1 = (self.x, self.y)

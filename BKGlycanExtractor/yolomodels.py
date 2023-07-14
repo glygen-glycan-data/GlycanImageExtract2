@@ -120,9 +120,6 @@ class YOLOModel:
                 box.fix_borders()
                 
                 box.is_entire_image()
-                    
-                # if box.y<0:
-                #     box.y = 0
                 
                 box.to_four_corners()
 
@@ -195,7 +192,7 @@ class YOLOTrainingData:
             split_line = line.split(' ')
             
             box = boundingboxes.Training(
-                image, class_=int(split_line[0]),
+                image=image, class_=int(split_line[0]),
                 rel_cen_x=float(split_line[1]),
                 rel_cen_y=float(split_line[2]), rel_w=float(split_line[3]),
                 rel_h=float(split_line[4])
