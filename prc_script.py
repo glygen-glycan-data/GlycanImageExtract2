@@ -167,9 +167,9 @@ configs_file = os.path.join(configs_dir, "configs.ini")
 try:
     models = sys.argv[2]
 except IndexError:
-    models = "OriginalYOLONewest OriginalYOLO"
+    models = "NewYOLO OriginalYOLO"
 if os.path.isdir(models):
-    models = "OriginalYOLONewest OriginalYOLO"
+    models = "NewYOLO OriginalYOLO"
     
 # set type of model to be tested
 # you should change this in the program
