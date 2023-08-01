@@ -230,8 +230,10 @@ class HeuristicMonos(MonoID):
         
     def find_monos(self, image, **kw):
         # monos = {}
+        test = kw.get("test", False)
         img = self.crop_largest(image)
-        img = self.resize_image(img)
+        if not test:
+            img = self.resize_image(img)
         #save original image, and then format it for masking
         origin_image = img.copy()
         # monos["original"] = origin_image
@@ -345,6 +347,7 @@ class HeuristicMonos(MonoID):
                     continue
                 if "???" not in mono:
                     box.set_class(FoundMonosaccharide.backwards_class_dictionary[mono])
+                    box.set_dummy_confidence(1)
                     monosaccharide = FoundMonosaccharide(
                         monoid=mono+str(count), type_=1, boundingbox=box
                         )
@@ -428,10 +431,12 @@ class YOLOMonos(YOLOModel, MonoID):
     def find_monos(self, image, **kw):
         
         threshold = kw.get('threshold', 0.5)
+        test = kw.get('test', False)
         
         # monosaccharide finding formatting
         img = self.crop_largest(image)
-        img = self.resize_image(img)
+        if not test:
+            img = self.resize_image(img)
         
         origin_image = img.copy()
         

@@ -446,12 +446,20 @@ class Annotator:
                 "1KipiLdlUmGSDsr0WRUdM0ocsQPEmNQXo",
             "orientation.cfg":
                 "1AYren1VnmB67QLDxvDNbqduU8oAnv72x",
+            "orientation_flipped.cfg":
+                "1YXkSWjqjbx5_GkCrOdkIHrSocTAqu9WX",
+            "orientation_flipped.weights":
+                "1PQH6_JPpE_1o9WdhKAIGJdmOF5fI39Ew",
             "yolov3_monos_new_v2.weights":
                 "1h-QiO2FP7fU7IbvZjoF7fPf55N0DkTPp",
             "yolov3_monos_random.weights": 
                 "1m4nJqxrJLl1MamIugdyzRh6td4Br7OMg",
             "yolov3_monos_largerboxes.weights":
-                "1WQI9UiJkqGx68wy8sfh_Hl5LX6q1xH4-"
+                "1WQI9UiJkqGx68wy8sfh_Hl5LX6q1xH4-",
+            "rootmono.cfg":
+                "1RSgCYxkNvrPYann5MG7WybyBZS2UA5v0",
+            "yolov3_rootmono.weights":
+                "1dUTFbPA7XV-HztWeM5uto2mF_xo5F-3Z"
         }
         
         method_values = configparserobject[method_name]

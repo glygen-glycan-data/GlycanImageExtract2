@@ -77,7 +77,7 @@ class CompareBoxes:
                     intersecting_boxes.append((iou, dbox))
             
             # sort by first element (iou)
-            intersecting_boxes.sort(reverse=True)
+            intersecting_boxes.sort(key=lambda x: (x[0], x[1].get_confidence()), reverse=True)
             
             matched_boxes = []
             iou_conf = 0
