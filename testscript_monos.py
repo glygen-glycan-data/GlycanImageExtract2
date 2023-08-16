@@ -15,7 +15,6 @@ import os
 import sys
 
 import cv2
-import numpy as np
 
 import BKGlycanExtractor.compareboxes as compareboxes
 import BKGlycanExtractor.glycanannotator as glycanannotator

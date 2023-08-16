@@ -191,7 +191,7 @@ class YOLORootFinder(YOLOModel, RootFinder):
                                        mono, root_mono
                                        )
                 
-        print(intersection_list)
+        # print(intersection_list)
         # here check if identified root corresponds to identified mono
         max_int_idx = np.argmax(intersection_list)
         
