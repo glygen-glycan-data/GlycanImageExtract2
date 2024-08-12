@@ -13,9 +13,9 @@ import sys
 import time
 
 import cv2
-import fitz
+# import fitz
 import numpy as np
-import pdfplumber
+# import pdfplumber
 
 from .config import getfromgdrive
 from .pygly3.GlycanFormatter import GlycoCTFormat, GlycoCTParseError
