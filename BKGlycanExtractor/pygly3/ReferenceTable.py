@@ -1,9 +1,6 @@
 
 from pkg_resources import resource_stream
-try:
-    from configparser import SafeConfigParser
-except ImportError:
-    from ConfigParser import SafeConfigParser
+from configparser import ConfigParser as SafeConfigParser
 import os.path, sys
 
 class ReferenceTable(dict):
