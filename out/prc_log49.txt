@@ -1,0 +1,135 @@
+Start.
+
+G17621NP.png: Start
+small model
+Confidence: 0.91
+Unpadded boxes
+Training box checks:
+[ x0: 209    x2: 278    y0: 80    y2: 112    ]
+Training box intersects with detected box(es).
+[ x0: 61    x2: 130    y0: 62    y2: 94    ]
+Training box intersects with detected box(es).
+[ x0: 61    x2: 130    y0: 25    y2: 57    ]
+Training box intersects with detected box(es).
+[ x0: 24    x2: 93    y0: 62    y2: 94    ]
+Training box intersects with detected box(es).
+[ x0: 24    x2: 93    y0: 25    y2: 57    ]
+Training box intersects with detected box(es).
+[ x0: 172    x2: 241    y0: 80    y2: 112    ]
+Training box intersects with detected box(es).
+[ x0: 135    x2: 204    y0: 79    y2: 148    ]
+Training box intersects with detected box(es).
+[ x0: 135    x2: 204    y0: 80    y2: 112    ]
+Training box intersects with detected box(es).
+[ x0: 135    x2: 204    y0: 42    y2: 111    ]
+Training box intersects with detected box(es).
+[ x0: 98    x2: 167    y0: 116    y2: 167    ]
+Training box intersects with detected box(es).
+[ x0: 98    x2: 167    y0: 98    y2: 147    ]
+Training box intersects with detected box(es).
+[ x0: 98    x2: 167    y0: 42    y2: 93    ]
+Training box intersects with detected box(es).
+[ x0: 98    x2: 167    y0: 24    y2: 73    ]
+Training box intersects with detected box(es).
+[ x0: 61    x2: 130    y0: 136    y2: 168    ]
+Training box intersects with detected box(es).
+[ x0: 24    x2: 93    y0: 136    y2: 168    ]
+Training box intersects with detected box(es).
+Detected box checks:
+[ x0: 61    x2: 131    y0: 23    y2: 58    ]
+TP
+[ x0: 23    x2: 94    y0: 134    y2: 168    ]
+TP
+[ x0: 62    x2: 130    y0: 133    y2: 168    ]
+TP
+[ x0: 210    x2: 279    y0: 78    y2: 112    ]
+TP
+[ x0: 23    x2: 94    y0: 22    y2: 57    ]
+TP
+[ x0: 172    x2: 242    y0: 77    y2: 112    ]
+TP
+[ x0: 138    x2: 201    y0: 75    y2: 114    ]
+TP
+[ x0: 24    x2: 94    y0: 62    y2: 94    ]
+TP
+[ x0: 62    x2: 129    y0: 60    y2: 92    ]
+TP
+[ x0: 98    x2: 167    y0: 98    y2: 144    ]
+FP/FN, detection area too small.
+[ x0: 98    x2: 168    y0: 27    y2: 72    ]
+TP
+[ x0: 136    x2: 203    y0: 39    y2: 106    ]
+TP
+[ x0: 133    x2: 207    y0: 84    y2: 150    ]
+TP
+[ x0: 92    x2: 171    y0: 46    y2: 94    ]
+TP
+[ x0: 93    x2: 171    y0: 121    y2: 167    ]
+TP
+big model
+Confidence: 0.91
+Unpadded boxes
+Training box checks:
+[ x0: 209    x2: 278    y0: 80    y2: 112    ]
+Training box intersects with detected box(es).
+[ x0: 61    x2: 130    y0: 62    y2: 94    ]
+Training box intersects with detected box(es).
+[ x0: 61    x2: 130    y0: 25    y2: 57    ]
+Training box intersects with detected box(es).
+[ x0: 24    x2: 93    y0: 62    y2: 94    ]
+Training box intersects with detected box(es).
+[ x0: 24    x2: 93    y0: 25    y2: 57    ]
+Training box intersects with detected box(es).
+[ x0: 172    x2: 241    y0: 80    y2: 112    ]
+Training box intersects with detected box(es).
+[ x0: 135    x2: 204    y0: 79    y2: 148    ]
+Training box intersects with detected box(es).
+[ x0: 135    x2: 204    y0: 80    y2: 112    ]
+Training box intersects with detected box(es).
+[ x0: 135    x2: 204    y0: 42    y2: 111    ]
+Training box intersects with detected box(es).
+[ x0: 98    x2: 167    y0: 116    y2: 167    ]
+Training box intersects with detected box(es).
+[ x0: 98    x2: 167    y0: 98    y2: 147    ]
+Training box intersects with detected box(es).
+[ x0: 98    x2: 167    y0: 42    y2: 93    ]
+Training box intersects with detected box(es).
+[ x0: 98    x2: 167    y0: 24    y2: 73    ]
+Training box intersects with detected box(es).
+[ x0: 61    x2: 130    y0: 136    y2: 168    ]
+Training box intersects with detected box(es).
+[ x0: 24    x2: 93    y0: 136    y2: 168    ]
+Training box intersects with detected box(es).
+Detected box checks:
+[ x0: 174    x2: 242    y0: 78    y2: 112    ]
+TP
+[ x0: 211    x2: 279    y0: 77    y2: 112    ]
+TP
+[ x0: 61    x2: 129    y0: 133    y2: 166    ]
+TP
+[ x0: 101    x2: 164    y0: 40    y2: 97    ]
+TP
+[ x0: 24    x2: 91    y0: 135    y2: 167    ]
+TP
+[ x0: 23    x2: 95    y0: 23    y2: 55    ]
+TP
+[ x0: 100    x2: 165    y0: 116    y2: 167    ]
+FP/FN, detection area too small.
+[ x0: 135    x2: 204    y0: 41    y2: 111    ]
+TP
+[ x0: 24    x2: 94    y0: 61    y2: 92    ]
+TP
+[ x0: 61    x2: 131    y0: 23    y2: 56    ]
+TP
+[ x0: 96    x2: 169    y0: 23    y2: 72    ]
+TP
+[ x0: 137    x2: 200    y0: 81    y2: 145    ]
+FP/FN, detection area too small.
+[ x0: 64    x2: 126    y0: 61    y2: 91    ]
+TP
+[ x0: 101    x2: 165    y0: 93    y2: 144    ]
+TP
+G17621NP.png Finished
+File G17621NP.svg had an Unsupported file extension: svg.
+Confidence 0.90: Precision 0.9333333333333333, recall 0.9333333333333333
+Confidence 0.90: Precision 0.8571428571428571, recall 0.8571428571428571
