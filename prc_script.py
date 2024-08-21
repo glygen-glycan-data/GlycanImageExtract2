@@ -1,74 +1,17 @@
-# -*- coding: utf-8 -*-
-"""
-Create a precision recall curve to assess detection success
-"""
-
-# set matplotlib backend to avoid cv2 conflicts
+#set matplotlib backend to avoid cv2 conflicts
 import matplotlib
 matplotlib.use('tkagg')
 import matplotlib.pyplot as plt
 
-from decimal import Decimal
-import logging
-import os
-import sys
+#import framework for getting boxes, comparing them
+import glycanrectangleid as glycanrectangleid
+import compareboxes as compareboxes
+import modeltests as modeltests
 
-import cv2
+import sys, logging, cv2, os, random
 
-import BKGlycanExtractor.compareboxes as compareboxes
-import BKGlycanExtractor.glycanannotator as glycanannotator
-from BKGlycanExtractor.yolomodels import YOLOTrainingData
 
-def find_best_match(
-        training_name, match_dictionary, pairs, conf, disallowed_box=None
-        ):
-    tbox, matches = match_dictionary[training_name]
-    if disallowed_box is None:
-        for dbox in matches:
-            dbox_name = dbox.get_name()
-            if dbox.get_confidence() >= conf:
-                if dbox_name not in pairs:
-                    pairs[dbox_name] = tbox
-                    return
-                else:
-                    prev_t = pairs[dbox_name]
-                    prev_iou = box_comparer.iou(prev_t, dbox)
-                    new_iou = box_comparer.iou(tbox, dbox)
-                    if new_iou > prev_iou:
-                        pairs[dbox_name] = tbox
-                        find_best_match(
-                            prev_t.get_name(), match_dictionary,
-                            pairs, conf, dbox
-                            )
-                    else:
-                        continue
-        return
-    else:
-        found = False
-        for dbox in matches:
-            if dbox == disallowed_box:
-                found = True
-                continue
-            if found:
-                dbox_name = dbox.get_name()
-                if dbox.get_confidence() >= conf:
-                    if dbox_name not in pairs:
-                        pairs[dbox_name] = tbox
-                        return
-                    else:
-                        prev_t = pairs[dbox_name]
-                        prev_iou = box_comparer.iou(prev_t, dbox)
-                        new_iou = box_comparer.iou(tbox, dbox)
-                        if new_iou > prev_iou:
-                            pairs[dbox_name] = tbox
-                            find_best_match(
-                                prev_t.get_name(), match_dictionary,
-                                pairs, conf, dbox
-                                )
-                        else:
-                            continue
-        return
-    
+#get training box file
 def get_training_box_doc(file = None, direc = '.'):
     filename = file.split(".")[0]
     boxes_doc = os.path.join(direc,filename+".txt")
@@ -77,190 +20,174 @@ def get_training_box_doc(file = None, direc = '.'):
     else:
         return None
 
-def plot_prc(label, confidences, matched_boxes):
-    confidences = list(confidences)
-    confidences.sort()
-    
-    precision = []
-    recall = []
-    for conf in confidences:
-        results = []
-        # low to high threshold
-        for image, training_matches, detections in matched_boxes:
-            pairs = {}
-            for name, value in training_matches.items():
-                find_best_match(name, training_matches, pairs, conf)
-            # pairs is now full, dboxname: tbox
-            for name, value in training_matches.items():
-                tbox = value[0]
-                if tbox in pairs.values():
-                    results.append("TP")
-                    # tbox.annotate(image, colour=(255,0,0))
-                else:
-                    results.append("FN")
-                    # print("training not in pairs")
-            for detection in detections:
-                if detection.get_confidence() >= conf:
-                    try:
-                        if detection.get_name() not in pairs:
-                            results.append("FP")
-                            # print("detection not matched")
-                    # else:
-                        # detection.annotate(image, colour=(0,255,0))
-                    except AttributeError:
-                        results.append("FP")
-                        # print("detection not matched")
-            # cv2.imshow("match", image)
+#make plot
+def plotprecisionrecall(*args):
+    #args is dictionaries of precision/recall values at different confidences; dictionaries differ by some alg
+    for dictionary in args:
+        precision = []
+        recall = []
+        name = dictionary.get("name",'')
+        dictionary.pop("name")
+        print(dictionary.items())
+        for conf,results_list in dictionary.items():
+            if len(results_list) > 0:
+                fp = results_list.count('FP')
+                tp = results_list.count('TP')
+                pos = fp + tp
+                fn = results_list.count('FN')
+                tpfn = tp+fn
+                try: 
+                    prec = tp/pos
+                except ZeroDivisionError:
+                    prec = 0
+                rec = tp/tpfn
+                precision.append(prec)
+                recall.append(rec)
+                logger.info(f"Confidence 0.9{conf}: Precision {prec}, recall {rec}")
+            
+        recall, precision = zip(*sorted(zip(recall, precision)))
         
-            # cv2.waitKey(0)
-            # cv2.destroyAllWindows
-        fp = results.count("FP")
-        tp = results.count("TP")
-        pos = fp + tp
-        fn = results.count("FN")
-        tpfn = tp + fn
-        try: 
-            prec = tp/pos
-        except ZeroDivisionError:
-            prec = 0
-        rec = tp/tpfn
-        
-        if prec <= 0 and rec <= 0:
-            continue
-        precision.append(prec)
-        recall.append(rec)
-        logger.info(f"Confidence {conf}: Precision {prec}, recall {rec}")
-        # print(f"Confidence {conf}: Precision {prec}, recall {rec}")    
-        
-    recall, precision = zip(*sorted(zip(recall, precision)))
-    logger.info(f"recall: {recall}")
-    logger.info(f"precision: {precision}")
-    plt.figure(1)
-    if len(set(recall)) == 1 and len(set(precision)) == 1:
-        plt.plot(recall, precision, ".", label=label)
-    else:
-        plt.plot(recall, precision, "-",label=label)
-    
+        if len(set(recall)) == 1 and len(set(precision)) == 1:
+            plt.plot(recall,precision, ".", label = name)
+        else:
+            plt.plot(recall,precision, ".-",label = name)
+    plt.ylabel('Precision'
+)
+    plt.xlabel('Recall')
+    plt.xlim([0.8,1.1])
+    plt.ylim([0.8,1.1])
+    plt.axhline(y=1, color='k', linestyle='--')
+    plt.axvline(x=1, color='k', linestyle='--')
+    plt.legend(loc="best")
+    pr = plt.gcf()
+    return pr
 
-glycan_folder = sys.argv[1]
 
-detection_threshold = 0.95
-overlap_threshold = 0.75
-containment_threshold = 0.3
+#location for yolo configuration files
+base_configs = "./BKGlycanExtractor/config/"
+weight1=base_configs+"yolov3_6000final.weights"
+weight2=base_configs+"yolov3_10000final.weights"
+coreyolo=base_configs+"yolov3.cfg"
 
-annotator = glycanannotator.Annotator()
-training_box_interpreter = YOLOTrainingData()
-box_comparer = compareboxes.CompareRawBox(
-    detection_threshold = detection_threshold, 
-    overlap_threshold = overlap_threshold, 
-    containment_threshold = containment_threshold
-    )
 
-try:
-    configs_dir = sys.argv[3]
-except IndexError:
-    configs_dir = "./BKGlycanExtractor/config/"
-configs_file = os.path.join(configs_dir, "configs.ini")
+#provide directory to search and directory to save plot
+search_direc = sys.argv[1]
+output_direc = sys.argv[2]
 
-# provide models as space-separated list in quotes 
-# i.e. "YOLOMonos YOLOMonos2"
-try:
-    models = sys.argv[2]
-except IndexError:
-    models = "NewYOLO OriginalYOLO"
-if os.path.isdir(models):
-    models = "NewYOLO OriginalYOLO"
-    
-# set type of model to be tested
-# you should change this in the program
-# it may affect the comparison methods you want to use
-prefix = "glycanfinding."
+training_box_interpreter = glycanrectangleid.TrainingData()
+#padded_box_comparer = compareboxes.ComparePaddedBox()
+unpadded_box_comparer = compareboxes.CompareRawBox()
+glycan_checker = modeltests.TestModel()
 
-print("Testing models", models, "of type", prefix)
-print("If type seems wrong, look at the script. You need to edit comparison finding for the appropriate type.")
 
+#methods for comparison    
+annotator = glycanrectangleid.OriginalYOLO(weights = weight1, net = coreyolo)
+annotator2 = glycanrectangleid.OriginalYOLO(weights = weight2, net = coreyolo)
+#annotator3 = glycanrectangleid.OriginalYOLO(weights = weight3, net = coreyolo)
+
+annotator_dict = {
+    "small model" : annotator,
+    "big model" : annotator2,
+    }
+
+
+if os.path.isdir(os.path.join(output_direc)):
+    pass
+else:
+    os.makedirs(os.path.join(output_direc))
+
+#set up logging
 logger = logging.getLogger("test")
 logger.setLevel(logging.INFO)
 
-annotatelogfile = os.path.abspath("./prc_log.txt")
+annotatelogfile = f"{output_direc}/prc_log.txt"
+if os.path.isfile(annotatelogfile):
+    tag = str(random.randint(1,100))
+    annotatelogfile = f"{output_direc}/prc_log"+tag+".txt"
+    print("Directory already contains prc curve log - check")
 
 handler = logging.FileHandler(annotatelogfile)
 handler.setLevel(logging.INFO)
 handler.setFormatter(logging.Formatter('%(message)s'))
 logger.addHandler(handler)
 logger.info("Start.\n")
-logger.info("IOU thresholds:")
-logger.info("Glycan fully contained in box: "+str(containment_threshold))
-logger.info("Detection smaller than glycan: "+str(detection_threshold))
-logger.info("Overlapping: "+str(overlap_threshold))
 
-models = models.split()
-method_dict = {}    
-for model in models:
-    method = annotator.read_one_config(
-        configs_dir, configs_file, prefix, model
-        )
-    method_dict[model] = method
+#set up dictionaries
+results_dicts = []
+for desc, annotator in annotator_dict.items():
+    unpadded_dict = {
+                "0": [],
+                "1": [],
+                "2": [],
+                "3": [],
+                "4": [],
+                "5": [],
+                "6": [],
+                "7": [],
+                "8": [],
+                "9": [],
+                "name": desc
+                }
+    results_dicts.append(unpadded_dict)
+    
 
-
-
-for desc, method in method_dict.items():
-    print("Method:", desc)
-    results = []
-    confidences = set()
-    method.set_logger("test")
-
-    for glycan_file in os.scandir(glycan_folder):
-        name = glycan_file.name
-        if not name.endswith("png"):
-            continue
-        print(name)
-        longname = os.path.abspath(glycan_file)
+#scan through each png
+for file in os.scandir(search_direc):
+    break_flag = False
+    
+    name = file.name        
+    if name.endswith("png"):
+        print(name, "Start")
+        logger.info(f"{name}: Start")
+        longname = os.path.join(search_direc,name)
         image = cv2.imread(longname)
-        training_box_doc = get_training_box_doc(
-            file = name, direc = glycan_folder
-            )
+        training_box_doc = get_training_box_doc(file = name, direc = search_direc)
+        if not training_box_doc:
+            issue = f"No training data for image {name}."
+            logger.warning(issue)
+            print(issue)
+            logger.info(f"Finished: {name}")
+            continue
+        training = training_box_interpreter.get_rects(image=image,coord_file = training_box_doc)
         
-        trained_glycans = training_box_interpreter.read_boxes(
-            image, training_box_doc
-            )
-        
-        detections = method.find_glycans(image)
-        
-        training_matches = box_comparer.match_to_training(
-            trained_glycans, detections
-            )
-        
-        confidences.update(
-            [Decimal(str(round(detection.get_confidence(), 4))) for detection in detections]
-            )
-        
-        # showim = image.copy()
-        
-        # for training in trained_glycans:
-        #     training.annotate(showim, colour=(255,0,0))
+        #run each annotation method once, get results for each tested confidence level
+        for desc,annotation_method in annotator_dict.items():
+            logger.info(desc)
             
-        # for dec in detections:
-        #     dec.annotate(showim, colour=(0,255,0))
+            unpadded_boxes, padded_boxes = annotation_method.get_rects(image = image)
+
+            for j, confidence in enumerate([(9+x*0.1)*0.1 for x in range(1,2,1)]):
+                logger.info(f'Confidence: {confidence}')
+                logger.info("Unpadded boxes")
+                print('Confidence Threshold:',confidence)
+                unpadded_results = glycan_checker.compare(unpadded_boxes,training,unpadded_box_comparer, image, confidence)
+
+                for dictionary in results_dicts:
+                    if dictionary.get("name") == desc:
+                        [dictionary[str(j)].append(result) for result in unpadded_results]
+            if break_flag:
+                continue
             
-        # cv2.imshow('boxes', showim)
-        # cv2.waitKey(0)
-        # cv2.destroyAllWindows
+    elif name.endswith(".txt"):
+        continue
+    else:
+        extn = name.split(".")[1]
+        print('File %s had an Unsupported file extension: %s.'%(name,extn))
+        logger.warning('File %s had an Unsupported file extension: %s.'%(name,extn))
+        continue
+    logger.info("%s Finished", name)
 
-        results.append((image, training_matches, detections))
-        
-    plt.figure(1)
-    plot_prc(desc, confidences, results)
-plt.ylabel('Precision')
-plt.xlabel('Recall')
-plt.xlim([0.0, 1.1])
-plt.ylim([0.0, 1.1])
-plt.axhline(y=1, color='k', linestyle='--')
-plt.axvline(x=1, color='k', linestyle='--')
-plt.legend(loc="best")
 
-impath = os.path.abspath("./prc.png")
-plt.savefig(impath)
+#make plot    
+prc = plotprecisionrecall(*results_dicts)    
+
+
+#save plot
+path = f"{output_direc}/precisionrecallplot.png"
+if os.path.isfile(path):
+    path = f"{output_direc}/precisionrecallplot"+tag+".png"
+    print("Directory already contains prc curve file - check")
+plt.savefig(path)
 plt.close()
 
 #close handlers
