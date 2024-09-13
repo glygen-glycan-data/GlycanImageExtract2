@@ -17,7 +17,7 @@ YOLOTrainingData processes training.txt files
 # and we want explicit defintions of class -> semantic info
 
 import os
-
+import math
 import cv2
 import numpy as np
 
@@ -51,7 +51,9 @@ class YOLOModel:
         # print('end YOLOModel.__init__')
 
     # should allow setting a minimum confidence threshold for returns
-    def get_YOLO_output(self, image_dict, threshold, **kw):
+    def get_YOLO_output(self, image, threshold, **kw):
+
+        image_dict = self.format_image(image)
         
         request_padding = kw.get("request_padding", False)
         multi_class = kw.get("class_options", False)
@@ -69,64 +71,66 @@ class YOLOModel:
         for out in outs:
             #print(out)
             for detection in out:
-                #print(detection)
-                scores = detection[5:]
-                #print(scores)
-                class_id = np.argmax(scores)
-                confidence = scores[class_id]
-                
-                if multi_class:
-                
-                    scores[class_id] = 0.
-                    class_options = {str(class_id): confidence}
-                
-                    while np.any(scores):
+
+                if not any(math.isnan(x) for x in detection):
+                    #print(detection)
+                    scores = detection[5:]
                     #print(scores)
-                        classopt = np.argmax(scores)
-                        confopt = scores[classopt]
-                        scores[classopt] = 0.
-                        class_options[str(classopt)] = confopt
-                
-                    if len(class_options) > 1:
-                        message = "WARNING: More than one class possible: " \
-                                  + str(class_options)
-                        # print(message)
-                        self.logger.warning(message)
-                        
-                    box = boundingboxes.Detected(
-                        confidence, image=origin_image, class_=class_id,
-                        white_space=white_space, rel_cen_x=detection[0],
-                        rel_cen_y=detection[1], rel_w=detection[2],
-                        rel_h=detection[3], class_options=class_options
-                        )
-    
-                else: 
-                    box = boundingboxes.Detected(
-                        confidence, image=origin_image, class_=class_id,
-                        white_space=white_space, rel_cen_x=detection[0],
-                        rel_cen_y=detection[1], rel_w = detection[2],
-                        rel_h=detection[3]
-                        )
+                    class_id = np.argmax(scores)
+                    confidence = scores[class_id]
+                    
+                    if multi_class:
+                    
+                        scores[class_id] = 0.
+                        class_options = {str(class_id): confidence}
+                    
+                        while np.any(scores):
+                        #print(scores)
+                            classopt = np.argmax(scores)
+                            confopt = scores[classopt]
+                            scores[classopt] = 0.
+                            class_options[str(classopt)] = confopt
+                    
+                        if len(class_options) > 1:
+                            message = "WARNING: More than one class possible: " \
+                                    + str(class_options)
+                            print(message)
+                            # self.logger.warning(message)
+                            
+                        box = boundingboxes.BoundingBox(
+                            confidence=confidence, image=origin_image, class_=class_id,
+                            white_space=white_space, rel_cen_x=detection[0],
+                            rel_cen_y=detection[1], rel_w=detection[2],
+                            rel_h=detection[3], class_options=class_options
+                            )
+        
+                    else: 
+                        box = boundingboxes.BoundingBox(
+                            confidence=confidence, image=origin_image, class_=class_id,
+                            white_space=white_space, rel_cen_x=detection[0],
+                            rel_cen_y=detection[1], rel_w = detection[2],
+                            rel_h=detection[3]
+                            )
 
-                box.rel_to_abs()
-                
-                box.fix_image()
-                
-                box.center_to_corner()
-                
-                if request_padding:
-                    box.pad_borders()
-                
-                box.fix_borders()
-                
-                box.is_entire_image()
-                
-                box.to_four_corners()
+                    box.rel_to_abs()
+                    
+                    box.fix_image()
+                    
+                    box.center_to_corner()
+                    
+                    if request_padding:
+                        box.pad_borders()
+                    
+                    box.fix_borders()
+                    
+                    box.is_entire_image()
+                    
+                    box.to_four_corners()
 
-                boxes.append(box)
+                    boxes.append(box)
 
-                confidences.append(float(confidence))
-                class_ids.append(class_id)
+                    confidences.append(float(confidence))
+                    class_ids.append(class_id)
 
         boxesfornms = [bbox.to_list() for bbox in boxes]
         

@@ -48,8 +48,12 @@ for file in os.scandir(glycan_folder):
     shutil.copyfile(glycan_file, os.path.join(workdir, "input", glycan_name))  
     
     annotator.set_loggers(workdir, file, methods)
-    annotation, results = annotator.annotate_file(glycan_file, methods)
-    annotator.save_results(workdir, glycan_file, results, annotation)
-    annotator.close_logger(glycan_file)
+
+    results = annotator.annotate_file(glycan_file, methods)
+
+    print("results:",results)
+
+    # annotator.save_results(workdir, glycan_file, results, annotation)
+    # annotator.close_logger(glycan_file)
     
 print("Finished.")

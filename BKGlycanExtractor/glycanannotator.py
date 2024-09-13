@@ -26,8 +26,42 @@ from . import rootmonofinding
 from . import glycanbuilding
 from . import glycansearch
 
+from BKGlycanExtractor.semantics import Image_Semantics, Figure_Semantics, Glycan_Semantics
+
 class Annotator:
-    def annotate_file(self, glycanfile, methods):        
+    def run(self,configs,image):
+        glycanfinder = configs.get("glycanfinder")
+        monosfinder = configs.get("mono_id")
+        linkfinder = configs.get("connector")
+        rootfinder = configs.get("rootfinder") 
+        builder = configs.get("builder")
+        searches = configs.get("search")
+
+
+        img_semantics = Image_Semantics()
+        glycan_semantics = Glycan_Semantics()
+
+
+        # call the semantics class and pass image, so that the skeleton can be filled with some data
+        figure_semantics = Figure_Semantics(image)
+        
+        # Image_Semantics has all the common data that is stored in an obj - JSON format
+        # img_semantics = Image_Semantics()
+        # img_semantics.create_image_semantics(figure_semantics)
+
+        glycanfinder.find_objects(figure_semantics)
+
+        for gly_obj in figure_semantics.glycans():
+            monosfinder.find_objects(gly_obj)
+            linkfinder.find_objects(gly_obj)
+            rootfinder.find_objects(gly_obj)
+
+        # print("\ngly_obj",gly_obj)
+        return figure_semantics.semantics
+
+
+
+    def annotate_file(self, glycanfile, methods):       
         objecttype = self.get_object_type(glycanfile)
         # print(objecttype)
         if objecttype == "pdf":
@@ -40,7 +74,7 @@ class Annotator:
             pass
         
         return annotation, results
-    
+
     def annotate_pdf(self, glycanpdf, methods):
         pdf_file = pdfplumber.open(glycanpdf)
         array=[]
@@ -160,12 +194,12 @@ class Annotator:
                         )
         
         return pdf, results
-    
+
     def annotate_png(self, glycanpng, methods):
         glycanimage = cv2.imread(glycanpng)
         glycanimage, resultslist = self.annotate_image(glycanimage, methods)
         return glycanimage, resultslist
-    
+        
     def annotate_image(self, glycanimage, methods):
         glycanfinder = methods.get("glycanfinder")
         monos = methods.get("mono_id")
@@ -183,39 +217,44 @@ class Annotator:
             single_glycanimage = glycanimage[y:y2, x:x2].copy()
             glycan_info = monos.find_monos(single_glycanimage)
             count += 1
-            connector.connect(glycan_info)
+            # connector.connect(glycan_info)
             rootconf = root_monos.find_root_mono(glycan_info)
-            glycoCT = builder(glycan_info)
+            connect_mono_dict = connector.connect(glycan_info)
             
-            gctparser = GlycoCTFormat()
-            count_dictionary = glycan_info.get_composition()
-            total_count = sum(count_dictionary.values())
-            for searchmethod in searches:
-                accession = None
-                if glycoCT is not None:
-                    try:
-                        g = gctparser.toGlycan(glycoCT)
-                    except GlycoCTParseError:
-                        g = None
-                    if g is not None:
-                        comp = g.iupac_composition()
-                        # this needs to be changed to add new monos
-                        # not ideal
-                        comptotal = sum(map(comp.get, (
-                            "Glc", "GlcNAc", "Gal", "GalNAc",
-                            "NeuAc", "NeuGc", "Man", "Fuc"
-                            )))
-                        if comptotal == total_count:
-                            self.logger.info(
-                                f"\n{type(searchmethod).__name__} submitting:{glycoCT}"
-                                )
-                            accession = searchmethod(glycoCT)
-                        else:
-                            glycoCT = None
-                    else:
-                        glycoCT = None
-                if accession is not None:
-                    break
+            print("rootconf:",glycan_info)
+
+            print("--->>>>connect_mono_dict",connect_mono_dict)
+        #     glycoCT = builder(glycan_info)
+            
+        #     gctparser = GlycoCTFormat()
+        #     count_dictionary = glycan_info.get_composition()
+        #     total_count = sum(count_dictionary.values())
+        #     for searchmethod in searches:
+        #         accession = None
+        #         if glycoCT is not None:
+        #             try:
+        #                 g = gctparser.toGlycan(glycoCT)
+        #             except GlycoCTParseError:
+        #                 g = None
+        #             if g is not None:
+        #                 comp = g.iupac_composition()
+        #                 # this needs to be changed to add new monos
+        #                 # not ideal
+        #                 comptotal = sum(map(comp.get, (
+        #                     "Glc", "GlcNAc", "Gal", "GalNAc",
+        #                     "NeuAc", "NeuGc", "Man", "Fuc"
+        #                     )))
+        #                 if comptotal == total_count:
+        #                     self.logger.info(
+        #                         f"\n{type(searchmethod).__name__} submitting:{glycoCT}"
+        #                         )
+        #                     accession = searchmethod(glycoCT)
+        #                 else:
+        #                     glycoCT = None
+        #             else:
+        #                 glycoCT = None
+        #         if accession is not None:
+        #             break
             
             [x0, y0, x1, y1] = glycan.to_pdf_coords()
             (x, y), (x2, y2) = glycan.to_image_coords()
@@ -223,19 +262,20 @@ class Annotator:
             p1, p2 = (x, y), (x2, y2)
             cv2.rectangle(final, p1, p2, (0,255,0), 3)
                 
-            returninfo = {
-                "name" : glycan_info.get_composition_string(),
-                "accession": accession,
-                "origimage": glycan_info.get_image(),
-                "confidence": str(round(glycan.get_confidence(), 2)),
-                "annotatedimage": glycan_info.get_annotated_image(),
-                "pdfcoordinates": {"x0": x0, "y0": y0, "x1": x1, "y1": y1},
-                "glycoCT": glycoCT,
-                }
+        #     returninfo = {
+        #         "name" : glycan_info.get_composition_string(),
+        #         "accession": accession,
+        #         "origimage": glycan_info.get_image(),
+        #         "confidence": str(round(glycan.get_confidence(), 2)),
+        #         "annotatedimage": glycan_info.get_annotated_image(),
+        #         "pdfcoordinates": {"x0": x0, "y0": y0, "x1": x1, "y1": y1},
+        #         "glycoCT": glycoCT,
+        #         }
 
-            returninfo = self.get_uri(returninfo, count_dictionary)
-            results.append(returninfo)
-        return final, results
+        #     returninfo = self.get_uri(returninfo, count_dictionary)
+        #     results.append(returninfo)
+        return final, glycan_info
+        # return glycan_info
     
     def close_logger(self, glycanfile):
         glycan_name = os.path.basename(glycanfile)
