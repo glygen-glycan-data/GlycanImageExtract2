@@ -29,17 +29,20 @@ from . import glycansearch
 from BKGlycanExtractor.semantics import Image_Semantics, Figure_Semantics, Glycan_Semantics
 
 class Annotator:
-    def run(self,configs,image):
-        glycanfinder = configs.get("glycanfinder")
-        monosfinder = configs.get("mono_id")
-        linkfinder = configs.get("connector")
-        rootfinder = configs.get("rootfinder") 
-        builder = configs.get("builder")
-        searches = configs.get("search")
+    def __init__(self,configs_dir, configs_file, pipeline_name):
+        self.configs = self.read_pipeline_configs(configs_dir, configs_file, pipeline_name)
+
+    def run(self,image):
+        glycanfinder = self.configs.get("glycanfinder")
+        monosfinder = self.configs.get("mono_id")
+        linkfinder = self.configs.get("connector")
+        rootfinder = self.configs.get("rootfinder") 
+        builder = self.configs.get("builder")
+        searches = self.configs.get("search")
 
 
-        img_semantics = Image_Semantics()
-        glycan_semantics = Glycan_Semantics()
+        # img_semantics = Image_Semantics()
+        # glycan_semantics = Glycan_Semantics()
 
 
         # call the semantics class and pass image, so that the skeleton can be filled with some data
@@ -52,9 +55,9 @@ class Annotator:
         glycanfinder.find_objects(figure_semantics)
 
         for gly_obj in figure_semantics.glycans():
-            monosfinder.find_objects(gly_obj)
-            linkfinder.find_objects(gly_obj)
-            rootfinder.find_objects(gly_obj)
+            monosfinder.find_objects(obj=gly_obj)
+            linkfinder.find_objects(obj=gly_obj)
+            rootfinder.find_objects(obj=gly_obj)
 
         # print("\ngly_obj",gly_obj)
         return figure_semantics.semantics
@@ -522,4 +525,5 @@ class Annotator:
                 method_configs[key] = filename
         if not method_configs:
             return eval(prefix+method_class+"()")
+        print("\nprefix",prefix,method_class)
         return eval(prefix+method_class+"(method_configs)")

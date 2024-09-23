@@ -17,10 +17,11 @@ class BoundingBox:
         if bounding_box is not None:
             bounding_box.copy_to(self)
         else:
-            image = kw["image"]
-            height, width, channels = image.shape
-            self.imwidth = width
-            self.imheight = height
+            if kw.get('image',None) is not None:
+                image = kw["image"]
+                height, width, channels = image.shape
+                self.imwidth = width
+                self.imheight = height
             self.rel_cen_x = kw.get("rel_cen_x", None)
             self.rel_cen_y = kw.get("rel_cen_y", None)
             self.rel_w = kw.get("rel_w", None)
@@ -37,6 +38,20 @@ class BoundingBox:
             self.class_name = kw.get("class_name", '')
             self.whitespace = kw.get("white_space", 0)
             self.confidence = kw.get("confidence", 0)
+            
+    def clone(self):
+        bb = BoundingBox()
+        for attr in dir(self):
+            if attr.startswith('_'):
+                continue
+            val = getattr(self,attr)
+            if not (isinstance(val,int) or \
+               	    isinstance(val,str) or \
+                    isinstance(val,float) or \
+                    isinstance(val,type(None))):
+                continue		
+            setattr(bb,attr,getattr(self,attr))
+        return bb
         
     # convert an absolute bounding box into a relative bounding box
     def abs_to_rel(self):
