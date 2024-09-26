@@ -1,52 +1,84 @@
 import os
-import numpy as np
-import cv2
 import sys
 
 import matplotlib
 # matplotlib.use('tkagg')
 matplotlib.use('Agg') 
 import matplotlib.pyplot as plt  
+import argparse
 
-import BKGlycanExtractor.monosaccharideid as mono_finder
 import modeltests as mt
+from BKGlycanExtractor.glycanannotator import Config_Manager
 
-try:
-    configs_dir = sys.argv[1]
-except IndexError:
-    configs_dir = "./BKGlycanExtractor/config/"
-configs_file = os.path.join(configs_dir, "configs.ini")
 
-try:
-    data_folder = sys.argv[2]
-except IndexError:
-    data_folder = "./data/"
+'''
+optinal CMD arguments:
+1) known_semantics pipeline [optional, default-'KnownSemantics'] - for ground truth data
+2) test pipelines [optional, default-'YOLOMonosAnnotator'] - can be a single/multiple pipelines
+3) directory path [required] - where all txt files (ground truth) and png/jpg(test),etc files are stores
+'''
+
+parser = argparse.ArgumentParser(description="Start")
+
+# optional argument
+parser.add_argument(
+    '--known_pipeline_name',
+    type = str,
+    default = 'KnownSemantics',
+    help = 'Known Semantics Pipeline (default: KnownSemantics)'
+)
+
+# optional argument
+parser.add_argument(
+    '--pipeline_name',
+    type = str,
+    nargs = '+', # allows one or more values
+    default = ['YOLOMonosAnnotator'],
+    help = 'Test pipeline(s) (default: YOLOMonosAnnotator)'
+)
+
+# required argument
+parser.add_argument(
+    '--data_folder',
+    type = str,
+    required = True,
+    help = 'Directory path where all txt files and png/jpg files are stored (required)'
+)
+
+args = parser.parse_args()
+km_pipeline_name = args.known_pipeline_name
+pipeline_name = args.pipeline_name
+data_folder = args.data_folder
+
 
 '''
 created find_boxes method for the YOLOMonos and KnownMonos
-find_boxes() --> generates padded and unpadded boxes for YOLOMonos 
-but find_objects() generates only unpadded_boxes with the entire semantic obj structure
+find_boxes() --> unpadded/padded boxes for YOLOMonos 
 
-TestModel class handles:
+Finder_Evaluator class handles:
 - reading the folder and formatting the data and configs
 - getting boxes data - KnownMonos() and YOLOMonos()
 - comparing the ground truth and predicted boxes based on IOU
 - producing precision-recall plot
 '''
 
-pipeline_name = "BaseFinder"
-
 
 if __name__ == "__main__": 
-    pipeline = mt.TestModel(configs_dir, configs_file, pipeline_name, data_folder)
+    config = Config_Manager()
 
-    pipeline.run() 
-    pipeline.plotprecisionrecall() 
+    # pipeline accepts one/multiple names
+    pipeline = config.get(pipeline_name)
+    pipeline_km = config.get(km_pipeline_name)
+
+    evaluator = mt.Finder_Evaluator(pipeline,pipeline_km)
+
+    # maybe generate/store x-y coordinates and keep the work of plotting for the user
+    evaluator.plotprecisionrecall(data_folder)
 
     print("Done")
 
 
-                
+
 
 
 

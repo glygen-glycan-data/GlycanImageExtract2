@@ -14,9 +14,12 @@ import cv2
 import logging
 import math
 import numpy as np
+import os
+import sys
 
 from .boundingboxes import BoundingBox
 from .yolomodels import YOLOModel
+from BKGlycanExtractor.semantics import Figure_Semantics,File_Semantics
 
 # class_dictionary = {
 #     0: "GlcNAc",
@@ -228,6 +231,9 @@ class HeuristicMonos(MonoID):
         # cv2.imshow("different", diff)
         # cv2.waitKey(0)
         return 1 - score
+
+    def execute(self, obj):
+        self.find_objects(obj)
         
 
     def find_objects(self, obj):
@@ -237,7 +243,7 @@ class HeuristicMonos(MonoID):
         image = obj.get('image')
         img = self.crop_largest(image)
 
-        if not img_resize:
+        if img_resize:
             img = self.resize_image(img)
 
         #save original image, and then format it for masking
@@ -246,8 +252,7 @@ class HeuristicMonos(MonoID):
         img = self.smooth_and_blur(img)
         
         hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-        img_width = img.shape[1]
-        img_height = img.shape[0]
+        img_height, img_width, _ = img.shape
 
         # read color range in config folder
         #origin = img.copy()
@@ -443,41 +448,30 @@ class HeuristicMonos(MonoID):
         kernel = np.array([[-1, -1, -1], [-1, 9, -1], [-1, -1, -1]])
         img = cv2.filter2D(img, -1, kernel)
         return img
-    
-    
-class YOLOMonos(YOLOModel, MonoID):
-    def __init__(self, configs,threshold=0.5,resize_image=False):
-        super().__init__(configs)
-        self.threshold = threshold
-        self.img_resize = resize_image
 
-    def find_objects(self, obj):
-        
-        # threshold = kw.get('threshold', 0.5)
-        # resize_image = kw.get('resize_image', False)
-        threshold = self.threshold
+
+    def find_boxes(self, image):
         img_resize = self.img_resize
 
-        image = obj.get('image')
-        
-        # monosaccharide finding formatting
         img = self.crop_largest(image)
-        
-        if not img_resize:
+
+        if img_resize:
             img = self.resize_image(img)
-        
+
+        #save original image, and then format it for masking
         origin_image = img.copy()
-
-        # print("img",img)
+        # monos["original"] = origin_image
+        img = self.smooth_and_blur(img)
         
-        # YOLO formatting
-        # image_dict = self.format_image(img)
-        
-        mono_boxes = self.get_YOLO_output(img, threshold,class_options=True)
+        hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
 
-        # Contours: monos_boxes is monos_list which was saved as monos["contours"] = monos_list  in link-prediction code
+        img_height, img_width, _ = img.shape
 
-        final = origin_image.copy()
+        # read color range in config folder
+        #origin = img.copy()
+        final = img.copy()  # final annotated pieces
+
+        mask_array, mask_array_name, mask_dict = self.get_masks(hsv)
         
         monoCount_dict = {
             "GlcNAc": 0, 
@@ -489,26 +483,120 @@ class YOLOMonos(YOLOModel, MonoID):
             "Glc": 0, 
             "NeuGc": 0,
             }
-        
-        monos = []
+
+        mono_boxes = []
+
         count = 0
-        for mono in mono_boxes:
+        for color in mask_array_name:
+            if color == "black_mask":
+                continue
+            contours_list, _ = cv2.findContours(
+                mask_dict[color], cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
+                )
             
-            # print("mono",mono.cen_x, mono.cen_y)
+            for contour in contours_list:
+                x, y, w, h = cv2.boundingRect(contour)
+
+                area = cv2.contourArea(contour)
+                
+                squareness = abs(math.log(float(w)/float(h),2))
+                arearatio = 1e6*float(area)/(img_height*img_width)
+                arearatio1 = 1000*area/float(w*h)
+                if squareness < 2 and arearatio > 100 and arearatio1 > 200:
+                    if (squareness > 0.25 
+                            or arearatio < 1000.0 
+                            or arearatio1 < 500):
+                        # self.logger.info("BAD")
+                        continue
+                    box = BoundingBox(
+                        image=img, x=x, y=y, width=w, height=h
+                        )
+                    
+                    box.corner_to_center()
+                    box.abs_to_rel()
+                    box.to_four_corners()
+                    
+                    if color == "red_mask":
+                        mono = 'Fuc'                        
+
+                    elif color == "purple_mask":
+                        mono = 'NeuAc'
+
+                        
+                    elif color == "blue_mask":
+                        white = np.zeros([h, w, 3], dtype=np.uint8)
+                        white.fill(255)
+                        this_blue_img = mask_dict["blue_mask"][y:y+h, x:x+w]
+                        this_blue_img = cv2.cvtColor(
+                            this_blue_img, cv2.COLOR_GRAY2BGR
+                            )
+                        score = self.compare_to_img(white, this_blue_img)
+                        if score >= 0.8:  # is square
+                            mono = 'GlcNAc'
+
+                        elif 0.5 < score < 0.8: # is circle
+                            mono = 'Glc'
+
+                        else:
+                            mono = '??? score='+score
+
+                    elif color == "green_mask":
+                        mono = "Man"
+
+                    elif color == "yellow_mask":
+                        white = np.zeros([h, w, 3], dtype=np.uint8)
+                        white.fill(255)
+                        yellow_img = mask_dict["yellow_mask"][y:y+h, x:x+w]
+                        yellow_img = cv2.cvtColor(
+                            yellow_img, cv2.COLOR_GRAY2BGR
+                            )
+
+                        score = self.compare_to_img(white, yellow_img)
+                        if score > 0.9:  # is square
+                            mono = "GalNAc"
+
+                        elif 0.5 < score < 0.9: # is circle
+                            mono = "Gal"
+                        else:
+                            mono = "??? score="+ str(score)
+                else:
+                    continue
+                if "???" not in mono:
+                    # box.set_class(FoundMonosaccharide.backwards_class_dictionary[mono])
+                    box.set_class(class_list.index(mono))
+                    box.set_dummy_confidence(1)
+
+                    count += 1
+                    # monos.append(monosaccharide)
+
+                    # mono_info = {
+                    #     'id': mono+str(count),
+                    #     'type': mono,
+                    #     'bbox': box.to_new_list(),
+                    #     'center': [box.cen_x, box.cen_y],
+                    #     'box': box
+                    # }
+
+                    # obj['monos'].append(mono_info)
+                    mono_boxes.append(box)
+
+
+                if mono in monoCount_dict:
+                    monoCount_dict[mono] += 1
+        
+        return mono_boxes
+    
+class YOLOMonos(YOLOModel, MonoID):
+    def __init__(self,configs,threshold=0.5,resize_image=False):
+        super().__init__(configs)
+        self.threshold = threshold
+        self.img_resize = resize_image
+
+    def set_mono_info(self,obj,boxes):
+        count = 0
+        for mono in boxes:
             class_id = mono.class_
-            # mononame = class_dictionary[class_id]
             mononame = class_list[class_id]
-
-            monoCount_dict[mononame] += 1
-
-            # self.logger.info(mononame)
-            # monosaccharide = FoundMonosaccharide(
-            #     monoid=mononame+str(count), type_=2, boundingbox=mono
-            #     )
-            # final = monosaccharide.annotate(final)
-
-            # monos.append(monosaccharide)
-
 
             count += 1
 
@@ -521,8 +609,118 @@ class YOLOMonos(YOLOModel, MonoID):
             }
 
             obj['monos'].append(mono_info)
-                
+
         return obj
+
+    def execute(self, obj,**kw):
+        self.find_objects(obj,**kw)
+
+
+    def find_objects(self, obj,**kw):
+        threshold = self.threshold
+        img_resize = self.img_resize
+
+        request_padding = kw.get('request_padding',False)
+
+        image = obj.get('image')
+        origin_image = image.copy()
         
-                
+        # monosaccharide finding formatting
+        # image = self.crop_largest(image)
         
+        if img_resize:
+            image = self.resize_image(image)
+        
+        final = image.copy()
+        
+        # YOLO formatting
+        # image_dict = self.format_image(img)
+        
+        mono_boxes = self.get_YOLO_output(image,threshold,class_options=True,request_padding=request_padding)
+
+        self.set_mono_info(obj, mono_boxes)
+
+        return obj
+
+
+    def find_boxes(self, image,**kw):
+        # currently works for single glycan in an image, else if multipe glycans, then glycanfinding method
+        # would be needed - YOLOGlycanFinder?
+        image_path = image
+        figure_semantics = Figure_Semantics(image_path)
+        
+        request_padding = kw.get('request_padding',False)
+
+        idx = 1
+        figure_semantics.set_glycans(idx,image)
+
+        for gly_obj in figure_semantics.glycans():
+            self.find_objects(gly_obj,request_padding=request_padding)
+            return figure_semantics
+
+
+class KnownMono:
+    def __init__(self):
+        self.glycan_id = 0
+
+    def find_boxes(self,file_path):
+        path = os.path.abspath(file_path)
+        # file_name = os.path.basename(path)
+
+        file_semantics = File_Semantics(path)
+
+        monos = []
+
+        with open(file_path, 'r') as file:
+            count = 0
+            for line in file:
+                # print("line",line)
+                if line.startswith('m'):
+                    data_points = line.split()
+                    mono_id = data_points[1]
+                    name = data_points[2]
+                    x_coords = []
+                    y_coords = []
+
+                    for coords in data_points[3:-1]:
+                        x,y = map(int,coords.split(','))
+                        x_coords.append(x)
+                        y_coords.append(y)
+
+                    x_min = min(x_coords)
+                    y_min = min(y_coords)
+                    x_max = max(x_coords)
+                    y_max = max(y_coords)
+
+                    width = x_max - x_min
+                    height = y_max - y_min
+
+
+                    box = BoundingBox(image=None,x=x_min, y=y_min, x2=x_max, y2=y_max, width=width, height=height, class_=class_list.index(name),class_name=name)
+                    box.corner_to_center()
+
+                    count += 1
+
+                    mono_info = {
+                        'id': name + str(count),
+                        'type': name,
+                        'training_id': mono_id,
+                        'bbox': box.to_new_list(),
+                        'center': [box.cen_x, box.cen_y],
+                        'box': box
+                    }
+
+                    monos.append(mono_info)
+
+
+            self.glycan_id += 1
+
+            known_monos_obj = {
+                'id': self.glycan_id,
+                'monos': monos
+                }
+            
+            obj = file_semantics.glycans()
+            obj.append(known_monos_obj)
+
+        return file_semantics

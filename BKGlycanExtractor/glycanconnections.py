@@ -61,6 +61,9 @@ class HeuristicConnector(GlycanConnector):
 
         return obj
 
+    def execute(self, obj):
+        self.find_objects(obj)
+
     def find_objects(self, obj):
         origin_image = obj.get('image')
         # monos_list = obj.get_monos()

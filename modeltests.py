@@ -10,24 +10,22 @@ import logging
 import configparser
 import os
 import numpy as np
+import json
 
 from BKGlycanExtractor import monosaccharideid
 from BKGlycanExtractor.compareboxes import CompareBoxes
 import BKGlycanExtractor.monosaccharideid as mono_finder
+from BKGlycanExtractor.glycanannotator import Config_Manager
 
 
 logger = logging.getLogger("test")
+        
 
-class TestModel:
-    def __init__(self,configs_dir, configs_file, pipeline_name,data_folder):
-        self.data_folder = data_folder
-
-        self.obs = {
-            'unpadded': {},
-            'padded': {}
-        } 
-
-        self.configs = self.read_pipeline_configs(configs_dir, configs_file, pipeline_name)
+class Finder_Evaluator:
+    def __init__(self,pipeline_methods,km_pipeline_methods):
+        self.configs = pipeline_methods
+        self.km_configs = km_pipeline_methods
+        self.obs = {}
 
     def is_glycan(self,boxes,con_threshold = 0.5):
         for i in boxes:
@@ -210,128 +208,77 @@ class TestModel:
                     logger.info("FP/FN, not enough overlap.")
                     return False
     
-    def read_pipeline_configs(self, config_dir, config_file, pipeline):
-        methods = {}
-        config = configparser.ConfigParser()
-        config.read(config_file)
-        pipelines = []
-        for key, value in config.items():
-            if value.get("sectiontype") == "modeltest":
-                pipelines.append(key)
-        try:
-            annotator_methods = config[pipeline]
-        except KeyError:
-            print(pipeline,"is not a valid pipeline.")
-            print("Valid pipelines:", pipelines)
-            sys.exit(1)
-        
-        method_descriptions = {
-            "mono_id": {"prefix": "monosaccharideid.", "multiple": False},
-            }
 
-        for method, desc in method_descriptions.items():
-            # print(method, desc)
-            if desc.get("multiple"):
-                method_names = annotator_methods.get(method).split(",")
-                methods[method] = []
-                for method_name in method_names:
-                    # print(method_name)
-                    methods[method].append(self.setup_method(
-                        config, desc.get("prefix"), config_dir, method_name
-                        ))
-            else:
-                method_name = annotator_methods.get(method)
-                # print(method_name)
-                methods[method] = self.setup_method(
-                    config, desc.get("prefix"), config_dir, method_name
-                    )
-        return methods
+    def run(self,data_folder):
+        # known_semantic_data = {}
+        # predicted_semantic_data = {}
 
-    def setup_method(
-            self, configparserobject, prefix, directory, method_name
-            ):
-        gdrive_dict = {
-            "coreyolo.cfg":
-                "1M2yMBkIB_VctyH01tyDe1koCHT0U8cwV",
-            "Glycan_300img_5000iterations.weights":
-                "1xEeMF-aJnVDwbrlpTHkd-_kI0_P1XmVi",
-            "largerboxes_plusindividualglycans.weights":
-                "16-AIvwNd-ZERcyXOf5G50qRt1ZPlku5H",
-            "monos2.cfg":
-                "15_XxS7scXuvS_zl1QXd7OosntkyuMQuP",
-            "orientation_redo.weights":
-                "1KipiLdlUmGSDsr0WRUdM0ocsQPEmNQXo",
-            "orientation.cfg":
-                "1AYren1VnmB67QLDxvDNbqduU8oAnv72x",
-            "orientation_flipped.cfg":
-                "1YXkSWjqjbx5_GkCrOdkIHrSocTAqu9WX",
-            "orientation_flipped.weights":
-                "1PQH6_JPpE_1o9WdhKAIGJdmOF5fI39Ew",
-            "yolov3_monos_new_v2.weights":
-                "1h-QiO2FP7fU7IbvZjoF7fPf55N0DkTPp",
-            "yolov3_monos_random.weights": 
-                "1m4nJqxrJLl1MamIugdyzRh6td4Br7OMg",
-            "yolov3_monos_largerboxes.weights":
-                "1WQI9UiJkqGx68wy8sfh_Hl5LX6q1xH4-",
-            "rootmono.cfg":
-                "1RSgCYxkNvrPYann5MG7WybyBZS2UA5v0",
-            "yolov3_rootmono.weights":
-                "1dUTFbPA7XV-HztWeM5uto2mF_xo5F-3Z"
-        }
-        
-        method_values = configparserobject[method_name]
-        method_class = method_values.pop("class")
-        method_configs = {}
-        for key, value in method_values.items():
-            filename = os.path.join(directory,value)
-            if os.path.isfile(filename):
-                method_configs[key] = filename
-            else:
-                gdrive_id = gdrive_dict.get(value)
-                if gdrive_id is None:
-                    raise FileNotFoundError(
-                        value + 
-                        "was not found in configs directory or Google Drive"
-                        )
-                getfromgdrive.download_file_from_google_drive(
-                    gdrive_id, filename
-                    )
-                method_configs[key] = filename
-        if not method_configs:
-            return eval(prefix+method_class+"()")
-        return eval(prefix+method_class+"(method_configs)")
-
-    def run(self):
-        km = mono_finder.KnownMono()
-        mf = self.configs.get('mono_id')
         compare_algo = CompareBoxes()
+        glycan_files = [file for file in os.scandir(data_folder) if os.path.isfile(file) and file.name.endswith("png")]
+        random_files = np.random.choice(glycan_files, 3) # select 100 of the files randomly 
 
-        glycan_files = [file for file in os.scandir(self.data_folder) if os.path.isfile(file) and file.name.endswith("png")]
-        # select 100 of the files randomly 
-        random_files = np.random.choice(glycan_files, 100) 
+        km = self.km_configs.get('mono_id')
 
-        for glycan_file in random_files:        
-            name = glycan_file.name        
-            if name.endswith("png"):
-                image = cv2.imread(glycan_file)
-                text_file = self.training_file(file=name, direc=self.data_folder)
+        for name, pipeline_config in self.configs.items():
+            self.obs.update({name: {}})
+            # print("pipeline_config",pipeline_config)
+            mf = pipeline_config.get('mono_id')
 
-                bx1 = km.find_boxes(text_file)
-                bx2 = mf.find_boxes(glycan_file)
+            for glycan_file in random_files:        
+                file_name = glycan_file.name 
+                print("\nfile name:",file_name)       
+                if file_name.endswith("png"):
+                    image = cv2.imread(glycan_file)
+                    text_file = self.training_file(file=file_name, direc=data_folder)
 
-                for gly_obj in bx2.glycans():
-                    bx2_unpadded = [monos['box'] for monos in gly_obj['monos_unpadded']]
-                    bx2_padded = [monos['box'] for monos in gly_obj['monos_padded']]
-                    
+                    bx1 = km.find_boxes(text_file)
+                    bx2 = mf.find_boxes(glycan_file)
 
-                for confidence in [c/100 for c in range(0,100)]:
-                    unpadded_results = self.compare(bx2_unpadded,bx1,compare_algo,image,confidence)
-                    padded_results = self.compare(bx2_padded,bx1,compare_algo,image,confidence)
+                    # can add bx3 (padded data) for comparision with ground truth data
+                    # bx3 = mf.find_boxes(glycan_file,request_padding=True)
 
-                    self.obs['unpadded'].setdefault(confidence, []).extend(unpadded_results)
-                    self.obs['padded'].setdefault(confidence, []).extend(padded_results)
+                    # there is some mistake here
+                    for idx, gly_obj in enumerate(bx2.glycans()):
+                        bx_2 = [monos['box'] for monos in gly_obj['monos']]
+                        # predicted_semantic_data[file_name] = self.format_data(bx2.semantics)
+
+                    for idx, gly_obj in enumerate(bx1.glycans()):
+                        bx1_km = [monos['box'] for monos in gly_obj['monos']]
+                        # known_semantic_data[file_name] = self.format_data(bx1.semantics)
+
+                    for confidence in [c/100 for c in range(0,100)]:
+                        results = self.compare(bx_2,bx1_km,compare_algo,image,confidence)
+                        self.obs[name].setdefault(confidence, []).extend(results)
+
+
+        # # * Semantics JSON string --> no need to include image and objects and save it in a file
+        # create a method for json dumps, which also removes the ndarray and class obj from the data strcuture
+        # predicted_monos_data = json.dumps(predicted_semantic_data)
+        # known_monos_data = json.dumps(known_semantic_data)
+
+        # # Save the JSON string to a file
+        # with open('predicted_monos_data.json', 'w') as file:
+        #     json.dump(predicted_monos_data, file, indent=4)
+        
+        # with open('known_monos_data.json', 'w') as file:
+        #     json.dump(known_monos_data, file, indent=4)
         
         return self.obs
+
+    def format_data(self,semantic_obj):
+        if 'image' in semantic_obj:
+            del semantic_obj['image']
+
+        for gly_obj in semantic_obj['glycans']:
+            if 'image' in gly_obj: 
+                del gly_obj['image']
+
+            for mono in gly_obj['monos']:
+                del mono['box']
+
+        # print("\nsemantic_obj",semantic_obj)
+        return semantic_obj
+
 
     def training_file(self,file = None, direc = '.'):
         filename = file.split(".")[0]
@@ -341,11 +288,13 @@ class TestModel:
         else:
             return None
 
-    def plotprecisionrecall(self):
+    def plotprecisionrecall(self,data_folder):
+        self.run(data_folder)
+        
         plt.figure(1) 
         plt.figure(2)
 
-        for padding_type, result_data in self.obs.items():
+        for annotator_name, result_data in self.obs.items():
             precision = []
             recall = []
             
@@ -369,16 +318,16 @@ class TestModel:
             # Plot on figure 1 
             plt.figure(1)
             if len(set(recall)) == 1 and len(set(precision)) == 1:
-                plt.plot(recall, precision, ".", label=f"{padding_type + ' borders'}")
+                plt.plot(recall, precision, ".", label=f"{annotator_name}")
             else:
-                plt.plot(recall, precision, ".-", label=f"{padding_type + ' borders'}")
+                plt.plot(recall, precision, ".-", label=f"{annotator_name}")
 
 
             plt.figure(2)
             if len(set(recall)) == 1 and len(set(precision)) == 1:
-                plt.plot(recall, precision, ".", label=f"{padding_type + ' borders'}")
+                plt.plot(recall, precision, ".", label=f"{annotator_name}")
             else:
-                plt.plot(recall, precision, ".-", label=f"{padding_type + ' borders'}")  
+                plt.plot(recall, precision, ".-", label=f"{annotator_name}")  
 
         plt.figure(1)
         plt.ylabel('Precision')
@@ -408,7 +357,7 @@ class TestModel:
         return pr,pr_zoom
 
 
-class MonosImprovement(TestModel):
+class MonosImprovement(Finder_Evaluator):
     def compare(self, boxes, training, comparison_alg, image,conf_threshold = 0.0):
         fp = False
         for box in boxes:

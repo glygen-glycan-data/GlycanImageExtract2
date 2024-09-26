@@ -11,6 +11,8 @@ import os
 import shutil
 import sys
 import time
+import copy
+
 
 import cv2
 import fitz
@@ -27,41 +29,66 @@ from . import glycanbuilding
 from . import glycansearch
 
 from BKGlycanExtractor.semantics import Image_Semantics, Figure_Semantics, Glycan_Semantics
+# from BKGlycanExtractor.config_manager import Config_Manager
+
+# config_dir = '/home/nmathias/GlycanImageExtract2/BKGlycanExtractor/config'
+# config_file = '/home/nmathias/GlycanImageExtract2/BKGlycanExtractor/config/configs.ini'
+
 
 class Annotator:
-    def __init__(self,configs_dir, configs_file, pipeline_name):
-        self.configs = self.read_pipeline_configs(configs_dir, configs_file, pipeline_name)
+    def __init__(self,pipeline_methods):
+        # config manager: self.configs = self.read_pipeline_configs(configs_dir, configs_file
+        # the config manager should take the pipeline name and provide the related details required for each class
+        # Idea is to import config manager in all the py files and directly use it rather than pass configs_file and directory from the main_file
+        # Also something which has the path for files or can automcatically find the path of a file
+        self.configs_m = Config_Manager()
+        self.configs = self.configs_m.read_pipeline_configs(pipeline_methods)
+        # self.configs = self.read_pipeline_configs(pipeline_name)
+
+        self.method_mappings = {
+            'glycanfinder': self.configs.get("glycanfinder"),
+            'mono_id': self.configs.get("mono_id"),
+            'connector': self.configs.get("connector"),
+            'rootfinder': self.configs.get("rootfinder"), 
+            'builder': self.configs.get("builder"),
+            'search': self.configs.get("search"),
+        }
 
     def run(self,image):
-        glycanfinder = self.configs.get("glycanfinder")
-        monosfinder = self.configs.get("mono_id")
-        linkfinder = self.configs.get("connector")
-        rootfinder = self.configs.get("rootfinder") 
-        builder = self.configs.get("builder")
-        searches = self.configs.get("search")
-
-
-        # img_semantics = Image_Semantics()
-        # glycan_semantics = Glycan_Semantics()
-
-
-        # call the semantics class and pass image, so that the skeleton can be filled with some data
         figure_semantics = Figure_Semantics(image)
-        
-        # Image_Semantics has all the common data that is stored in an obj - JSON format
-        # img_semantics = Image_Semantics()
-        # img_semantics.create_image_semantics(figure_semantics)
+        execution_order = self.configs.get("execution_order")
 
-        glycanfinder.find_objects(figure_semantics)
+        if execution_order is not None:
+            order = execution_order.split(',')
+        else:
+            # default_order --> if no order is specified in the configs.ini file
+            order = ['glycanfinder', 'mono_id', 'connector', 'rootfinder']
 
-        for gly_obj in figure_semantics.glycans():
-            monosfinder.find_objects(obj=gly_obj)
-            linkfinder.find_objects(obj=gly_obj)
-            rootfinder.find_objects(obj=gly_obj)
+        try:
+            self.method_mappings.get('glycanfinder').execute(figure_semantics)
+            order.remove('glycanfinder') # removed 'glycanfinder' so that the other steps below which do not need it can run independently 
+        except:
+            print('\nglycanfinder is a required step. You should add to the execution order in the configs file and then run the program')
+            print("Current execution order:",order)
+            sys.exit(1)
 
-        # print("\ngly_obj",gly_obj)
+        for step in order:
+            for gly_obj in figure_semantics.glycans():
+                # * add try statment in case something is missing in order = ['glycanfinder', 'mono_id', 'connector', 'rootfinder']
+                self.method_mappings.get(step).execute(obj=gly_obj)
+                # self.method_mappings.get(step)(obj=gly_obj)
+
+        # glycanfinder.find_objects(figure_semantics)
+
+        # construct a dict which has the below steps
+        # glycanfinder = self.configs.get("glycanfinder")
+        # monosfinder = self.configs.get("mono_id")
+        # linkfinder = self.configs.get("connector")
+        # rootfinder = self.configs.get("rootfinder") 
+        # builder = self.configs.get("builder")
+        # searches = self.configs.get("search") and call the dict values instead of the below part
+
         return figure_semantics.semantics
-
 
 
     def annotate_file(self, glycanfile, methods):       
@@ -353,48 +380,6 @@ class Annotator:
         config.read(config_file)
         return self.setup_method(config, module, config_dir, class_name)
         
-    # read in info from the configs.ini file, for a named pipeline
-    # returns a dictionary of methods to use for each pipeline step
-    def read_pipeline_configs(self, config_dir, config_file, pipeline):
-        methods = {}
-        config = configparser.ConfigParser()
-        config.read(config_file)
-        pipelines = []
-        for key, value in config.items():
-            if value.get("sectiontype") == "annotator":
-                pipelines.append(key)
-        try:
-            annotator_methods = config[pipeline]
-        except KeyError:
-            print(pipeline,"is not a valid pipeline.")
-            print("Valid pipelines:", pipelines)
-            sys.exit(1)
-        
-        method_descriptions = {
-            "glycanfinder": {"prefix": "glycanfinding.", "multiple": False},
-            "mono_id": {"prefix": "monosaccharideid.", "multiple": False},
-            "connector": {"prefix": "glycanconnections.", "multiple": False},
-            "rootfinder": {"prefix": "rootmonofinding.", "multiple": False},
-            "builder": {"prefix": "glycanbuilding.", "multiple": False},
-            "search": {"prefix": "glycansearch.", "multiple": True},
-            }
-        for method, desc in method_descriptions.items():
-            # print(method, desc)
-            if desc.get("multiple"):
-                method_names = annotator_methods.get(method).split(",")
-                methods[method] = []
-                for method_name in method_names:
-                    # print(method_name)
-                    methods[method].append(self.setup_method(
-                        config, desc.get("prefix"), config_dir, method_name
-                        ))
-            else:
-                method_name = annotator_methods.get(method)
-                # print(method_name)
-                methods[method] = self.setup_method(
-                    config, desc.get("prefix"), config_dir, method_name
-                    )
-        return methods
     
     def save_results(self, directory, glycanfile, results, annotation):
         glycan_name = os.path.basename(glycanfile)
@@ -473,6 +458,89 @@ class Annotator:
             else:
                 method.set_logger(glycan_name)
     
+
+class Config_Manager():
+    def __init__(self):
+        # add code to search for the correct path of the config file and check if the file really exists
+        self.config_folder = '/home/nmathias/GlycanImageExtract2/BKGlycanExtractor/config'
+        self.config_file_name = 'configs.ini'
+        self.config_file_path = os.path.join(self.config_folder, self.config_file_name)
+        self.config = configparser.ConfigParser()
+        self.config.read(self.config_file_path)
+
+
+    def get(self,pipeline_name, **kw):
+        pipelines = []
+        for key, value in self.config.items():
+            if (value.get("sectiontype") == "annotator") or (value.get("sectiontype") == "knownmonos"):
+                pipelines.append(key)
+
+        # if pipeline_name is a list, then need to create a list of different configs that were returned
+        if isinstance(pipeline_name,list):
+            config_methods_dict = {}
+            for name in pipeline_name:
+                all_configs = copy.deepcopy(self.config)
+                
+            #     try:
+            #         annotator_methods = self.config[pipeline_name]
+            #     except KeyError:
+            #         print(pipeline_name,"is not a valid pipeline.")
+            #         print("Valid pipelines:", pipelines)
+            #         sys.exit(1)
+                # print("\nPipeline_name",name)
+                annotator_methods = all_configs[name]
+                # print("annotator_methods",annotator_methods)
+                config_methods = self.read_pipeline_configs(annotator_methods,config_copy=all_configs)
+                config_methods_dict[name] = config_methods
+            return config_methods_dict
+        else:
+            annotator_methods = self.config[pipeline_name]
+            config_methods = self.read_pipeline_configs(annotator_methods)
+            return config_methods
+
+    def get_pipeline(self,pipeline_name,**kw):
+        annotator_methods = self.config[pipeline_name]
+        pipeline = Annotator(annotator_methods)
+        return pipeline
+
+    def read_pipeline_configs(self, annotator_methods,**kw):
+        methods = {}
+        config = kw.get('config_copy',self.config)
+        
+        method_descriptions = {
+            "glycanfinder": {"prefix": "glycanfinding.", "multiple": False},
+            "mono_id": {"prefix": "monosaccharideid.", "multiple": False},
+            "connector": {"prefix": "glycanconnections.", "multiple": False},
+            "rootfinder": {"prefix": "rootmonofinding.", "multiple": False},
+            "builder": {"prefix": "glycanbuilding.", "multiple": False},
+            "search": {"prefix": "glycansearch.", "multiple": True},
+            }
+        for method, desc in method_descriptions.items():
+            if desc.get("multiple"):
+                all_methods = annotator_methods.get(method) 
+                if all_methods is not None:
+                    method_names = annotator_methods.get(method).split(",")
+                    methods[method] = []
+                    for method_name in method_names:
+                        methods[method].append(self.setup_method(
+                            config, desc.get("prefix"), self.config_folder, method_name
+                            ))
+            else:
+                method_name = annotator_methods.get(method)
+                # print("--->>>>method_name",method_name)
+                if method_name is not None:
+                    # print(method_name)
+                    methods[method] = self.setup_method(
+                        config, desc.get("prefix"), self.config_folder, method_name
+                        )
+
+        execution_order = annotator_methods.get('execution_order', None)
+        if execution_order is not None:
+            methods['execution_order'] = execution_order
+
+        return methods
+
+
     def setup_method(
             self, configparserobject, prefix, directory, method_name
             ):
@@ -506,6 +574,7 @@ class Annotator:
         }
         
         method_values = configparserobject[method_name]
+        
         method_class = method_values.pop("class")
         method_configs = {}
         for key, value in method_values.items():
@@ -525,5 +594,6 @@ class Annotator:
                 method_configs[key] = filename
         if not method_configs:
             return eval(prefix+method_class+"()")
-        print("\nprefix",prefix,method_class)
         return eval(prefix+method_class+"(method_configs)")
+
+

@@ -49,6 +49,10 @@ class OrientationRootFinder(RootFinder):
     # returns orientation and its confidence
     # 0 (left-right), 1 (right-left), 2 (top-bottom), 3 (bottom-top)
     # potential to add other orientations (diagonal?) with numbers >3
+    
+    def execute(self, obj,**kw):
+        self.find_objects(obj,**kw)
+
     def find_objects(self, mono_info, **kw):
         orientation, confidence = self.get_orientation(mono_info, **kw)
         # print(orientation)
@@ -155,6 +159,9 @@ class YOLORootFinder(YOLOModel, RootFinder):
     # finds the root monosaccharide directly
     def __init__(self, configs):
         super().__init__(configs)
+
+    def execute(self, obj,**kw):
+        self.find_objects(obj,**kw)
     
     def find_objects(self, obj, **kw):
         glycanimage = obj['image']

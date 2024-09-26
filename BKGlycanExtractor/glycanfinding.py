@@ -2,7 +2,7 @@
 """
 class for glycan locating methods.
 
-all subclasses need a find_glycans method
+all subclasses need a find_objects method
 which takes an image 
 and returns bounding boxes for all glycans in the image.
 
@@ -49,7 +49,7 @@ class GlycanFinder:
     def __init__(self, **kw):
         pass
     
-    def find_glycans(self, image, **kw):
+    def find_objects(self, image, **kw):
         raise NotImplementedError
         
     def set_logger(self, logger_name=''):
@@ -65,6 +65,9 @@ class YOLOGlycanFinder(YOLOModel, GlycanFinder):
         super().__init__(configs)
         self.threshold = threshold
         self.padding = padding
+
+    def execute(self, figure_semantics):
+        self.find_objects(figure_semantics)
 
     def find_objects(self, figure_semantics):
         image = figure_semantics.semantics['image']

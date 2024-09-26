@@ -10,17 +10,33 @@ class Image_Semantics:
     '''
     image can be any of the following formats: img_path, png, cv2, pdf
     '''
-    semantics = {
-        'glycans': []
-    }
 
-    @classmethod
-    def create_image_semantics(cls,semantics):
-        # storing common attributes in the base class (class-level)
-        cls.semantics['image_path'] = semantics.image_path
-        cls.semantics['image'] = semantics.image
-        cls.semantics['width'] = semantics.width
-        cls.semantics['height'] = semantics.height
+    def __init__(self):
+        self.semantics = {
+            'glycans': []
+        }
+
+    def create_image_semantics(self, semantics):
+        self.semantics['image_path'] = semantics.image_path
+        self.semantics['file_name'] = semantics.file_name
+        self.semantics['image'] = semantics.image
+        self.semantics['width'] = semantics.width
+        self.semantics['height'] = semantics.height
+
+    def glycans(self):
+        return self.semantics['glycans']
+
+    # semantics = {
+    #     'glycans': []
+    # }
+
+    # @classmethod
+    # def create_image_semantics(cls,semantics):
+    #     # storing common attributes in the base class (class-level)
+    #     cls.semantics['image_path'] = semantics.image_path
+    #     cls.semantics['image'] = semantics.image
+    #     cls.semantics['width'] = semantics.width
+    #     cls.semantics['height'] = semantics.height
 
     # @classmethod
     # def glycans(cls):
@@ -31,6 +47,7 @@ class Figure_Semantics(Image_Semantics):
     def __init__(self,image):
         super().__init__()
         self.image_path = os.path.abspath(image)
+        self.file_name = os.path.basename(self.image_path) 
         self.image = self.format_image(self.image_path)
         self.height, self.width, _ = self.image.shape
         self.create_image_semantics(self)   # stores all the data in the base class
@@ -52,8 +69,16 @@ class Figure_Semantics(Image_Semantics):
         else:
             return None
 
-    def glycans(self):
-        return self.semantics['glycans']
+
+    def set_glycans(self,idx,image_path):
+        image = cv2.imread(os.path.abspath(image_path))
+        glycan_obj = {
+                'id': idx,
+                'image': image,
+                'monos': []
+            }
+        
+        self.semantics['glycans'].append(glycan_obj)
 
 
 class Glycan_Semantics(Image_Semantics):
@@ -61,6 +86,7 @@ class Glycan_Semantics(Image_Semantics):
         super().__init__()  
         self.mono_list = {}
         self.linked_monos = {}
+        self.boxes = []
 
     def monosaccharides(self):
         for gly_obj in self.glycans():
@@ -72,6 +98,23 @@ class Glycan_Semantics(Image_Semantics):
         for gly_obj in self.glycans():
             self.linked_monos[gly_obj['id']] = [{mono['id']: mono['links']} for mono in gly_obj['monos']]
         return self.linked_monos
+
+    
+    def boxes(self):
+        for gly_obj in self.glycans():
+            self.boxes = [mono['box'] for mono in gly_obj['monos']]
+        return self.boxes
+
+
+class File_Semantics(Image_Semantics):
+    def __init__(self,file_path):
+        super().__init__()
+        self.image_path = os.path.abspath(file_path)
+        self.file_name = os.path.basename(self.image_path)
+        self.image = None
+        self.height, self.width, _ = None,None,None
+        self.create_image_semantics(self)   # stores all the data in the base class
+
 
 
 
