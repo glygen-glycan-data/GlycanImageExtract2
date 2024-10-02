@@ -9,6 +9,7 @@ import numpy as np
 from .boundingboxes import BoundingBox
 from . import compareboxes
 from .yolomodels import YOLOModel
+from .config_data import ConfigData
 
 
 class FoundOrientedGlycan(BoundingBox):
@@ -154,11 +155,27 @@ class YOLOOrientationRootFinder(YOLOModel, OrientationRootFinder):
         oriented_glycan = oriented_glycans[best_index]
         
         return oriented_glycan.get_class(), oriented_glycan.get_confidence()
-    
-class YOLORootFinder(YOLOModel, RootFinder):
+
+class YOLORootFinder(YOLOModel, RootFinder,ConfigData):
     # finds the root monosaccharide directly
-    def __init__(self, configs):
-        super().__init__(configs)
+    def __init__(self, config,**kwargs):
+
+        self.defaults = {
+            'weights': './BKGlycanExtractor/config/yolov3_rootmono.weights',
+            'config_net': './BKGlycanExtractor/config/rootmono.cfg'
+        }
+
+        RootFinder.__init__(self)
+        ConfigData.__init__(self,config,self.defaults,class_name=self.__class__.__name__)
+        self.weights = self.get_param('weights',**kwargs)
+        self.config_net = self.get_param('config',**kwargs)
+
+        current_config = {
+            'weights':self.weights,
+            'config': self.config_net
+        }
+
+        YOLOModel.__init__(self,current_config)
 
     def execute(self, obj,**kw):
         self.find_objects(obj,**kw)

@@ -33,6 +33,7 @@ import logging
 
 from .boundingboxes import BoundingBox
 from .yolomodels import YOLOModel 
+from .config_data import ConfigData
 
 class FoundGlycan(BoundingBox):
     # class definitions for glycan bounding boxes
@@ -44,11 +45,11 @@ class FoundGlycan(BoundingBox):
     def __init__(self, **kw):
         super().__init__(**kw)
 
-
+# Base class
 class GlycanFinder:  
-    def __init__(self, **kw):
+    def __init__(self,**kw):
         pass
-    
+
     def find_objects(self, image, **kw):
         raise NotImplementedError
         
@@ -60,12 +61,29 @@ class GlycanFinder:
 # allows minimum confidence thresholding, to restrict returns
 # also allows requesting padding of glycan borders (off by default)
 # confidences for YOLO detection are stored in the bounding box
-class YOLOGlycanFinder(YOLOModel, GlycanFinder):
-    def __init__(self, configs, threshold=0.0, padding=False):
-        super().__init__(configs)
-        self.threshold = threshold
-        self.padding = padding
+class YOLOGlycanFinder(GlycanFinder,YOLOModel,ConfigData):
+    def __init__(self,config,**kwargs):
+        self.threshold = kwargs.get('threshold',0.0)
+        self.padding = kwargs.get('padding',False)
 
+        self.defaults = {
+            'weights': './BKGlycanExtractor/config/largerboxes_plusindividualglycans.weights',
+            'config_net': './BKGlycanExtractor/config/coreyolo.cfg'
+        }
+        
+        GlycanFinder.__init__(self)
+        ConfigData.__init__(self,config,self.defaults,class_name=self.__class__.__name__)
+        self.weights = self.get_param('weights',**kwargs)
+        self.config_net = self.get_param('config',**kwargs)
+
+        current_config = {
+            'weights':self.weights,
+            'config': self.config_net
+        }
+
+        YOLOModel.__init__(self,current_config)
+
+        
     def execute(self, figure_semantics):
         self.find_objects(figure_semantics)
 
@@ -82,9 +100,6 @@ class YOLOGlycanFinder(YOLOModel, GlycanFinder):
         glycans = [FoundGlycan(boundingbox=glycan) for glycan in glycans]
 
         for idx,glycan in enumerate(glycans):
-            # printstr = f'Glycan found at: {glycan.to_new_list()}'
-            # self.logger.info(printstr)
-            # print(printstr)
             glycan_obj = self.save_object(idx,glycan,image)
             figure_semantics.semantics['glycans'].append(glycan_obj)
         return glycans
@@ -106,21 +121,3 @@ class YOLOGlycanFinder(YOLOModel, GlycanFinder):
         }
         return single_glycan
 
-    
-"""  
-if __name__ == "__main__":
-    config_dict = {
-        "weights": "/home/nmathias/GlycanImageExtract2/BKGlycanExtractor/config/largerboxes_plusindividualglycans.weights",
-        "config": "/home/nmathias/GlycanImageExtract2/BKGlycanExtractor/config/coreyolo.cfg"}
-    
-    # initialize glycan finder
-    glycanfinder = YOLOGlycanFinder(config_dict)
-
-    # call function
-    png_image = "/home/nmathias/GlycanImageExtract2/glycans/right_root.png"
-    image = cv2.imread(png_image)
-    glycans, obj = glycanfinder.find_objects(image)
-
-    print("glycans:",glycans)
-    print("\nobj:",obj)
-"""

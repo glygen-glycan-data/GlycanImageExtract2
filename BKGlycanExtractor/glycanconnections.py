@@ -11,6 +11,7 @@ and returns an  list of connected Monosaccharide objects
 import cv2
 import logging
 import numpy as np
+from .config_data import ConfigData
 
 class GlycanConnector:
     def __init__(self):
@@ -451,11 +452,24 @@ class OriginalConnector(HeuristicConnector):
         return black_masks
     
 # class to connect monosaccharides found with YOLO models
-class ConnectYOLO(HeuristicConnector):
+class ConnectYOLO(HeuristicConnector,ConfigData):
     
-    def __init__(self, configs):
-        super().__init__(configs)
+    def __init__(self, config,**kwargs):
         self.cropfactor = 1.2
+
+        self.defaults = {
+            'color_range': './BKGlycanExtractor/config/colors_range'
+        }
+        
+        ConfigData.__init__(self,config,self.defaults,class_name=self.__class__.__name__)
+        self.color_range = self.get_param('color_range',**kwargs)
+
+        current_config = {
+            'color_range':self.color_range,
+        }
+
+        HeuristicConnector.__init__(self,current_config)
+        
         
     #method to start the connection dictionary
     #takes the monosaccharide list from monosaccharideid class returns

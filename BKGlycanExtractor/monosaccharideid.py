@@ -19,6 +19,7 @@ import sys
 
 from .boundingboxes import BoundingBox
 from .yolomodels import YOLOModel
+from .config_data import ConfigData
 from BKGlycanExtractor.semantics import Figure_Semantics,File_Semantics
 
 # class_dictionary = {
@@ -147,7 +148,8 @@ class_list = ["GlcNAc","NeuAc","Fuc","Man","GalNAc","Gal","Glc","NeuGc"]
 
 class MonoID: 
     def __init__(self, **kw):
-        super().__init__()
+        pass
+        # super().__init__()
         
     # def compstr(self, counts):
     #     s = ""
@@ -586,11 +588,28 @@ class HeuristicMonos(MonoID):
         
         return mono_boxes
     
-class YOLOMonos(YOLOModel, MonoID):
-    def __init__(self,configs,threshold=0.5,resize_image=False):
-        super().__init__(configs)
-        self.threshold = threshold
-        self.img_resize = resize_image
+class YOLOMonos(YOLOModel, MonoID,ConfigData):
+    def __init__(self,config,**kwargs):
+        self.threshold = kwargs.get('threshold',0.5)
+        self.img_resize = kwargs.get('resize_image',False)
+
+        self.defaults = {
+            'weights': './BKGlycanExtractor/config/yolov3_monos_random.weights',
+            'config_net': './BKGlycanExtractor/config/monos2.cfg',
+            'color_range': './BKGlycanExtractor/config/colors_range.txt'
+        }
+
+        MonoID.__init__(self)
+        ConfigData.__init__(self,config,self.defaults,class_name=self.__class__.__name__)
+        self.weights = self.get_param('weights',**kwargs)
+        self.config_net = self.get_param('config',**kwargs)
+
+        current_config = {
+            'weights':self.weights,
+            'config': self.config_net
+        }
+
+        YOLOModel.__init__(self,current_config)
 
     def set_mono_info(self,obj,boxes):
         count = 0

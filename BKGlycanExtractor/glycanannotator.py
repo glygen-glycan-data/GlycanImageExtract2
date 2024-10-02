@@ -18,9 +18,11 @@ import cv2
 import fitz
 import numpy as np
 import pdfplumber
+import importlib
 
 from .config import getfromgdrive
 from .pygly3.GlycanFormatter import GlycoCTFormat, GlycoCTParseError
+
 from . import glycanfinding
 from . import monosaccharideid
 from . import glycanconnections
@@ -29,64 +31,30 @@ from . import glycanbuilding
 from . import glycansearch
 
 from BKGlycanExtractor.semantics import Image_Semantics, Figure_Semantics, Glycan_Semantics
-# from BKGlycanExtractor.config_manager import Config_Manager
 
-# config_dir = '/home/nmathias/GlycanImageExtract2/BKGlycanExtractor/config'
-# config_file = '/home/nmathias/GlycanImageExtract2/BKGlycanExtractor/config/configs.ini'
-
-
-class Annotator:
-    def __init__(self,pipeline_methods):
-        # config manager: self.configs = self.read_pipeline_configs(configs_dir, configs_file
-        # the config manager should take the pipeline name and provide the related details required for each class
-        # Idea is to import config manager in all the py files and directly use it rather than pass configs_file and directory from the main_file
-        # Also something which has the path for files or can automcatically find the path of a file
-        self.configs_m = Config_Manager()
-        self.configs = self.configs_m.read_pipeline_configs(pipeline_methods)
-        # self.configs = self.read_pipeline_configs(pipeline_name)
-
-        self.method_mappings = {
-            'glycanfinder': self.configs.get("glycanfinder"),
-            'mono_id': self.configs.get("mono_id"),
-            'connector': self.configs.get("connector"),
-            'rootfinder': self.configs.get("rootfinder"), 
-            'builder': self.configs.get("builder"),
-            'search': self.configs.get("search"),
-        }
-
+class Annotator():
+    # Annotator constructors should behave the same as finders
+    def __init__(self,config):
+        self.config = config
+    
+    def get_finder(self,key,default=None):
+        instance = self.config.get_finder(key,default)
+        if instance:
+            return instance
+        return default
+        
     def run(self,image):
         figure_semantics = Figure_Semantics(image)
-        execution_order = self.configs.get("execution_order")
 
-        if execution_order is not None:
-            order = execution_order.split(',')
-        else:
-            # default_order --> if no order is specified in the configs.ini file
-            order = ['glycanfinder', 'mono_id', 'connector', 'rootfinder']
+        image_steps = self.get_finder('image_steps')[0]
+        glycan_steps = self.get_finder('glycan_steps')
+        # search_steps = self.get_finder('search_steps')
 
-        try:
-            self.method_mappings.get('glycanfinder').execute(figure_semantics)
-            order.remove('glycanfinder') # removed 'glycanfinder' so that the other steps below which do not need it can run independently 
-        except:
-            print('\nglycanfinder is a required step. You should add to the execution order in the configs file and then run the program')
-            print("Current execution order:",order)
-            sys.exit(1)
-
-        for step in order:
+        # * Handle any errors
+        image_steps.execute(figure_semantics)
+        for step in glycan_steps:
             for gly_obj in figure_semantics.glycans():
-                # * add try statment in case something is missing in order = ['glycanfinder', 'mono_id', 'connector', 'rootfinder']
-                self.method_mappings.get(step).execute(obj=gly_obj)
-                # self.method_mappings.get(step)(obj=gly_obj)
-
-        # glycanfinder.find_objects(figure_semantics)
-
-        # construct a dict which has the below steps
-        # glycanfinder = self.configs.get("glycanfinder")
-        # monosfinder = self.configs.get("mono_id")
-        # linkfinder = self.configs.get("connector")
-        # rootfinder = self.configs.get("rootfinder") 
-        # builder = self.configs.get("builder")
-        # searches = self.configs.get("search") and call the dict values instead of the below part
+                step.execute(obj=gly_obj)
 
         return figure_semantics.semantics
 
@@ -457,12 +425,122 @@ class Annotator:
                     mth.set_logger(glycan_name)
             else:
                 method.set_logger(glycan_name)
-    
+
 
 class Config_Manager():
+    # reads/gets configs from configs.ini
+    def __init__(self):
+        # * add code to search for the correct path of the config file and check if the file really exists
+        self.config_folder = './BKGlycanExtractor/config'
+        self.config_file_name = 'configs.ini'
+        self.config_file_path = os.path.join(self.config_folder, self.config_file_name)
+        self.config = configparser.ConfigParser()
+        self.config.read(self.config_file_path)
+        self.pipeline_name = None
+
+
+    def get(self,pipeline_name, **kw):
+        pipelines = []
+        for key, value in self.config.items():
+            if (value.get("sectiontype") == "annotator") or (value.get("sectiontype") == "knownmonos"):
+                pipelines.append(key)
+
+        # if pipeline_name is a list, then need to create a list of different configs that were returned
+        if isinstance(pipeline_name,list):
+            config_methods_dict = {}
+            for name in pipeline_name:
+                all_configs = copy.deepcopy(self.config)
+                
+            #     try:
+            #         annotator_methods = self.config[pipeline_name]
+            #     except KeyError:
+            #         print(pipeline_name,"is not a valid pipeline.")
+            #         print("Valid pipelines:", pipelines)
+            #         sys.exit(1)
+                # print("\nPipeline_name",name)
+                annotator_methods = all_configs[name]
+                # print("annotator_methods",annotator_methods)
+                config_methods = self.read_pipeline_configs(annotator_methods,config_copy=all_configs)
+                config_methods_dict[name] = config_methods
+            return config_methods_dict
+        else:
+            annotator_methods = self.config[pipeline_name]
+            config_methods = self.read_pipeline_configs(annotator_methods)
+            return config_methods
+
+    # Call Annotator constructor with config= argument
+    # return instantiated Annotator instance
+    def get_pipeline(self,pipeline_name,**kw):
+        self.pipeline_name = "Pipeline:" + pipeline_name
+        # print("\nself.pipeline_name",self.pipeline_name)
+        config = Config(self.pipeline_name)
+        pipeline = Annotator(config=config)
+        return pipeline
+
+    # Call Finder constructor with config= argument
+    # return instantiated Finder instance
+    # TO DO - this should be implemented, but for now I am using get_finder from Config()
+    # def get_finder(self, key,default=None):
+    #     print("---->>> 1 Config_manager",key)
+    #     # TO DO correct this method
+    #     print("key",key,self.pipeline_name)
+    #     finder_type = self.config[self.pipeline_name].get(key,default)
+
+    #     # if finder_type:
+    #     #     if finder_type in self.config[self.pipeline_name]:
+    #     #         prefix = self.read_pipeline_configs(finder_type)
+    #     #         method_class = self.config[self.section_name][finder_type]
+    #     #         return eval(prefix+method_class+"(config="+self.config+")")
+    #     return finder_type
+        
+
+        # self.config --> should already have the PipelineName's details and based on the below
+        # extract weights and configs
+        # this will have the config and weight files
+        # self.method_mappings = {
+        #     'glycanfinder': self.config.get("glycanfinder"),
+        #     'mono_id': self.config.get("mono_id"),
+        #     'connector': self.config.get("connector"),
+        #     'rootfinder': self.config.get("rootfinder"), 
+        #     'builder': self.config.get("builder"),
+        #     'search': self.config.get("search"),
+        # }
+
+        # for finder,class_instance in self.annotator_config.items():
+        #     congifs = {
+        #         'weights': 'path '
+        #         'config': 'path'
+        #     }
+        #     class_instance(config=)
+            # pass config from configs.ini file: config=rootmono.cfg, and weight file path
+        # for finder,instance in self.annotator_config.items():
+        #     print("finder",finder,instance)
+            # finder
+
+        # GlycanFinder, MonoFinder,etc
+        # dynamically call the different finders and pass its respective config rather than all the configs
+        
+    # In Annotator class, get_finder(finder_name) method should return the output from this function
+    def read_pipeline_configs(self,finder_type):
+        methods = {}
+        method_descriptions = {
+            "glycan_finder": {"prefix": "glycanfinding."},
+            "mono_finder": {"prefix": "monosaccharideid."},
+            "link_finder": {"prefix": "glycanconnections."},
+            "root_finder": {"prefix": "rootmonofinding."},
+            "sequence_builder": {"prefix": "glycanbuilding."},
+            "sequence_lookup": {"prefix": "glycansearch."},
+        }
+
+        if finder_type in method_descriptions:
+            prefix = method_descriptions[finder_type]['prefix']
+            return prefix
+        
+
+class OldConfig_Manager():
     def __init__(self):
         # add code to search for the correct path of the config file and check if the file really exists
-        self.config_folder = '/home/nmathias/GlycanImageExtract2/BKGlycanExtractor/config'
+        self.config_folder = './BKGlycanExtractor/config'
         self.config_file_name = 'configs.ini'
         self.config_file_path = os.path.join(self.config_folder, self.config_file_name)
         self.config = configparser.ConfigParser()
@@ -534,9 +612,9 @@ class Config_Manager():
                         config, desc.get("prefix"), self.config_folder, method_name
                         )
 
-        execution_order = annotator_methods.get('execution_order', None)
-        if execution_order is not None:
-            methods['execution_order'] = execution_order
+        # execution_order = annotator_methods.get('execution_order', None)
+        # if execution_order is not None:
+        #     methods['execution_order'] = execution_order
 
         return methods
 
@@ -595,5 +673,68 @@ class Config_Manager():
         if not method_configs:
             return eval(prefix+method_class+"()")
         return eval(prefix+method_class+"(method_configs)")
+
+class Config():
+    def __init__(self,section_name):
+        super().__init__()
+        # hold reference to config manager and the name of the relevant section
+        self.section_name = section_name # Config_Manager passed pipeline_name here during get_pipeline() phase
+        self.config_manager = Config_Manager()
+        # print("self.config_manager pipeline",self.config_manager.pipeline_name)
+
+
+    # eg. key - glycan_finder
+    def get_str(self,section,key,default=None):
+        # Retrieve string value for key from the relevant section
+        return self.config_manager.config[section].get(key,default)
+
+    # def get_int(key,default=None):
+
+    # def get_float(key,default=None):
+
+    def get_config_filename(self,key,default=None):
+        # Get the full pathname for a key
+        filename = self.config[self.section_name].get(key,default)
+        if filename:
+            name = '/'.join(filename.split('.')[:-1])
+            return os.path.join(os.getcwd(), name + '.py')
+        return default
+
+    
+    def get_steps(self,key,default=None):
+        # list of keys of Finder instances to execute, CSV?
+        steps = self.config_manager.config[self.section_name].get(key).split(',')
+        return steps
+
+
+    # defer to Config Manager get_finder based on key’s value - So Config() uses the same implementaion as Config_Manager
+    def get_finder(self,key,default=None):
+        # print("---->>> 2 Config",self.section_name)
+        steps = self.get_steps(key,default)
+        instance_list = []
+        for step in steps:
+            step = step.strip()
+            prefix = self.config_manager.read_pipeline_configs(step)
+            config_finder = self.get_str(self.section_name,step)
+            finder_section = "Finder:" + config_finder
+            finder_method = self.get_str(finder_section, "class")
+
+            module = importlib.import_module('BKGlycanExtractor.'+prefix[:-1])
+    
+            finder_class = getattr(module, finder_method)
+            instance = finder_class(config=self.config_manager.config)
+
+            instance_list.append(instance)
+        return instance_list if instance_list is not None else default
+
+
+
+
+
+
+
+
+
+    
 
 

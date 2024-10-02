@@ -26,11 +26,13 @@ from BKGlycanExtractor.boundingboxes import BoundingBox
 
 class YOLOModel:
     
-    def __init__(self, configs):
+    def __init__(self, config):
         # for debugging:
         # print('start YOLOModel.__init__')
-        weights = configs.get("weights",None)
-        net = configs.get("config",None)
+        # super().__init__()  # Call the next class in the MRO
+
+        weights = config.get("weights",None)
+        net = config.get("config",None)
         
         if not os.path.isfile(weights):
             raise FileNotFoundError()
