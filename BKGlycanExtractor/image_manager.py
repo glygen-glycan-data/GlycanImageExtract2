@@ -1,7 +1,7 @@
 import os
 
 class Image_Manager:
-    def __init__(self,glycan_folder,pattern):
+    def __init__(self,glycan_folder,pattern='*.png,*.jpg,*.txt'):
         self.glob = [pattern_type.strip()[1:] if pattern_type.strip().startswith('*') else pattern_type.strip() for pattern_type in pattern.split(',')]
         self.images = self.get_images(glycan_folder)
 

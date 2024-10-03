@@ -588,7 +588,7 @@ class HeuristicMonos(MonoID):
         
         return mono_boxes
     
-class YOLOMonos(YOLOModel, MonoID,ConfigData):
+class YOLOMonos(YOLOModel,MonoID,ConfigData):
     def __init__(self,config,**kwargs):
         self.threshold = kwargs.get('threshold',0.5)
         self.img_resize = kwargs.get('resize_image',False)
@@ -679,7 +679,7 @@ class YOLOMonos(YOLOModel, MonoID,ConfigData):
 
 
 class KnownMono:
-    def __init__(self):
+    def __init__(self,config,**kwargs):
         self.glycan_id = 0
 
     def find_boxes(self,file_path):

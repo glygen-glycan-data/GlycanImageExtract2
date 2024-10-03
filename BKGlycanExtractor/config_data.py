@@ -1,6 +1,6 @@
 '''
 The class accepts the configs.ini reference passed from a Finder class and the Finder class_name.
-Provides config file location for - weights/config/color_range.
+Provides file location for - weights/config/color_range.
 Ensures that the Finder and ConfigData class doesn't require the configs.ini file which is part of the design
 '''
 

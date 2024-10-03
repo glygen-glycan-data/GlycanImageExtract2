@@ -440,33 +440,37 @@ class Config_Manager():
 
 
     def get(self,pipeline_name, **kw):
-        pipelines = []
-        for key, value in self.config.items():
-            if (value.get("sectiontype") == "annotator") or (value.get("sectiontype") == "knownmonos"):
-                pipelines.append(key)
+        # returns a dict - 
+        # {pipeline_name1: {
+            # 'steps': 'mono_finder,link_finder',
+        #   'instance': [instantaited_finders],
+        # }
 
+        # changes --> Pipeline_name is provided
+        # get the steps - glycan_steps
+        # get step names and respective Instatiated finder based on the steps(glycan_steps)
+
+        if isinstance(pipeline_name,list) is False:
+            pipeline_name = pipeline_name.split(',')
+        
+        pipeline_configs = {}
+        
         # if pipeline_name is a list, then need to create a list of different configs that were returned
-        if isinstance(pipeline_name,list):
-            config_methods_dict = {}
-            for name in pipeline_name:
-                all_configs = copy.deepcopy(self.config)
-                
-            #     try:
-            #         annotator_methods = self.config[pipeline_name]
-            #     except KeyError:
-            #         print(pipeline_name,"is not a valid pipeline.")
-            #         print("Valid pipelines:", pipelines)
-            #         sys.exit(1)
-                # print("\nPipeline_name",name)
-                annotator_methods = all_configs[name]
-                # print("annotator_methods",annotator_methods)
-                config_methods = self.read_pipeline_configs(annotator_methods,config_copy=all_configs)
-                config_methods_dict[name] = config_methods
-            return config_methods_dict
-        else:
-            annotator_methods = self.config[pipeline_name]
-            config_methods = self.read_pipeline_configs(annotator_methods)
-            return config_methods
+        config_methods_dict = {}
+        for name in pipeline_name:
+            pipeline = 'Pipeline:' + name
+            config = Config(pipeline)
+
+            glycan_steps = config.get_steps('glycan_steps')
+            step_instances = config.get_finder('glycan_steps')
+
+            pipeline_configs[pipeline] = {
+                'steps': glycan_steps,
+                'instantiated_finders': step_instances
+            }
+
+        return pipeline_configs
+        
 
     # Call Annotator constructor with config= argument
     # return instantiated Annotator instance
@@ -533,8 +537,11 @@ class Config_Manager():
         }
 
         if finder_type in method_descriptions:
-            prefix = method_descriptions[finder_type]['prefix']
-            return prefix
+            if finder_type in method_descriptions:
+                prefix = method_descriptions[finder_type]['prefix']
+                return prefix
+            else:
+                print(f"The mentioned step {finder_type} does not exist. For more information check the configs.ini file...")
         
 
 class OldConfig_Manager():
@@ -676,7 +683,7 @@ class OldConfig_Manager():
 
 class Config():
     def __init__(self,section_name):
-        super().__init__()
+        # super().__init__()
         # hold reference to config manager and the name of the relevant section
         self.section_name = section_name # Config_Manager passed pipeline_name here during get_pipeline() phase
         self.config_manager = Config_Manager()

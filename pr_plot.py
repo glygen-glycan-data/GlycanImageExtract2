@@ -9,6 +9,7 @@ import argparse
 
 import modeltests as mt
 from BKGlycanExtractor.glycanannotator import Config_Manager
+from BKGlycanExtractor.image_manager import Image_Manager
 
 
 '''
@@ -33,8 +34,8 @@ parser.add_argument(
     '--pipeline_name',
     type = str,
     nargs = '+', # allows one or more values
-    default = ['YOLOMonosAnnotator'],
-    help = 'Test pipeline(s) (default: YOLOMonosAnnotator)'
+    default = ['SingleGlycanImage-YOLOFinders'],
+    help = 'Test pipeline(s) (default: SingleGlycanImage-YOLOFinders)'
 )
 
 # required argument
@@ -65,15 +66,17 @@ Finder_Evaluator class handles:
 
 if __name__ == "__main__": 
     config = Config_Manager()
+    images = Image_Manager(data_folder)
+
 
     # pipeline accepts one/multiple names
-    pipeline = config.get(pipeline_name)
-    pipeline_km = config.get(km_pipeline_name)
+    pipeline_pred = config.get(pipeline_name)
+    pipeline_known = config.get(km_pipeline_name)
 
-    evaluator = mt.Finder_Evaluator(pipeline,pipeline_km)
+    evaluator = mt.Finder_Evaluator(pipeline_pred,reference=pipeline_known,evaluation_type='mono_finder')
 
-    # maybe generate/store x-y coordinates and keep the work of plotting for the user
-    evaluator.plotprecisionrecall(data_folder)
+    # # maybe generate/store x-y coordinates and keep the work of plotting for the user
+    evaluator.plotprecisionrecall(images)
 
     print("Done")
 

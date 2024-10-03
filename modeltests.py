@@ -22,9 +22,10 @@ logger = logging.getLogger("test")
         
 
 class Finder_Evaluator:
-    def __init__(self,pipeline_methods,km_pipeline_methods):
+    def __init__(self,pipeline_methods,reference='KnownSemantics',evaluation_type=None):
         self.configs = pipeline_methods
-        self.km_configs = km_pipeline_methods
+        self.km_configs = reference
+        self.evaluation_type = evaluation_type
         self.obs = {}
 
     def is_glycan(self,boxes,con_threshold = 0.5):
@@ -209,27 +210,50 @@ class Finder_Evaluator:
                     return False
     
 
-    def run(self,data_folder):
-        # known_semantic_data = {}
-        # predicted_semantic_data = {}
+    def run(self,images):
+        # To Do [Discuss integrating link boxes,etc]- making this method more flexible so that it can accept - link_finder, etc
+
+        # evaluation type is 'mono_finder' - it is straight forward, just implement mono_finder
+        # if evaluation  type is 'link_finder' - you need to fill in Figure Semantics for 
+        # everything in glycan_steps order before you can get details for 'link_finder' and then compare
+        
+        known_semantic_data = {}
+        predicted_semantic_data = {}
+
+        known_pipeline_name = None
 
         compare_algo = CompareBoxes()
-        glycan_files = [file for file in os.scandir(data_folder) if os.path.isfile(file) and file.name.endswith("png")]
+        # for image in images:
+        #     print("image",image)
+        glycan_files = [image for image in images if os.path.isfile(image) and os.path.basename(image).endswith('.png')]
         random_files = np.random.choice(glycan_files, 3) # select 100 of the files randomly 
 
-        km = self.km_configs.get('mono_id')
+        # there will only be one pipeline always for Known Semantics
+        for km_pipeline in self.km_configs:
+            known_pipeline_name = km_pipeline
+            mono_idx = self.km_configs[km_pipeline]['steps'].index('mono_finder')
+            km = self.km_configs[km_pipeline]['instantiated_finders'][mono_idx]
 
+        # should handle multiple prediction pipelines
         for name, pipeline_config in self.configs.items():
+            predicted_semantic_data[name] = []
+            known_semantic_data[known_pipeline_name] = []
+
+            print("\nPipeline name:",name)
             self.obs.update({name: {}})
-            # print("pipeline_config",pipeline_config)
-            mf = pipeline_config.get('mono_id')
+            # if there are multiple steps, need to execute all the steps (for loop) before self.evalution_type?
+            # in order to fill the figure semantics obj and then create a pipeline with the evalution_type
+            # create a method that will execute all the steps
+            finder_idx = pipeline_config['steps'].index(self.evaluation_type)
+            mf = pipeline_config['instantiated_finders'][finder_idx]
 
             for glycan_file in random_files:        
-                file_name = glycan_file.name 
+                file_name = os.path.basename(glycan_file)
+
                 print("\nfile name:",file_name)       
                 if file_name.endswith("png"):
                     image = cv2.imread(glycan_file)
-                    text_file = self.training_file(file=file_name, direc=data_folder)
+                    text_file = self.training_file(file=file_name, direc=os.path.dirname(glycan_file))
 
                     bx1 = km.find_boxes(text_file)
                     bx2 = mf.find_boxes(glycan_file)
@@ -240,11 +264,11 @@ class Finder_Evaluator:
                     # there is some mistake here
                     for idx, gly_obj in enumerate(bx2.glycans()):
                         bx_2 = [monos['box'] for monos in gly_obj['monos']]
-                        # predicted_semantic_data[file_name] = self.format_data(bx2.semantics)
+                        predicted_semantic_data[name].append({file_name: self.format_data(bx2.semantics)})
 
                     for idx, gly_obj in enumerate(bx1.glycans()):
                         bx1_km = [monos['box'] for monos in gly_obj['monos']]
-                        # known_semantic_data[file_name] = self.format_data(bx1.semantics)
+                        known_semantic_data[known_pipeline_name].append({file_name: self.format_data(bx1.semantics)})
 
                     for confidence in [c/100 for c in range(0,100)]:
                         results = self.compare(bx_2,bx1_km,compare_algo,image,confidence)
@@ -253,15 +277,17 @@ class Finder_Evaluator:
 
         # # * Semantics JSON string --> no need to include image and objects and save it in a file
         # create a method for json dumps, which also removes the ndarray and class obj from the data strcuture
-        # predicted_monos_data = json.dumps(predicted_semantic_data)
-        # known_monos_data = json.dumps(known_semantic_data)
+        predicted_monos_data = json.dumps(predicted_semantic_data)
+        known_monos_data = json.dumps(known_semantic_data)
 
-        # # Save the JSON string to a file
-        # with open('predicted_monos_data.json', 'w') as file:
-        #     json.dump(predicted_monos_data, file, indent=4)
+        # Save the JSON string to a file
+        with open('predicted_monos_data.json', 'w') as file:
+            json.dump(predicted_monos_data, file, indent=4)
+            # file.write(predicted_monos_data)
         
-        # with open('known_monos_data.json', 'w') as file:
-        #     json.dump(known_monos_data, file, indent=4)
+        with open('known_monos_data.json', 'w') as file:
+            json.dump(known_monos_data, file, indent=4)
+            # file.write(known_monos_data)
         
         return self.obs
 
@@ -288,8 +314,8 @@ class Finder_Evaluator:
         else:
             return None
 
-    def plotprecisionrecall(self,data_folder):
-        self.run(data_folder)
+    def plotprecisionrecall(self,images):
+        self.run(images)
         
         plt.figure(1) 
         plt.figure(2)
