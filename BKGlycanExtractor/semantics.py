@@ -26,22 +26,6 @@ class Image_Semantics:
     def glycans(self):
         return self.semantics['glycans']
 
-    # semantics = {
-    #     'glycans': []
-    # }
-
-    # @classmethod
-    # def create_image_semantics(cls,semantics):
-    #     # storing common attributes in the base class (class-level)
-    #     cls.semantics['image_path'] = semantics.image_path
-    #     cls.semantics['image'] = semantics.image
-    #     cls.semantics['width'] = semantics.width
-    #     cls.semantics['height'] = semantics.height
-
-    # @classmethod
-    # def glycans(cls):
-    #     return cls.semantics['glycans']
-
 
 class Figure_Semantics(Image_Semantics):
     def __init__(self,image):
@@ -113,7 +97,7 @@ class File_Semantics(Image_Semantics):
         self.file_name = os.path.basename(self.image_path)
         self.image = None
         self.height, self.width, _ = None,None,None
-        self.create_image_semantics(self)   # stores all the data in the base class
+        self.create_image_semantics(self) 
 
 
 

@@ -22,13 +22,14 @@ class GlycanConnector:
         
     def set_logger(self, logger_name=''):
         self.logger = logging.getLogger(logger_name+'.glycanconnections')
-        
 
-class HeuristicConnector(GlycanConnector):
-    def __init__(self, configs):
+
+class HeuristicConnector(GlycanConnector,ConfigData):
+    def __init__(self, config, **kwargs):
+        self.color_range = config.get("color_range")
+
         #read in color ranges for masking
-        color_range = configs.get("color_range",)
-        color_range_file = open(color_range)
+        color_range_file = open(self.color_range)
         color_range_dict = {}
         for line in color_range_file.readlines():
             line = line.strip()
@@ -40,7 +41,7 @@ class HeuristicConnector(GlycanConnector):
         color_range_file.close()
         self.color_range = color_range_dict
         
-        super().__init__()
+        GlycanConnector.__init__(self)
 
     #expects a monosaccharide connection dictionary and 2 monosaccharides
     #connects the monosaccharides to each other in the connection dictionary and returns it
@@ -80,27 +81,6 @@ class HeuristicConnector(GlycanConnector):
         average_mono_distance = self.get_average_mono_distance(obj)
 
         obj, v_count, h_count = self.link_monos(black_masks, obj, average_mono_distance)
-
-        # print("\nmono_dict",obj)
-
-        # for mono_id, mono_details in mono_dict.items():
-        #     print("\n-->>",obj['monos'][0])
-
-        # dont need to find root - there is a seperate module that does it.
-        # mono_dict = self.find_root(mono_dict, v_count, h_count, origin, orientation_method)
-
-        # printmonodict = "{\n"
-        # for key, value in mono_dict.items():
-        #     printmonodict+=key+": "
-        #     for x in value[1:6]:
-        #         printmonodict += str(x) + ", "
-        #     printmonodict += "\n"
-        # printmonodict += "}"
-
-        # print("\nprintmonodict",printmonodict)
-
-        
-        # self.logger.info(f"Monosaccharide Connection Dictionary:\n{printmonodict}")
 
         return obj
 
@@ -196,7 +176,6 @@ class HeuristicConnector(GlycanConnector):
             str(6): "Glc",
             str(7): "NeuGc",
         }
-        # mono_dict = {}
         count = 0
 
         for box in monos_list:
@@ -208,62 +187,12 @@ class HeuristicConnector(GlycanConnector):
             p1 = (x, y)
             p2 = (x + w, y + h)
         
-            # calculate center& radius
-            # mo = cv2.moments(box)
-            # centerX = int(mo["m10"] / mo["m00"])
-            # centerY = int(mo["m01"] / mo["m00"])
-            # cir_radius = int(((h ** 2 + w ** 2) ** 0.5) / 2)
-            # mono_dict[monoID] = [box, (centerX, centerY), cir_radius, (x, y, w, h)]
-
-            # remove mono
-            #cv2.circle(black_masks, (centerX, centerY), int(cir_radius * 0.12) + cir_radius, (0, 0, 0), -1)
             p11 =(int(x*0.985), int(y*0.985 ))
             p22=(int((x + w)*1.015), int((y + h)*1.015))
             cv2.rectangle(black_masks, p11, p22, (0, 0, 0), -1)
             
         return black_masks
-
-        # for i in range(len(monos_list)):
-
-        #     count += 1
-        #     monoID = monos_list[i][0] + str(count)
-        #     contour = monos_list[i][1]
-
-        #     print("NAME", monoID)
-
-        #     x, y, w, h = cv2.boundingRect(contour)
-        #     p1 = (x, y)
-        #     p2 = (x + w, y + h)
-        #     # cv2.rectangle(origin, p1, p2, (0, 255, 0), 1)
-
-        #     # cv2.putText(origin, monoID[:2] + monoID[-2:], (p1[0] - 5, p1[1] - 5), cv2.FONT_HERSHEY_COMPLEX_SMALL, 0.5,
-        #     #             (0, 0, 255), thickness=1)
-
-        #     # calculate center& radius
-        #     mo = cv2.moments(contour)
-        #     centerX = int(mo["m10"] / mo["m00"])
-        #     centerY = int(mo["m01"] / mo["m00"])
-        #     cir_radius = int(((h ** 2 + w ** 2) ** 0.5) / 2)
-        #     mono_dict[monoID] = [contour, (centerX, centerY), cir_radius, (x, y, w, h)]
-
-        #     # cv2.circle(origin, (centerX, centerY), 7, (0, 0, 0),
-        #     #            -1)  # img,point, radius,color last value -1 for fill else its thickness
-        #     # cv2.circle(black_masks, (centerX, centerY), 7, (255, 0, 255), -1)
-        #     #cv2.circle(all_masks_no_black, (centerX, centerY), 7, (255, 0, 255), -1)
-
-        #     # visual only
-        #     #cv2.circle(all_masks_no_black, (centerX, centerY), int(cir_radius * 0.13) + cir_radius, (255, 0, 255), 6)
-
-        #     # remove mono
-        #     #cv2.circle(black_masks, (centerX, centerY), int(cir_radius * 0.12) + cir_radius, (0, 0, 0), -1)
-        #     p11 =(int(x*0.985), int(y*0.985 ))
-        #     p22=(int((x + w)*1.015), int((y + h)*1.015))
-        #     cv2.rectangle(black_masks, p11, p22, (0, 0, 0), -1)
-            
-        #     # circle to detect lines
-        #     #cv2.circle(visual, (centerX, centerY), int(cir_radius * 0.13) + cir_radius, (255, 0, 255), 6)  # 9 is thickness
-        #     #cv2.circle(empty_mask, (centerX, centerY), int(cir_radius * 0.13) + cir_radius, (255, 0, 255), 6)
-        # return mono_dict, black_masks        
+       
 
     #method to detect if two lines intersect
     #takes the endpoints of the lines AB and CD
@@ -285,9 +214,6 @@ class HeuristicConnector(GlycanConnector):
                     (Dy - Cy) * (Bx - Ax) - (Dx - Cx) * (By - Ay)
                     )
             if (0 <= cont1 <= 1 and 0 <= cont2 <= 1):
-                # intersec_X = Ax + (cont1 * (Bx - Ax))
-                # intersec_Y = Ay + (cont1 * (By - Ay))
-                # print(intersec_X, intersec_Y)
                 return True
         return False
     
@@ -327,13 +253,11 @@ class HeuristicConnector(GlycanConnector):
         h_count = 0
 
         for mono in obj['monos']:
-            #print(id)
             boundaries = mono['box']
             
             x, y, w, h = mono['bbox']
             cir_radius = int((((h ** 2 + w ** 2) ** 0.5) / 2) * self.cropfactor)
             centerX,centerY = mono['center']
-            # radius = mono[2]
             
             y1 = centerY - cir_radius
             y2 = centerY + cir_radius
@@ -350,18 +274,10 @@ class HeuristicConnector(GlycanConnector):
             crop = diff[y1:y2,
                    x1:x2]
             
-            #cv2.imshow('fig1',crop)
-            #cv2.waitKey(0)
-            #cv2.destroyAllWindows()  
-
-            #crop_origin = ext_origin[centerY - cir_radius:centerY + cir_radius,
-                          #centerX - cir_radius:centerX + cir_radius]
             contours_list, _ = cv2.findContours(crop,
                                                 cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-            #aux = crop.copy()
 
             for contour in contours_list:
-                #print(contour)
                 point_mo = cv2.moments(contour)
                 stop=0
                 point_centerX2 = 0
@@ -378,7 +294,6 @@ class HeuristicConnector(GlycanConnector):
 
                 Bx = centerX - cir_radius + point_centerX2
                 By = centerY - cir_radius + point_centerY2
-                #################### length adjustable
                 for i in range(1, 200, 5):
                     i = i / 100
                     length = avg_mono_distance * i
@@ -390,22 +305,11 @@ class HeuristicConnector(GlycanConnector):
                     for mono2 in obj['monos']:
                         
                         rectangle = mono2['bbox']
-                        
-                        # need function to detect first hit
-                        
-
-                        # cv2.circle(crop, (Cx, Cy), 4, (0, 0, 255), -1)
-
-                        # cv2.putText(origin, (id[-2:] + id_2[-2:]), (Cx, Cy), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (0, 0, 0))
 
                         line = ((Ax, Ay), (Cx, Cy))
                         if self.interaction_line_rect(line, rectangle) and mono2['id'] != mono['id']:
-                            # cv2.line(origin, (Ax, Ay), (Cx, Cy),
-                            #              (0, 0, 255), 1, 1, 0)
-                            # cv2.circle(origin, (Cx, Cy), 4, (0, 0, 255), -1)
                             obj = self.append_links(obj, mono['id'], mono2['id'])
-                            # cv2.putText(origin, (id_[-2:] + id_2[-2:]), (Cx, Cy), cv2.FONT_HERSHEY_COMPLEX_SMALL, 0.5,
-                            #                 (0, 0, 0))
+    
                             if (abs(Ax - Cx) > abs(Ay - Cy)):
                                     h_count += 1
                             else:
@@ -415,9 +319,6 @@ class HeuristicConnector(GlycanConnector):
                     if stop ==1:
                         break
 
-                    # DEMO!!! this mess with the crop image use for demo only
-                    #cv2.line(aux, (int(crop.shape[0] / 2), int(crop.shape[1] / 2)), (point_centerX2, point_centerY2),
-                             #(255, 255, 0), 1, 1, 0)
         for mono in obj['monos']:
             if 'links' not in mono:
                 mono['links'] = []
@@ -434,14 +335,25 @@ class HeuristicConnector(GlycanConnector):
         return img 
         
 
-
-
 ### Subclass of HeuristicConnect; for connecting heuristically-identified monosaccharides    
-class OriginalConnector(HeuristicConnector):
+class OriginalConnector(HeuristicConnector,ConfigData):
     
-    def __init__(self, configs,cropfactor=1.5):
-        super().__init__(configs)
-        self.cropfactor = cropfactor
+    def __init__(self,config,**kwargs):
+
+        self.cropfactor = kwargs.get('cropfactor',1.2)
+
+        self.defaults = {
+            'color_range': './BKGlycanExtractor/config/colors_range'
+        }
+        
+        ConfigData.__init__(self,config,self.defaults,class_name=self.__class__.__name__)
+        self.color_range = self.get_param('color_range',**kwargs)
+
+        current_config = {
+            'color_range':self.color_range,
+        }
+
+        HeuristicConnector.__init__(self,current_config)
 
     #method to start creating the connection dictionary; calls the heuristic_mono_finder method from the superclass HeuristicConnector
     #takes a list of monosaccharides from the dictionary returned by the monosaccharideid class
@@ -451,11 +363,10 @@ class OriginalConnector(HeuristicConnector):
         black_masks = self.heuristic_mono_finder(monos_list, black_masks)
         return black_masks
     
-# class to connect monosaccharides found with YOLO models
 class ConnectYOLO(HeuristicConnector,ConfigData):
     
     def __init__(self, config,**kwargs):
-        self.cropfactor = 1.2
+        self.cropfactor = kwargs.get('cropfactor',1.2)
 
         self.defaults = {
             'color_range': './BKGlycanExtractor/config/colors_range'
@@ -486,75 +397,20 @@ class ConnectYOLO(HeuristicConnector,ConfigData):
             str(6): "Glc",
             str(7): "NeuGc",
             }
-        
-        # mono_dict = {}
-        
+                
         count = 0
         for box in monos_list:
             count += 1
             mono_name = class_dict[str(box.class_)]
             monoID = mono_name + str(count)
-            #print("NAME", monoID)
             x, y, w, h = box.x, box.y, box.w, box.h
             p1 = (x, y)
             p2 = (x + w, y + h)
-            #cv2.rectangle(origin, p1, p2, (0, 255, 0), 1)
 
-            # cv2.putText(origin, monoID[:2] + monoID[-2:], (p1[0] - 5, p1[1] - 5), cv2.FONT_HERSHEY_COMPLEX_SMALL, 0.5,
-            #             (0, 0, 255), thickness=1)
-
-            # calculate center& radius
             centerX = box.cen_x
             centerY = box.cen_y
 
-            # radius = int(((h ** 2 + w ** 2) ** 0.5) / 2)
-            # mono_dict[monoID] = [box, (centerX, centerY), radius, (x, y, w, h)]
-            #print(box, (centerX, centerY), radius, (x, y, w, h))
-
-            # cv2.circle(origin, (centerX, centerY), 7, (0, 0, 0),
-            #            -1)  # img,point, radius,color last value -1 for fill else its thickness
-            # cv2.circle(black_masks, (centerX, centerY), 7, (255, 0, 255), -1)
-            #cv2.circle(all_masks_no_black, (centerX, centerY), 7, (255, 0, 255), -1)
-
-            # visual only
-            #cv2.circle(all_masks_no_black, (centerX, centerY), int(cir_radius * 0.13) + cir_radius, (255, 0, 255), 6)
-
-            # remove mono
-            #cv2.circle(black_masks, (centerX, centerY), int(cir_radius * 0.12) + cir_radius, (0, 0, 0), -1)
             p11 =(int(x), int(y))
             p22=(int((x + w)), int((y + h)))
             cv2.rectangle(black_masks, p11, p22, (0, 0, 0), -1)
-            
-            # circle to detect lines
-            #cv2.circle(visual, (centerX, centerY), int(cir_radius * 0.13) + cir_radius, (255, 0, 255), 6)  # 9 is thickness
-            #cv2.circle(empty_mask, (centerX, centerY), int(cir_radius * 0.13) + cir_radius, (255, 0, 255), 6)
         return black_masks
-
-
-
-    #method to define the rectangle of a monosacharide
-    #requires the monosaccharide from the connection dictionary, image height and image width
-    #returns a rectangle which can be superimposed on the image
-    # def get_mono_rect(self, mono, imheight, imwidth):
-    #     box = mono[0]
-    #     radius = mono[2]
-    #     x, y, w, h = mono[3]
-    #     #centerX, centerY = mono[1]
-    #     #print(centerX, centerY, radius)
-    #     if x < 0:
-    #         x = 0
-    #     if y < 0:
-    #         y = 0
-    #     x_end = int((x+w)*1.05)
-    #     y_end = int((y+h)*1.05)
-    #     x = int(x*0.95)
-    #     y = int(y*0.95)
-    #     w = int(x_end-x)
-    #     h = int(y_end-y)
-
-    #     if y+h > imheight:
-    #         h = imheight-y
-    #     if x+w > imwidth:
-    #         w = imwidth-x
-    #     mono_rect = (x,y,w,h)
-    #     return mono_rect

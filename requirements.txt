@@ -11,3 +11,4 @@ pdfplumber
 PyMuPDF>=1.22.5
 rdflib
 requests
+cairosvg

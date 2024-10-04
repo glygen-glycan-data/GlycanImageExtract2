@@ -38,7 +38,9 @@ class BoundingBox:
             self.class_name = kw.get("class_name", '')
             self.whitespace = kw.get("white_space", 0)
             self.confidence = kw.get("confidence", 0)
-            
+            self.ID = None
+
+    # remove this method    
     def clone(self):
         bb = BoundingBox()
         for attr in dir(self):
@@ -53,6 +55,12 @@ class BoundingBox:
             setattr(bb,attr,getattr(self,attr))
         return bb
         
+    def get_ID(self):
+        return self.ID
+
+    def set_ID(self,id):
+        self.ID = id
+ 
     # convert an absolute bounding box into a relative bounding box
     def abs_to_rel(self):
         assert self.cen_x is not None
@@ -156,36 +164,10 @@ class BoundingBox:
     # or relies on the type of the bounding box
     def to_list(self, list_type=None):
         return [self.x, self.y, self.w, self.h, self.confidence]
-
-        # if list_type is None:
-        #     list_type = self.type
-        # if list_type == "detected":
-        #     [x,y,w,h,confidence] = [
-        #         self.x, self.y, self.w, self.h, self.confidence
-        #         ]
-        #     return [x, y, w, h, confidence]
-        # elif list_type == "training":
-        #     [class_,rel_cen_x,rel_cen_y,rel_w,rel_h] = [
-        #         self.class_, self.rel_cen_x, 
-        #         self.rel_cen_y, self.rel_w, self.rel_h
-        #         ]
-        #     return [class_, rel_cen_x, rel_cen_y, rel_w, rel_h]
     
     # compatible with new openCV versions
     def to_new_list(self, list_type=None):
         return [self.x, self.y, self.w, self.h]
-
-        # if list_type is None:
-        #     list_type = self.type
-        # if list_type == "detected":
-        #     [x,y,w,h] = [self.x, self.y, self.w, self.h]
-        #     return [x,y,w,h]
-        # elif list_type == "training":
-        #     [class_,rel_cen_x,rel_cen_y,rel_w,rel_h] = [
-        #         self.class_, self.rel_cen_x, 
-        #         self.rel_cen_y, self.rel_w, self.rel_h
-        #         ]
-        #     return [class_, rel_cen_x, rel_cen_y, rel_w, rel_h]
         
     # create coordinates for pdf placement
     def to_pdf_coords(self):
@@ -257,9 +239,6 @@ class BoundingBox:
         self.imwidth = self.imwidth + self.white_space
         self.imheight = self.imheight + self.white_space
 
-    
-    # this is the same as calling self.to_list(list_type="training") 
-    # new programs could use either
     def to_relative_list(self):
         [classid,relcenx,relceny,relw,relh] = [
             self.class_, self.rel_cen_x, 
@@ -270,118 +249,3 @@ class BoundingBox:
     def set_dummy_confidence(self,confidence):
         self.confidence = confidence
         
-    
-# subclass intended for bounding boxes detected by YOLO models
-# can be used to manually create a bounding box 
-# with the qualities expected of a detected object bounding box        
-# class Detected(BoundingBox):
-    # must be initialised with image and a confidence score for the box
-    # def __init__(self, confidence, **kw):
-    #     super().__init__(**kw)
-    #     self.confidence = confidence
-    #     self.type = "detected"
-    #     self.class_options = kw.get(
-    #         "class_options", {str(self.class_), self.confidence}
-    #         )
-    # # check if the bounding box is too large
-    # def is_entire_image(self):
-    #     assert self.w is not None
-    #     if self.w*self.h > 0.8*0.8*self.imwidth*self.imheight:
-    #         self.x = 0
-    #         self.y = 0
-    #         self.w = self.imwidth
-    #         self.h = self.imheight
-    #     else:
-    #         pass 
-
-
-    #set bounding box to contain the entire image
-    # def is_entire_image_training(self):
-    #     self.rel_cen_x = 0.5
-    #     self.rel_cen_y = 0.5
-    #     self.rel_w = 1
-    #     self.rel_h = 1
-        
-    # # fix borders 
-    # # so box cannot be outside image boundaries 
-    # # once whitespace is removed
-    # def fix_borders(self):
-    #     assert self.x is not None
-    #     assert self.w is not None
-    #     if self.x < 0:
-    #         self.x = 0
-    #     if self.y < 0:
-    #         self.y = 0
-    #     if self.x+self.w >= self.imwidth:
-    #         self.w = int(self.imwidth-self.x)
-    #     if self.y+self.h >= self.imheight:
-    #         self.h = int(self.imheight-self.y)
-            
-    # # pad borders by 20% to protect from cropping issues
-    # def pad_borders(self):
-    #     assert self.x is not None
-    #     assert self.w is not None
-    #     self.x = self.x - int(0.2*self.w)
-    #     self.y = self.y - int(0.2*self.h)
-    #     self.w = int(1.4*self.w)
-    #     self.h = int(1.4*self.h) 
-        
-    # # this is the same as calling self.to_list(list_type="training") 
-    # # new programs could use either
-    # def to_relative_list(self):
-    #     [classid,relcenx,relceny,relw,relh] = [
-    #         self.class_, self.rel_cen_x, 
-    #         self.rel_cen_y, self.rel_w, self.rel_h
-    #         ]
-    #     return [classid, relcenx, relceny, relw, relh]
-
-
-# class for bounding boxes from training data
-# or self-created boxes that want to be used as training data        
-# class Training(BoundingBox):
-    #must be initialised with the image
-    # def __init__(self, **kw):
-    #     super().__init__(**kw)
-    #     self.type = "training"
-        
-    #fix borders to prevent boxes outside image boundary
-    # def fix_borders(self):
-    #     assert self.x is not None
-    #     assert self.w is not None
-    #     if self.x < 0:
-    #         self.x = 0
-    #     if self.y < 0:
-    #         self.y = 0
-    #     if self.x+self.w >= self.imwidth:
-    #         self.w = int(self.imwidth-self.x)
-    #     if self.y+self.h >= self.imheight:
-    #         self.h = int(self.imheight-self.y)
-            
-    #set bounding box to contain the entire image
-    # def is_entire_image(self):
-    #     self.rel_cen_x = 0.5
-    #     self.rel_cen_y = 0.5
-    #     self.rel_w = 1
-    #     self.rel_h = 1
-        
-    #pad borders by a factor of 10%
-    # def pad_borders(self):
-    #     assert self.x is not None
-    #     assert self.w is not None
-    #     self.x = self.x - int(0.1*self.w)
-    #     self.y = self.y - int(0.1*self.h)
-    #     self.w = int(1.2*self.w)
-    #     self.h = int(1.2*self.h)
-        
-    # #add whitespace to image
-    # def reset_image(self,white_space):
-    #     assert self.cen_x is not None
-    #     self.white_space = white_space
-    #     half_white_space = int(white_space/2)
-    #     self.cen_x = self.cen_x + half_white_space
-    #     self.cen_y = self.cen_y + half_white_space
-    #     self.imwidth = self.imwidth + self.white_space
-    #     self.imheight = self.imheight + self.white_space
-        
-    # def set_dummy_confidence(self,confidence):
-    #     self.confidence = confidence

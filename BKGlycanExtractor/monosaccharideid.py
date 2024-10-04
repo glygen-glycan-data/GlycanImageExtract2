@@ -1,14 +1,6 @@
 # -*- coding: utf-8 -*-
 """
 class for monosaccharide finding methods.
-
-all need a find_monos method, 
-which takes an image (should be cropped to single glycan)
-and returns a GlycanMonoInfo instance consisting of: 
-image(formatted for searching), image(annotated), 
-dictionary of monosaccharide symbols and their counts, 
-list of monosaccharide objects, 
-string describing monosaccharide composition.
 """
 import cv2
 import logging
@@ -22,141 +14,11 @@ from .yolomodels import YOLOModel
 from .config_data import ConfigData
 from BKGlycanExtractor.semantics import Figure_Semantics,File_Semantics
 
-# class_dictionary = {
-#     0: "GlcNAc",
-#     1: "NeuAc",
-#     2: "Fuc",
-#     3: "Man",
-#     4: "GalNAc",
-#     5: "Gal",
-#     6: "Glc",
-#     7: "NeuGc",
-#     }
-
 class_list = ["GlcNAc","NeuAc","Fuc","Man","GalNAc","Gal","Glc","NeuGc"]
-
-# class FoundMonosaccharide(BoundingBox):
-#     # constrain type to refer to these
-#     contour_based = 1
-#     bounding_box_based = 2
-#     content_types = [contour_based, bounding_box_based]
-
-#     # class_list = ["GlcNAc","NeuAc","Fuc","Man","GalNAc","Gal","Glc","NeuGc"]
-    
-#     # backwards_class_dictionary = {
-#     #     "GlcNAc": 0,
-#     #     "NeuAc": 1,
-#     #     "Fuc": 2,
-#     #     "Man": 3,
-#     #     "GalNAc": 4,
-#     #     "Gal": 5,
-#     #     "Glc": 6,
-#     #     "NeuGc": 7,
-#     #     }
-    
-#     # class_dictionary = {
-#     #     0: "GlcNAc",
-#     #     1: "NeuAc",
-#     #     2: "Fuc",
-#     #     3: "Man",
-#     #     4: "GalNAc",
-#     #     5: "Gal",
-#     #     6: "Glc",
-#     #     7: "NeuGc",
-#     #     }
-    
-#     id_beginnings = tuple(class_list)
-    
-#     def __init__(self, monoid, type_, **kw):
-#         super().__init__(**kw)
-#         assert monoid.startswith(self.id_beginnings)
-#         self.monoID = monoid
-#         assert type_ in self.content_types
-#         self.type_ = type_
-#         self.linked_monos = []
-#         self.root = False
-        
-#     def add_linked_monos(self, mono_list):
-#         for mono in mono_list:
-#             if mono not in self.linked_monos:
-#                 self.linked_monos.append(mono)
-        
-#     def get_ID(self):
-#         return self.monoID
-        
-#     def get_linked_monos(self):
-#         return self.linked_monos
-    
-#     def is_root(self):
-#         return self.root
-    
-#     def remove_linked_mono(self, monoID):
-#         self.linked_monos.remove(monoID)
-        
-#     def set_root(self):
-#         self.root = True
-        
-#     def __str__(self):
-#         printstr = f"{{ id: {self.monoID}, box: {self.to_new_list()}, "
-#         printstr += f"image dimensions: w:{self.imwidth}, h:{self.imheight},\n"
-#         printstr += "linked monos: "
-#         printstr += ','.join([monoid for monoid in self.linked_monos])
-#         printstr += f",\nroot: {self.root} }}"
-        
-#         return printstr
-        
-
-# monos is a list of Monosaccharide objects
-# class GlycanMonoInfo:
-#     def __init__(self, **kw):
-#         self.original_img = kw["original"]
-#         self.comp_dict = kw.get("count_dict",)
-#         self.monos = kw.get("monos", [])
-#         self.annotated_img = kw["annotated"]
-#         self.comp_string = kw.get("comp_str", '')
-#         self.boxes = kw.get('boxes',[])
-    
-#     def get_annotated_image(self):
-#         return self.annotated_img
-    
-#     def get_composition(self):
-#         return self.comp_dict
-    
-#     def get_composition_string(self):
-#         return self.comp_string
-    
-#     def get_image(self):
-#         return self.original_img
-    
-#     def get_monos(self):
-#         return self.monos
-    
-#     def set_monos(self, monos_list):
-#         self.monos = monos_list
-
-#     def get_boxes(self):
-#         return self.boxes
-        
-#     def __str__(self):
-#         printstr = f"{{ composition_dict:\n{self.comp_dict}\nmonos: "
-#         printstr += ','.join([mono.monoID for mono in self.monos])
-#         printstr += f"\ncompostion count: {self.comp_string},"
-#         height, width, channels = self.original_img.shape
-#         printstr += f"\nimage dimensions: w:{width}, h:{height} }}"
-            
-#         return printstr
 
 class MonoID: 
     def __init__(self, **kw):
         pass
-        # super().__init__()
-        
-    # def compstr(self, counts):
-    #     s = ""
-    #     for sym,count in sorted(counts.items()):
-    #         if count > 0:
-    #             s += "%s(%d)"%(sym,count)
-    #     return s
     
     def crop_largest(self, image):
         img = image
@@ -182,7 +44,6 @@ class MonoID:
     
     def find_objects(self, image):
         raise NotImplementedError
-        # return mono_info, an instance of GlycanMonoInfo
         
     def resize_image(self, img):
         bigwhite = np.zeros(
@@ -200,11 +61,20 @@ class MonoID:
     def set_logger(self, logger_name=''):
         self.logger = logging.getLogger(logger_name+'.monosaccharideid')
     
-class HeuristicMonos(MonoID):
-    def __init__(self, configs,resize_image=False):
+class HeuristicMonos(MonoID,ConfigData):
+    def __init__(self, config, **kwargs):
         #read in color ranges for mono id
-        color_range = configs.get("color_range",)
-        color_range_file = open(color_range)
+        resize_image = kwargs.get('resize_image',False)
+
+        self.defaults = {
+            'color_range': './BKGlycanExtractor/config/colors_range.txt'
+        }
+
+        MonoID.__init__(self)
+        ConfigData.__init__(self,config,self.defaults,class_name=self.__class__.__name__)
+        self.color_range = self.get_param('color_range',**kwargs)
+
+        color_range_file = open(self.color_range)
         color_range_dict = {}
         for line in color_range_file.readlines():
             line = line.strip()
@@ -220,7 +90,6 @@ class HeuristicMonos(MonoID):
         super().__init__()
         
     def compare_to_img(self, img1, img2):
-        # return similarity between two image
         if img1.shape == img2.shape:
             pass
         else:
@@ -229,9 +98,6 @@ class HeuristicMonos(MonoID):
         diff = cv2.absdiff(img1, img2)
         r, g, b = cv2.split(diff)
         score = cv2.countNonZero(g) / (img1.shape[0] * img1.shape[1])
-
-        # cv2.imshow("different", diff)
-        # cv2.waitKey(0)
         return 1 - score
 
     def execute(self, obj):
@@ -239,9 +105,7 @@ class HeuristicMonos(MonoID):
         
 
     def find_objects(self, obj):
-        # monos = {}
         img_resize = self.img_resize
-        # test = kw.get("test", False)
         image = obj.get('image')
         img = self.crop_largest(image)
 
@@ -250,14 +114,10 @@ class HeuristicMonos(MonoID):
 
         #save original image, and then format it for masking
         origin_image = img.copy()
-        # monos["original"] = origin_image
         img = self.smooth_and_blur(img)
         
         hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
         img_height, img_width, _ = img.shape
-
-        # read color range in config folder
-        #origin = img.copy()
         final = img.copy()  # final annotated pieces
 
         mask_array, mask_array_name, mask_dict = self.get_masks(hsv)
@@ -284,10 +144,6 @@ class HeuristicMonos(MonoID):
                 )
             
             for contour in contours_list:
-
-                # approx = cv2.approxPolyDP(
-                #     contour, 0.035 * cv2.arcLength(contour, True), True
-                #     )
                 x, y, w, h = cv2.boundingRect(contour)
 
                 area = cv2.contourArea(contour)
@@ -308,11 +164,6 @@ class HeuristicMonos(MonoID):
                     box.corner_to_center()
                     box.abs_to_rel()
                     box.to_four_corners()
-                    
-                    # p1 = (x,y)
-                    # p2 = (x+w, y+h)
-                    # cv2.rectangle(final, p1, p2, (0, 255, 0), 1)
-                    # cv2.drawContours(final, [approx], 0, (0, 0, 255), 1)
                     
                     if color == "red_mask":
                         mono = 'Fuc'                        
@@ -360,17 +211,11 @@ class HeuristicMonos(MonoID):
                 else:
                     continue
                 if "???" not in mono:
-                    # box.set_class(FoundMonosaccharide.backwards_class_dictionary[mono])
                     box.set_class(class_list.index(mono))
                     box.set_dummy_confidence(1)
 
-                    # monosaccharide = FoundMonosaccharide(
-                    #     monoid=mono+str(count), type_=1, boundingbox=box
-                    #     )
-
                     count += 1
-                    # monos.append(monosaccharide)
-
+                    box.set_ID(mono+str(count))
                     mono_info = {
                         'id': mono+str(count),
                         'type': mono,
@@ -380,21 +225,8 @@ class HeuristicMonos(MonoID):
                     }
 
                     obj['monos'].append(mono_info)
-
-                    # final = monosaccharide.annotate(final)
-                # else:
-                #     final = box.annotate(final, mono)
-                
-                # self.logger.info(mono)
                 if mono in monoCount_dict:
                     monoCount_dict[mono] += 1
-                    
-        # c = self.compstr(monoCount_dict)
-                    
-        # mono_info = GlycanMonoInfo(
-        #     original=origin_image, count_dict=monoCount_dict, 
-        #     monos=monos, annotated=final, comp_str=c
-        #     )
         
         return obj  
         
@@ -460,17 +292,13 @@ class HeuristicMonos(MonoID):
         if img_resize:
             img = self.resize_image(img)
 
-        #save original image, and then format it for masking
         origin_image = img.copy()
-        # monos["original"] = origin_image
         img = self.smooth_and_blur(img)
         
         hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
 
         img_height, img_width, _ = img.shape
 
-        # read color range in config folder
-        #origin = img.copy()
         final = img.copy()  # final annotated pieces
 
         mask_array, mask_array_name, mask_dict = self.get_masks(hsv)
@@ -564,25 +392,11 @@ class HeuristicMonos(MonoID):
                 else:
                     continue
                 if "???" not in mono:
-                    # box.set_class(FoundMonosaccharide.backwards_class_dictionary[mono])
                     box.set_class(class_list.index(mono))
                     box.set_dummy_confidence(1)
 
                     count += 1
-                    # monos.append(monosaccharide)
-
-                    # mono_info = {
-                    #     'id': mono+str(count),
-                    #     'type': mono,
-                    #     'bbox': box.to_new_list(),
-                    #     'center': [box.cen_x, box.cen_y],
-                    #     'box': box
-                    # }
-
-                    # obj['monos'].append(mono_info)
                     mono_boxes.append(box)
-
-
                 if mono in monoCount_dict:
                     monoCount_dict[mono] += 1
         
@@ -644,27 +458,17 @@ class YOLOMonos(YOLOModel,MonoID,ConfigData):
         image = obj.get('image')
         origin_image = image.copy()
         
-        # monosaccharide finding formatting
-        # image = self.crop_largest(image)
-        
         if img_resize:
             image = self.resize_image(image)
         
         final = image.copy()
-        
-        # YOLO formatting
-        # image_dict = self.format_image(img)
-        
         mono_boxes = self.get_YOLO_output(image,threshold,class_options=True,request_padding=request_padding)
-
         self.set_mono_info(obj, mono_boxes)
 
         return obj
 
 
     def find_boxes(self, image,**kw):
-        # currently works for single glycan in an image, else if multipe glycans, then glycanfinding method
-        # would be needed - YOLOGlycanFinder?
         image_path = image
         figure_semantics = Figure_Semantics(image_path)
         
@@ -684,8 +488,6 @@ class KnownMono:
 
     def find_boxes(self,file_path):
         path = os.path.abspath(file_path)
-        # file_name = os.path.basename(path)
-
         file_semantics = File_Semantics(path)
 
         monos = []
@@ -719,6 +521,8 @@ class KnownMono:
                     box.corner_to_center()
 
                     count += 1
+
+                    box.set_ID(name + str(count))
 
                     mono_info = {
                         'id': name + str(count),

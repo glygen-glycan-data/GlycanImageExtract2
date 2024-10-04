@@ -37,7 +37,7 @@ class FoundRootMonosaccharide(BoundingBox):
 class RootFinder:
     def __init__(self, **kw):
         pass
-    def find_objects(self, mono_info, **kw):
+    def find_objects(self, obj, **kw):
         raise NotImplementedError
         
     def set_logger(self, logger_name=''):
@@ -54,10 +54,10 @@ class OrientationRootFinder(RootFinder):
     def execute(self, obj,**kw):
         self.find_objects(obj,**kw)
 
-    def find_objects(self, mono_info, **kw):
-        orientation, confidence = self.get_orientation(mono_info, **kw)
-        # print(orientation)
-        monos_list = mono_info.get_monos()
+    def find_objects(self, obj, **kw):
+        orientation, confidence = self.get_orientation(obj, **kw)
+
+        monos_list = [mono['box'] for mono in obj['monos']]
         
         # left-right
         if orientation == 0:
@@ -88,11 +88,12 @@ class OrientationRootFinder(RootFinder):
                 )
 
         for mono in monos_list:
-            if mono.get_ID().find("Fuc") == -1:
-                mono.set_root()
+            if mono.get_ID() is not None and mono.get_ID().find("Fuc") == -1:
+                obj['root'] = mono.get_ID()
                 break 
+            else:
+                obj['root'] = None
         
-        mono_info.set_monos(monos_list)
         return confidence
     
     def get_orientation(self, **kw):
@@ -101,14 +102,18 @@ class OrientationRootFinder(RootFinder):
 class DefaultOrientationRootFinder(OrientationRootFinder):    
     def get_orientation(self, obj):
         monos = [mono['box'] for mono in obj['monos']]
+        print("monos",obj)
         # monos = obj.get_monos()
         
         h_count = 0
         v_count = 0
         
-        for mono in monos:
-            aX, aY = [mono.cen_x, mono.cen_y]
-            for mono2 in mono.get_linked_monos():
+        for mono in obj['monos']:
+            mono_box = mono['box']
+            print("vars",vars(mono_box))
+            aX, aY = [mono_box.cen_x, mono_box.cen_y]
+            print("mono",mono)
+            for mono2 in mono['links']:
                 for x in monos:
                     if x.get_ID() == mono2:
                         mono2 = x
@@ -128,17 +133,30 @@ class DefaultOrientationRootFinder(OrientationRootFinder):
         else:
             return 3, 1        # bottom-top, confidence value
         
-class YOLOOrientationRootFinder(YOLOModel, OrientationRootFinder):
-    def __init__(self, configs):
-        super().__init__(configs)
+class YOLOOrientationRootFinder(YOLOModel, OrientationRootFinder, ConfigData):
+    def __init__(self, config,**kwargs):
+        self.threshold = kwargs.get('threshold', 0.0)
+        self.defaults = {
+            'weights': './BKGlycanExtractor/config/orientation_flipped.weights',
+            'config_net': './BKGlycanExtractor/config/orientation_flipped.cfg',
+        }
+
+        OrientationRootFinder.__init__(self)
+        ConfigData.__init__(self,config,self.defaults,class_name=self.__class__.__name__)
+        self.weights = self.get_param('weights',**kwargs)
+        self.config_net = self.get_param('config',**kwargs)
+
+        current_config = {
+            'weights':self.weights,
+            'config': self.config_net
+        }
+
+        YOLOModel.__init__(self,current_config)
         
-    def get_orientation(self, mono_info, **kw):
-        glycanimage = mono_info.get_image()
-        
-        threshold = kw.get('threshold', 0.0)
-        image_dict = self.format_image(glycanimage)
-        
-        oriented_glycans = self.get_YOLO_output(image_dict, threshold)
+    def get_orientation(self, obj):
+        image = obj.get('image')
+                
+        oriented_glycans = self.get_YOLO_output(image, self.threshold)
         
         oriented_glycans = [
             FoundOrientedGlycan(boundingbox=glycan) 
@@ -183,9 +201,7 @@ class YOLORootFinder(YOLOModel, RootFinder,ConfigData):
     def find_objects(self, obj, **kw):
         glycanimage = obj['image']
         threshold = kw.get('threshold', 0.0)
-        
-        # image_dict = self.format_image(glycanimage)
-        
+                
         monosaccharides = self.get_YOLO_output(glycanimage, threshold)
         
         monosaccharides = [
@@ -204,7 +220,6 @@ class YOLORootFinder(YOLOModel, RootFinder,ConfigData):
             root_mono = root_monos[best_index]
 
         monos_list, monos_id, mono_boxes =  zip(*[(mono['box'], mono['id'], mono['box']) for mono in obj['monos']])
-        # monos_list = mono_info.get_monos()
         if monos_list == []:
             return None
         comparison_alg = compareboxes.CompareBoxes()
@@ -217,8 +232,6 @@ class YOLORootFinder(YOLOModel, RootFinder,ConfigData):
                                        mono, root_mono
                                        )
                 
-        # print(intersection_list)
-        # here check if identified root corresponds to identified mono
         max_int_idx = np.argmax(intersection_list)
         
         box = monos_list[max_int_idx]
@@ -232,14 +245,8 @@ class YOLORootFinder(YOLOModel, RootFinder,ConfigData):
             or (inter == d_area
                 and comparison_alg.detection_sufficient(box, root_mono))
             or comparison_alg.is_overlapping(box, root_mono)):
-            # assign root to the appropriate monosaccharide
-            # print("\n monos_list",monos_list[max_int_idx],max_int_idx,monos_list)
             pred_root_id = monos_id[max_int_idx]
-            # pred_box = mono_boxes[max_int_idx]
-            # print("pred_root_id",pred_root_id,root_mono.to_new_list(),pred_box.to_new_list())
-            # monos_list[max_int_idx].set_root()
             obj['root'] = pred_root_id
-            # mono_info.set_monos(monos_list)
             return root_mono.get_confidence()
         else:
             return None
