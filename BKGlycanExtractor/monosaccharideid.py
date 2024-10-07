@@ -64,7 +64,7 @@ class MonoID:
 class HeuristicMonos(MonoID,ConfigData):
     def __init__(self, config, **kwargs):
         #read in color ranges for mono id
-        resize_image = kwargs.get('resize_image',False)
+        self.img_resize = kwargs.get('resize_image',False)
 
         self.defaults = {
             'color_range': './BKGlycanExtractor/config/colors_range.txt'
@@ -86,7 +86,6 @@ class HeuristicMonos(MonoID,ConfigData):
         color_range_file.close()
         self.color_range = color_range_dict
 
-        self.img_resize = resize_image
         super().__init__()
         
     def compare_to_img(self, img1, img2):
@@ -104,7 +103,7 @@ class HeuristicMonos(MonoID,ConfigData):
         self.find_objects(obj)
         
 
-    def find_objects(self, obj):
+    def find_objects(self, obj,**kw):
         img_resize = self.img_resize
         image = obj.get('image')
         img = self.crop_largest(image)
@@ -155,7 +154,7 @@ class HeuristicMonos(MonoID,ConfigData):
                     if (squareness > 0.25 
                             or arearatio < 1000.0 
                             or arearatio1 < 500):
-                        self.logger.info("BAD")
+                        # self.logger.info("BAD")
                         continue
                     box = BoundingBox(
                         image=img, x=x, y=y, width=w, height=h
@@ -207,7 +206,7 @@ class HeuristicMonos(MonoID,ConfigData):
                         elif 0.5 < score < 0.9: # is circle
                             mono = "Gal"
                         else:
-                            mono = "??? score="+score
+                            mono = "??? score="+str(score)
                 else:
                     continue
                 if "???" not in mono:
@@ -285,122 +284,17 @@ class HeuristicMonos(MonoID,ConfigData):
 
 
     def find_boxes(self, image):
-        img_resize = self.img_resize
 
-        img = self.crop_largest(image)
-
-        if img_resize:
-            img = self.resize_image(img)
-
-        origin_image = img.copy()
-        img = self.smooth_and_blur(img)
+        image_path = image
+        figure_semantics = Figure_Semantics(image_path)
         
-        hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+        idx = 1
+        figure_semantics.set_glycans(idx,image)
 
-        img_height, img_width, _ = img.shape
-
-        final = img.copy()  # final annotated pieces
-
-        mask_array, mask_array_name, mask_dict = self.get_masks(hsv)
+        for gly_obj in figure_semantics.glycans():
+            self.find_objects(gly_obj)
+        return figure_semantics
         
-        monoCount_dict = {
-            "GlcNAc": 0, 
-            "NeuAc": 0, 
-            "Fuc": 0, 
-            "Man": 0, 
-            "GalNAc": 0, 
-            "Gal": 0, 
-            "Glc": 0, 
-            "NeuGc": 0,
-            }
-
-        mono_boxes = []
-
-        count = 0
-        for color in mask_array_name:
-            if color == "black_mask":
-                continue
-            contours_list, _ = cv2.findContours(
-                mask_dict[color], cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
-                )
-            
-            for contour in contours_list:
-                x, y, w, h = cv2.boundingRect(contour)
-
-                area = cv2.contourArea(contour)
-                
-                squareness = abs(math.log(float(w)/float(h),2))
-                arearatio = 1e6*float(area)/(img_height*img_width)
-                arearatio1 = 1000*area/float(w*h)
-                if squareness < 2 and arearatio > 100 and arearatio1 > 200:
-                    if (squareness > 0.25 
-                            or arearatio < 1000.0 
-                            or arearatio1 < 500):
-                        # self.logger.info("BAD")
-                        continue
-                    box = BoundingBox(
-                        image=img, x=x, y=y, width=w, height=h
-                        )
-                    
-                    box.corner_to_center()
-                    box.abs_to_rel()
-                    box.to_four_corners()
-                    
-                    if color == "red_mask":
-                        mono = 'Fuc'                        
-
-                    elif color == "purple_mask":
-                        mono = 'NeuAc'
-
-                        
-                    elif color == "blue_mask":
-                        white = np.zeros([h, w, 3], dtype=np.uint8)
-                        white.fill(255)
-                        this_blue_img = mask_dict["blue_mask"][y:y+h, x:x+w]
-                        this_blue_img = cv2.cvtColor(
-                            this_blue_img, cv2.COLOR_GRAY2BGR
-                            )
-                        score = self.compare_to_img(white, this_blue_img)
-                        if score >= 0.8:  # is square
-                            mono = 'GlcNAc'
-
-                        elif 0.5 < score < 0.8: # is circle
-                            mono = 'Glc'
-
-                        else:
-                            mono = '??? score='+score
-
-                    elif color == "green_mask":
-                        mono = "Man"
-
-                    elif color == "yellow_mask":
-                        white = np.zeros([h, w, 3], dtype=np.uint8)
-                        white.fill(255)
-                        yellow_img = mask_dict["yellow_mask"][y:y+h, x:x+w]
-                        yellow_img = cv2.cvtColor(
-                            yellow_img, cv2.COLOR_GRAY2BGR
-                            )
-
-                        score = self.compare_to_img(white, yellow_img)
-                        if score > 0.9:  # is square
-                            mono = "GalNAc"
-
-                        elif 0.5 < score < 0.9: # is circle
-                            mono = "Gal"
-                        else:
-                            mono = "??? score="+ str(score)
-                else:
-                    continue
-                if "???" not in mono:
-                    box.set_class(class_list.index(mono))
-                    box.set_dummy_confidence(1)
-
-                    count += 1
-                    mono_boxes.append(box)
-                if mono in monoCount_dict:
-                    monoCount_dict[mono] += 1
-        
-        return mono_boxes
     
 class YOLOMonos(YOLOModel,MonoID,ConfigData):
     def __init__(self,config,**kwargs):
@@ -472,14 +366,12 @@ class YOLOMonos(YOLOModel,MonoID,ConfigData):
         image_path = image
         figure_semantics = Figure_Semantics(image_path)
         
-        request_padding = kw.get('request_padding',False)
-
         idx = 1
         figure_semantics.set_glycans(idx,image)
 
         for gly_obj in figure_semantics.glycans():
-            self.find_objects(gly_obj,request_padding=request_padding)
-            return figure_semantics
+            self.find_objects(gly_obj)
+        return figure_semantics
 
 
 class KnownMono:

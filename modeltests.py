@@ -5,7 +5,6 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
 import cv2
-# import BKGlycanExtractor.compareBoxes as cb
 import logging
 import configparser
 import os
@@ -41,20 +40,13 @@ class Finder_Evaluator:
                 return False
         return True
 
-    # changed conf_threshold = 0.5, originally it was conf_threshold = 0.0
     def compare(self, boxes_in, training, comparison_alg, image, conf_threshold = 0.5):
-        # boxes = [ box.clone() for box in boxes_in if box.confidence >= conf_threshold ] 
         boxes = [box for box in boxes_in if box.confidence >= conf_threshold ]
-        # print("--->>box class id",[(b.class_, b.confidence) for b in boxes])
 
         [box.to_four_corners() for box in boxes]
         compare_dict = {}
         annotate_image = image.copy()
         for idx,dbox in enumerate(boxes):
-
-            # p1 = (dbox.x,dbox.y)
-            # p2 = (dbox.x2,dbox.y2)
-            # cv2.rectangle(annotate_image,p1,p2,(0,255,0),3)
             dbox.set_name(str(idx))
             compare_dict[dbox.name] = (dbox, None)
             max_int = 0
@@ -69,31 +61,19 @@ class Finder_Evaluator:
         results = []
         logger.info("Training box checks:")
         for tbox in training:
-            #print(str(tbox))
             logger.info(str(tbox))
 
             found = False
             for dbox in boxes:
                 if comparison_alg.have_intersection(tbox,dbox):
                     found = True
-                    # print("intersection")
                     break
             if found:
-                #print("hello")
                 logger.info("Training box intersects with detected box(es).")
                 continue
             else:                                       
                 results.append('FN')
-                #print("tbox not found")
                 logger.info("FN, training box not detected.")
-        # if self.pad_flag:
-        #     cv2.imshow('image',annotate_image)
-        # else:
-        #     cv2.imshow('image2', annotate_image)
-        #     cv2.waitKey(0)
-        #     cv2.destroyAllWindows()
-        # cv2.waitKey(0)
-        # cv2.destroyAllWindows()
         
         logger.info("Detected box checks:")
         for key,boxpair in compare_dict.items():
@@ -104,10 +84,8 @@ class Finder_Evaluator:
             logger.info(str(dbox))
             if tbox is None:
                 results.append("FP")
-                #print("no tbox")
                 logger.info("FP, detection does not intersect with training box.")
             else:
-                # print("\ntbox,dbox",tbox.class_,dbox.class_)
                 if not comparison_alg.compare_class(tbox,dbox):
                     results.append("FP")
                     results.append("FN")
@@ -118,17 +96,14 @@ class Finder_Evaluator:
                     inter = comparison_alg.intersection_area(tbox,dbox)
                     if inter == 0:
                         results.append("FP")
-                        #print("no tbox")
                         logger.info("FP, detection does not intersect with training box.")
                     elif inter == t_area:
-                        #print(comparison_alg.training_contained(tbox,dbox))
                         if comparison_alg.training_contained(tbox,dbox):
                             results.append("TP")
                             logger.info("TP")
                         else:
                             results.append("FP")
                             results.append("FN")
-                            #print("dbox too big")
                             logger.info("FP/FN, detection area too large.")
                     elif inter == d_area:
                         if comparison_alg.detection_sufficient(tbox,dbox):
@@ -152,17 +127,6 @@ class Finder_Evaluator:
                 d1 = (dbox.x,dbox.y)
                 d2 = (dbox.x2,dbox.y2)
 
-                # print(t1,t2)
-                # print(d1,d2)
-
-                # print("iou:",comparison_alg.iou(tbox,dbox))
-
-                # cv2.rectangle(annotate_image,t1,t2,(255,0,0),2)
-                # cv2.rectangle(annotate_image,d1,d2,(0,255,0),2)
-                # cv2.imshow('image', annotate_image)
-                # annotate_image = image.copy()
-                # cv2.waitKey(0)
-                #cv2.destroyAllWindows()
         return results
 
     def compare_one(self, box, trainingbox, comparison_alg, conf_threshold = 0.0):
@@ -183,11 +147,9 @@ class Finder_Evaluator:
             d_area = box.area()
             inter = comparison_alg.intersection_area(trainingbox,box)
             if inter == 0:
-                #print("no tbox")
                 logger.info("FP, detection does not intersect with training box.")
                 return False
             elif inter == t_area:
-                #print(comparison_alg.training_contained(tbox,dbox))
                 if comparison_alg.training_contained(trainingbox,box):
                     logger.info("TP")
                     return True
@@ -223,12 +185,10 @@ class Finder_Evaluator:
         known_pipeline_name = None
 
         compare_algo = CompareBoxes()
-        # for image in images:
-        #     print("image",image)
         glycan_files = [image for image in images if os.path.isfile(image) and os.path.basename(image).endswith('.png')]
         random_files = np.random.choice(glycan_files, 3) # select 100 of the files randomly 
 
-        # there will only be one pipeline always for Known Semantics
+        # there will only be one pipeline for Known Semantics
         for km_pipeline in self.km_configs:
             known_pipeline_name = km_pipeline
             mono_idx = self.km_configs[km_pipeline]['steps'].index('mono_finder')
@@ -238,19 +198,18 @@ class Finder_Evaluator:
         for name, pipeline_config in self.configs.items():
             predicted_semantic_data[name] = []
             known_semantic_data[known_pipeline_name] = []
+            bx1_km = None
+            bx_2 = None
 
             print("\nPipeline name:",name)
             self.obs.update({name: {}})
-            # if there are multiple steps, need to execute all the steps (for loop) before self.evalution_type?
-            # in order to fill the figure semantics obj and then create a pipeline with the evalution_type
-            # create a method that will execute all the steps
             finder_idx = pipeline_config['steps'].index(self.evaluation_type)
             mf = pipeline_config['instantiated_finders'][finder_idx]
 
             for glycan_file in random_files:        
                 file_name = os.path.basename(glycan_file)
 
-                print("\nfile name:",file_name)       
+                print("file name:",file_name)       
                 if file_name.endswith("png"):
                     image = cv2.imread(glycan_file)
                     text_file = self.training_file(file=file_name, direc=os.path.dirname(glycan_file))
@@ -258,10 +217,6 @@ class Finder_Evaluator:
                     bx1 = km.find_boxes(text_file)
                     bx2 = mf.find_boxes(glycan_file)
 
-                    # can add bx3 (padded data) for comparision with ground truth data
-                    # bx3 = mf.find_boxes(glycan_file,request_padding=True)
-
-                    # there is some mistake here
                     for idx, gly_obj in enumerate(bx2.glycans()):
                         bx_2 = [monos['box'] for monos in gly_obj['monos']]
                         predicted_semantic_data[name].append({file_name: self.format_data(bx2.semantics)})
@@ -275,17 +230,20 @@ class Finder_Evaluator:
                         self.obs[name].setdefault(confidence, []).extend(results)
 
 
-        # # * Semantics JSON string --> no need to include image and objects and save it in a file
-        # create a method for json dumps, which also removes the ndarray and class obj from the data strcuture
         predicted_monos_data = json.dumps(predicted_semantic_data)
         known_monos_data = json.dumps(known_semantic_data)
 
+        directory = os.getcwd() + '/output'
+
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+
         # Save the JSON string to a file
-        with open('predicted_monos_data.json', 'w') as file:
+        with open(directory + '/predicted_monos_data.json', 'w') as file:
             json.dump(predicted_monos_data, file, indent=4)
             # file.write(predicted_monos_data)
         
-        with open('known_monos_data.json', 'w') as file:
+        with open(directory + '/known_monos_data.json', 'w') as file:
             json.dump(known_monos_data, file, indent=4)
             # file.write(known_monos_data)
         
@@ -302,7 +260,6 @@ class Finder_Evaluator:
             for mono in gly_obj['monos']:
                 del mono['box']
 
-        # print("\nsemantic_obj",semantic_obj)
         return semantic_obj
 
 
@@ -316,6 +273,10 @@ class Finder_Evaluator:
 
     def plotprecisionrecall(self,images):
         self.run(images)
+
+        directory = os.getcwd() + '/output'
+        if not os.path.exists(directory):
+            os.makedirs(directory)
         
         plt.figure(1) 
         plt.figure(2)
@@ -364,7 +325,7 @@ class Finder_Evaluator:
         plt.axvline(x=1, color='k', linestyle='--')
         plt.legend(loc="best")
 
-        # Customize and finalize figure 2 (zoomed-in graph)
+        # figure 2 (zoomed-in graph)
         plt.figure(2)
         plt.ylabel('Precision')
         plt.xlabel('Recall')
@@ -377,179 +338,10 @@ class Finder_Evaluator:
         pr = plt.figure(1)
         pr_zoom = plt.figure(2) 
 
-        pr.savefig('plot1.png') 
-        pr_zoom.savefig('plot2.png')
+        pr.savefig(directory + '/plot1.png') 
+        pr_zoom.savefig(directory + '/plot2.png')
 
         return pr,pr_zoom
 
 
-class MonosImprovement(Finder_Evaluator):
-    def compare(self, boxes, training, comparison_alg, image,conf_threshold = 0.0):
-        fp = False
-        for box in boxes:
-            if box.confidence < conf_threshold:
-                boxes.remove(box)
-        [box.to_four_corners() for box in boxes]
-        compare_dict = {}
-        #annotate_image = self.image.copy()
-        for idx,dbox in enumerate(boxes):
-                
-            # p1 = (dbox.x,dbox.y)
-            # p2 = (dbox.x2,dbox.y2)
-            # cv2.rectangle(annotate_image,p1,p2,(0,255,0),3)
-            dbox.set_name(str(idx))
-            compare_dict[dbox.name] = (dbox, None)
-            max_int = 0
-            for tbox in training:
-                if comparison_alg.have_intersection(tbox,dbox):
-                    intersect = comparison_alg.intersection_area(tbox,dbox)
-                    #print(intersect)
-                    if intersect > max_int:
-                        max_int = intersect
-                        compare_dict[dbox.name] = (dbox,tbox)
-                else:
-                    continue
-        results = []
-        logger.info("Training box checks:")
-        for tbox in training:
-            #print(str(tbox))
-            logger.info(str(tbox))
-            # p1 = (tbox.x,tbox.y)
-            # p2 = (tbox.x2,tbox.y2)
-            # cv2.rectangle(annotate_image,p1,p2,(255,0,0),3)
-            found = False
-            for dbox in boxes:
-                if comparison_alg.have_intersection(tbox,dbox):
-                    found = True
-                    #print("intersection")
-                    break
-            if found:
-                #print("hello")
-                logger.info("Training box intersects with detected box(es).")
-                continue
-            else:                                       
-                results.append('FN')
-                #print("tbox not found")
-                logger.info("FN, training box not detected.")
-        # if self.pad_flag:
-        #     cv2.imshow('image',annotate_image)
-        # else:
-        #     cv2.imshow('image2', annotate_image)
-        #     cv2.waitKey(0)
-        #     cv2.destroyAllWindows()
-        # cv2.waitKey(0)
-        # cv2.destroyAllWindows()
-        
-        logger.info("Detected box checks:")
-        for key,boxpair in compare_dict.items():
-            dbox = boxpair[0]
-            tbox = boxpair[1]
-            assert dbox.name == key
-            logger.info(str(dbox))
-            if tbox is None:
-                #print("no tbox")
-                #don't count this fp, add to folder of fp monos
-                logger.info("FP, detection does not intersect with training box.")
-                fp = True
-            else:
-                if not comparison_alg.compare_class(tbox,dbox):
-                    results.append("FP")
-                    results.append("FN")
-                    logger.info("FP/FN, incorrect class")
-                else:
-                    t_area = tbox.area()
-                    d_area = dbox.area()
-                    inter = comparison_alg.intersection_area(tbox,dbox)
-                    if inter == 0:
-                        results.append("FP")
-                        #print("no tbox")
-                        logger.info("FP, detection does not intersect with training box.")
-                    elif inter == t_area:
-                        #print(comparison_alg.training_contained(tbox,dbox))
-                        if comparison_alg.training_contained(tbox,dbox):
-                            #print("hello")
-                            results.append("TP")
-                            logger.info("TP")
-                        else:
-                            results.append("FP")
-                            results.append("FN")
-                            #print("dbox too big")
-                            logger.info("FP/FN, detection area too large.")
-                    elif inter == d_area:
-                        if comparison_alg.detection_sufficient(tbox,dbox):
-                            results.append("TP")
-                            logger.info("TP")
-                        else:
-                            results.append("FN")
-                            results.append("FP")
-                            logger.info("FP/FN, detection area too small.")
-                    else:
-                        if comparison_alg.is_overlapping(tbox,dbox):
-                            results.append("TP")
-                            logger.info("TP")
-                        else:
-                            results.append("FP")
-                            results.append("FN")
-                            logger.info("FP/FN, not enough overlap.")
-        #print(results)
-        return results, fp
-    def getfps(self,boxes, training, comparison_alg, conf_threshold = 0.5):
-        for box in boxes:
-            if box.confidence < conf_threshold:
-                boxes.remove(box)
-        [box.to_four_corners() for box in boxes]
-        compare_dict = {}
-        #annotate_image = self.image.copy()
-        for idx,dbox in enumerate(boxes):
-                
-            # p1 = (dbox.x,dbox.y)
-            # p2 = (dbox.x2,dbox.y2)
-            # cv2.rectangle(annotate_image,p1,p2,(0,255,0),3)
-            dbox.set_name(str(idx))
-            compare_dict[dbox.name] = (dbox, None)
-            max_int = 0
-            for tbox in training:
-                if comparison_alg.have_intersection(tbox,dbox):
-                    intersect = comparison_alg.intersection_area(tbox,dbox)
-                    #print(intersect)
-                    if intersect > max_int:
-                        max_int = intersect
-                        compare_dict[dbox.name] = (dbox,tbox)
-                else:
-                    continue
-        newmonos = []
-        logger.info("Training box checks:")
-        for tbox in training:
-            #print(str(tbox))
-            logger.info(str(tbox))
-            # p1 = (tbox.x,tbox.y)
-            # p2 = (tbox.x2,tbox.y2)
-            # cv2.rectangle(annotate_image,p1,p2,(255,0,0),3)
-            found = False
-            for dbox in boxes:
-                if comparison_alg.have_intersection(tbox,dbox):
-                    found = True
-                    #print("intersection")
-                    break
-            if found:
-                #print("hello")
-                logger.info("Training box intersects with detected box(es).")
-                continue
-
-        
-        logger.info("Detected box checks:")
-        for key,boxpair in compare_dict.items():
-            dbox = boxpair[0]
-            tbox = boxpair[1]
-            assert dbox.name == key
-            logger.info(str(dbox))
-            if tbox is None:
-                #print("no tbox")
-                #don't count this fp, add to folder of fp monos
-                logger.info("FP, detection does not intersect with training box.")
-                newmonos.append(dbox)
-
-        #print(results)
-        return newmonos
-    
     
