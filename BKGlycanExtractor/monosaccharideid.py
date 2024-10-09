@@ -324,9 +324,9 @@ class YOLOMonos(YOLOModel,MonoID,ConfigData):
         for mono in boxes:
             class_id = mono.class_
             mononame = class_list[class_id]
-
             count += 1
 
+            mono.class_name = mononame+str(count)
             mono_info = {
                 'id': mononame+str(count),
                 'type': mononame,
@@ -384,7 +384,7 @@ class KnownMono:
 
         monos = []
 
-        with open(file_path, 'r') as file:
+        with open(path, 'r') as file:
             count = 0
             for line in file:
                 # print("line",line)

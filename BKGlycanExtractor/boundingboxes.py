@@ -22,14 +22,20 @@ class BoundingBox:
                 height, width, channels = image.shape
                 self.imwidth = width
                 self.imheight = height
+            else:
+                # if there is no image (case applies for ground/known data)
+                # read the width and height if its exists from the known data (useful for converting rel_to_abs) 
+                self.imwidth = kw.get("width",0)
+                self.imheight = kw.get("height",0)
+
             self.rel_cen_x = kw.get("rel_cen_x", None)
             self.rel_cen_y = kw.get("rel_cen_y", None)
             self.rel_w = kw.get("rel_w", None)
             self.rel_h = kw.get("rel_h", None)
             self.cen_x = kw.get("cen_x", None)
             self.cen_y = kw.get("cen_y", None)
-            self.w = kw.get("width", None)
-            self.h = kw.get("height", None)
+            self.w = kw.get("width",0)
+            self.h = kw.get("height",0)
             self.x = kw.get("x", None)
             self.y = kw.get("y", None)
             self.x2 = kw.get("x2", None)
@@ -38,28 +44,12 @@ class BoundingBox:
             self.class_name = kw.get("class_name", '')
             self.whitespace = kw.get("white_space", 0)
             self.confidence = kw.get("confidence", 0)
-            self.ID = None
-
-    # remove this method    
-    def clone(self):
-        bb = BoundingBox()
-        for attr in dir(self):
-            if attr.startswith('_'):
-                continue
-            val = getattr(self,attr)
-            if not (isinstance(val,int) or \
-               	    isinstance(val,str) or \
-                    isinstance(val,float) or \
-                    isinstance(val,type(None))):
-                continue		
-            setattr(bb,attr,getattr(self,attr))
-        return bb
         
     def get_ID(self):
-        return self.ID
+        return self.class_
 
     def set_ID(self,id):
-        self.ID = id
+        self.class_ = id
  
     # convert an absolute bounding box into a relative bounding box
     def abs_to_rel(self):
@@ -130,10 +120,10 @@ class BoundingBox:
     def rel_to_abs(self):
         assert self.rel_cen_x is not None
         assert self.rel_w is not None
-        self.cen_x = int(self.rel_cen_x * (self.imwidth+self.whitespace))
-        self.cen_y = int(self.rel_cen_y * (self.imheight+self.whitespace))
-        self.w = int(self.rel_w * (self.imwidth+self.whitespace))
-        self.h = int(self.rel_h * (self.imheight+self.whitespace))
+        self.cen_x = int(float(self.rel_cen_x) * (self.imwidth+self.whitespace))
+        self.cen_y = int(float(self.rel_cen_y) * (self.imheight+self.whitespace))
+        self.w = int(float(self.rel_w) * (self.imwidth+self.whitespace))
+        self.h = int(float(self.rel_h) * (self.imheight+self.whitespace))
     
     def set_class(self, classnum):
         self.class_ = classnum
@@ -162,11 +152,11 @@ class BoundingBox:
     # types are detected (with confidence) and training (with class)
     # takes an optional list_type argument, 
     # or relies on the type of the bounding box
-    def to_list(self, list_type=None):
+    def to_list(self):
         return [self.x, self.y, self.w, self.h, self.confidence]
     
     # compatible with new openCV versions
-    def to_new_list(self, list_type=None):
+    def to_new_list(self):
         return [self.x, self.y, self.w, self.h]
         
     # create coordinates for pdf placement
@@ -240,11 +230,7 @@ class BoundingBox:
         self.imheight = self.imheight + self.white_space
 
     def to_relative_list(self):
-        [classid,relcenx,relceny,relw,relh] = [
-            self.class_, self.rel_cen_x, 
-            self.rel_cen_y, self.rel_w, self.rel_h
-            ]
-        return [classid, relcenx, relceny, relw, relh]
+        return [self.class_, self.rel_cen_x, self.rel_cen_y, self.rel_w, self.rel_h]
 
     def set_dummy_confidence(self,confidence):
         self.confidence = confidence

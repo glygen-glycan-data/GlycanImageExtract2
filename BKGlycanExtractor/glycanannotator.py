@@ -55,7 +55,29 @@ class Annotator():
             for gly_obj in figure_semantics.glycans():
                 step.execute(obj=gly_obj)
 
+        # create json semantics output
+        semantic_data = copy.deepcopy(figure_semantics)
+        semantic_data = json.dumps(self.format_data(semantic_data.semantics))
+        with open('semantic_output.json', 'w') as file:
+            json.dump(semantic_data, file)
+
         return figure_semantics.semantics
+
+    def format_data(self,semantic_obj):
+        if 'image' in semantic_obj:
+            del semantic_obj['image']
+
+        for gly_obj in semantic_obj['glycans']:
+            if 'image' in gly_obj: 
+                del gly_obj['image']
+
+            if 'box' in gly_obj:
+                del gly_obj['box']
+
+            for mono in gly_obj['monos']:
+                del mono['box']
+
+        return semantic_obj
     
 class Config_Manager():
     # reads/gets configs from configs.ini
@@ -110,6 +132,7 @@ class Config_Manager():
             else:
                 print(f"The mentioned step {finder_type} does not exist. For more information check the configs.ini file...")
 
+
 class Config():
     def __init__(self,section_name):
         self.section_name = section_name
@@ -135,6 +158,7 @@ class Config():
     def get_steps(self,key,default=None):
         # list of keys of Finder instances to execute, CSV?
         steps = self.config_manager.config[self.section_name].get(key).split(',')
+        steps = [step.strip() for step in self.config_manager.config[self.section_name].get(key).split(',')]
         return steps
 
     def get_finder(self,key,default=None):
@@ -142,7 +166,6 @@ class Config():
         steps = self.get_steps(key,default)
         instance_list = []
         for step in steps:
-            step = step.strip()
             prefix = self.config_manager.read_pipeline_configs(step)
             config_finder = self.get_str(self.section_name,step)
             finder_section = "Finder:" + config_finder

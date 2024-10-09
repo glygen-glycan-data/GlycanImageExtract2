@@ -67,7 +67,7 @@ class YOLOModel:
 
                 if not any(math.isnan(x) for x in detection):
                     scores = detection[5:]
-                    class_id = np.argmax(scores)
+                    class_id = int(np.argmax(scores))
                     confidence = scores[class_id]
                     
                     if multi_class:
