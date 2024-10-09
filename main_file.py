@@ -1,8 +1,7 @@
 # import os
 import sys
 import argparse
-from BKGlycanExtractor.glycanannotator import Config_Manager
-from BKGlycanExtractor.image_manager import Image_Manager
+from BKGlycanExtractor import Config_Manager, Image_Manager
 
 '''
 CMD arguments
@@ -43,7 +42,8 @@ if __name__ == '__main__':
 
     for image in images:
         obj = pipeline.run(image)
-        print("\nSemantics:",obj)       
+        for gly in obj.glycans():
+            print("\nSemantics:",gly.tojson())       
 
 
 

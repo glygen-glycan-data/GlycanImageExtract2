@@ -11,15 +11,21 @@ import sys
 
 from .boundingboxes import BoundingBox
 from .yolomodels import YOLOModel
-from .config_data import ConfigData
-from BKGlycanExtractor.semantics import Figure_Semantics,File_Semantics
+from .glycanannotator import Config
 
-class_list = ["GlcNAc","NeuAc","Fuc","Man","GalNAc","Gal","Glc","NeuGc"]
-
-class MonoID: 
-    def __init__(self, **kw):
-        pass
+class MonoID(object): 
     
+    mono_syms = ["GlcNAc","NeuAc","Fuc","Man","GalNAc","Gal","Glc","NeuGc"]
+
+    def get_mono_sym(self, index):
+        return self.mono_syms[index]
+
+    def get_mono_index(self, sym):
+        return self.mono_syms.index(sym)
+        
+    def execute(self, obj):
+        self.find_objects(obj)
+
     def crop_largest(self, image):
         img = image
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
@@ -42,7 +48,7 @@ class MonoID:
         out2 = cv2.bitwise_or(out, img)
         return out2
     
-    def find_objects(self, image):
+    def find_objects(self, obj):
         raise NotImplementedError
         
     def resize_image(self, img):
@@ -61,19 +67,18 @@ class MonoID:
     def set_logger(self, logger_name=''):
         self.logger = logging.getLogger(logger_name+'.monosaccharideid')
     
-class HeuristicMonos(MonoID,ConfigData):
-    def __init__(self, config, **kwargs):
-        #read in color ranges for mono id
-        self.img_resize = kwargs.get('resize_image',False)
+class HeuristicMonos(MonoID):
 
-        self.defaults = {
-            'color_range': './BKGlycanExtractor/config/colors_range.txt'
-        }
+    defaults = {
+        'resize_image': False,
+        'colors_range': 'colors_range.txt'
+    }
+    
+    def __init__(self, **kwargs):
 
-        MonoID.__init__(self)
-        ConfigData.__init__(self,config,self.defaults,class_name=self.__class__.__name__)
-        self.color_range = self.get_param('color_range',**kwargs)
-
+        self.img_resize = Config.get_param('resize_image', Config.BOOL, kwargs, self.defaults)
+        self.color_range = Config.get_param('color_range', Config.CONFIGFILE, kwargs, self.defaults)
+    
         color_range_file = open(self.color_range)
         color_range_dict = {}
         for line in color_range_file.readlines():
@@ -86,8 +91,8 @@ class HeuristicMonos(MonoID,ConfigData):
         color_range_file.close()
         self.color_range = color_range_dict
 
-        super().__init__()
-        
+        # MonoID has no constructor...
+
     def compare_to_img(self, img1, img2):
         if img1.shape == img2.shape:
             pass
@@ -99,11 +104,9 @@ class HeuristicMonos(MonoID,ConfigData):
         score = cv2.countNonZero(g) / (img1.shape[0] * img1.shape[1])
         return 1 - score
 
-    def execute(self, obj):
-        self.find_objects(obj)
-        
+    def find_objects(self, obj):
+        # split into find_boxes and semantics?
 
-    def find_objects(self, obj,**kw):
         img_resize = self.img_resize
         image = obj.get('image')
         img = self.crop_largest(image)
@@ -210,7 +213,7 @@ class HeuristicMonos(MonoID,ConfigData):
                 else:
                     continue
                 if "???" not in mono:
-                    box.set_class(class_list.index(mono))
+                    box.set_class(self.get_mono_index(mono))
                     box.set_dummy_confidence(1)
 
                     count += 1
@@ -283,109 +286,65 @@ class HeuristicMonos(MonoID,ConfigData):
         return img
 
 
-    def find_boxes(self, image):
 
-        image_path = image
-        figure_semantics = Figure_Semantics(image_path)
-        
-        idx = 1
-        figure_semantics.set_glycans(idx,image)
+class YOLOMonos(YOLOModel,MonoID):
 
-        for gly_obj in figure_semantics.glycans():
-            self.find_objects(gly_obj)
-        return figure_semantics
-        
-    
-class YOLOMonos(YOLOModel,MonoID,ConfigData):
-    def __init__(self,config,**kwargs):
-        self.threshold = kwargs.get('threshold',0.5)
-        self.img_resize = kwargs.get('resize_image',False)
+    defaults = {
+        'threshold': 0.5,
+        'resize_image': False,
+        'request_padding': False,
+    }
 
-        self.defaults = {
-            'weights': './BKGlycanExtractor/config/yolov3_monos_random.weights',
-            'config_net': './BKGlycanExtractor/config/monos2.cfg',
-            'color_range': './BKGlycanExtractor/config/colors_range.txt'
-        }
+    def __init__(self,**kwargs):
+ 
+       self.img_resize = Config.get_param('resize_image', Config.BOOL, kwargs, self.defaults)
+       self.request_padding = Config.get_param('request_padding', Config.BOOL, kwargs, self.defaults)
+       self.threshold = Config.get_param('threshold', Config.FLOAT, kwargs, self.defaults)
+       
+       self.config_net = Config.get_param('config', Config.CONFIGFILE, kwargs, self.defaults)
+       self.weights = Config.get_param('weights', Config.CONFIGFILE, kwargs, self.defaults)
 
-        MonoID.__init__(self)
-        ConfigData.__init__(self,config,self.defaults,class_name=self.__class__.__name__)
-        self.weights = self.get_param('weights',**kwargs)
-        self.config_net = self.get_param('config',**kwargs)
-
-        current_config = {
-            'weights':self.weights,
-            'config': self.config_net
-        }
-
-        YOLOModel.__init__(self,current_config)
+       YOLOModel.__init__(self,dict(weights=self.weights,config=self.config_net))
+       MonoID.__init__(self)
 
     def set_mono_info(self,obj,boxes):
-        count = 0
-        for mono in boxes:
-            class_id = mono.class_
-            mononame = class_list[class_id]
-
-            count += 1
-
-            mono_info = {
-                'id': mononame+str(count),
-                'type': mononame,
-                'bbox': mono.to_new_list(),
-                'center': [mono.cen_x,mono.cen_y],
-                'box': mono
-            }
-
-            obj['monos'].append(mono_info)
-
+        obj.clear_monos()
+        for box in boxes:
+            sym = self.get_mono_sym(box.class_)
+            obj.add_mono(symbol=sym,box=box)
         return obj
 
-    def execute(self, obj,**kw):
-        self.find_objects(obj,**kw)
+    def find_objects(self, obj):
+        image = obj.image()
+        mono_boxes = self.find_boxes(image)
+        self.set_mono_info(obj, mono_boxes)
+        return obj
 
-
-    def find_objects(self, obj,**kw):
-        threshold = self.threshold
-        img_resize = self.img_resize
-
-        request_padding = kw.get('request_padding',False)
-
-        image = obj.get('image')
-        origin_image = image.copy()
-        
-        if img_resize:
+    def find_boxes(self, image):
+        # do we need to fix the placement of YOLO boxes if we resize the image?
+        if self.img_resize:
             image = self.resize_image(image)
-        
-        final = image.copy()
-        mono_boxes = self.get_YOLO_output(image,threshold,class_options=True,request_padding=request_padding)
+        return self.get_YOLO_output(image,self.threshold,class_options=True,request_padding=self.request_padding)
+
+class KnownMono(MonoID):
+    def __init__(self,**kwargs):
+        pass
+    
+    def set_mono_info(self, obj, boxes):
+        obj.clear_monos()
+        for box in boxes:
+            obj.add_mono(symbol=box.class_name,box=box,id=box.ID)
+
+    def find_objects(self, obj):
+        image_path = obj.image_path()
+        assert image_path, "KnownMono can only run on SingleGlycanImage glycan finder semantics objects"
+        known_path = image_path.rsplit('.',1)[0] + "_map.txt"
+        mono_boxes = self.find_boxes(known_path)
         self.set_mono_info(obj, mono_boxes)
 
-        return obj
-
-
-    def find_boxes(self, image,**kw):
-        image_path = image
-        figure_semantics = Figure_Semantics(image_path)
-        
-        idx = 1
-        figure_semantics.set_glycans(idx,image)
-
-        for gly_obj in figure_semantics.glycans():
-            self.find_objects(gly_obj)
-        return figure_semantics
-
-
-class KnownMono:
-    def __init__(self,config,**kwargs):
-        self.glycan_id = 0
-
-    def find_boxes(self,file_path):
-        path = os.path.abspath(file_path)
-        file_semantics = File_Semantics(path)
-
+    def find_boxes(self, file_path):
         monos = []
-
         with open(file_path, 'r') as file:
-            count = 0
             for line in file:
                 # print("line",line)
                 if line.startswith('m'):
@@ -408,34 +367,11 @@ class KnownMono:
                     width = x_max - x_min
                     height = y_max - y_min
 
-
-                    box = BoundingBox(image=None,x=x_min, y=y_min, x2=x_max, y2=y_max, width=width, height=height, class_=class_list.index(name),class_name=name)
+                    box = BoundingBox(image=None,x=x_min, y=y_min, x2=x_max, y2=y_max, 
+                                      width=width, height=height, 
+                                      class_=self.get_mono_index(name),class_name=name)
                     box.corner_to_center()
+                    box.set_ID(int(mono_id))
+                    monos.append(box)
 
-                    count += 1
-
-                    box.set_ID(name + str(count))
-
-                    mono_info = {
-                        'id': name + str(count),
-                        'type': name,
-                        'training_id': mono_id,
-                        'bbox': box.to_new_list(),
-                        'center': [box.cen_x, box.cen_y],
-                        'box': box
-                    }
-
-                    monos.append(mono_info)
-
-
-            self.glycan_id += 1
-
-            known_monos_obj = {
-                'id': self.glycan_id,
-                'monos': monos
-                }
-            
-            obj = file_semantics.glycans()
-            obj.append(known_monos_obj)
-
-        return file_semantics
+        return monos
