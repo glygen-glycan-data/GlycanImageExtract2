@@ -19,7 +19,7 @@ from . semantics import Figure_Semantics, Glycan_Semantics
 
 class GlycanExtractorPipeline():
     
-    pipeline_step_groups = ['figure_steps','glycan_steps']
+    pipeline_stages = ['figure','glycan']
 
     defaults = {
         'figure_steps': [],
@@ -28,17 +28,38 @@ class GlycanExtractorPipeline():
 
     def __init__(self,**kwargs):
         self.steps = {}
-        for steps in self.pipeline_step_groups:
-            self.steps[steps] = Config.get_param(steps, Config.STEPS, kwargs, self.defaults)
+        for stage in self.pipeline_stages:
+            self.steps[stage] = Config.get_param(stage+'_steps', Config.STEPS, kwargs, self.defaults)
+
+    # step should be a finder instance
+    def add_step(self,stage,step):
+        assert stage in ("figure","glycan"), "Bad stage specification: "+stage
+        self.steps[stage].append(step)
+            
+    def get_steps(self,stage):
+        assert stage in ("figure","glycan"), "Bad stage specification: "+stage
+        return self.steps[stage]
+            
+    # steps should be a list of finder instances, shallow copy!
+    def set_steps(self,stage,steps):
+        assert stage in ("figure","glycan"), "Bad stage specification: "+stage
+        self.steps[stage] = list(steps)
+
+    # Shallow clone, finders should be stateless
+    def clone(self):
+        gep = GlycanExtractorPipeline()
+        for stage in self.pipeline_stages:
+            gep.set_steps(self,stage,self.get_steps(stage))
+        return gep
             
     def run(self,image):
         figure_semantics = Figure_Semantics(image)
         
-        for figstep in self.steps['figure_steps']:
+        for figstep in self.steps['figure']:
             figstep.execute(figure_semantics)
         
         for glycan_semantics in figure_semantics.glycans():
-            for glystep in self.steps['glycan_steps']:
+            for glystep in self.steps['glycan']:
                 glystep.execute(glycan_semantics)
 
         return figure_semantics

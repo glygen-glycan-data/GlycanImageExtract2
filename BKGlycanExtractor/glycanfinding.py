@@ -31,9 +31,9 @@ during the initial definition
 
 import logging
 
-from .boundingboxes import BoundingBox
-from .yolomodels import YOLOModel 
-from .glycanannotator import Config
+from . bbox import BoundingBox
+from . yolomodels import YOLOModel 
+from . glycanannotator import Config
 
 # Base class
 class GlycanFinder(object):  
@@ -56,53 +56,35 @@ class YOLOGlycanFinder(YOLOModel,GlycanFinder):
 
     defaults = {
         'threshold': 0.0,
-        'padding': False,
+        'boxpadding': 0,
     }
 
     def __init__(self,**kwargs):
-
-       self.padding = Config.get_param('padding', Config.BOOLEAN, kwargs, self.defaults)
-       self.threshold = Config.get_param('threshold', Config.FLOAT, kwargs, self.defaults)
-       
-       self.config_net = Config.get_param('config', Config.CONFIGFILE, kwargs, self.defaults)
-       self.weights = Config.get_param('weights', Config.CONFIGFILE, kwargs, self.defaults)
-       
-       YOLOModel.__init__(self,dict(weights=self.weights,config=self.config_net))
+       params = dict(
+           boxpadding = Config.get_param('boxpadding', Config.FLOAT, kwargs, self.defaults),
+           threshold = Config.get_param('threshold', Config.FLOAT, kwargs, self.defaults),
+           config = Config.get_param('config', Config.CONFIGFILE, kwargs, self.defaults),
+           weights = Config.get_param('weights', Config.CONFIGFILE, kwargs, self.defaults),
+       )
+       YOLOModel.__init__(self,**params)
+       assert self.classes == 1
        GlycanFinder.__init__(self)
         
     def execute(self, figure_semantics):
         self.find_objects(figure_semantics)
 
     def find_boxes(self, image):
-        return self.get_YOLO_output(image, self.threshold, request_padding=self.padding)
+        return self.get_YOLO_output(image)
 
     def find_objects(self, figure_semantics):
-        image = figure_semantics.semantics['image']
+        image = figure_semantics.image()
 
-        glycans = self.find_boxes(image)
+        boxes = self.find_boxes(image)
 
-        figure_semantics.semantics['glycans'] = []
-        for idx,glycan in enumerate(glycans):
-            glycan_obj = self.save_object(idx,glycan,image)
-            figure_semantics.semantics['glycans'].append(glycan_obj)
+        figure_semantics.clear_glycans()
+        for box in boxes:
+            figure_semantics.add_glycan(box=box)
     
-    def save_object(self,idx,glycan,image):
-        (x, y), (x2, y2) = glycan.to_image_coords()
-        glycan_img = image[y:y2, x:x2].copy()
-        height, width, _ = glycan_img.shape
-
-        single_glycan = {
-            'id': idx,
-            'image': glycan_img,
-            'width': width,
-            'height': height,
-            'bbox': [x,y,width,height],
-            'box': glycan,
-            'monos': [],
-        }
-        return single_glycan
-
-
 class SingleGlycanImage(GlycanFinder):
 
     defaults = {
@@ -112,18 +94,18 @@ class SingleGlycanImage(GlycanFinder):
 
     def __init__(self,**kwargs):
        self.crop = Config.get_param('crop', Config.BOOL, kwargs, self.defaults)
-       self.padding = Config.get_param('padding', Config.INT, kwargs, self.defaults)
+       self.padding = Config.get_param('padding', Config.FLOAT, kwargs, self.defaults)
        super().__init__()
 
     def find_objects(self, obj):
         obj.clear_glycans()
         boxes = self.find_boxes(obj.image())
-        obj.add_glycan(boxes[0],image_path=obj.image_path())
+        obj.add_glycan(box=boxes[0],image_path=obj.image_path())
 
     def find_boxes(self, image):
         #implement crop and padding?
         height, width, _ = image.shape
-        return [ BoundingBox(x=0, y=0, width=width, height=height) ]
+        return [ BoundingBox(image=image, x=0, y=0, width=width, height=height) ]
 
         
 

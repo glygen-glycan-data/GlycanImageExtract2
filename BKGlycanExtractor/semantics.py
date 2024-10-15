@@ -30,6 +30,16 @@ class Image_Semantics:
     def height(self):
         return self.semantics['height']
 
+    def set(self,key,value):
+        self.semantics[key] = value
+
+    def has(self,key):
+        return key in self.semantics
+
+    def get(self,key,default=None):
+        return self.semantics.get(key,default)
+
+
 # Class for whole figure/image containing glycans
 class Figure_Semantics(Image_Semantics):
     def __init__(self,image_path,**kwargs):
@@ -71,15 +81,19 @@ class Figure_Semantics(Image_Semantics):
 
     def add_glycan(self,box,**kwargs):
         if kwargs.get('id') is None:
-            kwargs['id'] = len(self.semantics['glycans'])+1
-        (x, y), (x2, y2) = box.to_image_coords()
-        image = self.image()[y:y2, x:x2].copy()
-        gly = Glycan_Semantics(image,bbox=box.to_new_list(),box=box,**kwargs)
+            if len(self.glycans()) == 0:
+                kwargs['id'] = 1
+            else:
+                kwargs['id'] = max(gly.semantics['id'] for gly in self.glycans())+1
+        box.set_image_dimensions(image_width=self.width(),image_height=self.height())
+        gly = Glycan_Semantics(image=box.crop(self.image()),box=box,**kwargs)
         self.semantics['glycans'].append(gly)
 
 class Glycan_Semantics(Image_Semantics):
-    def __init__(self,image,**kwargs):
+    def __init__(self,image,box,**kwargs):
         super().__init__(image)  
+        self.semantics['box'] = box
+        self.semantics['bbox'] = box.bbox()
         self.semantics['monos'] = {}
         self.semantics.update(copy.deepcopy(kwargs))
 
@@ -88,8 +102,11 @@ class Glycan_Semantics(Image_Semantics):
 
     def add_mono(self,symbol,box,**kwargs):
         if kwargs.get('id') is None:
-            kwargs['id'] = len(self.semantics['monos'])+1
-        mono = dict(symbol=symbol,box=box,bbox=box.to_new_list(),center=box.get_center_point(),links=[],**kwargs)
+            if len(self.monosaccharides()) == 0:
+                kwargs['id'] = 1
+            else:
+                kwargs['id'] = max(self.semantics['monos'])+1
+        mono = dict(symbol=symbol,box=box,bbox=box.bbox(),center=box.center(),links=[],**kwargs)
         assert kwargs['id'] not in self.semantics['monos']
         self.semantics['monos'][kwargs['id']] = mono
 

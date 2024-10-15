@@ -9,20 +9,12 @@ import numpy as np
 import os
 import sys
 
-from .boundingboxes import BoundingBox
+from .bbox import BoundingBox
 from .yolomodels import YOLOModel
 from .glycanannotator import Config
 
 class MonoID(object): 
     
-    mono_syms = ["GlcNAc","NeuAc","Fuc","Man","GalNAc","Gal","Glc","NeuGc"]
-
-    def get_mono_sym(self, index):
-        return self.mono_syms[index]
-
-    def get_mono_index(self, sym):
-        return self.mono_syms.index(sym)
-        
     def execute(self, obj):
         self.find_objects(obj)
 
@@ -70,13 +62,11 @@ class MonoID(object):
 class HeuristicMonos(MonoID):
 
     defaults = {
-        'resize_image': False,
         'colors_range': 'colors_range.txt'
     }
     
     def __init__(self, **kwargs):
 
-        self.img_resize = Config.get_param('resize_image', Config.BOOL, kwargs, self.defaults)
         self.color_range = Config.get_param('color_range', Config.CONFIGFILE, kwargs, self.defaults)
     
         color_range_file = open(self.color_range)
@@ -107,12 +97,8 @@ class HeuristicMonos(MonoID):
     def find_objects(self, obj):
         # split into find_boxes and semantics?
 
-        img_resize = self.img_resize
         image = obj.get('image')
         img = self.crop_largest(image)
-
-        if img_resize:
-            img = self.resize_image(img)
 
         #save original image, and then format it for masking
         origin_image = img.copy()
@@ -124,17 +110,6 @@ class HeuristicMonos(MonoID):
 
         mask_array, mask_array_name, mask_dict = self.get_masks(hsv)
         
-        monoCount_dict = {
-            "GlcNAc": 0, 
-            "NeuAc": 0, 
-            "Fuc": 0, 
-            "Man": 0, 
-            "GalNAc": 0, 
-            "Gal": 0, 
-            "Glc": 0, 
-            "NeuGc": 0,
-            }
-
         monos = []
         
         count = 0
@@ -159,20 +134,13 @@ class HeuristicMonos(MonoID):
                             or arearatio1 < 500):
                         # self.logger.info("BAD")
                         continue
-                    box = BoundingBox(
-                        image=img, x=x, y=y, width=w, height=h
-                        )
-                    
-                    box.corner_to_center()
-                    box.abs_to_rel()
-                    box.to_four_corners()
+                    box = BoundingBox(x=x, y=y, width=w, height=h)
                     
                     if color == "red_mask":
                         mono = 'Fuc'                        
 
                     elif color == "purple_mask":
                         mono = 'NeuAc'
-
                         
                     elif color == "blue_mask":
                         white = np.zeros([h, w, 3], dtype=np.uint8)
@@ -213,24 +181,7 @@ class HeuristicMonos(MonoID):
                 else:
                     continue
                 if "???" not in mono:
-                    box.set_class(self.get_mono_index(mono))
-                    box.set_dummy_confidence(1)
-
-                    count += 1
-                    box.set_ID(mono+str(count))
-                    mono_info = {
-                        'id': mono+str(count),
-                        'type': mono,
-                        'bbox': box.to_new_list(),
-                        'center': [box.cen_x, box.cen_y],
-                        'box': box
-                    }
-
-                    obj['monos'].append(mono_info)
-                if mono in monoCount_dict:
-                    monoCount_dict[mono] += 1
-        
-        return obj  
+                    obj.add_mono(symbol=mono,box=box)
         
     def get_masks(self, hsv_image):
         color_range_dict = self.color_range
@@ -285,66 +236,59 @@ class HeuristicMonos(MonoID):
         img = cv2.filter2D(img, -1, kernel)
         return img
 
-
-
 class YOLOMonos(YOLOModel,MonoID):
+
+    mono_syms = ["GlcNAc","NeuAc","Fuc","Man","GalNAc","Gal","Glc","NeuGc"]
 
     defaults = {
         'threshold': 0.5,
-        'resize_image': False,
-        'request_padding': False,
+        'boxpadding': 0,
     }
 
     def __init__(self,**kwargs):
  
-       self.img_resize = Config.get_param('resize_image', Config.BOOL, kwargs, self.defaults)
-       self.request_padding = Config.get_param('request_padding', Config.BOOL, kwargs, self.defaults)
-       self.threshold = Config.get_param('threshold', Config.FLOAT, kwargs, self.defaults)
-       
-       self.config_net = Config.get_param('config', Config.CONFIGFILE, kwargs, self.defaults)
-       self.weights = Config.get_param('weights', Config.CONFIGFILE, kwargs, self.defaults)
-
-       YOLOModel.__init__(self,dict(weights=self.weights,config=self.config_net))
+       params = dict(
+           config = Config.get_param('config', Config.CONFIGFILE, kwargs, self.defaults),
+           weights = Config.get_param('weights', Config.CONFIGFILE, kwargs, self.defaults),
+           threshold = Config.get_param('threshold', Config.FLOAT, kwargs, self.defaults),
+           boxpadding = Config.get_param('boxpadding', Config.FLOAT, kwargs, self.defaults),
+       )
+       YOLOModel.__init__(self,multiclass=True,**params)
+       assert self.classes == len(self.mono_syms)
        MonoID.__init__(self)
-
-    def set_mono_info(self,obj,boxes):
-        obj.clear_monos()
-        for box in boxes:
-            sym = self.get_mono_sym(box.class_)
-            obj.add_mono(symbol=sym,box=box)
-        return obj
 
     def find_objects(self, obj):
         image = obj.image()
         mono_boxes = self.find_boxes(image)
-        self.set_mono_info(obj, mono_boxes)
-        return obj
+        obj.clear_monos()
+        for box in mono_boxes:
+            sym = self.get_mono_sym(box.get("classid"))
+            obj.add_mono(symbol=sym,box=box)
 
     def find_boxes(self, image):
-        # do we need to fix the placement of YOLO boxes if we resize the image?
-        if self.img_resize:
-            image = self.resize_image(image)
-        return self.get_YOLO_output(image,self.threshold,class_options=True,request_padding=self.request_padding)
+        return self.get_YOLO_output(image)
+
+    def get_mono_sym(self, index):
+        return self.mono_syms[index]
 
 class KnownMono(MonoID):
     def __init__(self,**kwargs):
         pass
     
-    def set_mono_info(self, obj, boxes):
-        obj.clear_monos()
-        for box in boxes:
-            obj.add_mono(symbol=box.class_name,box=box,id=box.ID)
-
     def find_objects(self, obj):
         image_path = obj.image_path()
         assert image_path, "KnownMono can only run on SingleGlycanImage glycan finder semantics objects"
-        known_path = image_path.rsplit('.',1)[0] + "_map.txt"
-        mono_boxes = self.find_boxes(known_path)
-        self.set_mono_info(obj, mono_boxes)
+        mono_boxes = self.find_boxes(image_path)
+        obj.clear_monos()
+        for box in mono_boxes:
+            box.set_image_dimensions(image_width=obj.width(),image_height=obj.height())
+            obj.add_mono(symbol=box.get('symbol'),box=box,id=box.get('id'))
 
-    def find_boxes(self, file_path):
+    def find_boxes(self, image_path):
         monos = []
-        with open(file_path, 'r') as file:
+        
+        known_path = image_path.rsplit('.',1)[0] + "_map.txt"
+        with open(known_path, 'r') as file:
             for line in file:
                 # print("line",line)
                 if line.startswith('m'):
@@ -364,14 +308,7 @@ class KnownMono(MonoID):
                     x_max = max(x_coords)
                     y_max = max(y_coords)
 
-                    width = x_max - x_min
-                    height = y_max - y_min
-
-                    box = BoundingBox(image=None,x=x_min, y=y_min, x2=x_max, y2=y_max, 
-                                      width=width, height=height, 
-                                      class_=self.get_mono_index(name),class_name=name)
-                    box.corner_to_center()
-                    box.set_ID(int(mono_id))
+                    box = BoundingBox(x1=x_min, y1=y_min, x2=x_max, y2=y_max, symbol=name, id=int(mono_id))
                     monos.append(box)
 
         return monos
