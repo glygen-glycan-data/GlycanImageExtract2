@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 YOLOModel is superclass for all YOLO models
 __init__ is the same for all YOLO models, 
@@ -15,6 +14,7 @@ import os
 import math
 import cv2
 import numpy as np
+import configparser
 
 from .bbox import BoundingBox
 
@@ -40,18 +40,10 @@ class YOLOModel:
         if net is not None and (not os.path.isfile(net)):
             raise FileNotFoundError()
 
-        inyolo = False
-        for l in open(net):
-            if l.strip() == "[yolo]":
-                inyolo = True
-            elif l.strip().startswith('['):
-                inyolo = False
-            elif inyolo and 'classes' in l:
-                sl = [ s.strip() for s in l.split('=') ]
-                assert(sl[0]) == 'classes'
-                self.classes = int(sl[1])
-                break
-        
+        config = configparser.ConfigParser(strict=False)
+        config.read(net)
+        self.classes = int(config['yolo']['classes'])
+
         self.net = cv2.dnn.readNet(weights,net)
         
         layer_names = self.net.getLayerNames()
