@@ -7,9 +7,8 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt  
 import argparse
 
-import modeltests as mt
-from BKGlycanExtractor.glycanannotator import Config_Manager
-from BKGlycanExtractor.image_manager import Image_Manager
+# import modeltests as mt
+from BKGlycanExtractor import BoxEvaluator
 
 
 '''
@@ -23,60 +22,49 @@ parser = argparse.ArgumentParser(description="Start")
 
 # optional argument
 parser.add_argument(
-    '--known_pipeline_name',
+    '--base_pipeline',
     type = str,
-    default = 'KnownSemantics',
-    help = 'Known Semantics Pipeline (default: KnownSemantics)'
+    default = 'SingleGlycanImage-YOLOFinders',
+    help = 'Base Pipeline (default: SingleGlycanImage-YOLOFinders)'
 )
 
 # optional argument
 parser.add_argument(
-    '--pipeline_name',
+    '--known_finder',
+    type = str,
+    default = 'KnownMono',
+    help = 'Known Semantics Pipeline (default: KnownMono)'
+)
+
+# optional argument
+parser.add_argument(
+    '--pred_finder',
     type = str,
     nargs = '+', # allows one or more values
-    default = ['SingleGlycanImage-YOLOFinders'],
-    help = 'Test pipeline(s) (default: SingleGlycanImage-YOLOFinders)'
+    default = ['YOLOMonosRandom'],
+    # default = 'YOLOMonosRandom',
+    help = 'Test pipeline(s) (default: YOLOMonosRandom)'
 )
 
 # required argument
 parser.add_argument(
-    '--data_folder',
+    '--image_folder',
     type = str,
     required = True,
     help = 'Directory path where all txt files and png/jpg files are stored (required)'
 )
 
 args = parser.parse_args()
-km_pipeline_name = args.known_pipeline_name
-pipeline_name = args.pipeline_name
-data_folder = args.data_folder
-
-
-'''
-created find_boxes method for the YOLOMonos and KnownMonos
-find_boxes() --> unpadded/padded boxes for YOLOMonos 
-
-Finder_Evaluator class handles:
-- reading the folder and formatting the data and configs
-- getting boxes data - KnownMonos() and YOLOMonos()
-- comparing the ground truth and predicted boxes based on IOU
-- producing precision-recall plot
-'''
+base_pipeline = args.base_pipeline
+known_finder = args.known_finder
+pred_finder = args.pred_finder
+image_folder = args.image_folder
 
 
 if __name__ == "__main__": 
-    config = Config_Manager()
-    images = Image_Manager(data_folder)
-
-
-    # pipeline accepts one/multiple names
-    pipeline_pred = config.get(pipeline_name)
-    pipeline_known = config.get(km_pipeline_name)
-
-    evaluator = mt.Finder_Evaluator(pipeline_pred,reference=pipeline_known,evaluation_type='mono_finder')
-
-    # # maybe generate/store x-y coordinates and keep the work of plotting for the user
-    evaluator.plotprecisionrecall(images)
+    evaluator = BoxEvaluator(pred_finder, base_pipeline=base_pipeline,known=known_finder)
+    evaluator.runall(image_folder)
+    evaluator.plotprecisionrecall()
 
     print("Done")
 
