@@ -13,168 +13,143 @@ import sys
 import time
 import copy
 
-
-import cv2
-import fitz
-import numpy as np
-import pdfplumber
 import importlib
 
-from .config import getfromgdrive
-from .pygly3.GlycanFormatter import GlycoCTFormat, GlycoCTParseError
+from . semantics import Figure_Semantics, Glycan_Semantics
 
-from . import glycanfinding
-from . import monosaccharideid
-from . import glycanconnections
-from . import rootmonofinding
-from . import glycanbuilding
-from . import glycansearch
-
-from BKGlycanExtractor.semantics import Image_Semantics, Figure_Semantics, Glycan_Semantics
-
-class Annotator():
-    def __init__(self,config):
-        self.config = config
+class GlycanExtractorPipeline():
     
-    def get_finder(self,key,default=None):
-        instance = self.config.get_finder(key,default)
-        if instance:
-            return instance
-        return default
-        
+    pipeline_stages = ['figure','glycan']
+
+    defaults = {
+        'figure_steps': [],
+        'glycan_steps': []
+    }
+
+    def __init__(self,**kwargs):
+        self.steps = {}
+        for stage in self.pipeline_stages:
+            self.steps[stage] = Config.get_param(stage+'_steps', Config.STEPS, kwargs, self.defaults)
+
+    # step should be a finder instance
+    def add_step(self,stage,step):
+        assert stage in ("figure","glycan"), "Bad stage specification: "+stage
+        self.steps[stage].append(step)
+            
+    def get_steps(self,stage):
+        assert stage in ("figure","glycan"), "Bad stage specification: "+stage
+        return self.steps[stage]
+            
+    # steps should be a list of finder instances, shallow copy!
+    def set_steps(self,stage,steps):
+        assert stage in ("figure","glycan"), "Bad stage specification: "+stage
+        self.steps[stage] = list(steps)
+
+    # Shallow clone, finders should be stateless
+    def clone(self):
+        gep = GlycanExtractorPipeline()
+        for stage in self.pipeline_stages:
+            gep.set_steps(self,stage,self.get_steps(stage))
+        return gep
+            
     def run(self,image):
         figure_semantics = Figure_Semantics(image)
+        
+        for figstep in self.steps['figure']:
+            figstep.execute(figure_semantics)
+        
+        for glycan_semantics in figure_semantics.glycans():
+            for glystep in self.steps['glycan']:
+                glystep.execute(glycan_semantics)
 
-        image_steps = self.get_finder('image_steps')[0]
-        glycan_steps = self.get_finder('glycan_steps')
-        # search_steps = self.get_finder('search_steps')
-
-        # * Handle any errors
-        image_steps.execute(figure_semantics)
-        for step in glycan_steps:
-            for gly_obj in figure_semantics.glycans():
-                step.execute(obj=gly_obj)
-
-        # create json semantics output
-        semantic_data = copy.deepcopy(figure_semantics)
-        semantic_data = json.dumps(self.format_data(semantic_data.semantics))
-        with open('semantic_output.json', 'w') as file:
-            json.dump(semantic_data, file)
-
-        return figure_semantics.semantics
-
-    def format_data(self,semantic_obj):
-        if 'image' in semantic_obj:
-            del semantic_obj['image']
-
-        for gly_obj in semantic_obj['glycans']:
-            if 'image' in gly_obj: 
-                del gly_obj['image']
-
-            if 'box' in gly_obj:
-                del gly_obj['box']
-
-            for mono in gly_obj['monos']:
-                del mono['box']
-
-        return semantic_obj
+        return figure_semantics
     
-class Config_Manager():
-    # reads/gets configs from configs.ini
-    def __init__(self):
-        self.config_folder = './BKGlycanExtractor/config'
-        self.config_file_name = 'configs.ini'
-        self.config_file_path = os.path.join(self.config_folder, self.config_file_name)
+class Config_Manager(object):
+
+    default_config_folder = os.path.join(os.path.split(__file__)[0],"config")
+    config_filename = "configs.ini"
+
+    def __init__(self, config_folder=default_config_folder):
+        self.config_folder = config_folder
         self.config = configparser.ConfigParser()
-        self.config.read(self.config_file_path)
-        self.pipeline_name = None
+        self.config.read(os.path.join(self.config_folder,self.config_filename))
 
-    def get(self,pipeline_name, **kw):
-        if isinstance(pipeline_name,list) is False:
-            pipeline_name = pipeline_name.split(',')
-        
-        pipeline_configs = {}
-        for name in pipeline_name:
-            pipeline = 'Pipeline:' + name
-            config = Config(pipeline)
+    def has(self, section, key):
+        return key in self.config[section]
+    
+    def get(self, section, key, default):
+        return self.config[section].get(key,default)
+    
+    def get_config(self, instance_name):
+        return Config(self,instance_name)
 
-            glycan_steps = config.get_steps('glycan_steps')
-            step_instances = config.get_finder('glycan_steps')
+    def get_pipeline(self, pipeline_name):
+        conf = self.get_config("Pipeline:" + pipeline_name)
+        return GlycanExtractorPipeline(__config__=conf)
 
-            pipeline_configs[pipeline] = {
-                'steps': glycan_steps,
-                'instantiated_finders': step_instances
-            }
-
-        return pipeline_configs
-        
-    def get_pipeline(self,pipeline_name,**kw):
-        self.pipeline_name = "Pipeline:" + pipeline_name
-        config = Config(self.pipeline_name)
-        pipeline = Annotator(config=config)
-        return pipeline
-        
-    def read_pipeline_configs(self,finder_type):
-        methods = {}
-        method_descriptions = {
-            "glycan_finder": {"prefix": "glycanfinding."},
-            "mono_finder": {"prefix": "monosaccharideid."},
-            "link_finder": {"prefix": "glycanconnections."},
-            "root_finder": {"prefix": "rootmonofinding."},
-            "sequence_builder": {"prefix": "glycanbuilding."},
-            "sequence_lookup": {"prefix": "glycansearch."},
-        }
-
-        if finder_type in method_descriptions:
-            if finder_type in method_descriptions:
-                prefix = method_descriptions[finder_type]['prefix']
-                return prefix
-            else:
-                print(f"The mentioned step {finder_type} does not exist. For more information check the configs.ini file...")
+    def get_finder(self, finder_name):
+        module = importlib.import_module(".pipeline",package="BKGlycanExtractor")
+        conf = self.get_config("Finder:" + finder_name)
+        assert conf.has("class"), "Finder %s: class not specified"
+        findercls = getattr(module,conf.get("class"))
+        try:
+            return findercls(__config__=conf)
+        except:
+            # For DefaultOrientationRootFinder - it doesn't take any configs
+            return findercls()
 
 
-class Config():
-    def __init__(self,section_name):
+class Config(object):
+    def __init__(self,config_manager,section_name):
+        assert config_manager.config.has_section(section_name), "Configuration has no section: "+section_name
         self.section_name = section_name
-        self.config_manager = Config_Manager()
+        self.config_manager = config_manager
 
-    # eg. key - glycan_finder
-    def get_str(self,section,key,default=None):
+    def has(self,key):
+        return self.config_manager.has(self.section_name,key)
+
+    def get(self,key,default=None):
         # Retrieve string value for key from the relevant section
-        return self.config_manager.config[section].get(key,default)
-
-    # def get_int(key,default=None):
-
-    # def get_float(key,default=None):
-
-    def get_config_filename(self,key,default=None):
-        # Get the full pathname for a key
-        filename = self.config[self.section_name].get(key,default)
-        if filename:
-            name = '/'.join(filename.split('.')[:-1])
-            return os.path.join(os.getcwd(), name + '.py')
-        return default
+        return self.config_manager.get(self.section_name,key,default).strip()
 
     def get_steps(self,key,default=None):
-        # list of keys of Finder instances to execute, CSV?
-        steps = self.config_manager.config[self.section_name].get(key).split(',')
-        steps = [step.strip() for step in self.config_manager.config[self.section_name].get(key).split(',')]
-        return steps
+        if self.has(key):
+            steps = [ s.strip() for s in self.get(key).split(',') ]
+            return [ self.config_manager.get_finder(name) for name in steps ]
+        return default
 
-    def get_finder(self,key,default=None):
-        # print("---->>> 2 Config",self.section_name)
-        steps = self.get_steps(key,default)
-        instance_list = []
-        for step in steps:
-            prefix = self.config_manager.read_pipeline_configs(step)
-            config_finder = self.get_str(self.section_name,step)
-            finder_section = "Finder:" + config_finder
-            finder_method = self.get_str(finder_section, "class")
+    def get_int(self,key,default=None):
+        if self.has(key):
+            return int(self.get(key))
+        return default
 
-            module = importlib.import_module('BKGlycanExtractor.'+prefix[:-1])
-    
-            finder_class = getattr(module, finder_method)
-            instance = finder_class(config=self.config_manager.config)
+    def get_float(self,key,default=None):
+        if self.has(key):
+            return float(self.get(key))
+        return default
 
-            instance_list.append(instance)
-        return instance_list if instance_list is not None else default
+    def get_bool(self,key,default=None):
+        if self.has(key):
+            return self.get(key).lower() in ('true','yes','1')
+        return default
+
+    def get_config_filename(self,key,default=None):
+        return os.path.join(self.config_manager.config_folder,self.get(key,default))
+
+    # Implement a multi-stage strategy for getting parameters from
+    # class defaults, then configuration, then keyword arguments
+
+    BOOL = 'get_bool'
+    CONFIGFILE = 'get_config_filename'
+    STR = 'get'
+    INT = 'get_int'
+    FLOAT = 'get_float'
+    STEPS = 'get_steps'
+
+    @staticmethod
+    def get_param(key,datatype,kwargs={},defaults={}):
+        value = defaults.get(key)
+        config = kwargs.get('__config__')
+        if config:
+            value = getattr(config,datatype)(key,value)
+        return kwargs.get(key,value)

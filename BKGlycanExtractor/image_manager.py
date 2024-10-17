@@ -21,6 +21,14 @@ class Image_Manager:
                     images.append(image_file.path)
         return images
 
-
     def match_glob(self,image_file):
         return any(image_file.name.endswith(ext) for ext in self.glob)
+
+
+
+
+
+
+
+
+

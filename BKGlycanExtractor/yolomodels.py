@@ -16,7 +16,7 @@ import math
 import cv2
 import numpy as np
 
-from BKGlycanExtractor.boundingboxes import BoundingBox
+from .bbox import BoundingBox
 
 
 class YOLOModel:
@@ -24,6 +24,10 @@ class YOLOModel:
     def __init__(self, config):
         weights = config.get("weights",None)
         net = config.get("config",None)
+
+        self.threshold = config.get('threshold')
+        self.expandimage = config.get('expandimage',0)
+        self.boxpadding = config.get('boxpadding',0)
         
         if weights is not None and (not os.path.isfile(weights)):
             raise FileNotFoundError()
@@ -41,26 +45,19 @@ class YOLOModel:
             self.output_layers = [layer_names[i - 1] 
                                   for i in self.net.getUnconnectedOutLayers()]
 
-    def get_YOLO_output(self, image, threshold, **kw):
-
-        image_dict = self.format_image(image)
-        
-        request_padding = kw.get("request_padding", False)
+    def get_YOLO_output(self, image, **kw):
+        original_image = image.copy()
+        blob = self.format_image(image)
+                
+        # request_padding = kw.get("request_padding", False)
+        self.boxpadding = kw.get('boxpadding',0)
         multi_class = kw.get("class_options", False)
-        pr_test = kw.get("pr_test",False)
-        
-        blob = image_dict["formatted_blob"]
-        origin_image = image_dict["origin_image"]
-        white_space = image_dict["whitespace"]
         
         self.net.setInput(blob)
         outs = self.net.forward(self.output_layers)
         
-        class_ids = []
         confidences = []
         boxes = []
-        unpadded_boxes = []
-        padded_boxes = []
 
         for out in outs:
             for detection in out:
@@ -86,84 +83,47 @@ class YOLOModel:
                                     + str(class_options)
                             print(message)                           
                     
-                    box = BoundingBox(confidence=confidence, image=origin_image, class_=class_id,
-                    white_space=white_space, rel_cen_x=detection[0],
-                    rel_cen_y=detection[1], rel_w=detection[2],
-                    rel_h=detection[3]
-                    )
-                    # generates boxes which are common for all the different components (monos, root, connector) that use YOLO detector
-                    box.rel_to_abs()
-                    
-                    box.fix_image()
-                    
-                    box.center_to_corner()
-                    
-                    if request_padding:
-                        box.pad_borders()
-                    
-                    box.fix_borders()
-                    
-                    box.is_entire_image()
+                    box = BoundingBox(image=image,
+                                      rcx=detection[0], rcy=detection[1], 
+                                      rw=detection[2], rh=detection[3],
+                                      classid=class_id, confidence=confidence)
 
-                    if box.y<0:
-                        box.y = 0
+                    if self.expandimage != 0:
+                        box.set_image_dimensions(image=original_image)
+                        box.shift(-self.expandimage,-self.expandimage)
 
-                    box.to_four_corners()
-                    
+                    if float(self.boxpadding) != 0.0:
+                        if 0 < self.boxpadding < 1:
+                            box.pad_relative(self.boxpadding)
+                        else:
+                            box.pad(self.boxpadding)
+
                     boxes.append(box)
 
-                    confidences.append(float(confidence))
-                    class_ids.append(class_id)
-
-        # returns boxes - which are common for all the different components (monos, root, connector) that use YOLO detector 
-        boxesfornms = [bbox.to_list() for bbox in boxes]
+        boxesfornms = [box.bbox() for box in boxes]
+        confidences = [box.get('confidence') for box in boxes]
                 
-        try:
-            indexes = cv2.dnn.NMSBoxes(
-                boxesfornms, confidences, threshold, 0.4
-                )
-        except TypeError:
-            boxesfornms = [bbox.to_new_list() for bbox in boxes]
-            indexes = cv2.dnn.NMSBoxes(
-                boxesfornms, confidences, threshold, 0.4
-                )
-        try:
-            indexes = [index[0] for index in indexes]
-        except IndexError:
-            pass
+        indexes = cv2.dnn.NMSBoxes(
+            boxesfornms, confidences, self.threshold, 0.4
+        )
 
-        boxes = [boxes[i] for i in indexes]
-        confidences = [confidences[i] for i in indexes]
-        class_ids = [class_ids[i] for i in indexes]
-        return boxes
-
+        return [boxes[i] for i in indexes]
 
     def format_image(self, image):
-        origin_image = image.copy()
+        return cv2.dnn.blobFromImage(image, 0.00392, (416, 416), (0, 0, 0), True, crop=False)
+
+    def expand_image(self, image, expand=100):
         height, width, channels = image.shape
 
+        # add expand pixels to top, bottom, left, and right
+        bigwhite = np.zeros([height+(2*expand), width+(2*expand), 3], dtype=np.uint8)
 
-        white_space = 200
-        bigwhite = np.zeros(
-            [image.shape[0]+white_space, image.shape[1]+white_space, 3],
-            dtype=np.uint8
-            )
+        # white background...
         bigwhite.fill(255)
-        half_white_space = int(white_space/2)
-        bigwhite[half_white_space : (half_white_space+image.shape[0]), 
-                 half_white_space : (half_white_space+image.shape[1])] = image
-        image = bigwhite.copy()
 
-        blob = cv2.dnn.blobFromImage(
-            image, 0.00392, (416, 416), (0, 0, 0), True, crop=False
-            )
-        
-        image_dict = {
-            "origin_image": origin_image,
-            "whitespace": white_space,
-            "formatted_blob": blob
-            }
-        
-        return image_dict
+        # put image in the middle/center
+        bigwhite[expand:(height+expand), expand:(width+expand)] = image
+
+        return bigwhite
 
 

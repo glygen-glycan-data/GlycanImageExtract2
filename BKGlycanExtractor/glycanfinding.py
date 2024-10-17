@@ -31,26 +31,17 @@ during the initial definition
 
 import logging
 
-from .boundingboxes import BoundingBox
-from .yolomodels import YOLOModel 
-from .config_data import ConfigData
-
-class FoundGlycan(BoundingBox):
-    # class definitions for glycan bounding boxes
-    # keep consistent, but can be added to for multiclass model use
-    class_dictionary = {
-        0: "glycan",
-        }
-    
-    def __init__(self, **kw):
-        super().__init__(**kw)
+from . bbox import BoundingBox
+from . yolomodels import YOLOModel 
+from . glycanannotator import Config
 
 # Base class
-class GlycanFinder:  
-    def __init__(self,**kw):
-        pass
+class GlycanFinder(object):  
 
-    def find_objects(self, image, **kw):
+    def execute(self, obj):
+        self.find_objects(obj)
+
+    def find_objects(self, obj):
         raise NotImplementedError
         
     def set_logger(self, logger_name=''):
@@ -61,63 +52,60 @@ class GlycanFinder:
 # allows minimum confidence thresholding, to restrict returns
 # also allows requesting padding of glycan borders (off by default)
 # confidences for YOLO detection are stored in the bounding box
-class YOLOGlycanFinder(GlycanFinder,YOLOModel,ConfigData):
-    def __init__(self,config,**kwargs):
-        self.threshold = kwargs.get('threshold',0.0)
-        self.padding = kwargs.get('padding',False)
+class YOLOGlycanFinder(YOLOModel,GlycanFinder):
 
-        self.defaults = {
-            'weights': './BKGlycanExtractor/config/largerboxes_plusindividualglycans.weights',
-            'config_net': './BKGlycanExtractor/config/coreyolo.cfg'
-        }
-        
+    defaults = {
+        'threshold': 0.0,
+        'boxpadding': 0,
+    }
+
+    def __init__(self,**kwargs):
+        params = dict(
+           boxpadding = Config.get_param('boxpadding', Config.FLOAT, kwargs, self.defaults),
+           threshold = Config.get_param('threshold', Config.FLOAT, kwargs, self.defaults),
+           config = Config.get_param('config', Config.CONFIGFILE, kwargs, self.defaults),
+           weights = Config.get_param('weights', Config.CONFIGFILE, kwargs, self.defaults),
+        )
+        YOLOModel.__init__(self,params)
+    #    assert self.classes == 1
         GlycanFinder.__init__(self)
-        ConfigData.__init__(self,config,self.defaults,class_name=self.__class__.__name__)
-        self.weights = self.get_param('weights',**kwargs)
-        self.config_net = self.get_param('config',**kwargs)
-
-        current_config = {
-            'weights':self.weights,
-            'config': self.config_net
-        }
-
-        YOLOModel.__init__(self,current_config)
-
         
     def execute(self, figure_semantics):
         self.find_objects(figure_semantics)
 
+    def find_boxes(self, image):
+        return self.get_YOLO_output(image)
+
     def find_objects(self, figure_semantics):
-        image = figure_semantics.semantics['image']
+        image = figure_semantics.image()
 
-        # threshold = kw.get('threshold', 0.0)
-        # padding = kw.get('request_padding', False)
-        threshold = self.threshold
-        padding = self.padding
+        boxes = self.find_boxes(image)
 
-        glycans = self.get_YOLO_output(image, threshold, request_padding=padding)
-
-        glycans = [FoundGlycan(boundingbox=glycan) for glycan in glycans]
-
-        for idx,glycan in enumerate(glycans):
-            glycan_obj = self.save_object(idx,glycan,image)
-            figure_semantics.semantics['glycans'].append(glycan_obj)
-        return glycans
-
+        figure_semantics.clear_glycans()
+        for box in boxes:
+            figure_semantics.add_glycan(box=box)
     
-    def save_object(self,idx,glycan,image):
-        (x, y), (x2, y2) = glycan.to_image_coords()
-        glycan_img = image[y:y2, x:x2].copy()
-        height, width, _ = glycan_img.shape
+class SingleGlycanImage(GlycanFinder):
 
-        single_glycan = {
-            'id': idx,
-            'image': glycan_img,
-            'width': width,
-            'height': height,
-            'bbox': [x,y,width,height],
-            'box': glycan,
-            'monos': [],
-        }
-        return single_glycan
+    defaults = {
+        'crop': False,
+        'padding': 0
+    }
+
+    def __init__(self,**kwargs):
+       self.crop = Config.get_param('crop', Config.BOOL, kwargs, self.defaults)
+       self.padding = Config.get_param('padding', Config.FLOAT, kwargs, self.defaults)
+       super().__init__()
+
+    def find_objects(self, obj):
+        obj.clear_glycans()
+        boxes = self.find_boxes(obj.image())
+        obj.add_glycan(box=boxes[0],image_path=obj.image_path())
+
+    def find_boxes(self, image):
+        #implement crop and padding?
+        height, width, _ = image.shape
+        return [ BoundingBox(image=image, x=0, y=0, width=width, height=height) ]
+
+        
 
