@@ -5,7 +5,6 @@ assess ovelap, intersection over union value, class comparison, etc
 """
 
 class CompareBoxes:
-    mono_syms = ["GlcNAc","NeuAc","Fuc","Man","GalNAc","Gal","Glc","NeuGc"]
 
     def __init__(self, **kw):
         self.detection_threshold = kw.get("detection_threshold", 0.5)
@@ -13,11 +12,8 @@ class CompareBoxes:
         self.containment_threshold = kw.get("containment_threshold", 0.5)
         
     def compare_class(self, known, detected):
-        if len(known.data) > 0 and len(detected.data) > 0:
-            if self.mono_syms.index(known.data['symbol']) == detected.data['classid']:
-                return True
-            else:
-                return False
+        if known.get('classid',-1) == detected.get('classid',-2):
+            return True
         return False
         
     def detection_sufficient(self, training, detected):

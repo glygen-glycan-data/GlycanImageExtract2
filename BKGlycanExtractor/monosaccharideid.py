@@ -15,6 +15,15 @@ from .glycanannotator import Config
 
 class MonoID(object): 
     
+    mono_syms = ["GlcNAc","NeuAc","Fuc","Man","GalNAc","Gal","Glc","NeuGc"]
+
+    def get_mono_sym(self, index):
+        return self.mono_syms[index]
+
+    def get_mono_index(self, name):
+        assert name in self.mono_syms
+        return self.mono_syms.index(name)
+
     def execute(self, obj):
         self.find_objects(obj)
 
@@ -238,8 +247,6 @@ class HeuristicMonos(MonoID):
 
 class YOLOMonos(YOLOModel,MonoID):
 
-    mono_syms = ["GlcNAc","NeuAc","Fuc","Man","GalNAc","Gal","Glc","NeuGc"]
-
     defaults = {
         'threshold': 0.5,
         'boxpadding': 0,
@@ -271,9 +278,6 @@ class YOLOMonos(YOLOModel,MonoID):
     def find_boxes(self, image, **kwargs):
         return self.get_YOLO_output(image,**kwargs,class_options=True)
 
-    def get_mono_sym(self, index):
-        return self.mono_syms[index]
-
 class KnownMono(MonoID):
     def __init__(self,**kwargs):
         pass
@@ -285,7 +289,7 @@ class KnownMono(MonoID):
         obj.clear_monos()
         for box in mono_boxes:
             box.set_image_dimensions(image_width=obj.width(),image_height=obj.height())
-            obj.add_mono(symbol=box.get('symbol'),box=box,id=box.get('id'))
+            obj.add_mono(symbol=self.get_mono_sym(box.get('classid')),box=box,id=box.get('id'))
 
     def find_boxes(self, image_path, **kwargs):
         boxpadding = kwargs.get('boxpadding',0)
@@ -311,7 +315,7 @@ class KnownMono(MonoID):
                     x_max = max(x_coords)
                     y_max = max(y_coords)
 
-                    box = BoundingBox(x1=x_min, y1=y_min, x2=x_max, y2=y_max, symbol=name, id=int(mono_id))
+                    box = BoundingBox(x1=x_min, y1=y_min, x2=x_max, y2=y_max, classid=self.get_mono_index(name), id=int(mono_id))
                     box.pad(boxpadding) # known data is absolute
                     monos.append(box)
 
