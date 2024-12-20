@@ -13,11 +13,12 @@ YOLOTrainingData processes training.txt files
 
 import os
 import math
+
 import cv2
 import numpy as np
-
+from collections import defaultdict
 from .bbox import BoundingBox
-
+from .debug_methods import DebugMode
 
 class YOLOModel:
     
@@ -25,7 +26,8 @@ class YOLOModel:
         weights = config.get("weights",None)
         net = config.get("config",None)
 
-        self.threshold = config.get('threshold')
+        self.conf_threshold = config.get('threshold')
+        self.iou_threshold = config.get('iou_threshold')
         self.expandimage = config.get('expandimage',0)
         self.boxpadding = config.get('boxpadding',0)
         
@@ -35,6 +37,8 @@ class YOLOModel:
             raise FileNotFoundError()
         
         self.net = cv2.dnn.readNet(weights,net)
+        self.classes = self.get_num_classes(net)
+
         
         layer_names = self.net.getLayerNames()
         #compatibility with new opencv versions
@@ -45,69 +49,72 @@ class YOLOModel:
             self.output_layers = [layer_names[i - 1] 
                                   for i in self.net.getUnconnectedOutLayers()]
 
-    def get_YOLO_output(self, image, **kw):
+    def get_YOLO_output(self, image):
         original_image = image.copy()
         blob = self.format_image(image)
                 
-        # request_padding = kw.get("request_padding", False)
-        self.boxpadding = kw.get('boxpadding',0)
-        multi_class = kw.get("class_options", False)
-        
         self.net.setInput(blob)
         outs = self.net.forward(self.output_layers)
         
         confidences = []
         boxes = []
+        class_boxes = defaultdict(list)
 
         for out in outs:
-            for detection in out:
+            detections = out[~np.isnan(out).any(axis=1)] 
 
-                if not any(math.isnan(x) for x in detection):
-                    scores = detection[5:]
-                    class_id = int(np.argmax(scores))
-                    confidence = scores[class_id]
-                    
-                    if multi_class:
-                    
-                        scores[class_id] = 0.
-                        class_options = {str(class_id): confidence}
-                    
-                        while np.any(scores):
-                            classopt = np.argmax(scores)
-                            confopt = scores[classopt]
-                            scores[classopt] = 0.
-                            class_options[str(classopt)] = confopt
-                    
-                        if len(class_options) > 1:
-                            message = "WARNING: More than one class possible: " \
-                                    + str(class_options)
-                            print(message)                           
-                    
-                    box = BoundingBox(image=image,
-                                      rcx=detection[0], rcy=detection[1], 
-                                      rw=detection[2], rh=detection[3],
-                                      classid=class_id, confidence=confidence)
-
-                    if self.expandimage != 0:
-                        box.set_image_dimensions(image=original_image)
-                        box.shift(-self.expandimage,-self.expandimage)
-
-                    if float(self.boxpadding) != 0.0:
-                        if 0 < self.boxpadding < 1:
-                            box.pad_relative(self.boxpadding)
-                        else:
-                            box.pad(self.boxpadding)
-
-                    boxes.append(box)
-
-        boxesfornms = [box.bbox() for box in boxes]
-        confidences = [box.get('confidence') for box in boxes]
+            for detection in detections:
+ 
+                # if not any(math.isnan(x) for x in detection):
+                scores = detection[5:]
                 
-        indexes = cv2.dnn.NMSBoxes(
-            boxesfornms, confidences, self.threshold, 0.4
-        )
+                for class_id, confidence in enumerate(scores):
+                    if confidence >= self.conf_threshold:
 
-        return [boxes[i] for i in indexes]
+                        box = BoundingBox(image=image,
+                            rcx=detection[0], rcy=detection[1], 
+                            rw=detection[2], rh=detection[3],
+                            classid=class_id, confidence=confidence)
+
+                        if self.expandimage != 0:
+                            box.set_image_dimensions(image=original_image)
+                            box.shift(-self.expandimage,-self.expandimage)
+
+                        if float(self.boxpadding) != 0.0:
+                            if 0 < self.boxpadding < 1:
+                                box.pad_relative(self.boxpadding)
+                            else:
+                                box.pad(self.boxpadding)
+
+                        class_boxes[class_id].append(box)
+
+        for class_id in class_boxes:
+            boxesfornms = [box.bbox() for box in class_boxes[class_id]]
+            confidences = [box.get('confidence') for box in class_boxes[class_id]]
+
+            indexes = cv2.dnn.NMSBoxes(
+                boxesfornms, confidences, self.conf_threshold, self.iou_threshold 
+            )
+
+            if len(confidences) != len(indexes):
+                DebugMode.info = "Runner up boxes were rejected"
+
+            boxes.extend([class_boxes[class_id][i] for i in indexes.flatten()])
+
+        return boxes
+
+    def get_num_classes(self, config_path):
+        # Parse the config file to get the number of classes
+        with open(config_path, 'r') as f:
+            lines = f.readlines()
+
+        for line in lines:
+            if 'classes=' in line:
+                num_classes = int(line.split('=')[1].strip())
+                return num_classes
+        raise ValueError("Number of classes not found in the config file.")
+
+
 
     def format_image(self, image):
         return cv2.dnn.blobFromImage(image, 0.00392, (416, 416), (0, 0, 0), True, crop=False)

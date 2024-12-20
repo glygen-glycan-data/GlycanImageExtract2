@@ -1,7 +1,6 @@
 
 __all__ = [ 'BoundingBox' ]
 
-import cv2
 import copy
 
 def hasall(dct,*keys):

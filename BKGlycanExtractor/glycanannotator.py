@@ -57,7 +57,7 @@ class GlycanExtractorPipeline():
         
         for figstep in self.steps['figure']:
             figstep.execute(figure_semantics)
-        
+
         for glycan_semantics in figure_semantics.glycans():
             for glystep in self.steps['glycan']:
                 glystep.execute(glycan_semantics)

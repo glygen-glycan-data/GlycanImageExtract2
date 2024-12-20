@@ -17,6 +17,8 @@ from collections import defaultdict
 from .yolomodels import YOLOModel
 from .glycanannotator import Config 
 from .bbox import BoundingBox
+from BKGlycanExtractor import LinksCompare, BoxCompare, DebugMode
+
 
 class GlycanConnector:
     
@@ -25,9 +27,23 @@ class GlycanConnector:
 
     def execute(self, obj):
         self.find_objects(obj)
+
+    @staticmethod
+    def box_components(iou):
+        return BoxCompare(iou)
         
+    @staticmethod
+    def semantic_components(proximity):
+        return LinksCompare(proximity)
+
+    @staticmethod
+    def known_predictor():
+        return KnownLink()
+        
+
     def set_logger(self, logger_name=''):
         self.logger = logging.getLogger(logger_name+'.glycanconnections')
+
 
 # base class for Heuristics
 class HeuristicConnector(GlycanConnector):
@@ -331,6 +347,7 @@ class ConnectYOLO(YOLOModel,GlycanConnector):
         'threshold': 0.5,
         'boxpadding': 0,
         'expandimage': 0,
+        'iou_threshold': 0.4
     }
 
     def __init__(self,**kwargs):
@@ -339,16 +356,28 @@ class ConnectYOLO(YOLOModel,GlycanConnector):
             config = Config.get_param('config', Config.CONFIGFILE, kwargs, self.defaults),
             weights = Config.get_param('weights', Config.CONFIGFILE, kwargs, self.defaults),
             threshold = Config.get_param('threshold', Config.FLOAT, kwargs, self.defaults),
+            iou_threshold = Config.get_param('iou_threshold', Config.FLOAT, kwargs, self.defaults),
             boxpadding = Config.get_param('boxpadding', Config.INT, kwargs, self.defaults),
             expandimage = Config.get_param('expandimage', Config.INT, kwargs, self.defaults)
         )
 
         YOLOModel.__init__(self,params)
+        assert self.classes == 1
+        
 
-    def find_boxes(self,image,**kwargs):
-        return self.get_YOLO_output(image,**kwargs,class_options=True)
+    def find_boxes(self, image, **kwargs):
+        boxes = self.get_YOLO_output(image)
 
-    def find_objects(self,obj):
+        if DebugMode.debug:
+            DebugMode.log_data(
+                identifier = DebugMode.curr_image,
+                data = {'links':[len(boxes)]},
+                image_path = DebugMode.image_path
+            )
+
+        return boxes
+
+    def find_objects(self, obj, **kwargs):
         image = obj.image()
 
         detected_boxes = self.find_boxes(image)
@@ -358,7 +387,6 @@ class ConnectYOLO(YOLOModel,GlycanConnector):
             linked_monos = []
             x1, y1, x2, y2 = dbox.corners()
 
-            # # test -  you shouldnt have to do this - you should get ID from bounding box
             for mono in obj.monosaccharides(): 
                 x_cen, y_cen = mono['center']
 
@@ -366,54 +394,63 @@ class ConnectYOLO(YOLOModel,GlycanConnector):
                     linked_monos.append(mono)
 
             if len(linked_monos) == 2:
-                links.append(linked_monos)
+                links.append([linked_monos, dbox.get('confidence')])
 
-            elif len(linked_monos) > 2 and len(linked_monos) < 4:
+            elif len(linked_monos) > 2 and len(linked_monos) <= 4:
+
                 max_distance = 0
 
                 farthest_pair = (None, None)
         
-                # Loop through all combinations of boxes and check the euclidean distance b/w them
                 for i in range(len(linked_monos)):
                     for j in range(i+1, len(linked_monos)):
-                        dist = self.euclidean_distance(linked_monos[i], linked_monos[j])
+                        if linked_monos[i].get('symbol') != 'Fuc' and linked_monos[j].get('symbol') != 'Fuc':
+                            dist = self.euclidean_distance(linked_monos[i], linked_monos[j])
 
-                        if dist > max_distance:
-                            max_distance = dist
-                            farthest_pair = [linked_monos[i], linked_monos[j]]
-    
+                            if dist > max_distance:
+                                max_distance = dist
+                                farthest_pair = [linked_monos[i], linked_monos[j]]
+
                 if farthest_pair != (None, None):
-                    links.append(farthest_pair)
-       
-        id_link_map = defaultdict(set)
+                    links.append([farthest_pair,dbox.get('confidence')])
 
-        for link_pairs in links:
+        id_link_map = defaultdict(list)
+
+        for link_pairs, conf in links:
             mono1, mono2 = link_pairs
-            id_link_map[mono1.get('id')].add(mono2.get('id'))
-            id_link_map[mono2.get('id')].add(mono1.get('id'))
+
+            id_link_map[mono1.get('id')].append([mono2.get('id'),conf])
+            id_link_map[mono2.get('id')].append([mono1.get('id'),conf])
+
 
         for id in id_link_map:
             obj.add_link(id,list(id_link_map[id]))
-
-        return links
+            
+        return obj
 
 
     def euclidean_distance(self,mbox1,mbox2):
         bx1_cen_x, bx1_cen_y = mbox1['center']
         bx2_cen_x, bx2_cen_y = mbox2['center']
         return math.sqrt((bx1_cen_x - bx2_cen_x)**2 + (bx1_cen_y - bx2_cen_y)**2)
-
+        
 
 class KnownLink(GlycanConnector):
-    def __init__(self,**kwargs):
-        pass
 
-    def find_boxes(self,image,**kwargs):
-        boxpadding = kwargs.get('boxpadding',0)
+    defaults = {
+        'boxpadding': 0,
+    }
+
+    def __init__(self,**kwargs):
+        self.params = dict(
+            boxpadding = Config.get_param('boxpadding', Config.INT, kwargs, self.defaults),
+        )
+
+    def find_boxes(self,image):
 
         box_coords = {}
         links = collections.defaultdict(list)
-        link_boxes = []
+        boxes = []
         image_path = image.rsplit('.',1)[0] + "_map.txt"
         with open(image_path, 'r') as file:
             for line in file:
@@ -445,11 +482,18 @@ class KnownLink(GlycanConnector):
                 width = x_max - x_min 
                 height = y_max - y_min
 
-                box = BoundingBox(x1=x_min, y1=y_min, x2=x_max, y2=y_max, width=width, height=height) 
-                box.pad(boxpadding) # known data is absolute
-                link_boxes.append(box)
+                box = BoundingBox(x1=x_min, y1=y_min, x2=x_max, y2=y_max) 
+                box.pad(self.params['boxpadding']) # known data is absolute
+                boxes.append(box)
+        
+        if DebugMode.debug:
+            DebugMode.log_data(
+                identifier = DebugMode.curr_image,
+                data = {'links_known':len(boxes)},
+                image_path = DebugMode.image_path
+            )
 
-        return link_boxes
+        return boxes
                                       
 
     def find_objects(self,obj):
@@ -472,6 +516,11 @@ class KnownLink(GlycanConnector):
         for mono in obj.monosaccharides():
             mono_id = mono['id']
             mono['links'] = links[mono_id]
+
+        # if DebugMode.debug:
+        #     self.find_boxes(obj.image_path())
+
+        return obj
 
 
 

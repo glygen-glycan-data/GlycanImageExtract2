@@ -3,37 +3,23 @@
 class for glycan locating methods.
 
 all subclasses need a find_objects method
-which takes an image 
-and returns bounding boxes for all glycans in the image.
+which takes an image and returns semantic data for all glycans in the image.
 
 any classes for detection need to return Detected bounding boxes, 
 with confidence values.
 
-bounding boxes are laid out in boundingboxes.py.
+bounding boxes are laid out in bbox.py.
 they require the image the glycan was found in, 
 some set of coordinates, and confidence of detection.
-YOLO format is not required; coordinates can be absolute or relative, 
-center/w/h, 4 corners, etc.
-
-to avoid later errors, 
-use the boundingbox coordinate conversion functions
-to completely fill out the coordinate system 
-during the initial definition
-(relative center_x/y, relative width/height, 
- absolute center_x/y/width/height, 4 corners)
-
 """
 
-# Need a way to take padding/crop/threshold before the find_objects()
-
-# create an obj which stores information about the glycan(s) which can be passed to
-# other classes
-
 import logging
-
+import os
+import json
 from . bbox import BoundingBox
 from . yolomodels import YOLOModel 
 from . glycanannotator import Config
+from BKGlycanExtractor import DebugMode
 
 # Base class
 class GlycanFinder(object):  
@@ -67,11 +53,8 @@ class YOLOGlycanFinder(YOLOModel,GlycanFinder):
            weights = Config.get_param('weights', Config.CONFIGFILE, kwargs, self.defaults),
         )
         YOLOModel.__init__(self,params)
-    #    assert self.classes == 1
+        assert self.classes == 1
         GlycanFinder.__init__(self)
-        
-    def execute(self, figure_semantics):
-        self.find_objects(figure_semantics)
 
     def find_boxes(self, image):
         return self.get_YOLO_output(image)
@@ -84,6 +67,7 @@ class YOLOGlycanFinder(YOLOModel,GlycanFinder):
         figure_semantics.clear_glycans()
         for box in boxes:
             figure_semantics.add_glycan(box=box)
+    
     
 class SingleGlycanImage(GlycanFinder):
 
@@ -101,6 +85,7 @@ class SingleGlycanImage(GlycanFinder):
         obj.clear_glycans()
         boxes = self.find_boxes(obj.image())
         obj.add_glycan(box=boxes[0],image_path=obj.image_path())
+
 
     def find_boxes(self, image):
         #implement crop and padding?

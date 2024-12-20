@@ -8,10 +8,13 @@ import math
 import numpy as np
 import os
 import sys
+import json
 
 from .bbox import BoundingBox
 from .yolomodels import YOLOModel
 from .glycanannotator import Config
+from BKGlycanExtractor import MonosCompare, BoxCompare, DebugMode
+
 
 class MonoID(object): 
     
@@ -26,6 +29,19 @@ class MonoID(object):
 
     def execute(self, obj):
         self.find_objects(obj)
+
+    @staticmethod
+    def box_components(iou):
+        return BoxCompare(iou)
+
+    @staticmethod
+    def semantic_components(proximity):
+        return MonosCompare(proximity)
+
+    @staticmethod
+    def known_predictor():
+        return KnownMono()
+
 
     def crop_largest(self, image):
         img = image
@@ -119,7 +135,7 @@ class HeuristicMonos(MonoID):
 
         mask_array, mask_array_name, mask_dict = self.get_masks(hsv)
         
-        monos = []
+        obj.clear_monos()
         
         count = 0
         for color in mask_array_name:
@@ -190,7 +206,10 @@ class HeuristicMonos(MonoID):
                 else:
                     continue
                 if "???" not in mono:
-                    obj.add_mono(symbol=mono,box=box)
+                    classid = self.get_mono_index(mono)
+                    box.set('classid',classid)
+                    # box.set('symbol',mono)
+                    obj.add_mono(classid=classid,symbol=mono,box=box)
         
     def get_masks(self, hsv_image):
         color_range_dict = self.color_range
@@ -250,7 +269,8 @@ class YOLOMonos(YOLOModel,MonoID):
     defaults = {
         'threshold': 0.5,
         'boxpadding': 0,
-        'expandimage': 0
+        'expandimage': 0,
+        'iou_threshold': 0.4
     }
 
     def __init__(self,**kwargs):
@@ -259,28 +279,56 @@ class YOLOMonos(YOLOModel,MonoID):
             config = Config.get_param('config', Config.CONFIGFILE, kwargs, self.defaults),
             weights = Config.get_param('weights', Config.CONFIGFILE, kwargs, self.defaults),
             threshold = Config.get_param('threshold', Config.FLOAT, kwargs, self.defaults),
+            iou_threshold = Config.get_param('iou_threshold', Config.FLOAT, kwargs, self.defaults),
             boxpadding = Config.get_param('boxpadding', Config.INT, kwargs, self.defaults),
             expandimage = Config.get_param('expandimage', Config.INT, kwargs, self.defaults)
-        )
+        )        
+
         YOLOModel.__init__(self,params)
-        # assert self.classes == len(self.mono_syms)
+        assert self.classes == len(self.mono_syms)
+
         MonoID.__init__(self)
 
-    def find_objects(self, obj):
+
+    def find_objects(self, obj, **kwargs):
         image = obj.image()
         mono_boxes = self.find_boxes(image)
         obj.clear_monos()
-        for box in mono_boxes:
-            sym = self.get_mono_sym(box.get("classid"))
-            # id is being added to the semantics and not bounding-box
-            obj.add_mono(symbol=sym,box=box)
+
+        for id, box in enumerate(mono_boxes):
+            classid = box.get('classid')
+            symbol = self.mono_syms[classid]
+            obj.add_mono(classid=classid,symbol=symbol,box=box,id=id)
+            box.set('id', id)
+            box.set('symbol', symbol)
+
+        return obj
 
     def find_boxes(self, image, **kwargs):
-        return self.get_YOLO_output(image,**kwargs,class_options=True)
+        boxes = self.get_YOLO_output(image)
+        
+        if DebugMode.debug:
+            DebugMode.log_data(
+            identifier= DebugMode.curr_image,
+            data={'monos':[len(boxes)]},
+            image_path = DebugMode.image_path,
+            )
+
+            DebugMode.info = None
+
+        return boxes
+
 
 class KnownMono(MonoID):
+
+    defaults = {
+        'boxpadding': 0,
+    }
+
     def __init__(self,**kwargs):
-        pass
+        self.params = dict(
+            boxpadding = Config.get_param('boxpadding', Config.INT, kwargs, self.defaults),
+        )
     
     def find_objects(self, obj):
         image_path = obj.image_path()
@@ -289,12 +337,13 @@ class KnownMono(MonoID):
         obj.clear_monos()
         for box in mono_boxes:
             box.set_image_dimensions(image_width=obj.width(),image_height=obj.height())
-            obj.add_mono(symbol=self.get_mono_sym(box.get('classid')),box=box,id=box.get('id'))
+            obj.add_mono(classid=self.get_mono_index(box.get('symbol')),symbol=box.get('symbol'),box=box,id=box.get('id'))
 
-    def find_boxes(self, image_path, **kwargs):
-        boxpadding = kwargs.get('boxpadding',0)
-        
-        monos = []
+        return obj
+
+
+    def find_boxes(self, image_path):
+        boxes = []
         image_path = image_path.rsplit('.',1)[0] + "_map.txt"
         with open(image_path, 'r') as file:
             for line in file:
@@ -305,18 +354,26 @@ class KnownMono(MonoID):
                     x_coords = []
                     y_coords = []
 
-                    for coords in data_points[3:-1]:
-                        x,y = map(int,coords.split(','))
-                        x_coords.append(x)
-                        y_coords.append(y)
+                    for coords in data_points[3:]:
+                        if ',' in coords:
+                            x,y = map(int,coords.split(','))
+                            x_coords.append(x)
+                            y_coords.append(y)
 
                     x_min = min(x_coords)
                     y_min = min(y_coords)
                     x_max = max(x_coords)
                     y_max = max(y_coords)
 
-                    box = BoundingBox(x1=x_min, y1=y_min, x2=x_max, y2=y_max, classid=self.get_mono_index(name), id=int(mono_id))
-                    box.pad(boxpadding) # known data is absolute
-                    monos.append(box)
+                    box = BoundingBox(x1=x_min, y1=y_min, x2=x_max, y2=y_max, symbol=name,classid=self.mono_syms.index(name),id=int(mono_id))
+                    box.pad(self.params['boxpadding']) # known data is absolute
+                    boxes.append(box)
 
-        return monos
+        if DebugMode.debug:
+            DebugMode.log_data(
+                identifier= DebugMode.curr_image,
+                data={'monos_known':len(boxes)},
+                image_path = DebugMode.image_path,
+            )
+
+        return boxes

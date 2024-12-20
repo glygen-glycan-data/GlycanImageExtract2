@@ -1,0 +1,1017 @@
+
+from ReferenceTable import ReferenceTable
+import os, os.path, sys, time, traceback, re, base64
+from dateutil import parser as dateutil_parser
+from collections import defaultdict
+from lockfile import FileLock
+import shelve
+import cPickle as pickle
+import gzip
+import csv
+import urllib, urllib2, urllib3
+import json
+import Glycan
+import SPARQLWrapper
+
+from GlycanFormatter import WURCS20Format, GlycoCTFormat, GlycanParseError, ZeroPlusLinkCountError, UndeterminedLinkCountError, CircularError, LinkCountError
+from WURCS20MonoFormatter import WURCS20MonoFormat, UnsupportedSkeletonCodeError, UnsupportedSubstituentError, InvalidMonoError
+
+import warnings                                                                                                 
+warnings.filterwarnings('ignore')
+
+class GlycanResource(ReferenceTable):
+    """
+       Abstract base class for glycan resources whose data is
+       accessed using triple store queries or HTTP requests
+
+       delaytime: Waiting time between request batches, default 0.2 sec
+       delaybatch: Size of request batches with no waiting time, default 1 (no batches)
+       retries: Maximum number of retries: default 4
+
+    """
+
+    def __init__(self,**kw):
+        self._delaybatch = kw.get('delaybatch',1)
+        self._delaytime = kw.get('delaytime',0.2)
+        self._retries = kw.get('retries',4)
+        self._lastrequesttime = 0
+        self._requestcount = 0
+
+        self.attr(kw,"cachefile",default=None)
+	if self._cachefile:
+	    self._cacheondisk = shelve.open(self._cachefile,flag='c')
+	    self._cache = {}
+	    self._cachedirty = {}
+        
+        super(GlycanResource,self).__init__(iniFile=kw.get('iniFile'))
+
+    def writecache(self):
+	if not self._cachefile:
+	    return
+        filelock = FileLock(self._cachefile)
+        try:
+            filelock.acquire()
+	    for key in self._cache:
+		if self._cachedirty.get(key,False):
+		    # write out "query" for key
+		    self._cacheondisk[key] = self._cache[key]
+		    self._cachedirty[key] = False
+	    self._cacheondisk.sync()
+        finally:
+            filelock.release()
+
+    def wait(self,delay=None):
+        elapsed = time.time() - self._lastrequesttime
+        if delay != None:
+            if elapsed < delay:
+                time.sleep(delay-elapsed)
+        elif (self._requestcount % self._delaybatch) == 0 and self._requestcount > 0:
+            if elapsed < delay:
+                time.sleep(self._delaytime-elapsed)
+        self._lastrequesttime = time.time()
+        self._requestcount += 1
+
+    def attr(self,kw,key,default=None,required=False):
+        if hasattr(self,key):
+            setattr(self,"_"+key,getattr(self,key))
+        elif key in kw:
+            setattr(self,"_"+key,kw[key])
+        elif not required:
+            setattr(self,"_"+key,default)
+        else:
+            raise RuntimeError("Can't find class/instance parameter %s for class %s"%(key,self.__class__.__name__))
+
+import rdflib
+
+class TripleStoreResource(GlycanResource):
+
+    """
+    Class for accessing glycan data from triple stores using arbitrary SPARQL queries
+
+    endpt: SPARQL query endpoint
+    defns: Default accession namespace prefix for URIs
+
+    Config file provides SPARQL queryies and the names of the methods
+    that should be created to access them...
+
+    """
+
+    def __init__(self,*args,**kw):
+        super(TripleStoreResource,self).__init__(*args,**kw)
+        self.attr(kw,'defns',default=None)
+        self.attr(kw,'endpt',required=True)
+	self.attr(kw,'verbose',default=False)
+        if self._defns:
+            self._ns = rdflib.Namespace(self._defns)
+        self._ts = rdflib.ConjunctiveGraph(store='SPARQLStore')
+        self._ts.open(self._endpt)
+
+    def queryts(self,sparql):
+        self.wait()
+
+	if self._verbose:
+	    print >>sys.stderr, "SPARQL Query:\n"
+	    print >>sys.stderr, sparql
+	    print >>sys.stderr, ""
+
+        attempt = 0
+        response = None
+        delay = self._delaytime
+        while response == None and (attempt-1) < self._retries:
+            try:
+                attempt += 1
+                response = self._ts.query(sparql)
+            except:
+                traceback.print_exc()
+                delay *= 2
+                self.wait(delay)
+
+        if response == None:
+            raise IOError("Cannot query SPARQL endpoint")
+
+        return response
+
+    def triples(self,acc):
+        self.wait()
+        
+        if not acc.startswith('http'):
+            assert self._ns != None
+            uri = self._ns[acc]
+        else:
+            uri = rdflib.Namespace(acc)[""]
+
+        seen = set()
+        for subj,pred,obj in self._ts.triples((uri,None,None)):
+            if (subj,pred,obj) in seen:
+                continue
+            seen.add((subj,pred,obj))
+            yield tuple(map(str,(subj,pred,obj)))
+        for subj,pred,obj in self._ts.triples((None,None,uri)):
+            if (subj,pred,obj) in seen:
+                continue
+            seen.add((subj,pred,obj))
+            yield tuple(map(str,(subj,pred,obj)))
+
+    def set_method(self,name,func):
+        setattr(self.__class__, name, func)
+        func.__name__ = name
+    
+    def modify_method(self,name,func):
+        newfunc = func(getattr(self.__class__,name))
+        setattr(self.__class__, name, newfunc)
+        newfunc.__name__ = name
+    
+    def parseSection(self,name,keyvaluepairs):
+        sparql = keyvaluepairs['sparql']
+        params = filter(None,map(str.strip,keyvaluepairs.get('params',"").split(',')))
+  	escape = filter(None,map(str.strip,keyvaluepairs.get('escape',"").split(',')))
+
+        def _query(self,*args,**kw):
+            # print >>sys.stderr, "query_%s: %s, %s"%(name,args,kw)
+            kwargs = {}
+            for i,param in enumerate(params):
+                if param in keyvaluepairs:
+                    kwargs[param] = keyvaluepairs[param]
+                if i < len(args):
+                    kwargs[param] = args[i]
+		    if param in escape:
+			kwargs[param] = re.escape(kwargs[param]).replace("\\","\\\\")
+                elif kw.get(param) != None:
+                    kwargs[param] = kw[param]
+		    if param in escape:
+			kwargs[param] = re.escape(kwargs[param]).replace("\\","\\\\")
+                assert param in kwargs, " ".join(map(repr,[param, kwargs]))
+            sparqlstr = sparql%kwargs
+            response = self.queryts(sparqlstr)
+            vars = map(str,response.vars)
+            for row in response.bindings:
+                row = tuple(map(row.get,response.vars))
+                yield dict(zip(vars,map(str,row)))
+
+        self.set_method("query_"+name, _query)
+        return [("query_"+name,params)]
+
+# Defaults ensure a 10-way partition of GlyTouCan accessions
+def partitioner(kwarg="accession",fmt="G%%0%dd.*",digits=1,values='decimal'):
+    fmtstr = fmt%(digits,)
+    def partition(fn):
+        def wrapper(self,*args,**kw):
+            if kwarg not in kw:
+		if values == "decimal":
+                    for i in range(0,10**digits):
+			kw[kwarg] = fmtstr%(i,)
+                        for row in fn(self,*args,**kw):
+                            yield row
+		elif values == "hexidecimal":
+		    for i in range(0,16**digits):
+			kw[kwarg] = fmtstr%(i,)
+                        for row in fn(self,*args,**kw):
+                            yield row
+            else:
+                for row in fn(self,*args,**kw):
+                    yield row
+        return wrapper
+    return partition
+
+def prefetcher(*kwargs):
+    if len(kwargs) == 0:
+	kwargs = ["accession"]
+    def prefetch(fn):
+        def wrapper(self,**kw):
+            # print >>sys.stderr, kw
+            kw1 = dict((k,v) for k,v in kw.items() if k not in kwargs)
+            key = fn.__name__+":"+":".join("%s=%s"%(k,v) for k,v in sorted(kw1.items()))
+            # print >>sys.stderr, "cache key:",key
+            if key not in self._cache:
+		if not self._cacheondisk.has_key(key):
+                    # print >>sys.stderr, "fill cache:",key
+		    self._cache[key] = {}
+		    self._cachedirty[key] = True
+                    for row in fn(self,**kw1):
+			for ind,kwarg in enumerate(kwargs):
+                            if (ind,row[kwarg]) not in self._cache[key]:
+                                self._cache[key][(ind,row[kwarg])] = []
+                            self._cache[key][(ind,row[kwarg])].append(row)
+                    self.writecache()
+		else:
+		    # print >>sys.stderr, key
+                    self._cache[key] = self._cacheondisk[key]
+		    self._cachedirty[key] = False
+
+	    for ind,kwarg in enumerate(kwargs):
+                if kwarg in kw:
+                    for row in self._cache[key].get((ind,kw[kwarg]),[]):
+                        yield row
+		    break
+            else:
+                for ind,acc in self._cache[key]:
+		    if ind > 0:
+			continue
+                    for row in self._cache[key][(0,acc)]:
+                        yield row
+        return wrapper
+    return prefetch
+
+class GlyTouCanTS(TripleStoreResource):
+
+    endpt = "http://ts.glytoucan.org/sparql"
+    defns = "http://rdf.glycoinfo.org/glycan/"
+    cachefile = ".gtccache_new"
+    # verbose = True
+    
+    sequence_formats = set(["wurcs", "glycoct", "iupac_extended", "iupac_condensed"])
+
+    crossref_resources = set(['glycosciences_de', 'pubchem', 'kegg',
+                              'unicarbkb', 'glyconnect', 'glycome-db',
+                              'unicarb-db', 'carbbank', 'pdb', 'cfg',
+                              'bcsdb','matrixdb','glycoepitope'])
+
+    def __init__(self,**kw):
+        super(GlyTouCanTS,self).__init__(**kw)
+        for k in self.keys():
+	    if k == "query_hashedseq":
+                self.modify_method(k,partitioner(kwarg="hash",fmt="%%0%dx.*",values='hexidecimal'))
+	    else:
+                self.modify_method(k,partitioner())
+	    if kw.get('usecache',True):
+		if k == "query_hashedseq":
+                    self.modify_method(k,prefetcher("hash","seq"))
+		else:
+                    self.modify_method(k,prefetcher())
+
+    def getseq(self,accession,format='wurcs'):
+        assert format in self.sequence_formats
+        for row in self.query_sequence(accession=accession,format=format):
+	    if row['format'] == 'wurcs' and not row['sequence'].startswith('WURCS'):
+		continue
+	    if row['format'] == 'glycoct' and not row['sequence'].startswith('RES'):
+		continue
+            return row['sequence']
+        return None
+
+    def allseq(self,format=None):
+        assert format == None or format in self.sequence_formats
+        for row in self.query_sequence(format=format):
+	    if row['format'] == 'wurcs' and not row['sequence'].startswith('WURCS'):
+                continue
+	    if row['format'] == 'glycoct' and not row['sequence'].startswith('RES'):
+                continue
+            yield row['accession'], row['format'], row['sequence']
+
+    def getmass(self,accession):
+        for row in self.query_mass(accession=accession):
+            try:
+                return float(row['mass'])
+            except ValueError:
+                pass
+        return None
+
+    def allmass(self):
+        for row in self.query_mass():
+            try:
+                yield row['accession'],float(row['mass'])
+            except ValueError:
+                pass
+
+    def getmonocount(self,accession):
+        for row in self.query_monocount(accession=accession):
+            try:
+                return int(row['count'])
+            except ValueError:
+                pass
+        return None
+
+    def allmonocount(self):
+        for row in self.query_monocount():
+            try:
+                yield row['accession'],int(row['count'])
+            except ValueError:
+                pass
+
+    def getrefs(self,accession):
+        refs = set()
+        for row in self.query_references(accession=accession):
+            try:
+                refs.add(int(row['ref']))
+            except ValueError:
+                continue
+        return sorted(refs)
+
+    def allrefs(self):
+        for row in self.query_references():
+            try:
+                yield row['accession'],int(row['ref'])
+            except ValueError:
+                continue
+
+    def getcrossrefs(self,accession,resource=None):
+        assert resource == None or resource in self.crossref_resources
+        for row in self.query_crossrefs(accession=accession,resource=resource):
+            if row['resource'] in self.crossref_resources:
+                yield row['resource'],row['entry']
+
+    def allcrossrefs(self,resource=None):
+        assert resource == None or resource in self.crossref_resources
+        for row in self.query_crossrefs(resource=resource):
+            if row['resource'] in self.crossref_resources:
+                yield row['accession'],row['resource'],row['entry']
+
+    # Named for consistency with GlyTouCan class...
+    def getmotif(self,accession):
+        return [ row['motif'] for row in self.query_motifs(accession=accession) ]
+
+    def allmotifaligns(self):
+        for row in self.query_motifs():
+            yield row['accession'],row['motif']
+
+    def allmotifs(self):
+        for row in self.query_allmotif():
+            yield row['accession'],row['label'],row['redend']
+
+    def exists(self,accession):
+        for row in self.query_exists(accession=accession):
+            return True
+        return False
+
+    def allinvalid(self):
+	for row in self.query_invalid():
+	    yield row['accession']
+
+    def invalid(self,accession):
+	for row in self.query_invalid(accession=accession):
+	    return True
+	return False
+
+    def allaccessions(self):
+        for row in self.query_exists():
+            yield row['accession']
+
+    def gethash(self,accession):
+	for row in self.query_hash(accession=accession):
+	    return row['hash']
+
+    def allhash(self):
+	for row in self.query_hash():
+	    yield row['accession'],row['hash']
+
+    def allhashedseq(self):
+	for row in self.query_hashedseq():
+	    yield row['hash'],row['seq']
+
+    def gethashedseq(self,hash=None,seq=None):
+        # we can lookup with hash or seq
+	kw = {}
+	if seq != None:
+	    kw['seq'] = seq
+	if hash != None:
+	    kw['hash'] = hash
+	for row in self.query_hashedseq(**kw):
+	    yield row['hash'],row['seq']
+
+    def gettaxa(self,accession):
+	for row in self.query_taxonomy(accession=accession):
+	    yield row['taxon']
+
+    def bytaxa(self,taxon):
+	for row in self.query_taxonomy(taxon=taxon):
+	    yield row['accession']
+
+    def alltaxa(self):
+	for row in self.query_taxonomy():
+	    yield row['accession'],row['taxon']
+
+    def gettopo(self,accession):
+	for row in self.query_topology(accession=accession):
+	    return row['topology']
+	return None
+
+    def alltopo(self):
+	for row in self.query_topology():
+	    yield row['accession'],row['topology']
+
+    def getcomp(self,accession):
+	for acc in set([self.gettopo(accession),accession]):
+	    for row in self.query_composition(accession=acc):
+	        return row['composition']
+
+    def allcomp(self):
+        topo = defaultdict(set)
+        for s, t in self.alltopo():
+            topo[t].add(s)
+        seen = set()
+        for row in self.query_composition():
+	    t,c = row['accession'],row['composition']
+            for s in topo[t]:
+                if (s, c) not in seen:
+                    seen.add((s, c))
+                    yield s, c
+                if (c, c) not in seen:
+                    seen.add((c, c))
+                    yield c, c
+
+    def getbasecomp(self,accession):
+	for acc in set([self.getcomp(accession),accession]):
+	    for row in self.query_basecomposition(accession=acc):
+	        return row['basecomposition']
+
+    def allbasecomp(self):
+	comp = defaultdict(set)
+	for s, c in self.allcomp():
+	    comp[c].add(s)
+	seen = set()
+	for row in self.query_basecomposition():
+	    c,bc = row['accession'],row['basecomposition']
+	    for s in comp[c]:
+		if (s,bc) not in seen:
+		    seen.add((s,bc))
+		    yield s, bc
+		if (bc,bc) not in seen:
+		    seen.add((bc,bc))
+		    yield bc,bc
+
+    def _query_date_helper(self,**kwargs):
+        lastacc = None; lastaccdates = set()
+	for row in sorted(self.query_date(**kwargs),key=lambda r: r['accession']):
+	    row['date'] = dateutil_parser.parse(row['date']).date()
+	    if row['accession'] != lastacc:
+		if len(lastaccdates) > 0:
+		    yield lastacc,min(lastaccdates).isoformat(),max(lastaccdates).isoformat()
+		lastacc = row['accession']
+		lastaccdates = set([row['date']])
+	    else:
+		lastaccdates.add(row['date'])
+	if len(lastaccdates) > 0:
+	    yield lastacc,min(lastaccdates).isoformat(),max(lastaccdates).isoformat()
+
+    def getdate(self,accession):
+	for row in self._query_date_helper(accession=accession):
+	    yield row[1],row[2]
+
+    def alldate(self):
+	for row in self._query_date_helper():
+	    yield row
+
+    def getimage(self,accession,notation='snfg',style='extended',format='svg'):
+        assert notation in ('snfg','cfg')                                                                                   
+        assert style in ('extended',)                                                                                       
+        assert format in ('png','svg')                                                                                      
+        for row in self.query_image(accession=accession,notation=notation,style=style,format=format):
+            if format == "png":
+                return base64.standard_b64decode(row['imagedata'])
+            else:
+                return row['imagedata']
+
+    def allimage(self,notation='snfg',style='extended',format='svg'):
+	assert notation in ('snfg','cfg')
+	assert style in ('extended',)
+	assert format in ('png','svg')
+	for row in self.query_image(notation=notation,style=style,format=format):
+	    if format == "png":
+		yield row['accession'],base64.standard_b64decode(row['imagedata'])
+	    else:
+		yield row['accession'],row['imagedata']
+
+class GlyTouCanUtil(object):
+    _wurcs_mono_format = WURCS20MonoFormat()
+    _wurcs_format = WURCS20Format()
+    _glycoct_format = GlycoCTFormat()
+    _alphamap = None
+
+    def getUnsupportedCodes(self, acc):
+        codes = set()
+	substs = set()
+	invalid = set()
+	other = set()
+        sequence = self.getseq(acc, 'wurcs')
+        if not sequence:
+            return codes, substs, invalid, other
+        monos = sequence.split('/[', 1)[1].split(']/')[0].split('][')
+        for m in monos:
+            try:
+                g = self._wurcs_mono_format.parsing(m)
+            except UnsupportedSkeletonCodeError, e:
+                codes.add(e.message.rsplit(None, 1)[-1])
+            except UnsupportedSubstituentError, e:
+                substs.add(e.message.rsplit(None, 1)[-1])
+            except InvalidMonoError, e:
+                invalid.add(e.message.rsplit(None, 1)[-1])
+            except GlycanParseError:
+                pass
+	try:
+	    g = self._wurcs_format.toGlycan(sequence)
+	except ZeroPlusLinkCountError:
+	    other.add("0+ link count")
+	except UndeterminedLinkCountError:
+	    other.add("undetermined link count")
+	except CircularError:
+	    other.add("circular")
+	except LinkCountError:
+	    other.add("bad link count")
+	except GlycanParseError:
+	    pass
+        return codes, substs, invalid, other
+
+    def getGlycan(self, acc, format=None):
+        if not format or (format == 'wurcs'):
+            sequence = self.getseq(acc, 'wurcs')
+            if sequence:
+                try:
+                    return self._wurcs_format.toGlycan(sequence)
+                except GlycanParseError:
+                    pass  # traceback.print_exc()
+        if not format or (format == 'glycoct'):
+            sequence = self.getseq(acc, 'glycoct')
+            if sequence:
+                try:
+                    return self._glycoct_format.toGlycan(sequence)
+                except GlycanParseError:
+                    pass
+        return None
+
+    def glycoct(self, acc, fetch=None):
+	g = self.getGlycan(acc,fetch)
+	if not g:
+	    return None
+	return g.glycoct()
+
+    def umw(self, acc, fetch=None):
+	g = self.getGlycan(acc,fetch)                                                                             
+	if not g:
+	    return None
+        return g.underivitized_molecular_weight()
+
+    def wurcs2glycoct(self, acc):
+	sequence = self.getseq(acc,'wurcs')
+	if sequence:
+	    sequence1 = urllib.quote_plus(sequence)
+	    url = 'https://api.glycosmos.org/glycanformatconverter/2.3.2-snapshot/wurcs2glycoct/'+sequence1
+	    try:
+	        data = json.loads(urllib.urlopen(url).read())
+	        if 'GlycoCT' in data:
+	            return data['GlycoCT']
+	    except ValueError:
+		pass
+	return None
+
+    def subsumptionbyapi(self, acc):
+	sequence = self.getseq(acc,'wurcs')
+	if sequence:
+	    sequence1 = urllib.quote_plus(sequence)
+	    url = 'https://api.glycosmos.org/subsumption/0.2.0/'+sequence1
+	    data = urllib.urlopen(url).read()
+	    seen = set()
+	    lasts = None
+	    for triple in sorted(map(lambda t: tuple(map(str.strip,map(str,map(t.get,("S","P","O"))))),json.loads(data))):
+		if triple in seen:
+		    continue
+		seen.add(triple)
+		if triple[0] != lasts:
+		    if lasts != None:
+			print ""
+		    print triple[0]
+		    lasts = triple[0]
+		if triple[2] == sequence:
+		    print ">>  "+"\t".join(triple[1:])
+		else:
+		    print "    "+"\t".join(triple[1:])
+
+    def findskel(self, skel, maxcount=None):
+	if maxcount != None:
+	    maxcount = int(maxcount)
+        
+	for acc, format, wurcs in self.allseq(format='wurcs'):
+            glycoct = self.getseq(acc,format='glycoct')
+            if not glycoct:
+                continue
+	    monos = wurcs.split('/[', 1)[1].split(']/')[0].split('][')
+	    if maxcount != None and len(monos) > maxcount:
+		continue
+            for mono in monos:
+		msk = re.search(r'^(.*?)([-_].*)?$',mono).group(1)
+		assert msk
+		m = re.search(r"^%s$"%(skel,),msk)
+		if m:
+		    yield acc, m.group(0)
+
+    def multiseq(self):
+	counts = defaultdict(set)
+	for acc,fmt,seq in self.allseq():
+	    counts[(acc,fmt)].add(seq)
+	for k,v in counts.items():
+	    if len(v) > 1:
+		yield k
+
+    def fixcompwurcs(self, wurcsseq):
+        if not self._alphamap:
+            self._alphamap = dict()
+            for i, c in enumerate(range(ord('a'), ord('z') + 1)):
+                self._alphamap[i + 1] = chr(c)
+                self._alphamap[chr(c)] = (i + 1)
+            for i, c in enumerate(range(ord('A'), ord('Z') + 1)):
+                self._alphamap[i + 1 + 26] = chr(c)
+                self._alphamap[chr(c)] = (i + 1 + 26)
+        prefix, counts, rest = wurcsseq.split('/', 2)
+        unodes, nodes, edges = counts.split(',')
+        nodes = int(nodes)
+        assert '0+' in edges
+        edges = (nodes - 1)
+        ambignode = "|".join(map(lambda i: "%s?" % (self._alphamap[i],), range(1, nodes + 1)))
+        ambigedge = "%s}-{%s" % (ambignode, ambignode)
+        ambigedges = [ambigedge] * edges
+        return "%s/%s,%d,%d/%s%s" % (prefix, unodes, nodes, edges, rest, "_".join(ambigedges))
+
+    def anyglycan2wurcs(self, glycan):
+        sequence = ""
+        if isinstance(glycan, Glycan.Glycan):
+            if not self.glycoct_format:
+                self.glycoct_format = GlycoCTFormat()
+            sequence = self.glycoct2wurcs(self.glycoct_format.toStr(glycan))
+            if '0+' in sequence:
+                sequence = self.fixcompwurcs(sequence)
+        else:
+            sequence = re.sub(r'\n\n+', r'\n', glycan)
+            if sequence.strip().startswith('RES'):
+                sequence = self.glycoct2wurcs(glycan)
+        return sequence
+
+    def glycoct2wurcs(self, seq):
+        requestURL = "https://api.glycosmos.org/glycanformatconverter/2.3.2-snapshot/glycoct2wurcs/"
+        encodedseq = urllib.quote(seq, safe='')
+        requestURL += encodedseq
+        req = urllib2.Request(requestURL)
+        # self.wait()
+        response = urllib2.urlopen(req).read()
+
+        result = json.loads(response)
+
+        try:
+            wurcs = result["WURCS"]
+        except:
+            raise ValueError("GlycoCT 2 WURCS conversion failed")
+
+        return wurcs.strip()
+
+class GlyTouCanRegistration(object):
+    _credfile = ".gtccred"
+    _user = None
+    _apikey = None
+    _opener = None
+    
+    @staticmethod
+    def getcredentials():
+
+        # script directory
+        dir = os.path.split(sys.argv[0])[0]
+        credfile = os.path.join(dir, GlyTouCan.credfile)
+        if os.path.exists(credfile):
+            user, apikey = open(credfile).read().split()
+            return user, apikey
+
+        # local directory
+        credfile = GlyTouCan.credfile
+        if os.path.exists(credfile):
+            user, apikey = open(credfile).read().split()
+            return user, apikey
+
+        # home directory
+        dir = os.path.expanduser("~")
+        credfile = os.path.join(dir, GlyTouCan.credfile)
+        if os.path.exists(credfile):
+            user, apikey = open(credfile).read().split()
+            return user, apikey
+
+        raise GlyTouCanCredentialsNotFound()
+
+    def setup_api(self, user=None, apikey=None):
+        if user == None:
+            user = self.user
+            apikey = self.apikey
+        if user == None:
+            user, apikey = self.getcredentials()
+        # print user,apikey
+        self.password_mgr = urllib2.HTTPPasswordMgrWithDefaultRealm()
+        self.password_mgr.add_password(None, "https://api.glytoucan.org/glycan", user, apikey)
+        self.handler = urllib2.HTTPBasicAuthHandler(self.password_mgr)
+        self.opener = urllib2.build_opener(self.handler)
+
+    def register(self, glycan, force2wurcs=False):
+        if force2wurcs:
+            sequence = self.anyglycan2wurcs(glycan)
+        else:
+            if isinstance(glycan, basestring) or isinstance(glycan, unicode):
+                if "RES" in glycan:
+                    sequence = glycan.replace("\n", "\\n")
+            else:
+                sequence = glycan.glycoct()
+                sequence = sequence.replace("\n", "\\n")
+        status = self.registration_status(sequence)
+
+        acc = None
+        if status["accession"]:
+            acc = status["accession"]
+            return acc, status
+
+        if not status["submitted"]:
+            status["register_msg"] = self.register_request(sequence)
+            if status["register_msg"] != None:
+                acc = status["register_msg"].get(u'message')
+        return acc, status
+
+    def register_request(self, sequence):
+        if not self.opener:
+            self.setup_api()
+
+        params = json.dumps(dict(sequence=sequence))
+        # print params
+        req = urllib2.Request('https://api.glytoucan.org/glycan/register', params)
+        req.add_header('Content-Type', 'application/json')
+        req.add_header('Accept', 'application/json')
+        try:
+            self.wait()
+            response = json.loads(self.opener.open(req).read())
+            return response
+        except (ValueError, IOError), e:
+            pass
+        return None
+
+        registration_status_query = """
+PREFIX repo: <http://repository.sparqlite.com/terms#>
+PREFIX rlog: <http://persistence.uni-leipzig.org/nlp2rdf/ontologies/rlog#>
+SELECT DISTINCT ?batch_p ?batch_value
+WHERE{
+    VALUES ?InputSeq {"%s"}
+    {?log_uri rlog:resource ?normalized_hash_uri.
+    ?log_uri rlog:className ?batch_p.
+    ?log_uri rlog:message  ?batch_value.}
+    UNION
+    { GRAPH <http://glycosmos.org/batch/wurcsvalid> {?normalized_hash_uri ?batch_p ?batch_value} }
+    UNION
+    { GRAPH <http://glycosmos.org/batch/wurcs/accession> {?normalized_hash_uri ?batch_p ?batch_value} }
+    {
+    {?hash_uri repo:input ?InputSeq.
+    ?hash_uri ?p_detect ?detect.
+    ?hash_uri ?PValide  ?NormalizedWurcs.
+    }
+    UNION
+    {?hash_uri repo:input ?InputSeq. 
+    ?hash_uri ?p_ct2w ?wurcs_hash_uri.
+    ?wurcs_hash_uri ?p_detect ?detect.
+    ?wurcs_hash_uri ?PValide  ?NormalizedWurcs.
+    }
+    VALUES ?detect {"wurcs"}
+    FILTER REGEX (?PValide, "SNAPSHOT$")
+    FILTER CONTAINS(STR(?PValide), "valid")
+    BIND(IRI(CONCAT("http://repository.sparqlite.com/key#", SHA256(?NormalizedWurcs))) AS ?normalized_hash_uri)}
+    UNION
+    {?normalized_hash_uri repo:input ?InputSeq.
+    ?normalized_hash_uri ?p_detect ?detect.
+    VALUES ?detect {"wurcs"}}
+}"""
+
+    def registration_status(self, seq):
+
+        res = {
+            "accession": None,
+            "error": [],
+            "warning": [],
+            "submitted": False,
+        }
+        # TODO use post to query result
+        response = self.queryts(self.registration_status_query%seq)
+        for row in response.bindings:
+            res["submitted"] = True
+            predicate, obj = tuple(map(str, map(row.get, response.vars)))
+
+            if "AccessionNumber/wurcs2GTCID".lower() in predicate.lower():
+                res["accession"] = obj.split("/")[-1]
+
+            if "error" in predicate.lower():
+                res["error"].append((predicate, obj))
+
+            if "warning" in predicate.lower():
+                res["warning"].append((predicate, obj))
+
+        return res
+
+class GlyTouCanCredentialsNotFound(RuntimeError):
+    pass
+
+class GlyTouCan(GlyTouCanTS,GlyTouCanUtil):
+    pass
+
+class GlyTouCanNoCache(GlyTouCan):
+    def __init__(self):
+	iniFile = os.path.join(os.path.dirname(os.path.realpath(__file__)),"glytoucan.ini")
+	super(GlyTouCanNoCache,self).__init__(usecache=False,iniFile=iniFile)
+
+class UniCarbKBTS(TripleStoreResource):
+
+    # endpt = "http://130.56.249.35:40935/unicarbkb/query"
+    endpt = "http://203.101.226.128:40935/unicarbkb/query"
+    defns = "http://rdf.unicarbkb.org/structure/"
+
+    def __init__(self):
+	iniFile = os.path.join(os.path.dirname(os.path.realpath(__file__)),"unicarbkb.ini")
+	super(UniCarbKBTS,self).__init__(iniFile=iniFile)
+
+    def alltaxa(self):
+	for row in self.query_taxonomy():
+	    yield row['accession'],row['taxon']
+
+    def allgtc(self):
+	for row in self.query_gtcacc():
+	    yield row['accession'],row['glytoucan']
+
+    def allpub(self):
+	for row in self.query_publication():
+	    if row['pmid'] == '0':
+		continue
+	    yield row['accession'],row['pmid']
+
+class UniCarbKBDump(object):
+    dumpfileurl = "https://gitlab.com/matthew.campbell1980/Unicarb-Glygen/-/raw/master/data_files/unicarbkb/DATA_RELEASE/STABLE/mammalian/%s.csv"
+    species2taxa = {'human': '9606', 'mouse': '10090', 'rat': '10116'}
+    species2filename = {'human': 'human06022020', 'mouse': 'mouse06022020', 'rat': 'rat06022020'}
+
+    def records(self):
+	hdr = {'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.64 Safari/537.11',
+               'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+               'Accept-Charset': 'ISO-8859-1,utf-8;q=0.7,*;q=0.3',
+               'Accept-Encoding': 'none',
+               'Accept-Language': 'en-US,en;q=0.8',
+               'Connection': 'keep-alive'}
+	for species in ('human','mouse','rat'):
+            url = self.dumpfileurl%(self.species2filename[species],)
+	    req = urllib2.Request(url, headers=hdr)
+            for row in csv.DictReader(urllib2.urlopen(req)):
+		row['taxid'] = self.species2taxa[species]
+		yield row
+
+    def alltaxa(self):
+	seen = set()
+	for row in self.records():
+	    data = (row['Id'],row['taxid'])
+	    if data in seen:
+		continue
+	    seen.add(data)
+	    yield data
+
+    def allgtc(self):
+	seen = set()
+	for row in self.records():
+	    if not row['Toucan']:
+		continue
+	    data = (row['Id'],row['Toucan'])
+	    if data in seen:
+		continue
+	    seen.add(data)
+	    yield data
+
+    def allpub(self):
+	seen = set()
+	for row in self.records():
+	    if not row['Pmid'] or row['Pmid'] == "0":
+		continue
+	    data = (row['Id'],row['Pmid'])
+	    if data in seen:
+		continue
+	    seen.add(data)
+	    yield data
+
+def union(methodname):
+    def wrapper(self):
+	seen = set()
+	for cls in (UniCarbKBTS,UniCarbKBDump):
+	    try:
+	        for row in getattr(cls,methodname)(self):
+	            if row in seen:
+		        continue
+		    seen.add(row)
+		    yield row
+	    except IOError:
+		pass
+    return wrapper
+
+class UniCarbKB(UniCarbKBDump,UniCarbKBTS):
+
+    alltaxa = union("alltaxa")
+    allgtc = union("allgtc")
+    allpub = union("allpub")
+
+    def gtcbytaxa(self,taxon):
+	accmap = defaultdict(set)
+	for acc,gtc in self.allgtc():
+	    accmap[acc].add(gtc)
+	seen = set()
+	for acc,taxid in self.alltaxa():
+	    if int(taxid) == int(taxon):
+		for gtc in accmap[acc]:
+		    if gtc not in seen:
+			yield gtc
+			seen.add(gtc)
+
+class GlyGenTS(TripleStoreResource):
+    endpt = "http://sparql.glygen.org:8880/sparql/query"
+    # endpt = "https://sparql.glygen.org/query"
+    defns = "http://glygen.org/glycan/"
+
+    def __init__(self,**kw):
+        super(GlyGenTS,self).__init__(**kw)
+        for k in self.keys():
+            self.modify_method(k,partitioner())
+
+    def allglycans(self):
+	for row in self.query_glycans():
+            yield row['accession']
+
+class GlyGenBetaTS(GlyGenTS):
+    endpt = "http://beta-sparql.glygen.org:8880/sparql/query"
+    # endpt = "https://beta-sparql.glygen.org/"
+    def __init__(self):
+        iniFile = os.path.join(os.path.dirname(os.path.realpath(__file__)),"glygen.ini")
+        super(GlyGenBetaTS,self).__init__(usecache=False,iniFile=iniFile)
+
+class GlyGen(GlyGenTS):
+    pass
+
+class GlyGenBeta(GlyGenBetaTS):
+    pass
+
+if __name__ == "__main__":
+
+    cls = sys.argv[1]
+    resource = eval(cls+"()")
+    query = sys.argv[2]
+    method = getattr(resource,query)
+    headers = None
+    args = sys.argv[3:]
+    kwargs = {}
+    for i in range(len(args)-1,-1,-1):
+	if re.search(r'^[a-z]+=',args[i]):
+	    k,v = args[i].split('=',1)
+	    kwargs[k] = v
+	    del args[i]
+    result = method(*args,**kwargs)
+    if isinstance(result,basestring) or not hasattr(result,'next'):
+	print result
+    else:
+	for r in result:
+	    if isinstance(r,basestring):
+	        print r
+	    elif isinstance(r,dict):
+	        if headers == None:
+		    headers = sorted(r.keys())
+		    if 'accession' in headers:
+		        headers.remove('accession')
+		        headers = ['accession'] + headers
+	        print "\t".join(map(r.get,headers))
+	    else:
+	        print "\t".join(map(str,r))
+
+    # gtc = GlyTouCan(usecache=True)
+    # for acc,format,seq in gtc.allseq():
+    #     print acc,format,seq
+    # for acc,res,entry in gtc.allcrossrefs():
+    #     print acc,res,entry
+    # for i,(acc,mass) in enumerate(gtc.allmass()):
+    #     print i,acc,mass

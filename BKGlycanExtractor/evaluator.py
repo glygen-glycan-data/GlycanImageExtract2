@@ -19,59 +19,59 @@ logger = logging.getLogger("test")
 
 
 class BoxEvaluator:
-    cm = Config_Manager()
+    # cm = Config_Manager()
+    # initialize CompareBoxes here with 3 different IOU values and pass the reference instead of creatig
+    # the object agian and again later
 
-    def __init__(self,preds, base_pipeline='SingleGlycanImage-YOLOFinders',known='KnownMono'):
-        self.base_pipeline = base_pipeline
-        self.known_finder = self.cm.get_finder(known)
-        # self.pred_finders = self.cm.get_finder(pred1)
-        self.pred_finders = preds
+    # make a plot which shows a distrubution of confidence values
 
-
-    def runall(self,image_folder):
+    def runall(self,image_folder,base_pipeline,predictors,known):
         self.observations = {}
-        pipeline = self.cm.get_pipeline(self.base_pipeline)
+        # pipeline = self.cm.get_pipeline(self.base_pipeline)
 
         images = Image_Manager(image_folder,pattern="*.png,*.jpg")
 
-        # images = [image for image in images if os.path.basename(image).endswith('.png')]
-        # images = np.random.choice(images, 2) # select 100 of the files randomly
+        images = [image for image in images if os.path.basename(image).endswith('.png')]
+        images = np.random.choice(images, 2) # select 100 of the files randomly
 
-        for pred_finder in self.pred_finders:
-            self.observations[pred_finder] = {}  
-            self.pred = self.cm.get_finder(pred_finder)
+        for pred in predictors:
+            self.observations[pred.__class__.__name__] = {}  
+            # pred = self.cm.get_finder(pred_finder)
 
             for image in images:
                 # run the base_pipeline
-                figure_semantics = pipeline.run(image)
+                # this doesnt need to be the full pipeline --> instantiate only what you need in the main_file
+                figure_semantics = base_pipeline.run(image)
 
                 glycan = figure_semantics.glycans()[0] #since its a single glycan image
 
-                known_boxes = self.known_finder.find_boxes(glycan.image_path(),boxpadding=0)
-                pred_boxes = self.pred.find_boxes(glycan.image(),boxpadding=0)
+                known_boxes = known.find_boxes(glycan.image_path())
+                pred_boxes = pred.find_boxes(glycan.image())
 
                 # compare the boxes
-                for confidence in [c/2 for c in range(0,2)]:
+                for confidence in [c/100000 for c in range(99999,100000,10)]:
                     results = self.compare(pred_boxes,known_boxes,CompareBoxes(),image,confidence)
-                    self.observations[pred_finder].setdefault(confidence,[]).extend(results)
+                    self.observations[pred.__class__.__name__].setdefault(confidence,[]).extend(results)
 
                 # print("self.observations",self.observations)
     
 
     def compare(self, pred_boxes, known_boxes, comparison_alg, image, conf_threshold = 0.5):
-        boxes = [box for box in pred_boxes if box.data['confidence'] >= conf_threshold ]
+        boxes = [box for box in pred_boxes if box.get('confidence') >= conf_threshold ]
 
         compare_dict = {}
+        # should we take dbox and then tboxes or do the opposite? b/c rn a single dbox can have many tboxes ---> but that shouldnt happen --> one dbox box should have
+        # only one tbox and all should be unique pairs ---> rn because of multiples ---> we are getting too many TP's
         for idx,dbox in enumerate(boxes):
             dbox.set('id',idx)
-            compare_dict[dbox.data['id']] = (dbox, None)
+            compare_dict[dbox.get('id')] = (dbox, None)
             max_int = 0
             for tbox in known_boxes:
                 if comparison_alg.have_intersection(tbox,dbox):
                     iou = comparison_alg.iou(tbox,dbox)
                     if iou > max_int:
                         max_int = iou
-                        compare_dict[dbox.data['id']] = (dbox,tbox)
+                        compare_dict[dbox.get('id')] = (dbox,tbox)
                 else:
                     continue
         results = []
@@ -96,7 +96,7 @@ class BoxEvaluator:
             dbox = boxpair[0]
             tbox = boxpair[1]
 
-            assert dbox.data['id'] == key
+            assert dbox.get('id') == key
             logger.info(str(dbox))
             if tbox is None:
                 results.append("FP")
@@ -104,7 +104,7 @@ class BoxEvaluator:
             else:
                 if not comparison_alg.compare_class(tbox,dbox):
                     results.append("FP")
-                    results.append("FN")
+                    results.append("FN") # detected culd be associated with multiple training, so might not bre Fn
                     logger.info("FP/FN, incorrect class")
                 else:
                     t_area = tbox.area()
@@ -119,7 +119,7 @@ class BoxEvaluator:
                             logger.info("TP")
                         else:
                             results.append("FP")
-                            results.append("FN")
+                            results.append("FN") # detected culd be associated with multiple training, so might not bre Fn
                             logger.info("FP/FN, detection area too large.")
                     elif inter == d_area:
                         if comparison_alg.detection_sufficient(tbox,dbox):

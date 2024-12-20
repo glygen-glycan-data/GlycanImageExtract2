@@ -10,17 +10,32 @@ from .bbox import BoundingBox
 from .yolomodels import YOLOModel
 from .glycanannotator import Config
 from .compareboxes import CompareBoxes
-            
+from BKGlycanExtractor import RootCompare, BoxCompare, DebugMode
+
             
 class RootFinder:
     orientation_type = ["left_right","right_left","top_bottom","bottom_top"]
     mono_type = ["root_mono","nonroot"]
+    mono_syms = ["GlcNAc","NeuAc","Fuc","Man","GalNAc","Gal","Glc","NeuGc"]
+    
 
     def execute(self, obj):
         self.find_objects(obj)
 
     def find_objects(self, obj):
         raise NotImplementedError
+
+    @staticmethod
+    def box_components(iou):
+        return BoxCompare(iou)
+        
+    @staticmethod
+    def semantic_components(proximity):
+        return RootCompare(proximity)
+
+    @staticmethod
+    def known_predictor():
+        return KnownRoot()
         
     def set_logger(self, logger_name=''):
         self.logger = logging.getLogger(logger_name+'.rootmonofinding')
@@ -76,6 +91,9 @@ class OrientationRootFinder(RootFinder):
                 if mono_semantics['box'] == mono and mono_semantics['symbol'] != 'Fuc':
                     obj.add_root(mono_semantics['id'])
                     break
+                else:
+                    obj.add_root(None)
+
 
 
 
@@ -90,7 +108,7 @@ class DefaultOrientationRootFinder(OrientationRootFinder):
         for mono in obj.monosaccharides():
             aX, aY = mono['center']
             ID = mono['id']
-            for mono2 in obj.get_links(ID):
+            for mono2 in obj.links(ID):
                 for x in obj.monosaccharides():
                     if x['id'] == mono2:
                         mono2 = x
@@ -132,7 +150,7 @@ class YOLOOrientationRootFinder(YOLOModel, OrientationRootFinder):
         OrientationRootFinder.__init__(self)
         YOLOModel.__init__(self,params)
 
-    def get_boxes(self,image):
+    def find_boxes(self,image):
         return self.get_YOLO_output(image)
  
     def get_orientation(self, obj):
@@ -156,6 +174,7 @@ class YOLORootFinder(YOLOModel, RootFinder):
         'threshold': 0.5,
         'boxpadding': 0,
         'expandimage': 0,
+        'iou_threshold': 0.4
     }
 
     def __init__(self,**kwargs):
@@ -164,6 +183,7 @@ class YOLORootFinder(YOLOModel, RootFinder):
             config = Config.get_param('config', Config.CONFIGFILE, kwargs, self.defaults),
             weights = Config.get_param('weights', Config.CONFIGFILE, kwargs, self.defaults),
             threshold = Config.get_param('threshold', Config.FLOAT, kwargs, self.defaults),
+            iou_threshold = Config.get_param('iou_threshold', Config.FLOAT, kwargs, self.defaults),
             boxpadding = Config.get_param('boxpadding', Config.INT, kwargs, self.defaults),
             expandimage = Config.get_param('expandimage', Config.INT, kwargs, self.defaults)
         )
@@ -171,26 +191,49 @@ class YOLORootFinder(YOLOModel, RootFinder):
         RootFinder.__init__(self)
         YOLOModel.__init__(self,params)
 
+        # YOLO detects two classes for roots - either 0 (root) or 1 (non-root)
+        assert self.classes == 2
 
-    def find_boxes(self, image):
-        return self.get_YOLO_output(image)
+
+    def find_boxes(self, image, **kwargs):
+
+        boxes = self.get_YOLO_output(image)
+
+        if DebugMode.debug:
+            DebugMode.log_data(
+                identifier = DebugMode.curr_image,
+                data = {'root':[len(boxes)]},
+                image_path = DebugMode.image_path,
+            )
+
+        return boxes
     
-    def find_objects(self, obj):
+
+    def find_objects(self, obj, **kwargs):
         image = obj.image()
 
-        mono_boxes = self.find_boxes(image)
-        
-        root_monos = [x for x in mono_boxes if x.get('classid') == 0]
-        if len(root_monos) == 0:
-            return None
-        elif len(root_monos) == 1:
-            root_mono = root_monos[0]
-        else:
-            confidences = [mono.get('confidence') for mono in root_monos]
-            best_index = np.argmax(confidences)
-            root_mono = root_monos[best_index]
+        boxes = self.find_boxes(image)
 
-        # compare root box with all the boxes' of monosaccharides - the best match will be the root ID
+        root_boxes = []
+        root_mono = None
+
+
+        for box in boxes:
+            if box.get('classid') == 0:
+                root_boxes.append(box)
+
+        if len(root_boxes) > 1:
+            print("Log data: Multiple Roots were detected")
+            confidences = [mono.get('confidence') for mono in root_boxes]
+            best_index = np.argmax(confidences)
+            root_mono = root_boxes[best_index]
+        elif len(root_boxes) == 0:
+            print("Log data: No root was detected")
+        else:
+            root_mono = root_boxes[0]
+
+        assert root_mono is not None
+
         semantic_monos = list(obj.monosaccharides())
         
         if semantic_monos == []:
@@ -217,4 +260,86 @@ class YOLORootFinder(YOLOModel, RootFinder):
         or comparison_alg.is_overlapping(box, root_mono)):
             root = semantic_monos[max_int_idx]
             obj.add_root(root.get('id'))
-    
+            box.set('confidence',root_mono.get('confidence'))
+        else:
+            obj.add_root(None)
+
+        root_id = obj.root()
+        
+        return obj
+
+
+class KnownRoot(RootFinder):
+
+    defaults = {
+        'boxpadding': 0,
+    }
+
+    def __init__(self,**kwargs):
+        self.params = dict(
+            boxpadding = Config.get_param('boxpadding', Config.INT, kwargs, self.defaults),
+        )
+
+    def find_boxes(self, image):
+        
+        box_dict = {}
+
+        image_path = image.rsplit('.',1)[0] + "_map.txt"
+        with open(image_path, 'r') as file:
+            root_id = float('inf')
+
+            # root_id = None
+            for line in file:
+                if line.startswith('m'):
+                    data_points = line.split()
+                    # if int(data_points[1]) < root_id:
+                    root_id = min(root_id, int(data_points[1]))
+                    data_points = line.split()
+                    # root_id = int(data_points[1])
+                    mono_id = data_points[1]
+                    name = data_points[2]
+
+                    x_coords = []
+                    y_coords = []
+
+                    for coords in data_points[3:]:
+                        if ',' in coords:
+                            x,y = map(int,coords.split(','))
+                            x_coords.append(x)
+                            y_coords.append(y)
+                    
+                    x_min = min(x_coords)
+                    y_min = min(y_coords)
+                    x_max = max(x_coords)
+                    y_max = max(y_coords) 
+                
+                    # Note: YOLO predicts 0 or 1 as the classid for roots, 
+                    # known_items will also have classid = 0 for root and 1 for rest of the monos
+                    box = BoundingBox(x1=x_min, y1=y_min, x2=x_max, y2=y_max, symbol=name,classid=1,id=int(mono_id))
+                    box.pad(self.params['boxpadding']) # known data is absolute
+                    # boxes.append(box)
+                    box_dict[int(mono_id)] = box
+
+            box_dict[int(root_id)].set('classid',0)
+
+        if DebugMode.debug:
+            DebugMode.log_data(
+                identifier = DebugMode.curr_image,
+                data = {'root_known':len(box_dict.values())},
+                image_path = DebugMode.image_path,
+            )
+
+        return list(box_dict.values())
+                                      
+    def find_objects(self, obj):
+        image_path = obj.image_path()
+        boxes = self.find_boxes(image_path)
+
+        for box in boxes:
+            classid = box.get('classid')
+            if classid == 0:
+                obj.add_root(box.get('id'))
+
+            box.set('classid',self.mono_syms.index(box.get('symbol')))
+
+        return obj

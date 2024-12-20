@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 import argparse
 
 # import modeltests as mt
-from BKGlycanExtractor import BoxEvaluator
+from BKGlycanExtractor import BoxEvaluator,Config_Manager,GlycanExtractorPipeline
 
 
 '''
@@ -21,12 +21,12 @@ optinal CMD arguments:
 parser = argparse.ArgumentParser(description="Start")
 
 # optional argument
-parser.add_argument(
-    '--base_pipeline',
-    type = str,
-    default = 'SingleGlycanImage-YOLOFinders',
-    help = 'Base Pipeline (default: SingleGlycanImage-YOLOFinders)'
-)
+# parser.add_argument(
+#     '--base_finder',
+#     type = str,
+#     default = 'SingleGlycanImage',
+#     help = 'Base Finder (default: SingleGlycanImag)'
+# )
 
 # optional argument
 parser.add_argument(
@@ -55,18 +55,35 @@ parser.add_argument(
 )
 
 args = parser.parse_args()
-base_pipeline = args.base_pipeline
+# base_finder = args.base_finder
 known_finder = args.known_finder
 pred_finder = args.pred_finder
 image_folder = args.image_folder
 
+# instantiate all the finders before providing it to the BOXEvaluator
+# pred_finder, base_pipeline=base_pipeline,known=known_finder
+# box_padding can be taken from configs or provided by user
 
-if __name__ == "__main__": 
-    evaluator = BoxEvaluator(pred_finder, base_pipeline=base_pipeline,known=known_finder)
-    evaluator.runall(image_folder)
-    evaluator.plotprecisionrecall()
+config = Config_Manager()
 
-    print("Done")
+sgi = config.get_finder("SingleGlycanImage")
+pipeline = GlycanExtractorPipeline()
+pipeline.add_step("figure",sgi)
+
+known = config.get_finder(known_finder)
+
+predictors = []
+for pred in pred_finder:
+    predictors.append(config.get_finder(pred))
+
+
+# evaluator = BoxEvaluator(pred_finder, base_pipeline=pipeline0,known=known)
+evaluator = BoxEvaluator()
+evaluator.runall(image_folder,pipeline,predictors,known)
+# evaluator.runall(image_folder,pipeline,predictors,known, iouthr) # add IOU threshold as well
+evaluator.plotprecisionrecall()
+
+print("Done")
 
 
 

@@ -52,7 +52,9 @@ class CompareBoxes:
     def iou(self, training, detected):
         i = self.intersection_area(training, detected)
         u = self.union_area(training, detected)
-        return float(i/u)
+        iou = float(i/u)
+        # assert float('-inf') <= iou <= 1
+        return iou
     
     def is_overlapping(self, training, detected):
         if self.iou(training, detected) > self.overlap_threshold:
