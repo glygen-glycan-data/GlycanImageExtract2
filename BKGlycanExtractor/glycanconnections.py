@@ -368,12 +368,12 @@ class ConnectYOLO(YOLOModel,GlycanConnector):
     def find_boxes(self, image, **kwargs):
         boxes = self.get_YOLO_output(image)
 
-        if DebugMode.debug:
-            DebugMode.log_data(
-                identifier = DebugMode.curr_image,
-                data = {'links':[len(boxes)]},
-                image_path = DebugMode.image_path
-            )
+        # if DebugMode.debug:
+        #     DebugMode.log_data(
+        #         identifier = DebugMode.curr_image,
+        #         data = {'links':[len(boxes)]},
+        #         image_path = DebugMode.image_path
+        #     )
 
         return boxes
 
@@ -447,6 +447,7 @@ class KnownLink(GlycanConnector):
         )
 
     def find_boxes(self,image):
+        box_id = 0
 
         box_coords = {}
         links = collections.defaultdict(list)
@@ -482,9 +483,11 @@ class KnownLink(GlycanConnector):
                 width = x_max - x_min 
                 height = y_max - y_min
 
-                box = BoundingBox(x1=x_min, y1=y_min, x2=x_max, y2=y_max) 
+                box = BoundingBox(x1=x_min, y1=y_min, x2=x_max, y2=y_max, id=box_id, classid=0) 
                 box.pad(self.params['boxpadding']) # known data is absolute
                 boxes.append(box)
+                
+                box_id += 1
         
         if DebugMode.debug:
             DebugMode.log_data(
