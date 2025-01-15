@@ -1,7 +1,7 @@
 import os
 import sys
 import argparse
-from BKGlycanExtractor import Config_Manager, Image_Manager, GlycanExtractorPipeline, Image_Data, DebugMode
+from BKGlycanExtractor import Config_Manager, Image_Manager, GlycanExtractorPipeline, Image_Data, DebugMode, Glycan_Semantics
 
 
 
@@ -76,6 +76,7 @@ for image in sorted(images):
     obj1 = pipeline1.run(image)
 
     name = os.path.basename(image).split('.')[0]
+    # Annotate Image
     obj1.label_image(obj1.image().copy(), name = name + '_yolo')
     obj0.label_image(obj0.image().copy(), name = name + '_known')
 
@@ -85,12 +86,14 @@ for image in sorted(images):
         # print("known comp",comp0)
         # print("pred comp", comp1)
         # print(image,"GOOD" if comp0 == comp1 else "BAD",comp0,comp1)
+
+        # print("-->",gly0.semantics)
         
-        IUPAC0 = gly0.IUPAC()
-        IUPAC1 = gly1.IUPAC()
+        IUPAC0 = Glycan_Semantics.IUPAC(gly0.semantics['monos'], gly0.semantics['root'])
+        IUPAC1 = Glycan_Semantics.IUPAC(gly1.semantics['monos'], gly1.semantics['root'])
         
         print("Known IUPAC: ",IUPAC0)
-        print("Detected IUPAC: ",IUPAC1)
+        print("Detected IUPAC: ",IUPAC1 if IUPAC1 else 'No sequence detected')
         print("\nDo the IUPAC sequences match?", IUPAC0==IUPAC1)
 
         # print("\nSemantics:",gly0.tojson())       

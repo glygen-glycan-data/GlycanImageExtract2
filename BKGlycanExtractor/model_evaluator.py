@@ -13,7 +13,7 @@ import sys
 import time
 import queue
 from . import Image_Manager
-from .semantics import Figure_Semantics
+from .semantics import Figure_Semantics, Glycan_Semantics
 from .bbox import BoundingBox
 from .compareboxes import CompareBoxes
 from .debug_methods import DebugMode
@@ -23,120 +23,110 @@ from .build_pipeline import BuildPipeline
 from .glycanannotator import Config_Manager
 
 
+class Utility:
+
+    @staticmethod
+    def floor_precision(value, precision):
+        scale = 10 ** precision
+        return math.floor(value * scale) / scale
+
+
+    def update_metrics(results,threshold, TP, FP, FN):
+        prec_threshold = str(Utility.floor_precision(threshold, 8))
+        results.setdefault((prec_threshold), {"TP": 0, "FP": 0, "FN": 0})
+        results[prec_threshold]["TP"] += TP
+        results[prec_threshold]["FP"] += FP
+        results[prec_threshold]["FN"] += FN
+
+
+    @staticmethod
+    def build_adjacency_list(mono_semantics):
+        adj = defaultdict(list)
+        monos = mono_semantics.semantics['monos']
+
+        for mono_id, mono_data in monos.items():
+            for link_data in mono_data['links']:
+                if isinstance(link_data, list):  # Handle case with confidence value - for pred data case
+                    linked_id, conf = link_data
+                    try:
+                        adj[mono_data['box']].append([monos[linked_id]['box'], Utility.floor_precision(conf,8)])
+                    except KeyError as k:
+                        print("Key doesnt exist:", k)
+                else:  # Handle case without confidence - for known data case
+                    linked_id = link_data
+                    adj[mono_data['box']].append(monos[linked_id]['box'])
+
+        return adj
+
+
 class BoxCompare:
     def __init__(self, iou):
         self.iou = iou
         self.compare_boxes = CompareBoxes(**dict(detection_threshold=self.iou,overlap_threshold=self.iou,containment_threshold=self.iou))
 
 
+    def filtered_data(self,pred_boxes,known_boxes):
+        edges = []
+        confidence_scores = []
 
-    def compare(self, pred_boxes, known_boxes):
+        # Compute all potential matches between known and detected boxes using IOU as a constraint
+        for dbox_id, dbox in enumerate(pred_boxes):
+            matched = False
+            for tbox_id, tbox in enumerate(known_boxes):
+                computed_iou = self.compare_boxes.iou(tbox, dbox) if self.compare_boxes.have_intersection(tbox, dbox) else 0.0
 
-        confidence_scores = sorted({box.get('confidence') for box in pred_boxes})
-        # print("confidence_scores",confidence_scores)
-
-        matches = []
-        for threshold in confidence_scores:
-            FN, FP, TP = 0,0,0
-
-            # Filter predictions based on the current confidence threshold
-            boxes = [box for box in pred_boxes if box.get('confidence') >= threshold]
-            compare_dict = {}
-            t_visited = set()
-            d_visited = set()
-
-            iou_box_pairs = defaultdict(list)
+                if computed_iou >= self.iou:
+                    edges.append(dict(tbox=tbox_id,dbox=dbox_id,iou=computed_iou,conf=Utility.floor_precision(dbox.get('confidence'),8),cls=(tbox.get('classid'),dbox.get('classid'))))
             
-            # should we take dbox and then tboxes or do the opposite? b/c rn a single dbox can have many tboxes ---> but that shouldnt happen --> one dbox box should have
-            # only one tbox and all should be unique pairs ---> rn because of multiples ---> we are getting too many TP's
-            for idx,dbox in enumerate(boxes):
-                dbox.set('id',idx)
-                compare_dict[dbox.get('id')] = (dbox, None)
-                max_int = 0
-                for tbox in known_boxes:
-                    if self.compare_boxes.have_intersection(tbox,dbox):
-                        iou = self.compare_boxes.iou(tbox,dbox)
-                        if iou > max_int:
-                            max_int = iou
+            confidence_scores.append(Utility.floor_precision(dbox.get('confidence'),8))
 
-                            compare_dict[dbox.get('id')] = (dbox,tbox)
-
-                            iou_box_pairs[dbox].append([tbox,iou])
-                    else:
-                        continue
-
-            for dbox, pairs in iou_box_pairs.items():
-                iou_box_pairs[dbox] = sorted(pairs, key=lambda x: -x[1])
-
-                for training_box,iou in iou_box_pairs[dbox]:
-                    if training_box not in t_visited:
-                        compare_dict[dbox.get('id')] = (dbox,training_box)
-
-                        t_visited.add(training_box)
-
-                        break
-
-            for tbox in known_boxes:
+        return edges, set(confidence_scores)
             
-                found = False
-                for dbox in boxes:
-                    if self.compare_boxes.have_intersection(tbox,dbox):
-                        found = True
-                        break
-                if found:
+
+
+    def compare(self, pred_boxes, known_boxes, **kwargs):
+
+        results = {}
+        edges = []
+
+        edges, confidence_scores = self.filtered_data(pred_boxes,known_boxes)
+
+        
+        for threshold in sorted(confidence_scores):
+            TP, FP, FN = 0, 0, 0
+
+            matched_gt = set()  # Set of matched ground truth IDs
+            matched_pred = set()  # Set of matched predicted box IDs
+
+            # Greedy matching based on Confidence
+            for item in sorted(edges, key=lambda x: (-x['conf'], -float(x['iou']))):
+                if item['conf'] < threshold:
+                    break
+                if item['tbox'] in matched_gt:
                     continue
-                else:                                  
-                    FN += 1
-                    
-            for key,boxpair in compare_dict.items():
-                dbox = boxpair[0]
-                tbox = boxpair[1]
+                if item['dbox'] in matched_pred:
+                    continue
 
-                assert dbox.get('id') == key
-                if tbox is None:
-                    FP += 1
+                matched_gt.add(item['tbox'])
+                matched_pred.add(item['dbox'])
+
+                if item['cls'][0] == item['cls'][1]:
+                    TP += 1
                 else:
-                    # links do not have classes
-                    if tbox.has('classid') and dbox.has('classid') and not self.compare_boxes.compare_class(tbox,dbox):
-                        FP += 1
-                        FN += 1
-                    else:
-                        t_area = tbox.area()
-                        d_area = dbox.area()
-                        inter = self.compare_boxes.intersection_area(tbox,dbox)
-                        if inter == 0:
-                            FP += 1
-                        elif inter == t_area:
-                            if self.compare_boxes.training_contained(tbox,dbox):
-                                TP += 1
-                            else:
-                                FP += 1
-                                FN += 1
-                        elif inter == d_area:
-                            if self.compare_boxes.detection_sufficient(tbox,dbox):
-                                TP += 1
-                            else:
-                                FN += 1
-                                FP += 1
-                        else:
-                            if self.compare_boxes.is_overlapping(tbox,dbox):
-                                TP += 1
-                            else:
-                                FP += 1
-                                FN += 1   
+                    FP += 1
+                    FN += 1
 
-            matches.append([
-                str(round(threshold,5)),
-                {
-                    "TP": TP,
-                    "FP": FP,
-                    "FN": FN,
-                }
-            ])
+            FN += len(known_boxes) - len(matched_gt)
+            FP += len([pred_box for pred_box in pred_boxes if Utility.floor_precision(pred_box.get('confidence'),8) >= threshold]) - len(matched_pred)
 
+            Utility.update_metrics(results,threshold,TP,FP,FN)
+            
+        last_threshold = 1.00000001
+        Utility.update_metrics(results,last_threshold,0,0,FN+1)
 
-        return matches
+        return results
 
+   
 
 
 class MonosCompare:
@@ -144,80 +134,99 @@ class MonosCompare:
     def __init__(self, radius_threshold):
         self.radius_threshold = radius_threshold
 
-    # if classes dont match - it should be a FP and a FN
+
+    def filtered_predictions(self,pred_data,threshold):
+
+        for id, item in pred_data.semantics['monos'].copy().items():
+            # condition to remove data if it is below the threshold
+            if Utility.floor_precision(item['box'].get('confidence'), 8) < threshold:
+                del pred_data.semantics['monos'][id] 
+
+
+    def filtered_data(self,pred_data,known_data):
+        edges = []
+        confidence_scores = []
+
+        for pred_id, pred_item in enumerate(pred_data.monosaccharides()):
+
+            for known_id, known_item in enumerate(known_data.monosaccharides()):
+                distance = Evaluator.euclidean_distance(known_item['box'], pred_item['box'])
+                proximity = self.radius_threshold * min(known_item['box'].w, known_item['box'].h)
+
+                if distance <= proximity:
+                    edges.append(dict(tbox=known_id,dbox=pred_id,distance=distance,conf=Utility.floor_precision(pred_item['box'].get('confidence'),8),cls=(known_item.get('classid'),pred_item.get('classid'))))
+
+            confidence_scores.append(Utility.floor_precision(pred_item['box'].get('confidence'),8))
+
+        return edges, set(confidence_scores)
+
+    def confidence_data(self, pred_data):
+        confidence_scores = [
+            Utility.floor_precision(pred_item['box'].get('confidence'), 8)
+            for pred_item in pred_data.monosaccharides()
+            ]
+
+        return set(confidence_scores)
+
+
     def compare(self, pred_data, known_data, **kwargs):
-        matches = []
+        results = {}
+        edges = []
 
-        # Extract critical points (unique confidence scores)
-        confidence_scores = sorted({item['box'].get('confidence') for item in pred_data.monosaccharides()})
-        # confidence_scores = [i/10000 for i in range(9800,10000,10)]
+        whole_glycan = kwargs.get('whole_glycan',False)
+
+        # For Root Compare - if a root is not detected --> it is treated as a FN
+        if kwargs.get('p_root') and kwargs.get('p_root') == -1:
+            FN = 1
+            Utility.update_metrics(results,0.0,0,0,FN)
+
+        else:
+            edges, confidence_scores = self.filtered_data(pred_data,known_data)
+                
+
+            # Iterate over each critical point and filter predictions based on current threshold
+            for threshold in sorted(confidence_scores):
+
+                TP, FP, FN = 0, 0, 0
+
+                matched_gt = set()  # Set of matched ground truth IDs
+                matched_pred = set()  # Set of matched predicted box IDs
 
 
-        # Iterate over each critical point and filter predictions based on current threshold
-        for confidence_threshold in confidence_scores:
-            # confidence_threshold = confidence_scores[0]
-            pred_items = [item for item in pred_data.monosaccharides() if item['box'].get('confidence') >= confidence_threshold]
-
-
-            visited_ids = set()  # Track matched ground truth items
-            TP, FP, FN = 0, 0, 0
-
-
-            # get all possible distance mappings b/w known_item and pred_items when the distance < proximity
-            for pred_item in pred_items:
-                best_match = None
-                closest_mono = float('inf')
-
-                for known_item in known_data.monosaccharides():
-                    if known_item.get('id') in visited_ids:
+                for item in sorted(edges,key=lambda x: (-x['conf'], -float(x['distance']))):
+                    if item['conf'] < threshold:
+                        break
+                    if item['tbox'] in matched_gt:
+                        continue
+                    if item['dbox'] in matched_pred:
                         continue
 
-                    distance = Evaluator.euclidean_distance(known_item['box'], pred_item['box'])
-                    proximity = self.radius_threshold * min(known_item['box'].w, known_item['box'].h)
+                    matched_gt.add(item['tbox'])
+                    matched_pred.add(item['dbox'])
 
-                    if distance <= proximity and distance < closest_mono:
-                        best_match = known_item
-                        closest_mono = distance
-
-                if best_match:
-                    visited_ids.add(best_match.get('id'))
-
-                    # Compare classes to determine TP or FP/FN
-                    if pred_item.get('classid') == best_match.get('classid'):
-                        TP += 1  # True Positive
+                    if item['cls'][0] == item['cls'][1]:
+                        TP += 1
                     else:
-                        # print("class mismatch:",best_match.get('classid'), pred_item.get('classid'))
-                        FP += 1  # False Positive (wrong class)
-                        FN += 1  # False Negative (missed correct class)
-                else:
-                    # print("NO match for prediction")
-                    FP += 1  # False Positive (no match for prediction)
+                        FP += 1
+                        FN += 1
+
+                FN += len(known_data.monosaccharides()) - len(matched_gt)
+                FP += len([item for item in pred_data.monosaccharides() if Utility.floor_precision(item['box'].get('confidence'),8) >= threshold]) - len(matched_pred)
 
 
-            # Count False Negatives for unmatched ground truth items
-            unmatched_known = [
-                known_item for known_item in known_data.monosaccharides()
-                if known_item.get('id') not in visited_ids
-            ]
-            FN += len(unmatched_known)
+                Utility.update_metrics(results,threshold,TP,FP,FN)
 
-            matches.append([
-                str(round(confidence_threshold, 5)),
-                {
-                    "TP": TP,
-                    "FP": FP,
-                    "FN": FN,
-                }
-            ])
+                # if DebugMode.debug:
+                #     data = {}
+                #     if len(set(matches)) > 1:
+                #         data['incorrect_confidence'] = [confidence_threshold]
+                #         DebugMode.log_data(DebugMode.curr_image, data)  
 
+        
+        last_threshold = 1.00000001
+        Utility.update_metrics(results,last_threshold,0,0,FN+1)
 
-        # if DebugMode.debug:
-        #     data = {}
-        #     if len(set(matches)) > 1:
-        #         data['incorrect_confidence'] = [confidence_threshold]
-        #         DebugMode.log_data(DebugMode.curr_image, data)  
-
-        return matches
+        return results
 
 
         
@@ -226,35 +235,55 @@ class RootCompare:
         self.mono_compare = MonosCompare(radius_threshold)
 
 
+    def filtered_predictions(self,pred_data, threshold):
+
+        root_id = pred_data.root()
+
+        pred_semantics = pred_data.semantics['monos'].copy()
+
+        if root_id in pred_semantics:
+            if Utility.floor_precision(pred_semantics[root_id]['box'].get('confidence'), 8) < threshold:
+                del pred_semantics[root_id]
+
+
+
+    def confidence_data(self, pred_data):
+
+        root_id = pred_data.root()
+
+        if root_id == -1:
+            return [1.0]
+
+        root_data = pred_data.semantics['monos'][root_id]
+        return [Utility.floor_precision(root_data['box'].get('confidence'),8)]
+
+
     def root_data(self, data):
         root_id = data.root()
-        mono_data = data.monosaccharide(root_id)
 
-        box = mono_data.get('box')
-        # Add confidence to box if it doesn't exist
-        if not hasattr(box, 'confidence'):
-            setattr(box, 'confidence', 0.0)  # Set default confidence if missing
+        if root_id != -1:
+            mono_data = data.monosaccharide(root_id)
 
-        data.clear_monos()
-        args = dict(id=root_id)
-        data.add_mono(mono_data.get('classid'), mono_data.get('symbol'), box, **args)
+            box = mono_data.get('box')
+            if not hasattr(box, 'confidence'):
+                setattr(box, 'confidence', 0.0)  # Set default confidence if missing
 
-        return data
+            data.clear_monos()
+            args = dict(id=root_id)
+            data.add_mono(mono_data.get('classid'), mono_data.get('symbol'), box, **args)
+
+        return data, root_id
 
     def compare(self, pred_data, known_data, **kwargs):
-        # Deep copy to prevent modifying original data
         predicted = copy.deepcopy(pred_data)
         known = copy.deepcopy(known_data)
 
-        # Prepare root data
-        pred_root_data = self.root_data(predicted)
-        known_root_data = self.root_data(known)
+        # Prepare root data - which can be used by the monos comparator
+        pred_root_data, p_root = self.root_data(predicted)
+        known_root_data, k_root = self.root_data(known)
 
-        # Extract critical confidence points from predictions
-        confidence_scores = sorted({item['box'].get('confidence', 1.0) for item in pred_root_data.monosaccharides()})
-
-        # Pass the data to MonosCompare without filtering confidence
-        return self.mono_compare.compare(pred_root_data, known_root_data)
+        args = dict(p_root= p_root, k_root= k_root)
+        return self.mono_compare.compare(pred_root_data, known_root_data,**args)
 
 
 
@@ -262,200 +291,132 @@ class LinksCompare:
     def __init__(self, radius_threshold):
         self.radius_threshold = radius_threshold
 
+    
+    def filtered_predictions(self,pred_data,threshold):
 
-    def compare(self, pred_data, known_data):
-        matches = []
+
+        pred_adj = self.build_adjacency_list(pred_data)
+
+        links_to_delete = set()
+
+        for pred_box, linked_items in pred_adj.items():
+            for linked_pred_box, conf in linked_items:
+                if Utility.floor_precision(conf, 8) < threshold:
+                    links_to_delete.add(pred_box.get('id'))
+                    links_to_delete.add(linked_pred_box.get('id'))
+
+
+        for id, item in pred_data.semantics['monos'].copy().items():
+            # condition to remove data if it is below the threshold and iterating the list in reverse so that we do not get index errors
+            for i in range(len(item['links'])-1, -1, -1):
+                
+                if item['links'][i][0] in links_to_delete:
+                    item['links'].pop(i)
+
+        
+
+    def confidence_data(self, pred_data):
+        confidence_scores = []
+
+        pred_adj = self.build_adjacency_list(pred_data)
+
+        for pred_box, linked_items in pred_adj.items():
+            for linked_pred_box, conf in linked_items:
+                confidence_scores.append(float(Utility.floor_precision(conf,8)))
+
+        return set(confidence_scores)
+
+
+
+    def filtered_data(self,pred_adj, known_adj):
+
+        edges = []
+        confidence_scores = []
+        matched_pred_ids = set()
+
+        # pred_adj = self.build_adjacency_list(pred_data)
+
+        for pred_box, linked_items in pred_adj.items():
+            for linked_pred_box, conf in linked_items:
+                for known_box, linked_known_boxes in known_adj.items():
+                    for linked_known_box in linked_known_boxes:
+                        dist1 = Evaluator.euclidean_distance(known_box, pred_box)
+                        dist2 = Evaluator.euclidean_distance(linked_known_box, linked_pred_box)
+                        proximity1 = self.radius_threshold * min(known_box.w, known_box.h)
+                        proximity2 = self.radius_threshold * min(linked_known_box.w, linked_known_box.h)
+
+                        if dist1 <= proximity1 and dist2 <= proximity2:       
+                            known_id_pair = tuple(sorted((known_box.get('id'), linked_known_box.get('id'))))
+                            pred_id_pair = tuple(sorted((pred_box.get('id'),linked_pred_box.get('id'))))
+
+                            if pred_id_pair not in matched_pred_ids:
+                                edges.append(dict(tbox=known_id_pair,dbox=pred_id_pair,dist1=dist1,dist2=dist2,conf=Utility.floor_precision(conf,8),cls=(sorted((known_box.get('classid'), linked_known_box.get('classid'))),sorted((pred_box.get('classid'), linked_pred_box.get('classid'))))))
+                                matched_pred_ids.add(pred_id_pair)
+
+
+                confidence_scores.append(float(Utility.floor_precision(conf,8)))
+
+        return edges, set(confidence_scores)
+
+
+    def compare(self, pred_data, known_data, **kwargs):
+
+        results = {}
 
         other_adj = self.build_adjacency_list(pred_data)
         known_adj = self.build_adjacency_list(known_data)
 
-        # Extract critical points (unique confidence scores)
-        confidence_scores = sorted({
-            conf
-            for box, links in other_adj.items()
-            for _, conf in links
-        })
+        # matched_pred_ids = set()
 
-        for confidence_threshold in confidence_scores:
+        edges, confidence_scores = self.filtered_data(other_adj, known_adj)
 
-            # bidirectional links exist
-            filtered_other_adj = {
-                box: [linked_box for linked_box, conf in linked_items if conf >= confidence_threshold]
-                for box, linked_items in other_adj.items()
-            }
+        # confidence_scores = set(confidence_scores)
 
-
-            # Track matched pairs to prevent double counting
-            visited_pairs = set()  # Track matched ground truth pairs
-            items_distance_pair = defaultdict(list)
-
-            # Match predictions to known data
-            for pred_box, linked_pred_boxes in filtered_other_adj.items():
-                for linked_pred_box in linked_pred_boxes:
-                    closest_distances = (float('inf'), float('inf'))
-                    best_match = None
-
-                    for known_box, linked_known_boxes in known_adj.items():
-                        for linked_known_box in linked_known_boxes:
-                            dist1 = Evaluator.euclidean_distance(known_box, pred_box)
-                            dist2 = Evaluator.euclidean_distance(linked_known_box, linked_pred_box)
-                            proximity1 = self.radius_threshold * min(known_box.w, known_box.h)
-                            proximity2 = self.radius_threshold * min(linked_known_box.w, linked_known_box.h)
-
-                            if dist1 <= proximity1 and dist2 <= proximity2 and (dist1, dist2) < closest_distances:
-                                closest_distances = (dist1, dist2)
-                                best_match = [pred_box, linked_pred_box, known_box, linked_known_box, dist1, dist2]
-
-                        if best_match:
-                            # since links are bi-directional - we want to store data only once - hence sort the id pairs and save them
-                            pair_id = tuple(sorted((pred_box.get('id'), linked_pred_box.get('id'))))
-                            if pair_id not in visited_pairs: 
-                                items_distance_pair[pair_id].append(best_match)
-                                visited_pairs.add(pair_id)
-
-
-            compare_dict = {
-                pair_id: min(mappings, key=lambda x: (x[-2], x[-1]))[:4]
-                for pair_id, mappings in items_distance_pair.items()
-            }
-
+        for threshold in sorted(confidence_scores):
             TP, FP, FN = 0, 0, 0
 
+            matched_gt = set()  # Set of matched ground truth IDs
+            matched_pred = set()  # Set of matched predicted box IDs
 
-            # Evaluate matched predictions
-            for pred_id, mapping in compare_dict.items():
-                pred_box, linked_pred_box, known_box, linked_known_box = mapping
+            count = 0
+            for item in sorted(edges, key=lambda x: (-x['conf'], -x['dist1'], -x['dist2'])):
+                if item['conf'] < threshold:
+                    break
+                if item['tbox'] in matched_gt:
+                    continue
+                if item['dbox'] in matched_pred:
+                    continue
 
-                if known_box is None or linked_known_box is None:
-                    FP += 1
-                elif (
-                    pred_box.get('classid') != known_box.get('classid') and
-                    linked_pred_box.get('classid') != linked_known_box.get('classid')
-                ):  
+                matched_gt.add(item['tbox'])
+                matched_pred.add(item['dbox'])
+
+                if item['cls'][0] == item['cls'][1]:
+                    count += 1
+                    TP += 1
+                else:
                     FP += 1
                     FN += 1
-                else:
-                    TP += 1
 
-            # Check for unmatched ground truth (False Negatives)
-            for known_box, linked_known_boxes in known_adj.items():
-                # Check if known_box has already matched in `compare_dict`
-                known_box_id = known_box.get('id')
+            # No. of links = no. of monos - 1
+            FN += len(known_data.monosaccharides()) - 1 - len(matched_gt)
 
-                for link_k_box in linked_known_boxes:
-                    link_k_box_id = link_k_box.get('id')
+            unmatched_pred_boxes = 0
+            pred_id_pair = set()
+            for pred_box, linked_items in other_adj.items():
+                for linked_pred_box, conf in linked_items:
+                    id_pair = tuple(sorted((pred_box.get('id'),linked_pred_box.get('id'))))
+                    if id_pair not in pred_id_pair and Utility.floor_precision(conf,8) >= threshold:
+                        pred_id_pair.add(id_pair)
+                        unmatched_pred_boxes += 1
 
-                    
-                    matched = any(
-                        (known_box_id == pair_id[0] or known_box_id == pair_id[1]) and (link_k_box_id == pair_id[0] or link_k_box_id == pair_id[1])
-                        for pair_id in compare_dict.keys()
-                    )
-
-                    if not matched:
-                        FN += 1
-
-            matches.append([
-                str(round(confidence_threshold, 5)),
-                {"TP": TP, "FP": FP, "FN": FN}
-            ])
-
-       
-
-        return matches
-
-    # def compare(self, pred_data, known_data):
-    #     matches = []
-
-    #     # Extract critical points (unique confidence scores)
-    #     confidence_scores = sorted({
-    #         conf
-    #         for box, links in self.build_adjacency_list(pred_data).items()
-    #         for _, conf in links if isinstance(links[0], list)
-    #     })
-
-    #     for confidence_threshold in confidence_scores:
-    #         other_adj = self.build_adjacency_list(pred_data)
-
-    #         # Filter predictions based on confidence threshold
-    #         filtered_other_adj = {
-    #             box: [linked_box for linked_box, conf in linked_items if conf >= confidence_threshold]
-    #             for box, linked_items in other_adj.items()
-    #         }
-
-    #         known_adj = self.build_adjacency_list(known_data)
+            FP += unmatched_pred_boxes - len(matched_pred)
+            Utility.update_metrics(results,threshold,TP,FP,FN)
 
 
-    #         # Track matched pairs to prevent double counting
-    #         visited_pairs = set()  # Track matched ground truth pairs
-    #         items_distance_pair = defaultdict(list)
+        last_threshold = 1.00000001
+        Utility.update_metrics(results,last_threshold,0,0,FN+1)
 
-    #         # Match predictions to known data
-    #         for pred_box, linked_pred_boxes in filtered_other_adj.items():
-    #             for linked_pred_box in linked_pred_boxes:
-    #                 closest_distances = (float('inf'), float('inf'))
-    #                 best_match = None
-
-    #                 for known_box, linked_known_boxes in known_adj.items():
-    #                     for linked_known_box in linked_known_boxes:
-    #                         dist1 = Evaluator.euclidean_distance(known_box, pred_box)
-    #                         dist2 = Evaluator.euclidean_distance(linked_known_box, linked_pred_box)
-    #                         proximity1 = self.radius_threshold * min(known_box.w, known_box.h)
-    #                         proximity2 = self.radius_threshold * min(linked_known_box.w, linked_known_box.h)
-
-    #                         if dist1 <= proximity1 and dist2 <= proximity2 and (dist1, dist2) < closest_distances:
-    #                             closest_distances = (dist1, dist2)
-    #                             best_match = (pred_box, linked_pred_box, known_box, linked_known_box)
-
-    #                 if best_match:
-    #                     pair_id = tuple(sorted((pred_box.get('id'), linked_pred_box.get('id'))))
-    #                     if pair_id not in visited_pairs:
-    #                         items_distance_pair[pair_id].append((*best_match, closest_distances[0], closest_distances[1]))
-    #                         visited_pairs.add(pair_id)
-
-
-    #         compare_dict = {
-    #             pair_id: min(mappings, key=lambda x: (x[4], x[5]))[:4]
-    #             for pair_id, mappings in items_distance_pair.items()
-    #         }
-
-    #         TP, FP, FN = 0, 0, 0
-
-    #         # Evaluate matched predictions
-    #         for pred_id, mapping in compare_dict.items():
-    #             pred_box, linked_pred_box, known_box, linked_known_box = mapping
-
-    #             if known_box is None or linked_known_box is None:
-    #                 FP += 1
-    #             elif (
-    #                 pred_box.get('classid') != known_box.get('classid') or
-    #                 linked_pred_box.get('classid') != linked_known_box.get('classid')
-    #             ):
-    #                 FP += 1
-    #                 FN += 1
-    #             else:
-    #                 TP += 1
-
-
-    #         # Check for unmatched ground truth (False Negatives)
-    #         for known_box, linked_known_boxes in known_adj.items():
-    #             # Check if known_box has already matched in `compare_dict`
-    #             known_box_id = known_box.get('id')
-                
-    #             matched = any(
-    #                 known_box_id == pair_id[1]
-    #                 for pair_id in compare_dict.keys()
-    #             )
-
-    #             if not matched:
-    #                 FN += 1
-
-    #         matches.append([
-    #             str(round(confidence_threshold, 5)),
-    #             {"TP": TP, "FP": FP, "FN": FN}
-    #         ])
-
-    #     return matches
-
+        return results
 
 
     def build_adjacency_list(self, mono_semantics):
@@ -466,11 +427,9 @@ class LinksCompare:
             for link_data in mono_data['links']:
                 if isinstance(link_data, list):  # Handle case with confidence
                     linked_id, conf = link_data
-                    # print("pred--monos",linked_id, mono_data)
-                    adj[mono_data['box']].append([monos[linked_id]['box'], conf])
+                    adj[mono_data['box']].append([monos[linked_id]['box'], Utility.floor_precision(conf,8)])
                 else:  # Handle case without confidence - known data case
                     linked_id = link_data
-                    # print("known--monos",linked_id, mono_data)
                     adj[mono_data['box']].append(monos[linked_id]['box'])
 
         return adj
@@ -480,19 +439,163 @@ class LinksCompare:
 
 class SemanticGlycanCompare:
 
-    def __init__(self, radius_threshold):
+    def __init__(self, base_pipeline, known_pipeline, radius_threshold):
+        self.base_pipeline = base_pipeline
+        self.known_pipeline = known_pipeline
         self.radius_threshold = radius_threshold
 
+    # Data structure: Considering pipeline_name incase we want to include multiple pipelines in the future
+    # {pipeline_name: image1: {TP: 1, FP:2, FN: 3}, image2: {TP: 1, FP:2, FN: 3}}
+    def runall(self,images):
 
-    def compare(self, pred_data, known_data, pipeline_name):
-        matches = []
+        start_time = time.time()
 
+        observations = {}
+
+        # for loop for all the different Pipelines
+        observations[self.base_pipeline.name] = {}
+
+        # self.critical_values = []
+
+        selected_critical_value = 0.77913584
+        for idx, image in enumerate(images):
+            print("image:",idx, image)
+
+            pred_semantics = self.base_pipeline.run(image)
+            glycan = pred_semantics.glycans()[0]
+
+            known_semantics = self.known_pipeline.run(image)
+            known_glycan = known_semantics.glycans()[0]
+
+            results = self.compare(glycan,known_glycan,selected_critical_value)
+
+            observations[self.base_pipeline.name][os.path.basename(image)] = results
+
+        # print("\n------>>>>>>>observations",observations)
+        # print("\n critical vals",sorted(self.critical_values))
+
+        end_time = time.time()
+        Evaluator.plotprecisionrecall(observations, 'Whole_Glycan', **dict(sort_results=False))
+
+        execution_time = end_time - start_time
+        print(f"\nExecution Time {execution_time} seconds")
+
+
+
+    # get one minimum confidence value for all images
+    def compare(self, pred_data, known_data, threhsold):
         compare_classes = [MonosCompare, RootCompare, LinksCompare]
 
-        for class_name in compare_classes:
-            matches.extend(class_name(self.radius_threshold).compare(pred_data, known_data))
+        # known IUPAC
+        k_monos, k_root_id = known_data.semantics['monos'], known_data.semantics['root']
+        known_IUPAC = Glycan_Semantics.IUPAC(k_monos, k_root_id)
 
-        return matches
+
+        # comment this for loop - it is only for experimentation to find best confidence threhsold
+        # for class_name in compare_classes:      
+        #     results = class_name(self.radius_threshold).confidence_data(pred_data)
+        #     self.critical_values.append(min(results))
+            # print("\nresults:",class_name, results)
+        
+
+        # Save the original state of pred_data
+        original_pred_data = copy.deepcopy(pred_data)
+
+        TP, FP, FN = 0, 0, 0
+        # for conf in sorted(self.critical_values[:1]):
+        # print("\nconf",conf)
+
+        # Reset pred_data to its original state
+        pred_data = copy.deepcopy(original_pred_data)
+
+        # pred_data is filtered based on threshold for the different predictors (compare_classes)
+        for class_name in compare_classes:
+            class_name(self.radius_threshold).filtered_predictions(pred_data, threhsold)
+        
+
+        # monos and root_id is derived after the filtering process was done using a threshold value
+        monos, root_id = pred_data.semantics['monos'], pred_data.semantics['root']
+
+
+        # before building IUPAC - put checks about:
+        # if root exists
+        # if no.of links = monos - 1
+        # are all monos reachable from the link
+        # if all the above checks are true - build IUPAC 
+
+        if root_id == -1:
+            FN += 1
+            print("Log: Root doesn't exist")
+        elif self.link_count(pred_data) != len(k_monos) - 1:
+            FN += 1
+            print("Log: Insufficient Links")
+        elif self.all_monos_reachable(pred_data) != len(k_monos):
+            FN += 1
+            print("Log: Cannot traverse all nodes")
+        else:
+            try:
+                pred_IUPAC = Glycan_Semantics.IUPAC(monos, root_id)
+
+                if pred_IUPAC and pred_IUPAC == known_IUPAC:
+                    TP += 1
+                else:
+                    FP += 1
+                    FN += 1
+
+                    print("Log: The known and pred sequence's dont match")
+                    print("PRED SEQ", pred_IUPAC)
+                    print("KNOWN SEQ",known_IUPAC)
+                
+            except Exception as e:
+                print("EXCEPTION OCCURED",e)
+
+        return {'TP': TP, 'FP': FP, 'FN': FN}
+
+
+    
+    def link_count(self, pred_data):
+
+        # no. of links = no. of monos - 1
+        num_links = set()
+
+        links_adj = Utility.build_adjacency_list(pred_data)
+
+
+        for box, linked_boxes in links_adj.items():
+            # print("\n--->>",box.get('id'))
+            for link_box in linked_boxes:
+                # print(link_box[0].get('id'))
+                
+                link = tuple(sorted((box.get('id'), link_box[0].get('id'))))
+                num_links.add(link)
+
+        # print("--->>",len(links_adj), len(num_links))
+
+        return len(num_links)
+
+    
+    def all_monos_reachable(self, pred_data):
+        links_adj = Utility.build_adjacency_list(pred_data)
+        visited = set()
+        source = next(iter(links_adj))
+        self.DFS(links_adj,visited,-1,source)
+        return len(visited)
+
+
+    def DFS(self,adj,visited,parent,u):
+        visited.add(u.get('id'))
+
+        for v,conf in adj[u]:
+            if v.get('id') == parent:
+                continue
+            elif v.get('id') in visited:
+                return True
+            
+            elif self.DFS(adj,visited,u.get('id'),v):
+                return True
+        
+        return False
+
 
 
 
@@ -526,7 +629,6 @@ class Worker:
                 try:
                     for image in task:
 
-                        # print(f"Worker {self.index}: Processing task {task}")
                         loaded_pipeline, end_known_step, predict = Worker.prediction_compare(
                             image=image,
                             predictors=self.predictors,
@@ -542,7 +644,7 @@ class Worker:
                         self.end_known_step = end_known_step
 
                         # Collect results in the batch
-                        batch_results.append(predict)
+                        batch_results.append((image, predict))
 
                         # If batch is full, send it to the main process
                         if len(batch_results) >= batch_size:
@@ -557,9 +659,6 @@ class Worker:
             print(f"Worker {self.index} encountered an error: {e}")
 
 
-
-    # if something is shared and doesnt depend on instance - you need to pass it externally through methods
-    # things that need to be cached can be stored externally in the init as self.
     @staticmethod
     def prediction_compare(
             image,
@@ -574,9 +673,7 @@ class Worker:
         ):  
 
         predict = {}
-
         figure_semantics = None
-
 
         for pred_name, pred in predictors.items():
 
@@ -588,8 +685,7 @@ class Worker:
             if figure_semantics is None:
                 figure_semantics = loaded_pipeline.run(image)
                 figure_semantics = figure_semantics.glycans()[0]
-
-
+                
             pred_data, known_data, compare_strategy = evaluation_method(
                 figure_semantics, end_known_step, pred, eval_param, compare_strategy, known_data)
 
@@ -666,10 +762,43 @@ class Evaluator:
             self.evaluation_method = Worker.box_eval
             self.eval_param = kwargs.get('iou',0.5)
 
+    @staticmethod
+    def check_data_monotonicity(predict, **kwargs):
+        for pred_name, data in predict.items():
+
+            if kwargs.get('sort_data',True):
+                data = {k: v for k, v in sorted(data.items(), key=lambda x: float(x[0]))}
+
+            prev_conf = 0.0
+            TP = float('inf')
+            FP = float('inf')
+            FN = -1
+            for conf, pairs in data.items():
+                if float(conf) >= prev_conf:
+                    prev_conf = float(conf)
+
+                    if pairs['TP'] <= TP:
+                        TP = pairs['TP']
+                    else:
+                        print("-->>TP error:",conf, TP, pairs['TP'])
+
+                    if pairs['FP'] <= FP:
+                        FP = pairs['FP']
+                    else:
+                        print("-->>FP error:",conf,FP,pairs['FP'])
+
+                    if pairs['FN'] >= FN:
+                        FN = pairs['FN']
+                    else:
+                        print("-->>FN error",conf)
+                else:
+                    print("CONFIDENCE IS NOT ORDERED")
+
 
 
     def runall(self, image_folder):
-        collected_results = []
+        collected_results = defaultdict(lambda: defaultdict(dict))
+        
         image_data = Image_Manager(image_folder,pattern="*.png,*.jpg")
 
         print("\nProcessing the images...")
@@ -678,13 +807,13 @@ class Evaluator:
 
         # Serial Processing
         if not self.parallel_process:
-            cv2.setNumThreads(1)    # disable cv2 multi core processing for serial mode
+            # cv2.setNumThreads(1)    # uncommenting this will disable cv2 multi core processing
             loaded_pipeline = None
             end_known_step = None
             compare_strategy = None
 
             for image in image_data:
-                print("image:",image)
+                print("\nimage:",image)
                 known_data = None   # reset known_data for each image
 
                 loaded_pipeline, end_known_step, predict =  Worker.prediction_compare(
@@ -698,13 +827,17 @@ class Evaluator:
                     eval_param = self.eval_param,
                     serial = True,
                 )
-                collected_results.append(predict)
 
+                for pred_name, content in predict.items():
+                    collected_results[pred_name][os.path.basename(image)] = content
+
+                Evaluator.check_data_monotonicity(predict)
+                        
         # Parallel processing  
         else:
             ncpus = multiprocessing.cpu_count()
-            # if ncpus > 4:
-                # ncpus = 4
+            if ncpus > 4:
+                ncpus = 4
                 
             # print("No of CPUS:",ncpus)
             batch_size = len(image_data.images)//ncpus
@@ -729,11 +862,9 @@ class Evaluator:
                     tasks.put(list(images_batch))
                     images_batch = []
 
-
             # Pass any remaining images
             if images_batch:
                 tasks.put(list(images_batch))
-
 
             # Signal workers to exit
             for _ in range(ncpus):
@@ -747,8 +878,10 @@ class Evaluator:
                         worker_done_count += 1  # One worker has finished
                         print(f"Worker finished. Remaining: {ncpus - worker_done_count}")
                     else:
-                        # print("final result", result)
-                        collected_results.extend(result)
+                        # print("\nresult",result)
+                        for image, data in result:
+                            for pred_name, content in data.items():
+                                collected_results[pred_name][os.path.basename(image)] = data[pred_name]
                 except queue.Empty:
                     # print("Timeout: No results received. Waiting for workers to finish...")
                     pass
@@ -760,9 +893,7 @@ class Evaluator:
                     print(f"Worker {proc.pid} did not terminate. Forcing termination.")
                     proc.terminate()
 
-            
-        final_structure = self.process_results(collected_results)
-        print("\nfinal_structure",final_structure)
+        final_structure = self.process_results(collected_results)        
 
         end_time = time.time()
         
@@ -775,33 +906,50 @@ class Evaluator:
 
 
     @staticmethod
-    def process_model_data(model_name, model_data, aggregated_data):
-        for confidence, matches in model_data:
-            aggregated_data[model_name][confidence]['TP'] += matches['TP']
-            aggregated_data[model_name][confidence]['FP'] += matches['FP']
-            aggregated_data[model_name][confidence]['FN'] += matches['FN']
-
-
-    @staticmethod
     def process_results(collected_results,pipeline_name=None):
-        # Initialize aggregated_data as a nested defaultdict where inner values are dictionaries
-        aggregated_data = defaultdict(lambda: defaultdict(lambda: {'TP': 0, 'FP': 0, 'FN': 0}))
+        aggregated_results = {}
 
+        all_confidences = set()
+        for pred_name, data in collected_results.items():
+            for image_name, confidence_data in data.items():
+                all_confidences.update(map(float, confidence_data.keys()))
 
-        for data in collected_results: 
-            if isinstance(data,dict):
-                for model_name, model_data in data.items():
-                    Evaluator.process_model_data(model_name, model_data, aggregated_data)
+        sorted_confidences = sorted(all_confidences)
 
-            else:
-                Evaluator.process_model_data(pipeline_name, [data], aggregated_data)
+        # print("\ncollected_results",collected_results)
+        for pred_name in collected_results.keys():
+            aggregated_results[pred_name] = {
+                str(conf): {'TP': 0, 'FP': 0, 'FN': 0} for conf in sorted_confidences
+            }
 
-        return aggregated_data
+        # aggregated_results = {conf: {'TP': 0, 'FP': 0, 'FN': 0} for conf in sorted_confidences}
 
+        for conf in sorted_confidences:
+            # print("\nconf",conf)
+            for pred_name, data in collected_results.items():
+                for image_name, results in data.items():
+                    relevant_confs = [float(c) for c in results.keys() if float(c) >= conf]
+                    if relevant_confs:
+                        nearest_conf = min(relevant_confs)
+                        metrics = results[str(nearest_conf)]
+                        # Aggregate metrics into the corresponding confidence level
+                        aggregated_results[pred_name][str(conf)]['TP'] += metrics['TP']
+                        aggregated_results[pred_name][str(conf)]['FP'] += metrics['FP']
+                        aggregated_results[pred_name][str(conf)]['FN'] += metrics['FN']
+                    else:
+                        print("NOT RELEVANT")
+
+        # print("\naggregated_results",aggregated_results)
+
+        Evaluator.check_data_monotonicity(aggregated_results, **dict(sort_data=False))   # aggregated data should already be in sorted format
+
+        return aggregated_results
 
 
     @staticmethod
-    def plotprecisionrecall(observations, evaluator_type):
+    def plotprecisionrecall(observations, evaluator_type, **kwargs):
+
+        sort_results = kwargs.get('sort_results', True)
 
         # directory = os.getcwd() + '/output_plots'
         directory = os.getcwd() + '/PR_curves'
@@ -811,19 +959,34 @@ class Evaluator:
         plt.figure(1) 
         plt.figure(2)
 
+
         for pipeline_name, result_data in observations.items():
+            
+            print("pipeline name:",pipeline_name)
+            # collect = defaultdict(list)
+
+
             precision = []
             recall = []
 
-            for confidence, results in result_data.items():
+            # Use sorted only if sort_results is True - condition so that the
+            # same function if useful for Finders and Pipelines both
+            data_iterator = (
+                sorted(result_data.items(), key=lambda x: float(x[0]))
+                if sort_results
+                else result_data.items()
+            )
+            
+            for confidence, results in data_iterator:
+                # print("confidence",confidence)
                 tp = results['TP']
                 fp = results['FP']
                 fn = results['FN']
 
+                # Calculate precision and recall for each threshold
                 pos = tp + fp  # Total positive predictions
                 tpfn = tp + fn  # Total ground truth positives
 
-                # Calculate precision and recall
                 try:
                     prec = tp / pos if pos != 0 else 0
                 except ZeroDivisionError:
@@ -837,15 +1000,52 @@ class Evaluator:
                 precision.append(prec)
                 recall.append(rec)
 
-            # Sort the recall and precision for plotting
-            recall, precision = zip(*sorted(zip(recall, precision)))
+
+            precision = list(precision)
+            recall = list(recall)
+
+
+            # remove non-monotonic values...
+            filtered_recall = []
+            filtered_precision = []
+            for i in range(len(recall)):
+                if len(filtered_recall) == 0:
+                    filtered_recall.append(recall[i])
+                    filtered_precision.append(precision[i])
+                elif precision[i] > filtered_precision[-1]:
+                    filtered_recall.append(recall[i])
+                    filtered_precision.append(precision[i])
+
+            # print("\nfilter prec",filtered_precision)
+            # print("\nfilter recall", filtered_recall)
+
+            # and make step-based...
+            step_recall = [] 
+            step_precision = []
+            step_recall.append(filtered_recall[0])
+            step_precision.append(0)
+            step_recall.append(filtered_recall[0])
+            step_precision.append(filtered_precision[0])
+            for i in range(1,len(filtered_recall)):
+                step_recall.append(filtered_recall[i])
+                step_precision.append(filtered_precision[i-1])
+                step_recall.append(filtered_recall[i])
+                step_precision.append(filtered_precision[i])
+            step_recall.append(0)
+            step_precision.append(step_precision[-1])
+
+            # print("\nstep_prec",step_precision)
+            # print("\nstep_recall",step_recall)
+
 
             # Plot on figure 1
             plt.figure(1)
-            plt.plot(recall, precision, ".-", label=f"{pipeline_name}")
+            plt.plot(step_recall, step_precision, ".-", label=f"{pipeline_name}")
+            # plt.plot(recall, precision, "r.",)
 
             plt.figure(2)
-            plt.plot(recall, precision, ".-", label=f"{pipeline_name}")
+            plt.plot(step_recall, step_precision, ".-", label=f"{pipeline_name}")
+            plt.plot(recall, precision, "r.",)
 
         # Plot figure 1
         plt.figure(1)
@@ -883,6 +1083,7 @@ class Evaluator:
         pr.savefig(directory + '/' + evaluator_type + str(plot_no1) + '.png')
         pr_zoom.savefig(directory + '/' + evaluator_type + str(plot_no2) + '.png')
 
+        
         return pr, pr_zoom
 
 

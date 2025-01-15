@@ -1,6 +1,7 @@
 
 from . glycanannotator import Config_Manager, GlycanExtractorPipeline
 from . image_manager import Image_Manager, Image_Data
+from . semantics import Glycan_Semantics
 from . model_evaluator import *
 from . debug_methods import DebugMode
 from . build_pipeline import BuildPipeline

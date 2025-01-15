@@ -39,6 +39,71 @@ class CompareBoxes:
         if d_y2 < t_y:
             return False
         return True
+
+    # # new
+    # def intersect(self,training,detected):
+    #     # print("---->>>",dir(training), training.bbox())
+    #     t_x, t_y, t_w, t_h = training.bbox()
+    #     d_x, d_y, d_w, d_h = detected.bbox()
+
+    #     if t_x <= d_x <= t_x + t_w and \
+    #         t_y  <= d_y <= t_y +t_y :
+    #         return True
+    #     if t_x <= d_x + d_w <= t_x + t_w and \
+    #         t_y  <= d_y  <= t_y +t_y :
+    #             return True
+    #     if t_x <= d_x <= t_x + t_w and \
+    #         t_y  <= d_y + d_h <= t_y +t_y :
+    #             return True
+    #     if t_x <= d_x + d_w <= t_x + t_w and \
+    #         t_y  <= d_y + d_h <= t_y +t_y :
+    #             return True
+    #     if d_x <= t_x <= d_x + d_w and \
+    #         d_y  <= t_y  <= d_y +d_y :
+    #             return True
+    #     if d_x <= t_x+t_w <= d_x + d_w and \
+    #         d_y  <= t_y  <= d_y +d_y :
+    #             return True
+    #     if d_x <= t_x <= d_x + d_w and \
+    #         d_y  <= t_y + t_h <= d_y +d_y :
+    #             return True
+    #     if d_x <= t_x+t_w <= d_x + d_w and \
+    #         d_y  <= t_y + t_h <= d_y +d_y :
+    #             return True
+    #     return False
+
+    # # new
+    # def intersection(self,training,detected):
+    #     assert self.intersect(training,detected)
+
+    #     t_x, t_y, t_w, t_h = training.bbox()
+    #     d_x, d_y, d_w, d_h = detected.bbox()
+
+    #     ix=max(t_x, d_x)
+    #     iy=max(t_y, d_y)
+    #     iw=max(min(t_x + t_w, d_x + d_w)-ix,0)
+    #     ih=max(min(t_y + t_h, d_y + d_h)-iy,0)  
+    #     return dict(cx=ix+iw//2,cy=iy+ih//2,x=ix,y=iy,w=iw,h=ih)
+
+    # # new
+    # def area(self,box):
+    #     # print("box",box['w'])
+    #     return (box['w']+1)*(box['h']+1)
+    # # new
+    # def bbox_dict(self,box):
+    #     x,y,w,h = box.bbox()
+    #     return dict(x=x,y=y,w=w,h=h)
+
+    # # new
+    # def iou_score(self,training,detected):
+    #     if self.intersect(training,detected):
+    #         i = self.intersection(training,detected)
+
+    #         print("dict",training.bbox())
+    #         return float(self.area(i))/(self.area(self.bbox_dict(training))+self.area(self.bbox_dict(detected))-self.area(i))
+    #     return 0
+
+
     
     def intersection_area(self, training, detected):
         t_x, t_y, t_x2, t_y2 = training.corners()

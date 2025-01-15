@@ -224,48 +224,51 @@ class YOLORootFinder(YOLOModel, RootFinder):
 
         if len(root_boxes) > 1:
             print("Log data: Multiple Roots were detected")
+            # print("Log data: Multiple Roots were detected", [(mono.get('confidence'), dir(mono)) for mono in root_boxes])
             confidences = [mono.get('confidence') for mono in root_boxes]
             best_index = np.argmax(confidences)
             root_mono = root_boxes[best_index]
         elif len(root_boxes) == 0:
-            print("Log data: No root was detected")
+            print("Log: No root was detected")
+            obj.add_root(-1) 
         else:
             root_mono = root_boxes[0]
 
-        assert root_mono is not None
+        # assert root_mono is not None  # remove it because it should not break the whole semantics PR
+        # treat is as FN on the sequence - for PR curves of knownSemantics
+        if root_mono:
+            semantic_monos = list(obj.monosaccharides())
+            
+            if semantic_monos == []:
+                return None
 
-        semantic_monos = list(obj.monosaccharides())
-        
-        if semantic_monos == []:
-            return None
+            comparison_alg = CompareBoxes()
+            
+            intersection_list = [0]*len(semantic_monos)
 
-        comparison_alg = CompareBoxes()
-        
-        intersection_list = [0]*len(semantic_monos)
-
-        for i, mono in enumerate(semantic_monos):
-            if comparison_alg.have_intersection(mono['box'], root_mono):
-                intersection_list[i] = comparison_alg.intersection_area(mono['box'], root_mono)
-                
-        max_int_idx = np.argmax(intersection_list)
-        
-        box = semantic_monos[max_int_idx]['box']
-        t_area = box.area()
-        d_area = root_mono.area()
-        
-        inter = intersection_list[max_int_idx]
-        
-        if ((inter == t_area and comparison_alg.training_contained(box, root_mono))
-        or (inter == d_area and comparison_alg.detection_sufficient(box, root_mono))
-        or comparison_alg.is_overlapping(box, root_mono)):
-            root = semantic_monos[max_int_idx]
-            obj.add_root(root.get('id'))
-            box.set('confidence',root_mono.get('confidence'))
-        else:
-            obj.add_root(None)
+            for i, mono in enumerate(semantic_monos):
+                if comparison_alg.have_intersection(mono['box'], root_mono):
+                    intersection_list[i] = comparison_alg.intersection_area(mono['box'], root_mono)
+                    
+            max_int_idx = np.argmax(intersection_list)
+            
+            box = semantic_monos[max_int_idx]['box']
+            t_area = box.area()
+            d_area = root_mono.area()
+            
+            inter = intersection_list[max_int_idx]
+            
+            if ((inter == t_area and comparison_alg.training_contained(box, root_mono))
+            or (inter == d_area and comparison_alg.detection_sufficient(box, root_mono))
+            or comparison_alg.is_overlapping(box, root_mono)):
+                root = semantic_monos[max_int_idx]
+                obj.add_root(root.get('id'))
+                box.set('confidence',root_mono.get('confidence'))
+            else:
+                obj.add_root(-1)  
 
         root_id = obj.root()
-        
+
         return obj
 
 
@@ -320,7 +323,7 @@ class KnownRoot(RootFinder):
                     # boxes.append(box)
                     box_dict[int(mono_id)] = box
 
-            box_dict[int(root_id)].set('classid',0)
+            box_dict[int(root_id)].set('classid',0)            
 
         if DebugMode.debug:
             DebugMode.log_data(

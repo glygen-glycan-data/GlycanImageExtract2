@@ -251,27 +251,30 @@ class Glycan_Semantics(Image_Semantics):
                 retval += sym + "(" + str(comp[sym]) + ")"
         return retval
 
-
-    def IUPAC(self):
+    @staticmethod
+    def IUPAC(monosaccharides, root_id):
         iupac = []
-        root_id = self.root()
+        # root_id = monosaccharides['root']
 
-        root_mono = self.monosaccharide(root_id)
+        if root_id == -1:
+            return None
 
-        adj = self.build_adjecency_list()
+        # root_mono = self.monosaccharide(root_id)
+
+        adj = Glycan_Semantics.build_adjecency_list(monosaccharides)
 
         visited = set()
         ans = []
                 
-        self.DFS(iupac,adj,visited,-1,root_id)
+        Glycan_Semantics.DFS(iupac,adj,visited,-1,root_id,monosaccharides)
         iupac = iupac[::-1] # IUPAC sequence are read in reverse order
         return ''.join(iupac)
 
 
-
-    def build_adjecency_list(self):
+    @staticmethod
+    def build_adjecency_list(monosaccharides):
         adj = {}
-        for mono in self.monosaccharides():
+        for id, mono in monosaccharides.items():
             links = mono.get('links')
             # Process links to keep only integer IDs
             filtered_links = []
@@ -283,12 +286,13 @@ class Glycan_Semantics(Image_Semantics):
             adj[mono.get('id')] = filtered_links
         return adj
 
+    @staticmethod
+    def DFS(iupac, adj, visited, parent, u, monosaccharides):
+        visited.add(monosaccharides[u].get('id'))
 
-    def DFS(self, iupac, adj, visited, parent, u):
-        visited.add(self.monosaccharide(u).get('id'))
 
         # Get the current node's data
-        symbol = self.monosaccharide(u).get('symbol')
+        symbol = monosaccharides[u].get('symbol')
         extension = '?1-?' if symbol not in ['NeuAc', 'NeuGc'] else '?2-?'
         data = symbol + extension if parent != -1 else symbol
 
@@ -299,12 +303,12 @@ class Glycan_Semantics(Image_Semantics):
         filtered_adj = [v for v in adj[u] if v not in visited]
 
         # Sort the children (branches) lexicographically by their symbol for consistency
-        filtered_adj = sorted(filtered_adj, key=lambda x: self.monosaccharide(x).get('symbol'))
+        filtered_adj = sorted(filtered_adj, key=lambda x: monosaccharides[x].get('symbol'))
 
         branch_strings = []
         for v in filtered_adj:
             branch_iupac = []
-            self.DFS(branch_iupac, adj, visited, u, v)  # Recurse for each child
+            Glycan_Semantics.DFS(branch_iupac, adj, visited, u, v, monosaccharides)  # Recurse for each child
             
             branch_str = ''
             for i in range(len(branch_iupac)-1,-1,-1):
@@ -325,4 +329,86 @@ class Glycan_Semantics(Image_Semantics):
                 iupac.append('(' + branch)  # Close after the first branch
             else:
                 iupac.append(branch)
+
+
+
+    
+    # def IUPAC(self):
+    #     iupac = []
+    #     root_id = self.root()
+
+    #     if root_id == -1:
+    #         return None
+
+    #     # root_mono = self.monosaccharide(root_id)
+
+    #     adj = self.build_adjecency_list()
+
+    #     visited = set()
+    #     ans = []
+                
+    #     self.DFS(iupac,adj,visited,-1,root_id)
+    #     iupac = iupac[::-1] # IUPAC sequence are read in reverse order
+    #     return ''.join(iupac)
+
+
+
+    # def build_adjecency_list(self):
+    #     adj = {}
+    #     for mono in self.monosaccharides():
+    #         links = mono.get('links')
+    #         # Process links to keep only integer IDs
+    #         filtered_links = []
+    #         for link in links:
+    #             if isinstance(link, list):  # If link contains a list, extract the first element
+    #                 filtered_links.append(link[0])
+    #             else:  # Otherwise, it’s already an integer
+    #                 filtered_links.append(link)
+    #         adj[mono.get('id')] = filtered_links
+    #     return adj
+
+
+    # def DFS(self, iupac, adj, visited, parent, u):
+    #     visited.add(self.monosaccharide(u).get('id'))
+
+    #     # Get the current node's data
+    #     symbol = self.monosaccharide(u).get('symbol')
+    #     extension = '?1-?' if symbol not in ['NeuAc', 'NeuGc'] else '?2-?'
+    #     data = symbol + extension if parent != -1 else symbol
+
+    #     # Append the current node's data to the result
+    #     iupac.append(data)
+
+    #     # Filter adjacent nodes to only include unvisited ones
+    #     filtered_adj = [v for v in adj[u] if v not in visited]
+
+    #     # Sort the children (branches) lexicographically by their symbol for consistency
+    #     filtered_adj = sorted(filtered_adj, key=lambda x: self.monosaccharide(x).get('symbol'))
+
+    #     branch_strings = []
+    #     for v in filtered_adj:
+    #         branch_iupac = []
+    #         self.DFS(branch_iupac, adj, visited, u, v)  # Recurse for each child
+            
+    #         branch_str = ''
+    #         for i in range(len(branch_iupac)-1,-1,-1):
+    #             branch_str += branch_iupac[i]
+
+    #         branch_strings.append(branch_str)  # Collect each branch as a string
+
+    #     # Sort branches lexicographically after recursion
+    #     branch_strings.sort()
+
+    #     # If there are multiple branches, open a parenthesis to indicate a branch
+    #     if len(branch_strings) > 1:
+    #         iupac.append(')')
+
+    #     # Append branches, enclosing only the first branch with parentheses
+    #     for idx, branch in enumerate(branch_strings):
+    #         if idx == 0 and len(branch_strings) > 1:
+    #             iupac.append('(' + branch)  # Close after the first branch
+    #         else:
+    #             iupac.append(branch)
+
+
 
