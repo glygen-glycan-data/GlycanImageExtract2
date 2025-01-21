@@ -1,7 +1,7 @@
 import fitz, sys, os, cv2,shutil, pdfplumber, time, ntpath, json, base64
 from .submit import searchGlycoCTnew,  sendToGNOme
 from .glycanExtractor import compare2img, countcolors, extractGlycanTopology,buildglycan
-from .pygly3.GlycanFormatter import GlycoCTFormat, GlycoCTParseError
+from .pygly.GlycanFormatter import GlycoCTFormat, GlycoCTParseError
 from BKGlycanExtractor import Config_Manager, Glycan_Semantics
 
 from .monosaccharideid import YOLOMonos
