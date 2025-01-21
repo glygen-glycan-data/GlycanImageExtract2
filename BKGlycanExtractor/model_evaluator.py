@@ -283,7 +283,7 @@ class RootCompare:
         known_root_data, k_root = self.root_data(known)
 
         args = dict(p_root= p_root, k_root= k_root)
-        return self.mono_compare.compare(pred_root_data, known_root_data,**args)
+        return self.mono_compare.compare(pred_root_data, known_root_data, **args)
 
 
 
@@ -457,7 +457,7 @@ class SemanticGlycanCompare:
 
         # self.critical_values = []
 
-        selected_critical_value = 0.77913584
+        selected_critical_value = 0.77913584    # chosen after analyzing confidence values geenrated from all images after using their predictors
         for idx, image in enumerate(images):
             print("image:",idx, image)
 
@@ -471,8 +471,6 @@ class SemanticGlycanCompare:
 
             observations[self.base_pipeline.name][os.path.basename(image)] = results
 
-        # print("\n------>>>>>>>observations",observations)
-        # print("\n critical vals",sorted(self.critical_values))
 
         end_time = time.time()
         Evaluator.plotprecisionrecall(observations, 'Whole_Glycan', **dict(sort_results=False))
@@ -568,8 +566,6 @@ class SemanticGlycanCompare:
                 
                 link = tuple(sorted((box.get('id'), link_box[0].get('id'))))
                 num_links.add(link)
-
-        # print("--->>",len(links_adj), len(num_links))
 
         return len(num_links)
 
@@ -807,7 +803,7 @@ class Evaluator:
 
         # Serial Processing
         if not self.parallel_process:
-            # cv2.setNumThreads(1)    # uncommenting this will disable cv2 multi core processing
+            cv2.setNumThreads(1)    # uncommenting this will disable cv2 multi core processing
             loaded_pipeline = None
             end_known_step = None
             compare_strategy = None

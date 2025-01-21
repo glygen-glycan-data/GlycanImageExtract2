@@ -1,0 +1,24 @@
+{% include 'header.html' %}
+
+  <h1 align="center">Glycan Image Extractor</h1>
+  <div align="center">
+  <form action="file_upload" method="post" enctype="multipart/form-data">
+     <!-- Manuscript/Image (PDF, PNG, JPG): -->
+     <input type="file" name="file" /><input type="submit" value="Extract"/>
+  </form>
+  <p id="demo">
+    <div id="circle" class="loader" style ="display:none">
+    </div>
+  </p>
+  <div width="500px">
+    <p align="left">
+      <a href=".">Glycan Image Extractor</a> accepts manuscripts
+      (PDF format) and image files (PNG, JPG format). Extraction
+      time depends on the number and complexity of the figures in
+      the manuscript, and the number of glycans in each figure or
+      image. Extraction may take a few minutes for large or complex
+      files. Please be patient!  
+    </p>
+  </div>
+
+{% include 'footer.html' %}

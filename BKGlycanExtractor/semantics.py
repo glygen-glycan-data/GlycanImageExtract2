@@ -209,31 +209,53 @@ class Glycan_Semantics(Image_Semantics):
     def links(self,id):
         return list(self.semantics['monos'][id]['links'])
 
+    # def tojson(self):
+    #     data = {}
+    #     for k,v in self.semantics.items():
+    #         if k not in ('image','box','monos'):
+    #             data[k] = v
+    #     data['monos'] = []
+    #     for mono in self.semantics['monos'].values():
+    #         monodict = {}
+    #         for k,v in mono.items():
+    #             if k not in ('image','box','links'):
+    #                 monodict[k] = v
+    #             elif k == 'links' and len(v) > 0:
+    #                 monodict[k] = [item if isinstance(item,int) else item[0] for item in v]
+    #         data['monos'].append(monodict)
+
+    #     return json.dumps(data,indent=2,sort_keys=True)
+
+
     def tojson(self):
         data = {}
-        for k,v in self.semantics.items():
-            if k not in ('image','box','monos'):
+        
+        # Iterate through all the items in the semantics dictionary
+        for k, v in self.semantics.items():
+            if k not in ('image', 'box', 'monos'):
                 data[k] = v
+
         data['monos'] = []
         for mono in self.semantics['monos'].values():
             monodict = {}
-            for k,v in mono.items():
-                if k not in ('image','box','links'):
+            for k, v in mono.items():
+                if k not in ('image', 'box', 'links'):
                     monodict[k] = v
                 elif k == 'links' and len(v) > 0:
-                    monodict[k] = [item if isinstance(item,int) else item[0] for item in v]
+                    monodict[k] = [item if isinstance(item, int) else item[0] for item in v]
             data['monos'].append(monodict)
-
-        return json.dumps(data,indent=2,sort_keys=True)
+        
+        return json.dumps(data, indent=2, sort_keys=True)
 
     def image_path(self):
         # for single glycan images, the glycan image "has" a path
         return self.semantics.get('image_path',None)
-
-    def composition(self):
+    
+    @staticmethod
+    def composition(monosaccharides):
         count = defaultdict(int)
-        for m in self.monosaccharides():
-            sym = self.mono_syms[m['classid']]
+        for m in monosaccharides:
+            sym = Glycan_Semantics.mono_syms[m['classid']]
             if sym not in count:
                 count[sym] = 1
             else:
@@ -242,11 +264,11 @@ class Glycan_Semantics(Image_Semantics):
 
     mono_syms = ["GlcNAc","NeuAc","Fuc","Man","GalNAc","Gal","Glc","NeuGc"]
     
-
-    def compstr(self):
-        comp = self.composition()
+    @staticmethod
+    def compstr(monosaccharides):
+        comp = Glycan_Semantics.composition(monosaccharides)
         retval = ""
-        for sym in self.mono_syms:
+        for sym in Glycan_Semantics.mono_syms:
             if comp[sym] > 0:
                 retval += sym + "(" + str(comp[sym]) + ")"
         return retval

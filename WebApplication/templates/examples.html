@@ -1,0 +1,56 @@
+{% include 'header.html' %}
+
+<h1>Examples</h1>
+
+<p align = left>
+<br align = left>Sassi A, Lazaroski S, Wu G, Haslam SM, Fliegauf M, Mellouli F, Patiroglu T, Unal E, Ozdemir MA, Jouhadi Z, Khadir K et al. <i>Hypomorphic homozygous mutations in phosphoglucomutase 3 (PGM3) impair immunity and increase serum IgE levels. J Allergy Clin Immunol.</i> 2014 May;133(5):1410-9, 1419.e1-13. doi: <a href="https://doi.org/10.1016/j.jaci.2014.02.025">10.1016/j.jaci.2014.02.025.</a> Epub 2014 Apr 1. PMID: 24698316; PMCID: PMC4825677.
+    <br><small><small><button onclick="myDisplayFunction('displaythis1')">Click to show annotation!</button></small></small>
+    <br><small style="display: none;" id = "displaythis1">This is a good example presenting the capability of the tool. Majority of the Glycans are annotated correctly because they are presented very similarity to the Standardized Nomenclature for Glycans (SNFG). <small> <a href={{basedir+"/annotated_Example1.pdf"}} download="Curated_Example1.pdf"><button type="button">Download Curated PDF</button></a></small></small>
+
+
+<p align = left>
+<br align = left>Hong Q, Ruhaak LR, Stroble C, Parker E, Huang J, Maverakis E, Lebrilla CB. <i>A Method for Comprehensive Glycosite-Mapping and Direct Quantitation of Serum Glycoproteins.</i> J Proteome Res. 2015 Dec 4;14(12):5179-92. doi: <a href="https://pubs.acs.org/doi/10.1021/acs.jproteome.5b00756">10.1021/acs.jproteome.5b00756.</a> Epub 2015 Nov 9. PMID: 26510530; PMCID: PMC4670571.
+    <br><small><small><button onclick="myDisplayFunction('displaythis2')">Click to show annotation!</button></small></small>
+              <br><small style="display: none;" id = "displaythis2">In this example the Glycan format is typical. The tool were able to correctly predict the structure composition; however, because some are presented with very short linkages GlycoCT prediction is inaccurate on some MS table. <small><a href={{basedir+"/annotated_Example2.pdf"}} download="Curated_Example2.pdf"><button type="button">Download Curated PDF</button></a></small></small>
+
+
+<p align = left>
+<br align = left>Wang C, Qiang S, Jin W, Song X, Zhang Y, Huang L, Wang Z. <i>Reductive chemical release of N-glycans as 1-amino-alditols and subsequent 9-fluorenylmethyloxycarbonyl labeling for MS and LC/MS analysis.</i> J Proteomics. 2018 Sep 15;187:47-58. doi: <a href="https://doi.org/10.1016/j.jprot.2018.06.002">10.1016/j.jprot.2018.06.002</a>. Epub 2018 Jun 6. PMID: 29885470.
+              <br><small><small><button onclick="myDisplayFunction('displaythis3')">Click to show annotation!</button></small></small>
+              <br><small  style="display: none;" id = "displaythis3">This example show potential fault in our current tool which failed to detect correct neighbor if two monosaccharides on different brand are placed too close to one another.<small><a href={{basedir+"/annotated_Example3.pdf"}} download="Curated_Example3.pdf"><button type="button">Download Curated PDF</button></a></small></small>
+
+<p align = left>
+<br align = left>Beth McLeod. <i>Characterization of Glycans from Erbitux®, Rituxan® and Enbrel® using PNGase F (Glycerol-free), Recombinant.</i> GLYCOBIOLOGY & PROTEIN TOOLS. <a href="https://www.neb.com/-/media/nebus/files/application-notes/characterization-of-glycans-from-erbitux-rituxan-and-enbrel-using-pngase-f-glycerol-free-recombinant.pdf?rev=55a0ebe8a29e480cbb7354d7f972681b">Protein Expression and Analysis Manual.</a> New England Biolabs, Inc. www.neb.com.
+              <br><small><small><button onclick="myDisplayFunction('displaythis4')">Click to show annotation!</button></small></small>
+              <br><small  style="display: none;" id = "displaythis4">This example has their glycan presented similar to SNFG yet their linkages are colored red instead of black. As a result, some glycan are not being recognized by the GlycoCT predictor algorithm.<small><a href={{basedir+"/annotated_Example4.pdf"}} download="Curated_Example4.pdf"><button type="button">Download Curated PDF</button></a></small></small>
+
+
+<p align = left>
+<br align = left>Go EP, Ding H, Zhang S, Ringe RP, Nicely N, Hua D, Steinbock RT, Golabek M, Alin J, Alam SM, Cupo A, Haynes BF, Kappes JC, et al. <i>Glycosylation Benchmark Profile for HIV-1 Envelope Glycoprotein Production Based on Eleven Env Trimers.</i> J Virol. 2017 Apr 13;91(9):e02428-16. doi: <a href="https://doi.org/10.1128/jvi.02428-16">10.1128/JVI.02428-16.</a> PMID: 28202756; PMCID: PMC5391476.
+              <br><small><small><button onclick="myDisplayFunction('displaythis5')">Click to show annotation!</button></small></small>
+              <br><small  style="display: none;" id = "displaythis5">This example has their glycan presented similar to SNFG yet their linkages are colored red instead of black. As a result, some glycan are not being recognized by the GlycoCT predictor algorithm.<small><a href={{basedir+"/annotated_Example5.pdf"}} download="Curated_Example5.pdf"><button type="button">Download Curated PDF</button></a></small></small>
+
+<p align = left>
+<br align = left>Parker BL, Thaysen-Andersen M, Solis N, Scott NE, Larsen MR, Graham ME, Packer NH, Cordwell SJ. <i>Site-specific glycan-peptide analysis for determination of N-glycoproteome heterogeneity.</i> J Proteome Res. 2013 Dec 6;12(12):5791-800. doi: <a href="https://doi.org/10.1021/pr400783j">10.1021/pr400783j.</a> Epub 2013 Nov 1. PMID: 24090084.
+    <br><small><small><button onclick="myDisplayFunction('displaythis6')">Click to show annotation!</button></small></small>
+              <br><small  style="display: none;" id = "displaythis6">This example shown good example of glycan format yet due to low resolution, our tool prediction are thrown off significantly.<small><a href={{basedir+"/annotated_Example6.pdf"}} download="Curated_Example6.pdf"><button type="button">Download Curated PDF</button></a></small></small>
+
+
+<br align = left>Supplementary data (PDF):
+              <br><small><small><button onclick="myDisplayFunction('displaythis7')">Click to show annotation!</button></small></small>
+              <br><small  style="display: none;" id = "displaythis7">This is a document attachment that came with the study by Parker BL et al. which shown the potential for the use of our tool to predict multiple glycan images. <small><a href={{basedir+"/annotated_Supplementary_Figure_1.pdf"}} download="Curated_Supplementary_Figure_1.pdf"><button type="button">Download Curated Supplementary File</button></a></small></small>
+
+<small><a href={{basedir+"/Supplementary_Figure_1.pdf"}} >Supplementary Figures of Mass Spec contain Glycans. (Original)</a></p></small>
+
+<script>
+function myDisplayFunction(id) {
+  var x = document.getElementById(id);
+  if (x.style.display === "none") {
+    x.style.display = "block";
+  } else {
+    x.style.display = "none";
+  }
+}
+</script>
+
+{% include 'footer.html' %}

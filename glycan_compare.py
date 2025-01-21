@@ -59,7 +59,6 @@ known_pipeline = config.get_pipeline("KnownSemantics")
 
 
 collected_results = []
-unknown_iupac_results = {'FN':0, 'FP': 0}
 
 whole_glycan = SemanticGlycanCompare(base_pipeline, known_pipeline, proximity)
 

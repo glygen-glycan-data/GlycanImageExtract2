@@ -1,0 +1,53 @@
+{% include 'header.html' %}
+
+<h1>Glycan Structure Extraction from Scientific Literature</h1>
+<p/>
+<strong>Author:</strong> Nhat Duong
+<p/>
+<strong>Mentor:</strong> Dr. Nathan Edwards, Department of Biochemistry and Molecular &smp; Cellular Biology, Georgetown University Medical Center.
+<p/>
+The extraction and representation of accepted glycobiology knowledge
+is challenging due to the widespread use of images to represent glycans
+in published literature. In the absence of an explicit computer-readable
+glycan sequence or accession number, human curation is required to extract
+published glycosylation knowledge for our glycomics data-resources. Glycan
+structure images in published literature are highly stylized but poorly
+standardized, despite efforts by the Standardized Nomenclature for
+Glycans (SNFG) group to make them more consistent. Automated extraction
+of glycan structures from figures in published manuscripts will ease
+the curation effort.
+<p/>
+We use a combination of open-source Python modules for parsing and
+manipulating PDF files; neural network-based object classification
+to locate glycans in manuscripts’ figures; and OpenCV-based image
+analysis to extract glycan structure details. Figures from GlyGen and
+UniCarbKB manuscript annotations were curated to construct a training set
+of figures with glycan bounding-box locations. This object classification
+approach successfully identifies glycan structures in manuscript figures
+for subsequent detailed glycan image analysis and highlights the glycan
+structures in the manuscript.
+<p/>
+Glycan structure details are extracted using the open-source OpenCV
+library. Using color masks, monosaccharides' distinctive colors and
+shapes are recognized, establishing the monosaccharide composition of the
+glycan. Monosaccharide linkage is then determined, where possible. The
+glycan structure’s orientation and the reducing-end monosaccharide
+is then established by identifying common glycan cores. Together, this
+information is sufficient to construct a GlycoCT format sequence for
+the structure’s topology and to then search for a matching glycan
+in GlyTouCan. Once matched, the GlyTouCan accession is used to embed a
+targeted, clickable link to the GNOme Structure Browser on top of the
+glycan structure in the original PDF file.
+<p/>
+This infrastructure provides a surprisingly effective tool for
+extracting glycan structures from the figures of published glycobiology
+manuscripts. The method successfully identifies glycans' positions on
+all pages, extracts their topological structure in GlycoCT format, and
+annotates them in-place with deep-links to  GNOme so the curator can
+verify or refine the specific details of the structure. This prototype
+demonstrates the potential utility of automated extraction of glycan
+structures from published manuscript figures, significantly lowering
+the curation burden for the representation of glycosylation knowledge
+in glycomics resources.
+
+{% include 'footer.html' %}

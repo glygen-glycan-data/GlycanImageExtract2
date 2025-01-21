@@ -1,0 +1,85 @@
+{% include 'header.html' %}
+
+<div id="result">
+  <h3>Your file has been successfully uploaded for analysis.</h3>
+
+  <h3 id="info">Please wait</h3>
+</div>
+<div id="extracted" style="display: none"></div>
+<div style="display: flex; flex-wrap: wrap;" id="list_id" data-list_id="{{list_id}}"></div>
+<script>
+    "use strict";
+    let list_id = document.getElementById("list_id").getAttribute("data-list_id");
+
+    let start_time_stamp = new Date().getTime();
+
+    let wait_cycle = ["Please wait", "Please wait.", "Please wait..", "Please wait..."];
+    let wait_cycle_index = 0;
+    let calculation_time = 0.0;
+    let delay = 5;
+
+    function query(){
+        let request_URL = "retrieve?list_ids=" + JSON.stringify([list_id]);
+        jQuery.getJSON(request_URL, function (d){
+	     let tmp = d[0];
+
+            // in ms
+            let time_lapsed = new Date().getTime() - start_time_stamp;
+
+            if (tmp.finished){
+                calculation_time = Math.floor(tmp.result["runtime"]);
+                console.log("runtime")
+                console.log(tmp.result["runtime"])
+                addDownloadButton(tmp);
+            }
+            else{
+                wait_cycle_index += 1;
+                wait_cycle_index = wait_cycle_index % 4;
+
+                let additional_message = "";
+                // if (time_lapsed > 20*1000){
+                //    // Takes more than 10 seconds after submission
+                //    additional_message = "It might take longer for large file. "
+                // }
+
+                let info = document.getElementById("info");
+                info.innerText = additional_message + wait_cycle[wait_cycle_index];
+
+                setTimeout(query, delay*1000)
+            }
+        })
+    }
+
+    function addDownloadButton(result){
+        let reselt = document.getElementById("result");
+	let div = document.getElementById("list_id");
+
+	var resstr = ""
+	// resstr += "<h3>Analysis complete. ("+calculation_time+" sec)<h3>\n<ul>";
+        resstr += "<h3>Results: ";
+	if (result.result.inputtype == "pdf") {
+	    resstr += "<A target=\"_blank\" href=\"file_download?list_id="+list_id+"\">Annotated PDF</A>, "
+        }
+	resstr += "<A href=\"retrieve?list_ids=[%22"+list_id+"%22]\" target=\"_blank\">JSON format</A> (";
+	if (result.result.inputtype == "pdf") {
+	    resstr += "<A target=\"_blank\" href=\""+"static/files/"+result.id+"/input/"+encodeURIComponent(result.submission_detail.original_file_name)+"\">Original PDF</A>"
+	} else {
+	    resstr += "<A target=\"_blank\" href=\""+"static/files/"+result.id+"/input/"+encodeURIComponent(result.submission_detail.original_file_name)+"\">Original Image</A>"
+	}
+        resstr += ") [<A href=\""+"result?id="+result.id+"\">Bookmark</A>].</h3>";
+	reselt.innerHTML = resstr;
+	
+	document.getElementById("extracted").style="display: block;";
+	var glycans = result['result']['glycans'];
+	var innerdiv = "";
+	for (var i=0;i<glycans.length;i++) {
+	    var gly = glycans[i];
+	    innerdiv += "<div><P align=\"center\" style=\"padding: 20px;\"><img width=\"300px\" src=\""+gly.imageurl+"\"/><br/><A href=\""+gly.gnomeurl+"\" target=\"_blank\">"+gly.name+"</A><br/>("+gly.linkexpl+")</P></div>\n";
+	}
+	div.innerHTML = innerdiv;
+    }
+
+    query();
+
+
+</script>
