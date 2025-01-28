@@ -8,6 +8,6 @@ VENV_PYTHON="$CURRENT_DIR/.venv/bin/python"
 mkdir -p $OUTPUT_FOLDER
 
 # Generate random SVG images
-PYTHON_FILE="$CURRENT_DIR/BKGlycanExtractor/scripts/randimgs.py"
+PYTHON_FILE="$CURRENT_DIR/randimgs.py"
 
-$VENV_PYTHON $PYTHON_FILE 100 svg $OUTPUT_FOLDER
+$VENV_PYTHON $PYTHON_FILE 10 svg $OUTPUT_FOLDER
