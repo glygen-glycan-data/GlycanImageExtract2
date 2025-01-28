@@ -77,9 +77,6 @@ class Image_Data:
                 self.svg_parser(image_file)
                 self.svg_to_png(image_file)
 
-                self.svg_parser(image_file)
-                self.svg_to_png(image_file)
-
                 png_image = image_file.rsplit('.',1)[0] + '.png'
                 self.random_colors(png_image)
             
