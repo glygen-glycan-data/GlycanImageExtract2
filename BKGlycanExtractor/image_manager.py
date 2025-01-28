@@ -6,8 +6,6 @@ from cairosvg import svg2png
 import cv2
 import numpy as np
 import random
-from .scripts import parse_path
-# import parse_path
 
 
 class Image_Manager:
@@ -85,7 +83,20 @@ class Image_Data:
                 png_image = image_file.rsplit('.',1)[0] + '.png'
                 self.random_colors(png_image)
             
-        
+    def get_points(d):
+        commands = path.parseString(d)
+        points = []
+        currentset = None
+        for command in commands:
+            if command[0] == 'M' or command[0] =='m':
+                currentset = []
+                points.append(currentset)
+                currentset.append(command[1][-1])
+            elif command[0] == 'L' or command[0] =='l':
+                currentset.extend(command[1])
+            elif command[0] == 'C' or command[0] =='c':
+                currentset.extend(command[1])
+        return points  
             
     def svg_parser(self,file,**kwargs):
 
@@ -123,13 +134,13 @@ class Image_Data:
                                 paths = []
                                 for path in svgpaths:
                                     if path.nodeName == 'path':
-                                        points = parse_path.get_points(path.getAttribute('d'))
+                                        points = self.get_points(path.getAttribute('d'))
                                         for pointset in points:
                                             paths.append([clipPathID, pointset])
                                             pointset_count += 1
                                 parsed_groups[clipPathID] = paths
             else:
-                points = parse_path.get_points(e.getAttribute('d'))
+                points = self.get_points(e.getAttribute('d'))
                 for pointset in points:
                     paths.append([e.getAttribute('ID'), pointset])
             if e.hasAttribute('transform'):
