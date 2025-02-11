@@ -1,32 +1,51 @@
-# #!/bin/env python2
+# #!/bin/env python3.12
 from __future__ import print_function
 
-import sys, os, random, time
+import sys, os, random, time, re, shutil
+from collections import defaultdict
 import findpygly
 from pygly.GlycanImage import GlycanImage
 from pygly.GlycanResource import GlyTouCan, GlyCosmos
-# from pygly.GNOme import GNOme
+from pygly.GlycanFormatter import IUPACLinearFormat
+from pygly.manipulation import Topology
+from pygly.CompositionTable import Composition
 
-# dotopo = False
-# if sys.argv[1] == '--topo':
-#     dotopo = True
-#     sys.argv.pop(1)
+from BKGlycanExtractor.image_manager import Image_Data
 
-print("Start random")
+import argparse
 
-imagenum = int(sys.argv[1]) if len(sys.argv) > 1 else 100
-mode = sys.argv[2] if len(sys.argv) > 2 else 'png'
-assert mode in ('svg','png')
+parser = argparse.ArgumentParser(description="Randomized glycan image generation")
+parser.add_argument("-n", "--nimages", type=int, help="Number of images. Default: 100.", default=100)
+# parser.add_argument("-f", "--format", type=str, help="Image format. One of \"png\" or \"svg\". Default: png.", default='png')
+parser.add_argument("-o", "--outdir", type=str, help="Ouput directory. Default: current directory.", default=None)
+parser.add_argument("-c", "--clear", action='store_true', help="Clear output directory first.", default=False)
+parser.add_argument("-F", "--force", action='store_true', help="Force re-download of GlyTouCan accessions and sequences", default=False)
+parser.add_argument("-s", "--skip", type=str, help="File of accessions to skip. Default: None.", default=None)
+parser.add_argument("-r", "--random", type=str, help="Randomization mode. One of uniform accessions (uniform), biased accessions (biased), random monosaccharides (mono), random monosaccharides + baised accessions (biasmono). Default: uniform.", default="uniform")
 
-# Add this part to accept an output directory argument
-output_folder = sys.argv[3] if len(sys.argv) > 3 else os.getcwd()  # Default to current working directory
-if not os.path.exists(output_folder):
-    os.makedirs(output_folder)
+args = parser.parse_args()
+imagenum = args.nimages
+mode = "svg"
+cachemode = 'c'
+if args.force:
+    cachemode = 'n'
+assert mode in ("png","svg")
+output_folder = args.outdir
+if output_folder:
+    if args.clear:
+        if os.path.exists(output_folder):
+            shutil.rmtree(output_folder)
+    if not os.path.exists(output_folder):
+        os.makedirs(output_folder)
+    assert os.path.isdir(output_folder)
 
-# file which includes accessions which should be avoided while creating random SVG images
-badaccfile = sys.argv[4] if len(sys.argv) > 4 else None
+badaccfile = args.skip
+if badaccfile:
+    assert os.path.isfile(badaccfile)
+randmode = args.random
+assert randmode in ("uniform","biased","mono","biasmono")
 
-
+print("Start randimg...")
 
 batch = 10
 iterations = imagenum//batch
@@ -37,41 +56,50 @@ notation_options = [ "snfg", "cfg" ]
 display_options = [ "normal", "normalinfo", "compact" ]
 opaque_options = [ True, False ]
 
+valid_monos_str = """
+Glc Gal Man
+NeuAc NeuGc
+Fuc
+GlcNAc GalNAc
+"""
+valid_monos = valid_monos_str.split()
+valid_subst = defaultdict(set)
+for l in valid_monos_str.splitlines():
+    monos = l.split()
+    for m1 in monos:
+        for m2 in monos:
+            valid_subst[m1].add(m2)
+for k in valid_subst:
+    valid_subst[k] = list(valid_subst[k])
+
+ip = IUPACLinearFormat()
+topo = Topology()
+
 print("GlyCosmos archived...",file=sys.stderr)
 start = time.time()
-gco = GlyCosmos(usecache=False)
+gco = GlyCosmos(verbose=False,usecache=True,cachemode=cachemode)
 archived = set(map(lambda d: d['accession'],gco.archived()))
 print("GlyCosmos archived complete. (%s secs.)"%(time.time()-start,),file=sys.stderr)
 
 print("GlyTouCan accessions...",file=sys.stderr)
 start = time.time()
-gtc = GlyTouCan(verbose=False,usecache=False,prefetch=True)
+gtc = GlyTouCan(verbose=False,usecache=True,cachemode=cachemode)
 accs = list(filter(lambda acc: acc not in archived,gtc.allaccessions()))
 dummy = gtc.getseq('G00912UN','wurcs')
 print("GlyTouCan accessions complete. (%s secs.)"%(time.time()-start,),file=sys.stderr)
 
-# if dotopo:
-#     print("GNOme setup...",file=sys.stderr)
-#     start = time.time()
-#     gnome = GNOme()
-#     print("GNOme setup complete. (%s secs.)"%(time.time()-start,),file=sys.stderr)
-
-# import subprocess, atexit
-# xvfbproc = subprocess.Popen(["Xvfb",":1"])
-# os.environ["DISPLAY"] = "localhost:1.0"
-# def killxvfb(proc):
-#     try:
-#         proc.terminate()
-#     except OSError:
-#         pass
-# atexit.register(killxvfb,xvfbproc)
-
+# accessions your model was trained on, to avoid testing on them
 if badaccfile is not None:
-#uses the accessions your model was trained on, to avoid testing on them
     trained_accessions = set()
     with open(badaccfile) as f:
         for l in f:
             trained_accessions.add(l.rstrip())
+
+monofreq = Composition()
+monofreq.set(*valid_monos,value=1)
+monofreq['Count'] = len(valid_monos)
+
+imageData = Image_Data()
 
 seen = set()
 for j in range(iterations):
@@ -92,15 +120,14 @@ for j in range(iterations):
         if acc in seen:
             continue
         seen.add(acc)
-        # outfile = acc + "." + mode
         outfile = os.path.join(output_folder, acc + "." + mode)
         if os.path.exists(outfile):
             continue
-        gly = gtc.getGlycan(acc,format='wurcs')
-        if not gly:
-            continue
         seq = gtc.getseq(acc,format='wurcs')
         if not seq:
+            continue
+        gly = gtc.getGlycan(acc,format='wurcs')
+        if not gly:
             continue
         if gly.undetermined():
             continue
@@ -108,17 +135,13 @@ for j in range(iterations):
             continue
         if gly.repeated():
             continue
-        # if dotopo:
-        #     topoacc = gnome.get_topology(acc)
-        #     if not topoacc:
-        #         continue
         comp = gly.iupac_composition(floating_substituents=False,
                                      aggregate_basecomposition=False)
         if comp['Count'] < 3:
             continue
         bad = False
         for k,v in comp.items():
-            if k in ('Glc','Gal','Man','NeuAc','NeuGc','Fuc','GlcNAc','GalNAc','Count'):
+            if k in valid_monos or k == "Count":
                 continue
             if v <= 0:
                 continue
@@ -126,14 +149,64 @@ for j in range(iterations):
             break
         if bad:
             continue
+        if randmode in ("mono","biasmono"):
+            gly_iupac = ip.toStr(gly)
+            gly1 = ip.toGlycan(gly_iupac)
+            # print(gly_iupac)
+            l = re.split(r'([A-Za-z]+)',gly_iupac)
+            # print(l)
+            for i,tok in enumerate(l):
+                if tok in valid_monos:
+                    l[i] = random.choice(valid_subst[tok])
+                elif tok[:-1] in valid_monos and tok[-1] in 'ab':
+                    l[i] = random.choice(valid_subst[tok[:-1]]) + tok[-1]
+                elif re.search(r'[A-Za-z]',tok):
+                    raise RuntimeError("Bad IUPAC split")
+            # print(l)
+            gly_iupac = "".join(l)
+            # print(gly_iupac)
+            gly = ip.toGlycan(gly_iupac)
+            comp = gly.iupac_composition(floating_substituents=False,
+                                         aggregate_basecomposition=False)
+            seq = gly.glycoct()
+            
+        if randmode in("biased","biasmono"):
+            orig_freq = [ monofreq[m]/monofreq['Count'] for m in valid_monos ]
+            new_freq = [ (monofreq[m]+comp[m])/(monofreq['Count']+comp['Count']) for m in valid_monos ]
+            minf = 1e+20
+            # print(orig_freq)
+            # print(new_freq)
+            good1 = False
+            good2 = False
+            for i,(of,nf) in enumerate(zip(orig_freq,new_freq)):
+                if of <= min(orig_freq) and nf > of:
+                    good1 = True
+                    # print(valid_monos[i],round(of,2),"<",round(nf,2))
+                elif of >= max(orig_freq) and nf < of:
+                    good2 = True
+                    # print(valid_monos[i],round(of,2),">",round(nf,2))
+            if not good1 or not good2:
+                # print()
+                continue
+
+        monofreq.add(comp)
         print(acc,file=sys.stderr)
         imageWriter.writeImage(seq,outfile)
-        # wh = open(acc + ".log",'w')
-        # for k in ('scale','reducing_end','orientation','notation','display','opaque'):
-        #     print(k+":",imageWriter.get(k),file=wh)
-        # print("composition:",comp,file=wh)
-        # if dotopo:
-        # #     print("topology:",topoacc,file=wh)
-        # wh.close()
+        mapfile = imageData.generate_image(outfile)
+        h = open(mapfile)
+        mapfiledata = h.read()
+        h.close()
+        wh = open(mapfile,'w')
+        for k in ('scale','reducing_end','orientation','notation','display','opaque'):
+            print("# "+k+":",imageWriter.get(k),file=wh)
+        print("# composition:",comp,file=wh)
+        gly_iupac = ip.toStr(gly)
+        print("# iupac:",gly_iupac,file=wh)
+        topo_iupac = ip.toStr(topo(gly))
+        print("# topo:",topo_iupac,file=wh)
+        wh.write(mapfiledata)
+        wh.close()
+        os.unlink(outfile)
         count += 1
 
+print(monofreq)

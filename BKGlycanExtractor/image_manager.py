@@ -6,7 +6,7 @@ from cairosvg import svg2png
 import cv2
 import numpy as np
 import random
-
+from . svg_parse_path import get_points
 
 class Image_Manager:
     def __init__(self,glycan_folder,pattern='*.png,*.jpg,*.txt'):
@@ -55,11 +55,8 @@ class Image_Data:
         "light_blue_upper": np.array([108,121,255]),
     }
 
-    def __init__(self,glycan_folder):
-        # use the random SVG image's folder and create data
-        self.generate(glycan_folder)
-
     def generate(self,glycan_folder):
+        # use the random SVG image's folder and create data
         img_manager = Image_Manager(glycan_folder,pattern='*.svg')
 
         if len(img_manager.images) < 1:
@@ -68,40 +65,32 @@ class Image_Data:
         print("\nCreating PNG and TXT files if they do not exist for the corresponding SVG files...")
 
         for image_file in img_manager.images:
-            base_name = image_file.rsplit('.', 1)[0]
-            png_image = base_name + '.png'
-            txt_file = base_name + '_map.txt'
+            self.generate_image(image_file)
 
-            # create PNG and TXT files only if they do not exist...
-            if not os.path.exists(png_image) or not os.path.exists(txt_file):
-                self.svg_parser(image_file)
-                self.svg_to_png(image_file)
+    def generate_image(self,image_file,force=False):
+        base_name,extn = image_file.rsplit('.', 1)
+        assert extn.lower() == "svg"
 
-                png_image = image_file.rsplit('.',1)[0] + '.png'
-                self.random_colors(png_image)
+        png_image = base_name + '.png'
+        txt_file = base_name + '_map.txt'
+
+        # create PNG and TXT files only if they do not exist...
+        if not force and os.path.exists(png_image):
+            return
+        if not force and os.path.exists(txt_file):
+            return
+        self.svg_parser(image_file,txt_file)
+        self.svg_to_png(image_file,png_image)
+        self.random_colors(png_image)
+        return txt_file
             
-    def get_points(d):
-        commands = path.parseString(d)
-        points = []
-        currentset = None
-        for command in commands:
-            if command[0] == 'M' or command[0] =='m':
-                currentset = []
-                points.append(currentset)
-                currentset.append(command[1][-1])
-            elif command[0] == 'L' or command[0] =='l':
-                currentset.extend(command[1])
-            elif command[0] == 'C' or command[0] =='c':
-                currentset.extend(command[1])
-        return points  
-            
-    def svg_parser(self,file,**kwargs):
+    def svg_parser(self,infile,outfile,**kwargs):
 
         x = kwargs.get('x',None)
         y = kwargs.get('y',None)
         groups = kwargs.get('groups',None)
 
-        svg_file = xml.dom.minidom.parse(file)
+        svg_file = xml.dom.minidom.parse(infile)
         svg = svg_file.getElementsByTagName('svg')[0]
         svg_viewbox = svg.getAttribute('viewBox').split()
         svg_width = svg_viewbox[2]
@@ -131,13 +120,13 @@ class Image_Data:
                                 paths = []
                                 for path in svgpaths:
                                     if path.nodeName == 'path':
-                                        points = self.get_points(path.getAttribute('d'))
+                                        points = get_points(path.getAttribute('d'))
                                         for pointset in points:
                                             paths.append([clipPathID, pointset])
                                             pointset_count += 1
                                 parsed_groups[clipPathID] = paths
             else:
-                points = self.get_points(e.getAttribute('d'))
+                points = get_points(e.getAttribute('d'))
                 for pointset in points:
                     paths.append([e.getAttribute('ID'), pointset])
             if e.hasAttribute('transform'):
@@ -169,16 +158,17 @@ class Image_Data:
                     for i in parsed_groups[pathname][0][1]:
                         groups[gid].append(i)
 
-                    if e.childNodes[1].hasAttribute("height"):
-                        lenth = int(e.childNodes[1].getAttribute("height"))
-                        cx = int(e.childNodes[1].getAttribute("x")) + lenth/2
-                        cy = int(e.childNodes[1].getAttribute("y")) + lenth/2
-                        groups[gid].append((cx,cy))
-                        groups[gid].append(lenth)
-                cx = 0
-                cy = 0
-                lenth = 0
-                if data_type == 'Linkage':
+                    for ch in e.childNodes:
+                        if hasattr(ch,'hasAttribute') and ch.hasAttribute("height"):
+                            length = int(ch.getAttribute("height"))
+                            assert length == int(ch.getAttribute("width"))
+                            cx = int(ch.getAttribute("x")) + length/2
+                            cy = int(ch.getAttribute("y")) + length/2
+                            groups[gid].append((cx,cy))
+                            groups[gid].append(length)
+                            break
+
+                elif data_type == 'Linkage':
                     gid = e.getAttribute("ID")     
                     groups[gid] = []
 
@@ -199,17 +189,13 @@ class Image_Data:
                 out.append(tmp[:-1])
         out.sort()   
 
-        file_path = file.replace('.svg', '_map.txt')  
-
-        with open(file_path, 'w') as outfile:
-            outfile.write('\n'.join(out))
+        with open(outfile, 'w') as of:
+            of.write('\n'.join(out))
 
 
 
-    def svg_to_png(self,file):
-        outfile = file.rsplit('.',1)[0] + '.png'
-        svg2png(file_obj=open(file, "rb"), write_to=outfile)
-
+    def svg_to_png(self,infile,outfile):
+        svg2png(file_obj=open(infile, "rb"), write_to=outfile)
     
     def random_colors(self,image_file):
         # use heuristic mono finding colour ranges to make ranges of blue/green/red/etc

@@ -34,11 +34,9 @@ parser.add_argument(
 # optional argument
 parser.add_argument(
     '-p',
-    nargs = '?', # makes the argument optional
-    const = True, # value if the flag is provided without a value
-    type = str,
-    default = False,
-    help = "Enables Parallel Processing"
+    type = int,
+    default = 1,
+    help = "Enables Parallel Processing with <n> CPUs"
 )
 
 # optional argument

@@ -610,6 +610,7 @@ class Worker:
     def worker(self):
         batch_results = []  # Collect results in a batch
         batch_size = 10 # set this appropriately
+        cv2.setNumThreads(1)
 
         try:
             while True:
@@ -749,7 +750,7 @@ class Evaluator:
         self.predictors = predictors
 
         self.semantics = kwargs.get('semantics',False)
-        self.parallel_process = kwargs.get('parallel', True)
+        self.parallel_process = kwargs.get('parallel', 1)
 
         if self.semantics:
             self.evaluation_method = Worker.semantic_eval
@@ -802,7 +803,7 @@ class Evaluator:
         start_time = time.time()
 
         # Serial Processing
-        if not self.parallel_process:
+        if self.parallel_process <= 1:
             cv2.setNumThreads(1)    # uncommenting this will disable cv2 multi core processing
             loaded_pipeline = None
             end_known_step = None
@@ -831,10 +832,8 @@ class Evaluator:
                         
         # Parallel processing  
         else:
-            ncpus = multiprocessing.cpu_count()
-            if ncpus > 4:
-                ncpus = 4
-                
+            ncpus = self.parallel_process
+
             # print("No of CPUS:",ncpus)
             batch_size = len(image_data.images)//ncpus
 
@@ -897,7 +896,7 @@ class Evaluator:
         Evaluator.plotprecisionrecall(final_structure, self.evaluation_method.__name__)
 
         execution_time = end_time - start_time
-        print(f"\nExecution Time in {'Parallel' if self.parallel_process else 'Serial'} mode: {execution_time} seconds")
+        print(f"\nExecution Time in {'Parallel' if self.parallel_process > 1 else 'Serial'} mode: {execution_time} seconds")
 
 
 
