@@ -6,6 +6,7 @@ from cairosvg import svg2png
 import cv2
 import numpy as np
 import random
+import traceback
 from . svg_parse_path import get_points
 
 class Image_Manager:
@@ -27,7 +28,7 @@ class Image_Manager:
             for image_file in os.scandir(glycan_folder):
                 if image_file.is_file() and self.match_glob(image_file):
                     images.append(image_file.path)
-        return images
+        return sorted(images)
 
     def match_glob(self,image_file):
         return any(image_file.name.endswith(ext) for ext in self.glob)
@@ -35,6 +36,9 @@ class Image_Manager:
 
 
 class Image_Data:
+
+    def __init__(self,valid_monos):
+        self.valid_monos = set(valid_monos)
 
     color_range_dict = {
         "black_lower" : np.array([0,0,0]),
@@ -141,18 +145,25 @@ class Image_Data:
         for e in elements:
             if e.hasAttribute('ID'):
                 data_type = e.getAttribute("data.type")
+                gid = e.getAttribute("ID")
                 if data_type == 'Monosaccharide':
-                    gid = e.getAttribute("ID")
                     name = e.getAttribute("data.residueName") 
+                    if name not in self.valid_monos:
+                        raise ValueError("SVG Parser: %s not a valid mono name"%(name,))
 
-                    first_child = e.firstChild
-                    while first_child and first_child.nodeType == first_child.TEXT_NODE:
-                        first_child = first_child.nextSibling
+                    stylestring = None
+                    for ch in e.childNodes:
+                        if not hasattr(ch,'getAttribute'):
+                            continue
+                        stylestring = ch.getAttribute("style")
+                        if 'clip-path:url' not in stylestring:
+                            continue
+                        break
+                    if stylestring is None:
+                        continue
 
-                    stylestring = first_child.getAttribute("style")
-                    stylestring = stylestring.split("(")[1]
-                    stylestring = stylestring.split(")")[0]
-                    pathname = stylestring.strip("#")
+                    stylestring = stylestring.split("clip-path:url(#",1)[1]
+                    pathname = stylestring.split(")",1)[0]
                     groups[gid] = []           
                     groups[gid].append(str(name))
                     for i in parsed_groups[pathname][0][1]:
@@ -172,27 +183,45 @@ class Image_Data:
                     gid = e.getAttribute("ID")     
                     groups[gid] = []
 
+                elif gid == "r-1:1": # reducing-end squiggle
+                    for ch in e.childNodes:
+                        if hasattr(ch,'hasAttribute') and ch.hasAttribute("d"):
+                            points = get_points(ch.getAttribute('d'))
+                            groups[gid] = [ "~" ] + points[0]
+
+                # elif gid == "l-1:1,2": # reducing-end squiggle link
+                #      groups[gid] = []
+
         out = []
 
         for g in groups:
             if g[0] == 'l':
                 t = g.split(':')[1].split(',')
-                out.append('l\t'+t[0]+'\t'+t[1])
+                out.append(['l',t[0],t[1]])
             if g[0] == 'r':
-                tmp = 'm\t'+g.split(':')[-1]+'\t'
+                i = g.split(':')[-1]
+                tmp = ['m',i]
+                if groups[g][0] == "~":
+                    tmp[0] = 'r'
                 for p in groups[g]:
                     if type(p) == tuple:
-                        tmp += str(int(p[0]*width_ratio)) +',' + str(int(p[1]*height_ratio))+'\t'
+                        tmp.append(str(int(p[0]*width_ratio)) +',' + str(int(p[1]*height_ratio)))
                     else:
-                        tmp += str(p) + '\t'
+                        tmp.append(str(p))
+                out.append(tmp)
 
-                out.append(tmp[:-1])
-        out.sort()   
+        labelorder = dict(r=0,m=1,l=2)
+        def sortkey(l):
+            try:
+                intval = int(l[2])
+            except ValueError:
+                intval = l[2]
+            return labelorder[l[0]],int(l[1]),intval
+
+        out.sort(key=sortkey)   
 
         with open(outfile, 'w') as of:
-            of.write('\n'.join(out))
-
-
+            of.write('\n'.join([ "\t".join(line) for line in out]))
 
     def svg_to_png(self,infile,outfile):
         svg2png(file_obj=open(infile, "rb"), write_to=outfile)

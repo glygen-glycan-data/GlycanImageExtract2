@@ -153,3 +153,12 @@ class Config(object):
         if config:
             value = getattr(config,datatype)(key,value)
         return kwargs.get(key,value)
+
+    @staticmethod
+    def get_finder_name(kwargs={}):
+        config = kwargs.get('__config__')
+        if config:
+            finderstring,name = config.section_name.split(":",1)
+            assert finderstring == "Finder"
+            return name
+        return None

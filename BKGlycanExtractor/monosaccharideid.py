@@ -19,6 +19,7 @@ from BKGlycanExtractor import MonosCompare, BoxCompare, DebugMode
 class MonoID(object): 
     
     mono_syms = ["GlcNAc","NeuAc","Fuc","Man","GalNAc","Gal","Glc","NeuGc"]
+    finder_class = 'Monosaccharide'
 
     def get_mono_sym(self, index):
         return self.mono_syms[index]
@@ -31,17 +32,16 @@ class MonoID(object):
         self.find_objects(obj)
 
     @staticmethod
-    def box_components(iou):
-        return BoxCompare(iou)
+    def box_components(*args,**kwargs):
+        return BoxCompare(*args,**kwargs)
 
     @staticmethod
-    def semantic_components(proximity):
-        return MonosCompare(proximity)
+    def semantic_components(*args,**kwargs):
+        return MonosCompare(*args,**kwargs)
 
     @staticmethod
     def known_predictor():
         return KnownMono()
-
 
     def crop_largest(self, image):
         img = image
@@ -284,6 +284,7 @@ class YOLOMonos(YOLOModel,MonoID):
             expandimage = Config.get_param('expandimage', Config.INT, kwargs, self.defaults)
         )        
 
+        self.name = Config.get_finder_name(kwargs)
         YOLOModel.__init__(self,params)
         assert self.classes == len(self.mono_syms)
 
@@ -340,7 +341,6 @@ class KnownMono(MonoID):
             obj.add_mono(classid=self.get_mono_index(box.get('symbol')),symbol=box.get('symbol'),box=box,id=box.get('id'))
 
         return obj
-
 
     def find_boxes(self, image_path):
         boxes = []

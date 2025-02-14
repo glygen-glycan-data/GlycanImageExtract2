@@ -1,25 +1,25 @@
+#!.venv/bin/python
 import os
 import sys
 import argparse
 import logging
-from BKGlycanExtractor import Image_Manager, Evaluator, Config_Manager, DebugMode
+from BKGlycanExtractor import Image_Manager, SemanticEvaluator, Config_Manager, DebugMode
  
-
 parser = argparse.ArgumentParser(description="Start")
 
 parser.add_argument(
-    '--pred_finder',
+    '--finders',
     type = str,
     required = True,
     nargs = '+', # allows one or more values
-    help = 'A predictor name is required'
+    help = 'At least one glycan element finder. Required.'
 )
 
 parser.add_argument(
-    '--image_folder',
+    '--images',
     type = str,
     required = True,
-    help = 'Directory path where all png/jpg files are stored (required)'
+    help = 'Directory path where image files are stored. Required.'
 )
 
 # optional argument
@@ -27,19 +27,49 @@ parser.add_argument(
     '--proximity',
     type = float,
     default = 0.25,
-    help = 'Enter a value between 0-1'
+    help = 'Enter a value between 0-1. Default: 0.25.'
 )
 
 # optional argument
 parser.add_argument(
-    '-p',
-    nargs = '?', # makes the argument optional
-    const = True, # value if the flag is provided without a value
-    type = str,
+    '--wholeimage',
+    action = 'store_true',
     default = False,
-    help = "Enables Parallel Processing"
+    help = 'Whole image PR curve'
 )
 
+# optional argument
+parser.add_argument(
+    '--precision',
+    type = int,
+    default = 8,
+    help = "Precision for confidence values. Default: 8."
+)
+
+# optional argument
+parser.add_argument(
+    '--distproc',
+    type=str,
+    default  = "",
+    help = "Enables distributed processing: <n0>,remote1:<n1>,remote2:<n2>. n0 is cpus on host node (optional), ni is cpus on optional remotei node."
+)
+
+# optional argument
+parser.add_argument(
+    '--worker',
+    type=str,
+    default = "",
+    help = "Indicates that script should be run as a worker client for distributed processing: <n>:server. n is cpus, server is the host node."
+)
+
+# optional argument
+parser.add_argument(
+    '-v',
+    '--verbose',
+    action = 'store_true',
+    default = False,
+    help = 'Verbose logging.'
+)
 
 # optional argument
 # parser.add_argument(
@@ -54,9 +84,13 @@ parser.add_argument(
 
 args = parser.parse_args()
 
-pred_finder = args.pred_finder
-image_folder = args.image_folder
-proximity = args.proximity
+assert os.path.isdir(args.images) or args.worker
+
+distproc = None
+if args.worker:
+    distproc = ("worker",args.worker)
+elif args.distproc:
+    distproc = ("manager",args.distproc)
 
 # if args.d:
 #     DebugMode.debug = True
@@ -73,25 +107,22 @@ config = Config_Manager()
 
 # make sure that all predictors belong to the same class
 predictors = {}
-pred_class = None
-
-for pred in pred_finder:
-    current_finder = config.get_finder(pred)
-    current_class = current_finder.__class__.__name__
-
-    if not pred_class:
-        pred_class = current_class
-
-    if pred_class == current_class:
-        predictors[pred] = current_finder
-        # print("current_finder",dir(current_finder))
-    else:
+fclass = None
+for name in args.finders:
+    finder = config.get_finder(name)
+    if fclass is None:
+        fclass = finder.finder_class
+    elif finder.finder_class != fclass:
         sys.exit(
             f"Error: Predictors must belong to the same class. "
-            f"Found conflicting classes: {pred_class} and {current_class}."
+            f"Found conflicting classes: {fclass} and {finder.finder_class}."
         )
+    predictors[name] = finder
 
-
-args = dict(parallel = args.p, proximity=proximity, semantics=True)
-evaluator = Evaluator(predictors, **args)
-evaluator.runall(image_folder)
+evaluator = SemanticEvaluator(predictors,
+                              workers=distproc,
+                              proximity=args.proximity,
+                              whole_image=args.wholeimage,
+                              precision=args.precision,
+                              verbose=args.verbose)
+evaluator.runall(args.images)

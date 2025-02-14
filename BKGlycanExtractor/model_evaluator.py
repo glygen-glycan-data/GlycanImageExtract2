@@ -8,7 +8,7 @@ import re
 import copy
 import cv2
 from collections import defaultdict
-import multiprocessing
+# import multiprocessing
 import sys
 import time
 import queue
@@ -22,22 +22,9 @@ from .build_pipeline import BuildPipeline
 
 from .glycanannotator import Config_Manager
 
+from .distproc import DistributedProcessing
 
 class Utility:
-
-    @staticmethod
-    def floor_precision(value, precision):
-        scale = 10 ** precision
-        return math.floor(value * scale) / scale
-
-
-    def update_metrics(results,threshold, TP, FP, FN):
-        prec_threshold = str(Utility.floor_precision(threshold, 8))
-        results.setdefault((prec_threshold), {"TP": 0, "FP": 0, "FN": 0})
-        results[prec_threshold]["TP"] += TP
-        results[prec_threshold]["FP"] += FP
-        results[prec_threshold]["FN"] += FN
-
 
     @staticmethod
     def build_adjacency_list(mono_semantics):
@@ -58,50 +45,179 @@ class Utility:
 
         return adj
 
+class CompareBase:
+    def __init__(self,precision=8,verbose=False,whole_image=False):
+        self.verbose = verbose
+        self.whole_image = whole_image
+        self.precision = precision
+        self.scale = (10 ** precision)
+        self.scaled_onepluseps = (self.scale+1)
+        while self.float_trunc_conf(self.scaled_onepluseps) <= 1.0:
+            self.scaled_onepluseps += 1
 
-class BoxCompare:
-    def __init__(self, iou):
+    def scaled_trunc_conf(self,value):
+        return int(math.floor(value*self.scale))
+
+    def float_trunc_conf(self,value):
+        return value/self.scale
+
+    def str_trunc_conf(self,value):
+        return "%.*f"%(self.precision,value/self.scale)
+
+    def euclidean_distance(self,box1,box2):
+        bx1_cen_x, bx1_cen_y = box1.center()
+        bx2_cen_x, bx2_cen_y = box2.center()
+        return math.sqrt((bx1_cen_x - bx2_cen_x)**2 + (bx1_cen_y - bx2_cen_y)**2)   
+
+    def proximity(self,known_box,pred_box):
+        distance = self.euclidean_distance(known_box, pred_box)
+        return distance/min(known_box.w, known_box.h)
+
+    def _update_metrics(self,results,confidence,TP,FP,FN):
+        if self.verbose:
+            print(self.str_trunc_conf(confidence),"TP",TP,"FP",FP,"FN",FN,file=sys.stderr)
+        results[confidence] = dict(TP=TP,FP=FP,FN=FN)        
+
+    def update_metrics(self,results,confidence,nTRUE,TP,FP,FN):
+        if self.whole_image:
+            if FP + TP >= nTRUE:
+                if FP == 0:
+                    self._update_metrics(results,confidence,1,0,0)
+                elif TP == nTRUE:
+                    self._update_metrics(results,confidence,1,1,0)
+                else:
+                    self._update_metrics(results,confidence,0,1,0)
+            else:
+                self._update_metrics(results,confidence,0,0,1)
+        else:
+            self._update_metrics(results,confidence,TP,FP,FN)
+
+class BoxCompare(CompareBase):
+    def __init__(self, iou=0.5, **kwargs):
+        super().__init__(**kwargs)
         self.iou = iou
         self.compare_boxes = CompareBoxes(**dict(detection_threshold=self.iou,overlap_threshold=self.iou,containment_threshold=self.iou))
 
-
     def filtered_data(self,pred_boxes,known_boxes):
         edges = []
-        confidence_scores = []
+        confidence_scores = set()
 
         # Compute all potential matches between known and detected boxes using IOU as a constraint
         for dbox_id, dbox in enumerate(pred_boxes):
             matched = False
+            scaled_trunc_conf = self.scaled_trunc_conf(dbox.get('confidence'))
             for tbox_id, tbox in enumerate(known_boxes):
                 computed_iou = self.compare_boxes.iou(tbox, dbox) if self.compare_boxes.have_intersection(tbox, dbox) else 0.0
 
                 if computed_iou >= self.iou:
-                    edges.append(dict(tbox=tbox_id,dbox=dbox_id,iou=computed_iou,conf=Utility.floor_precision(dbox.get('confidence'),8),cls=(tbox.get('classid'),dbox.get('classid'))))
+                    edges.append(dict(tbox=tbox_id,dbox=dbox_id,iou=computed_iou,conf=scaled_trunc_conf,cls=(tbox.get('classid'),dbox.get('classid'))))
             
-            confidence_scores.append(Utility.floor_precision(dbox.get('confidence'),8))
+            confidence_scores.add(scaled_trunc_conf)
 
-        return edges, set(confidence_scores)
+        return edges, confidence_scores
             
-
-
-    def compare(self, pred_boxes, known_boxes, **kwargs):
+    def compare(self, pred_boxes, known_boxes):
 
         results = {}
         edges = []
 
+        # print("iou:",self.iou,file=sys.stderr)
+        # print("whole_image:",self.whole_image,file=sys.stderr)
+        # print("precision:",self.precision,file=sys.stderr)
         edges, confidence_scores = self.filtered_data(pred_boxes,known_boxes)
-
-        
+        ntbox = len(known_boxes)
         for threshold in sorted(confidence_scores):
             TP, FP, FN = 0, 0, 0
 
             matched_gt = set()  # Set of matched ground truth IDs
             matched_pred = set()  # Set of matched predicted box IDs
+            good_pred = set() # Set of detected boxes with acceptable confidence
+            # matching_edges = []
 
             # Greedy matching based on Confidence
-            for item in sorted(edges, key=lambda x: (-x['conf'], -float(x['iou']))):
+            for item in sorted(edges, key=lambda x: (-x['conf'], -x['iou'])):
                 if item['conf'] < threshold:
                     break
+                good_pred.add(item['dbox'])
+                if item['tbox'] in matched_gt:
+                    # if self.verbose:
+                    #     print("runner up edge",item,file=sys.stderr)
+                    continue
+                if item['dbox'] in matched_pred:
+                    continue
+                # if self.verbose:
+                #     print("retained edge",item,file=sys.stderr)
+                matched_gt.add(item['tbox'])
+                matched_pred.add(item['dbox'])
+                # matching_edges.append(item)
+
+                if item['cls'][0] == item['cls'][1]:
+                    TP += 1
+                else:
+                    FP += 1
+                    FN += 1
+
+            FN += ntbox - len(matched_gt)
+            FP += len(good_pred) - len(matched_pred)
+
+            self.update_metrics(results,threshold,ntbox,TP,FP,FN)
+
+        last_threshold = self.scaled_onepluseps
+        self.update_metrics(results,last_threshold,ntbox,0,0,ntbox)
+
+        return results
+
+class MonosCompare(CompareBase):
+
+    def __init__(self, proximity=0.25, **kwargs):
+        super().__init__(**kwargs)
+        self.proximitythr = proximity
+
+    def filtered_data(self,pred_data,known_data):
+        edges = []
+        confidence_scores = set()
+
+        for pred_id, pred_item in enumerate(pred_data.monosaccharides()):
+
+            scaled_trunc_conf = self.scaled_trunc_conf(pred_item['box'].get('confidence'))
+
+            for known_id, known_item in enumerate(known_data.monosaccharides()):
+                proximity = self.proximity(known_item['box'], pred_item['box'])
+
+                if proximity <= self.proximitythr:
+                    edges.append(dict(tbox=known_id,dbox=pred_id,proximity=proximity,conf=scaled_trunc_conf,
+                                      cls=(known_item.get('classid'),pred_item.get('classid'))))
+
+            confidence_scores.add(scaled_trunc_conf)
+
+        return edges, confidence_scores
+
+    def compare(self, pred_data, known_data):
+        results = {}
+        edges = []
+
+        # Figure out later how to do this...
+        #
+        # For Root Compare - if a root is not detected --> it is treated as a FN
+        # if kwargs.get('p_root') and kwargs.get('p_root') == -1:
+        #     FN = 1
+        #     Utility.update_metrics(results,0.0,0,0,FN)
+
+        edges, confidence_scores = self.filtered_data(pred_data,known_data)
+        ntmono = len(known_data.monosaccharides())
+
+        # Iterate over each critical point and filter predictions based on current threshold
+        for threshold in sorted(confidence_scores):
+            TP, FP, FN = 0, 0, 0
+
+            matched_gt = set()  # Set of matched ground truth IDs
+            matched_pred = set()  # Set of matched predicted box IDs
+            good_pred = set()
+
+            for item in sorted(edges,key=lambda x: (-x['conf'], x['proximity'])):
+                if item['conf'] < threshold:
+                    break
+                good_pred.add(item['dbox'])
                 if item['tbox'] in matched_gt:
                     continue
                 if item['dbox'] in matched_pred:
@@ -116,119 +232,22 @@ class BoxCompare:
                     FP += 1
                     FN += 1
 
-            FN += len(known_boxes) - len(matched_gt)
-            FP += len([pred_box for pred_box in pred_boxes if Utility.floor_precision(pred_box.get('confidence'),8) >= threshold]) - len(matched_pred)
+            FN += ntmono - len(matched_gt)
+            FP += len(good_pred) - len(matched_pred)
 
-            Utility.update_metrics(results,threshold,TP,FP,FN)
-            
-        last_threshold = 1.00000001
-        Utility.update_metrics(results,last_threshold,0,0,FN+1)
+            self.update_metrics(results,threshold,ntmono,TP,FP,FN)
 
-        return results
-
-   
-
-
-class MonosCompare:
-
-    def __init__(self, radius_threshold):
-        self.radius_threshold = radius_threshold
-
-
-    def filtered_predictions(self,pred_data,threshold):
-
-        for id, item in pred_data.semantics['monos'].copy().items():
-            # condition to remove data if it is below the threshold
-            if Utility.floor_precision(item['box'].get('confidence'), 8) < threshold:
-                del pred_data.semantics['monos'][id] 
-
-
-    def filtered_data(self,pred_data,known_data):
-        edges = []
-        confidence_scores = []
-
-        for pred_id, pred_item in enumerate(pred_data.monosaccharides()):
-
-            for known_id, known_item in enumerate(known_data.monosaccharides()):
-                distance = Evaluator.euclidean_distance(known_item['box'], pred_item['box'])
-                proximity = self.radius_threshold * min(known_item['box'].w, known_item['box'].h)
-
-                if distance <= proximity:
-                    edges.append(dict(tbox=known_id,dbox=pred_id,distance=distance,conf=Utility.floor_precision(pred_item['box'].get('confidence'),8),cls=(known_item.get('classid'),pred_item.get('classid'))))
-
-            confidence_scores.append(Utility.floor_precision(pred_item['box'].get('confidence'),8))
-
-        return edges, set(confidence_scores)
-
-    def confidence_data(self, pred_data):
-        confidence_scores = [
-            Utility.floor_precision(pred_item['box'].get('confidence'), 8)
-            for pred_item in pred_data.monosaccharides()
-            ]
-
-        return set(confidence_scores)
-
-
-    def compare(self, pred_data, known_data, **kwargs):
-        results = {}
-        edges = []
-
-        whole_glycan = kwargs.get('whole_glycan',False)
-
-        # For Root Compare - if a root is not detected --> it is treated as a FN
-        if kwargs.get('p_root') and kwargs.get('p_root') == -1:
-            FN = 1
-            Utility.update_metrics(results,0.0,0,0,FN)
-
-        else:
-            edges, confidence_scores = self.filtered_data(pred_data,known_data)
-                
-
-            # Iterate over each critical point and filter predictions based on current threshold
-            for threshold in sorted(confidence_scores):
-
-                TP, FP, FN = 0, 0, 0
-
-                matched_gt = set()  # Set of matched ground truth IDs
-                matched_pred = set()  # Set of matched predicted box IDs
-
-
-                for item in sorted(edges,key=lambda x: (-x['conf'], -float(x['distance']))):
-                    if item['conf'] < threshold:
-                        break
-                    if item['tbox'] in matched_gt:
-                        continue
-                    if item['dbox'] in matched_pred:
-                        continue
-
-                    matched_gt.add(item['tbox'])
-                    matched_pred.add(item['dbox'])
-
-                    if item['cls'][0] == item['cls'][1]:
-                        TP += 1
-                    else:
-                        FP += 1
-                        FN += 1
-
-                FN += len(known_data.monosaccharides()) - len(matched_gt)
-                FP += len([item for item in pred_data.monosaccharides() if Utility.floor_precision(item['box'].get('confidence'),8) >= threshold]) - len(matched_pred)
-
-
-                Utility.update_metrics(results,threshold,TP,FP,FN)
-
-                # if DebugMode.debug:
-                #     data = {}
-                #     if len(set(matches)) > 1:
-                #         data['incorrect_confidence'] = [confidence_threshold]
-                #         DebugMode.log_data(DebugMode.curr_image, data)  
+            # if DebugMode.debug:
+            #     data = {}
+            #     if len(set(matches)) > 1:
+            #         data['incorrect_confidence'] = [confidence_threshold]
+            #         DebugMode.log_data(DebugMode.curr_image, data)  
 
         
-        last_threshold = 1.00000001
-        Utility.update_metrics(results,last_threshold,0,0,FN+1)
+        last_threshold = self.scaled_onepluseps
+        self.update_metrics(results,last_threshold,ntmono,0,0,ntmono)
 
         return results
-
-
         
 class RootCompare:
     def __init__(self, radius_threshold):
@@ -596,7 +615,7 @@ class SemanticGlycanCompare:
 
 
 class Worker:
-    def __init__(self, index, tasks, results, predictors, evaluation_method, eval_param):
+    def __init__(self, index, tasks, results, predictors, evaluation_method, eval_params):
         self.index = index
         self.tasks = tasks
         self.results = results  # Queue to send results to the main process
@@ -604,7 +623,7 @@ class Worker:
         self.loaded_pipeline = None
         self.end_known_step = None
         self.evaluation_method = evaluation_method
-        self.eval_param = eval_param
+        self.eval_params = eval_params
 
 
     def worker(self):
@@ -626,13 +645,13 @@ class Worker:
                 try:
                     for image in task:
 
-                        loaded_pipeline, end_known_step, predict = Worker.prediction_compare(
+                        loaded_pipeline, end_known_step, predict, compare_strategy = Worker.prediction_compare(
                             image=image,
                             predictors=self.predictors,
                             loaded_pipeline=self.loaded_pipeline,
                             end_known_step=self.end_known_step,
                             evaluation_method=self.evaluation_method,
-                            eval_param=self.eval_param,
+                            eval_params=self.eval_params,
                             serial=False,
                         )
 
@@ -665,7 +684,7 @@ class Worker:
             compare_strategy = None,
             known_data = None,
             evaluation_method = None,
-            eval_param = None,
+            eval_params = None,
             serial = True,
         ):  
 
@@ -684,13 +703,13 @@ class Worker:
                 figure_semantics = figure_semantics.glycans()[0]
                 
             pred_data, known_data, compare_strategy = evaluation_method(
-                figure_semantics, end_known_step, pred, eval_param, compare_strategy, known_data)
+                figure_semantics, end_known_step, pred, eval_params, compare_strategy, known_data)
 
             results = compare_strategy.compare(pred_data, known_data)
 
             predict[pred_name] = results
 
-        return loaded_pipeline, end_known_step, predict
+        return loaded_pipeline, end_known_step, predict, compare_strategy
 
     
 
@@ -706,7 +725,7 @@ class Worker:
         figure_semantics, 
         end_known_step,
         end_pred_step, 
-        eval_param = 0.5,
+        eval_params = {},
         compare_strategy = None,
         known_data = None
         ):
@@ -714,7 +733,7 @@ class Worker:
         pred_boxes = end_pred_step.find_boxes(figure_semantics.image()) 
 
         if compare_strategy is None:
-            compare_strategy = end_pred_step.box_components(eval_param)
+            compare_strategy = end_pred_step.box_components(**eval_params)
 
         if known_data is None:
             known_data = end_known_step.find_boxes(figure_semantics.image_path())
@@ -727,7 +746,7 @@ class Worker:
         figure_semantics, 
         end_known_step, 
         end_pred_step,
-        eval_param = 0.25,
+        eval_params = {},
         compare_strategy = None,
         known_data = None
         ):
@@ -735,7 +754,7 @@ class Worker:
         pred_data = end_pred_step.find_objects(semantics)
 
         if compare_strategy is None:
-            compare_strategy = end_pred_step.semantic_components(eval_param)
+            compare_strategy = end_pred_step.semantic_components(**eval_params)
 
         if known_data is None:
             known_data = end_known_step.find_objects(figure_semantics)
@@ -746,18 +765,17 @@ class Worker:
         
 class Evaluator:
 
-    def __init__(self, predictors, **kwargs):
+    basepipeline = 'SingleGlycanImage-YOLOFinders'
+
+    def __init__(self, predictors, workers=None, **kwargs):
         self.predictors = predictors
-
-        self.semantics = kwargs.get('semantics',False)
-        self.parallel_process = kwargs.get('parallel', 1)
-
-        if self.semantics:
-            self.evaluation_method = Worker.semantic_eval
-            self.eval_param = kwargs.get('proximity',0.25)
-        else:
-            self.evaluation_method = Worker.box_eval
-            self.eval_param = kwargs.get('iou',0.5)
+        self.workers = workers
+        self.eval_params = kwargs
+        for pred_name in predictors:
+            # doesn't matter which one? Need to fix this stuff...
+            self.loaded_pipeline,self.end_known_step = Worker.build_pipeline(self.basepipeline, pred_name)
+            break
+        pass
 
     @staticmethod
     def check_data_monotonicity(predict, **kwargs):
@@ -791,102 +809,55 @@ class Evaluator:
                 else:
                     print("CONFIDENCE IS NOT ORDERED")
 
+    def process_image(self, image, **kwargs):
+        if self.verbose:
+            procspec = "%(hostname)s:%(worker_index)s"%kwargs
+            print(procspec,"image:",os.path.split(image)[1],file=sys.stderr)
 
+        figure_semantics = self.loaded_pipeline.run(image)
+        glycan_semantics = figure_semantics.glycans()[0]
+        
+        known_data = self.known(glycan_semantics)
+
+        results = {}
+        for pred_name, pred in self.predictors.items():
+            pred_data = self.predictions(pred,glycan_semantics)
+            results[pred_name] = self.compare_strategy.compare(pred_data,known_data)
+        return image,results
 
     def runall(self, image_folder):
+
+        cv2.setNumThreads(1)    # uncommenting this will disable cv2 multi core processing
+
         collected_results = defaultdict(lambda: defaultdict(dict))
-        
-        image_data = Image_Manager(image_folder,pattern="*.png,*.jpg")
 
-        print("\nProcessing the images...")
-        
         start_time = time.time()
-
-        # Serial Processing
-        if self.parallel_process <= 1:
-            cv2.setNumThreads(1)    # uncommenting this will disable cv2 multi core processing
-            loaded_pipeline = None
-            end_known_step = None
-            compare_strategy = None
-
-            for image in image_data:
-                print("\nimage:",image)
-                known_data = None   # reset known_data for each image
-
-                loaded_pipeline, end_known_step, predict =  Worker.prediction_compare(
-                    image = image,
-                    predictors = self.predictors,
-                    loaded_pipeline = loaded_pipeline,    # pass cached pipeline
-                    end_known_step = end_known_step,     # pass cached end step
-                    compare_strategy = compare_strategy,
-                    known_data = known_data,
-                    evaluation_method = self.evaluation_method,
-                    eval_param = self.eval_param,
-                    serial = True,
-                )
-
-                for pred_name, content in predict.items():
+        if self.workers is None: 
+            # serial processing
+            mode = "serial"
+            images = Image_Manager(image_folder,pattern="*.png,*.jpg")
+            for result in DistributedProcessing(target=self.process_image).serial(images):
+                image = result['result'][0]
+                for pred_name, content in result['result'][1].items():
                     collected_results[pred_name][os.path.basename(image)] = content
 
-                Evaluator.check_data_monotonicity(predict)
-                        
-        # Parallel processing  
-        else:
-            ncpus = self.parallel_process
+        elif self.workers[0] == "manager":
+            # manager/server/hostnode
+            mode = "distributed"
+            self.compare_strategy.verbose = False
+            images = [ os.path.abspath(f) for f in Image_Manager(image_folder,pattern="*.png,*.jpg") ]
+            p = DistributedProcessing(target=self.process_image,workerargs=(sys.argv[1:] + ["--worker","%(ncpus)s:%(server)s"])).server()
+            for result in p.execute(images,workers=self.workers[1]):
+                image = result['result'][0]
+                for pred_name, content in result['result'][1].items():
+                    collected_results[pred_name][os.path.basename(image)] = content
 
-            # print("No of CPUS:",ncpus)
-            batch_size = len(image_data.images)//ncpus
-
-            tasks = multiprocessing.Queue()
-            results = multiprocessing.Queue(maxsize=1000)  # Limit size to avoid indefinite blocking
-            procs = []
-
-            # Create workers
-            for i in range(ncpus):
-                worker = Worker(i, tasks, results, self.predictors, self.evaluation_method, self.eval_param)
-                proc = multiprocessing.Process(target=worker.worker)
-                procs.append(proc)
-                proc.start()
-
-
-            images_batch = []
-            for img in image_data:
-                images_batch.append(img)
-
-                if len(images_batch) == batch_size:
-                    tasks.put(list(images_batch))
-                    images_batch = []
-
-            # Pass any remaining images
-            if images_batch:
-                tasks.put(list(images_batch))
-
-            # Signal workers to exit
-            for _ in range(ncpus):
-                tasks.put(None)
-
-            worker_done_count = 0
-            while worker_done_count < ncpus:
-                try:
-                    result = results.get(timeout=5)  # Adjust timeout as needed
-                    if result is None:
-                        worker_done_count += 1  # One worker has finished
-                        print(f"Worker finished. Remaining: {ncpus - worker_done_count}")
-                    else:
-                        # print("\nresult",result)
-                        for image, data in result:
-                            for pred_name, content in data.items():
-                                collected_results[pred_name][os.path.basename(image)] = data[pred_name]
-                except queue.Empty:
-                    # print("Timeout: No results received. Waiting for workers to finish...")
-                    pass
-
-
-            for proc in procs:
-                proc.join(timeout=10)  # Wait for worker to exit
-                if proc.is_alive():
-                    print(f"Worker {proc.pid} did not terminate. Forcing termination.")
-                    proc.terminate()
+        elif self.workers[0] == "worker":
+            # worker
+            self.compare_strategy.verbose = False
+            ncpus,server = self.workers[1].split(':')
+            DistributedProcessing(target=self.process_image,host=server).client(int(ncpus))
+            sys.exit(0)
 
         final_structure = self.process_results(collected_results)        
 
@@ -896,25 +867,22 @@ class Evaluator:
         Evaluator.plotprecisionrecall(final_structure, self.evaluation_method.__name__)
 
         execution_time = end_time - start_time
-        print(f"\nExecution Time in {'Parallel' if self.parallel_process > 1 else 'Serial'} mode: {execution_time} seconds")
+        print(f"\nExecution Time in {mode} mode: {execution_time} seconds")
 
-
-
-    @staticmethod
-    def process_results(collected_results,pipeline_name=None):
+    def process_results(self,collected_results):
         aggregated_results = {}
 
         all_confidences = set()
         for pred_name, data in collected_results.items():
             for image_name, confidence_data in data.items():
-                all_confidences.update(map(float, confidence_data.keys()))
+                all_confidences.update(confidence_data.keys())
 
         sorted_confidences = sorted(all_confidences)
 
         # print("\ncollected_results",collected_results)
         for pred_name in collected_results.keys():
             aggregated_results[pred_name] = {
-                str(conf): {'TP': 0, 'FP': 0, 'FN': 0} for conf in sorted_confidences
+                conf: {'TP': 0, 'FP': 0, 'FN': 0} for conf in sorted_confidences
             }
 
         # aggregated_results = {conf: {'TP': 0, 'FP': 0, 'FN': 0} for conf in sorted_confidences}
@@ -923,20 +891,27 @@ class Evaluator:
             # print("\nconf",conf)
             for pred_name, data in collected_results.items():
                 for image_name, results in data.items():
-                    relevant_confs = [float(c) for c in results.keys() if float(c) >= conf]
+                    relevant_confs = [c for c in results.keys() if c >= conf]
                     if relevant_confs:
                         nearest_conf = min(relevant_confs)
-                        metrics = results[str(nearest_conf)]
+                        metrics = results[nearest_conf]
                         # Aggregate metrics into the corresponding confidence level
-                        aggregated_results[pred_name][str(conf)]['TP'] += metrics['TP']
-                        aggregated_results[pred_name][str(conf)]['FP'] += metrics['FP']
-                        aggregated_results[pred_name][str(conf)]['FN'] += metrics['FN']
+                        aggregated_results[pred_name][conf]['TP'] += metrics['TP']
+                        aggregated_results[pred_name][conf]['FP'] += metrics['FP']
+                        aggregated_results[pred_name][conf]['FN'] += metrics['FN']
                     else:
                         print("NOT RELEVANT")
 
+        for k,v in aggregated_results.items():
+            if self.verbose:
+                print(k,file=sys.stderr)
+            for k1,v1 in v.items():
+                if self.verbose:
+                    print(self.compare_strategy.str_trunc_conf(k1),v1,file=sys.stderr)
+             
         # print("\naggregated_results",aggregated_results)
 
-        Evaluator.check_data_monotonicity(aggregated_results, **dict(sort_data=False))   # aggregated data should already be in sorted format
+        Evaluator.check_data_monotonicity(aggregated_results, sort_data=False)   # aggregated data should already be in sorted format
 
         return aggregated_results
 
@@ -1083,12 +1058,7 @@ class Evaluator:
 
 
 
-    @staticmethod
-    def euclidean_distance(box1,box2):
-        bx1_cen_x, bx1_cen_y = box1.center()
-        bx2_cen_x, bx2_cen_y = box2.center()
-        return math.sqrt((bx1_cen_x - bx2_cen_x)**2 + (bx1_cen_y - bx2_cen_y)**2)   
-
+    
 
     # @staticmethod
     # def critical_value_graph(all_boxes):
@@ -1119,3 +1089,36 @@ class Evaluator:
 
     #     plt.savefig(directory + '/critical_points.png') 
 
+class BoxEvaluator(Evaluator):
+    
+    def __init__(self,*args,**kwargs):
+        super().__init__(*args,**kwargs)
+        for pred_name,pred in self.predictors.items():
+            # only need one, any one with do?
+            self.compare_strategy = pred.box_components(**self.eval_params)
+            break
+        self.verbose = self.compare_strategy.verbose
+        
+    def predictions(self,pred,glycan_semantics):
+        return pred.find_boxes(glycan_semantics.image())
+
+    def known(self,glycan_semantics):
+        return self.end_known_step.find_boxes(glycan_semantics.image_path())
+            
+class SemanticEvaluator(Evaluator):
+    
+    def __init__(self,*args,**kwargs):
+        super().__init__(*args,**kwargs)
+        for pred_name,pred in self.predictors.items():
+            # only need one, any one with do?
+            self.compare_strategy = pred.semantic_components(**self.eval_params)
+            break
+        self.verbose = self.compare_strategy.verbose
+
+    def predictions(self,pred,glycan_semantics):
+        semantics = copy.deepcopy(glycan_semantics)
+        return pred.find_objects(semantics)
+
+    def known(self,glycan_semantics):
+        return self.end_known_step.find_objects(glycan_semantics)
+            

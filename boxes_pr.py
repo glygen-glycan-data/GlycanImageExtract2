@@ -1,25 +1,26 @@
+#!.venv/bin/python
 import os
 import sys
 import argparse
-from BKGlycanExtractor import Image_Manager, Evaluator, Config_Manager, DebugMode
+from BKGlycanExtractor import Image_Manager, BoxEvaluator, Config_Manager, DebugMode
  
 parser = argparse.ArgumentParser(description="Start")
 
 # required argument
 parser.add_argument(
-    '--pred_finder',
+    '--finders',
     type = str,
     required = True,
     nargs = '+', # allows one or more values
-    help = 'A predictor name is required'
+    help = 'At least one glycan element finder. Required.'
 )
 
 # required argument
 parser.add_argument(
-    '--image_folder',
+    '--images',
     type = str,
     required = True,
-    help = 'Directory path where all png/jpg files are stored (required)'
+    help = 'Directory path where image files are stored. Required.'
 )
 
 
@@ -28,15 +29,48 @@ parser.add_argument(
     '--iou',
     type = float,
     default = 0.5,
-    help = 'IOU Threshold value'
+    help = 'IOU Threshold value. Default: 0.5.'
 )
 
 # optional argument
 parser.add_argument(
-    '-p',
+    '--wholeimage',
+    action = 'store_true',
+    default = False,
+    help = 'Whole image PR curve'
+)
+
+# optional argument
+parser.add_argument(
+    '--precision',
     type = int,
-    default = 1,
-    help = "Enables Parallel Processing with <n> CPUs"
+    default = 8,
+    help = "Precision for confidence values. Default: 8."
+)
+
+# optional argument
+parser.add_argument(
+    '--distproc',
+    type=str,
+    default  = "",
+    help = "Enables distributed processing: <n0>,remote1:<n1>,remote2:<n2>. n0 is cpus on host node (optional), ni is cpus on optional remotei node."
+)
+
+# optional argument
+parser.add_argument(
+    '--worker',
+    type=str,
+    default = "",
+    help = "Indicates that script should be run as a worker client for distributed processing: <n>:server. n is cpus, server is the host node."
+)
+
+# optional argument
+parser.add_argument(
+    '-v',
+    '--verbose',
+    action = 'store_true',
+    default = False,
+    help = 'Verbose logging.'
 )
 
 # optional argument
@@ -52,9 +86,13 @@ parser.add_argument(
 
 args = parser.parse_args()
 
-pred_finder = args.pred_finder
-image_folder = args.image_folder
-iou = args.iou
+assert os.path.isdir(args.images) or args.worker
+
+distproc = None
+if args.worker:
+    distproc = ("worker",args.worker)
+elif args.distproc:
+    distproc = ("manager",args.distproc)
 
 # if args.d:
 #     DebugMode.debug = True
@@ -71,24 +109,23 @@ iou = args.iou
 config = Config_Manager()
 
 predictors = {}
-pred_class = None
-for pred in pred_finder:
-    current_finder = config.get_finder(pred)
-    current_class = current_finder.__class__.__name__
-
-    if not pred_class:
-        pred_class = current_class
-
-    if pred_class == current_class:
-        predictors[pred] = current_finder
-    else:
+fclass = None
+for name in args.finders:
+    finder = config.get_finder(name)
+    if not fclass:
+        fclass = finder.finder_class
+    elif fclass != finder.finder_class:
         sys.exit(
             f"Error: Predictors must belong to the same class. "
-            f"Found conflicting classes: {pred_class} and {current_class}."
+            f"Found conflicting classes: {fclass} and {finder.finder_class}."
         )
+    predictors[name] = finder
 
-
-args = dict(parallel = args.p, iou=iou, semantics=False)
-evaluator = Evaluator(predictors, **args)
-evaluator.runall(image_folder)
+evaluator = BoxEvaluator(predictors, 
+                         workers=distproc,
+                         iou=args.iou,
+                         whole_image=args.wholeimage,
+                         precision=args.precision,
+                         verbose=args.verbose)
+evaluator.runall(args.images)
 

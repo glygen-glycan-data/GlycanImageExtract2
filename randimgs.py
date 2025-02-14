@@ -1,7 +1,7 @@
-# #!/bin/env python3.12
+#!.venv/bin/python
 from __future__ import print_function
 
-import sys, os, random, time, re, shutil
+import sys, os, random, time, re, shutil, traceback
 from collections import defaultdict
 import findpygly
 from pygly.GlycanImage import GlycanImage
@@ -22,6 +22,7 @@ parser.add_argument("-c", "--clear", action='store_true', help="Clear output dir
 parser.add_argument("-F", "--force", action='store_true', help="Force re-download of GlyTouCan accessions and sequences", default=False)
 parser.add_argument("-s", "--skip", type=str, help="File of accessions to skip. Default: None.", default=None)
 parser.add_argument("-r", "--random", type=str, help="Randomization mode. One of uniform accessions (uniform), biased accessions (biased), random monosaccharides (mono), random monosaccharides + baised accessions (biasmono). Default: uniform.", default="uniform")
+parser.add_argument("-A", "--accessions", type=str, help="Limit to specific accessions by regular expression or prefix. Default: No restriction.", default=None)
 
 args = parser.parse_args()
 imagenum = args.nimages
@@ -29,6 +30,14 @@ mode = "svg"
 cachemode = 'c'
 if args.force:
     cachemode = 'n'
+accregex = None
+if args.accessions:
+    accregex = args.accessions
+    if not accregex.startswith('^'):
+        accregex = "^"+accregex
+    if not accregex.endswith('$'):
+        accregex = accregex+".*$"
+    accregex = re.compile(args.accessions)
 assert mode in ("png","svg")
 output_folder = args.outdir
 if output_folder:
@@ -88,6 +97,10 @@ accs = list(filter(lambda acc: acc not in archived,gtc.allaccessions()))
 dummy = gtc.getseq('G00912UN','wurcs')
 print("GlyTouCan accessions complete. (%s secs.)"%(time.time()-start,),file=sys.stderr)
 
+if accregex:
+    accs = list(filter(lambda acc: accregex.search(acc),accs))
+    imagenum = min(imagenum,len(accs))
+
 # accessions your model was trained on, to avoid testing on them
 if badaccfile is not None:
     trained_accessions = set()
@@ -99,8 +112,9 @@ monofreq = Composition()
 monofreq.set(*valid_monos,value=1)
 monofreq['Count'] = len(valid_monos)
 
-imageData = Image_Data()
+imageData = Image_Data(valid_monos)
 
+outputcount = 0
 seen = set()
 for j in range(iterations):
     imageWriter = GlycanImage()
@@ -115,12 +129,16 @@ for j in range(iterations):
     # imageWriter.verbose(True)
 
     count = 0
-    while count < batch:
+    while count < batch and len(accs) > len(seen):
         acc = random.choice(accs)
         if acc in seen:
             continue
+        # print("random choice:",acc,file=sys.stderr)
         seen.add(acc)
-        outfile = os.path.join(output_folder, acc + "." + mode)
+        acc1 = acc
+        if 'mono' in randmode:
+            acc1 = "R%07d"%(outputcount + 1,)
+        outfile = os.path.join(output_folder, acc1 + "." + mode)
         if os.path.exists(outfile):
             continue
         seq = gtc.getseq(acc,format='wurcs')
@@ -189,14 +207,30 @@ for j in range(iterations):
                 # print()
                 continue
 
-        monofreq.add(comp)
-        print(acc,file=sys.stderr)
         imageWriter.writeImage(seq,outfile)
-        mapfile = imageData.generate_image(outfile)
+        try:
+            mapfile = imageData.generate_image(outfile)
+        except ValueError:
+            os.unlink(outfile)
+            continue
         h = open(mapfile)
         mapfiledata = h.read()
         h.close()
+        comp1 = Composition()
+        for l in mapfiledata.splitlines():
+            sl = l.split()
+            comp1[sl[2]] += 1
+        bad = False
+        for m in valid_monos:
+            if comp1[m] != comp[m]:
+                bad = True
+        if bad:
+            os.unlink(outfile)
+            os.unlink(mapfile)
+            continue
         wh = open(mapfile,'w')
+        if acc1 != acc:
+            print("# orig_accession:",acc,file=wh)
         for k in ('scale','reducing_end','orientation','notation','display','opaque'):
             print("# "+k+":",imageWriter.get(k),file=wh)
         print("# composition:",comp,file=wh)
@@ -206,7 +240,10 @@ for j in range(iterations):
         print("# topo:",topo_iupac,file=wh)
         wh.write(mapfiledata)
         wh.close()
+        print(acc1,file=sys.stderr)
+        monofreq.add(comp)
         os.unlink(outfile)
         count += 1
+        outputcount += 1
 
 print(monofreq)
