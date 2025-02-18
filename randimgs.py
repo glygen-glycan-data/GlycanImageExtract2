@@ -16,6 +16,7 @@ import argparse
 
 parser = argparse.ArgumentParser(description="Randomized glycan image generation")
 parser.add_argument("-n", "--nimages", type=int, help="Number of images. Default: 100.", default=100)
+parser.add_argument("-B", "--batchsize", type=int, help="Number of images with each randomly selected set of options. Default: 10.", default=10)
 # parser.add_argument("-f", "--format", type=str, help="Image format. One of \"png\" or \"svg\". Default: png.", default='png')
 parser.add_argument("-o", "--outdir", type=str, help="Ouput directory. Default: current directory.", default=None)
 parser.add_argument("-c", "--clear", action='store_true', help="Clear output directory first.", default=False)
@@ -56,7 +57,7 @@ assert randmode in ("uniform","biased","mono","biasmono")
 
 print("Start randimg...")
 
-batch = 10
+batch = args.batchsize
 iterations = imagenum//batch
 scale_options = [ 0.5, 1.0, 2.0, 4.0, ]
 redend_options = [ True, False ]
