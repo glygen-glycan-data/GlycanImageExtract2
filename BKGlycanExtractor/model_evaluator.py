@@ -492,7 +492,7 @@ class SemanticGlycanCompare:
 
 
         end_time = time.time()
-        Evaluator.plotprecisionrecall(observations, 'Whole_Glycan', **dict(sort_results=False))
+        self.plotprecisionrecall(observations, 'Whole_Glycan', **dict(sort_results=False))
 
         execution_time = end_time - start_time
         print(f"\nExecution Time {execution_time} seconds")
@@ -864,7 +864,7 @@ class Evaluator:
         end_time = time.time()
         
         # Plotting the results
-        Evaluator.plotprecisionrecall(final_structure, self.evaluation_method.__name__)
+        self.plotprecisionrecall(final_structure)
 
         execution_time = end_time - start_time
         print(f"\nExecution Time in {mode} mode: {execution_time} seconds")
@@ -916,8 +916,8 @@ class Evaluator:
         return aggregated_results
 
 
-    @staticmethod
-    def plotprecisionrecall(observations, evaluator_type, **kwargs):
+    def plotprecisionrecall(self, observations, **kwargs):
+        # title, other plot keywords?
 
         sort_results = kwargs.get('sort_results', True)
 
@@ -1019,7 +1019,7 @@ class Evaluator:
 
         # Plot figure 1
         plt.figure(1)
-        plt.title(f'{evaluator_type} PR Curve')
+        plt.title(f'{self.evaluator_type} PR Curve')
         plt.ylabel('Precision')
         plt.xlabel('Recall')
         plt.xlim([0.0, 1.1])
@@ -1030,7 +1030,7 @@ class Evaluator:
 
         # Zoomed-in graph (figure 2)
         plt.figure(2)
-        plt.title(f'{evaluator_type} Precision-Recall Curve')
+        plt.title(f'{self.evaluator_type} Precision-Recall Curve')
         plt.ylabel('Precision')
         plt.xlabel('Recall')
         plt.xlim([0.5, 1.1])
@@ -1043,15 +1043,15 @@ class Evaluator:
         pr_zoom = plt.figure(2)
 
         files = os.listdir(directory)
-        pattern = re.compile(rf"{re.escape(evaluator_type)}(\d+)\.png")
+        pattern = re.compile(rf"{re.escape(self.evaluator_type)}(\d+)\.png")
 
         numbers = [int(match.group(1)) for file in files if (match := pattern.search(file))]
 
         plot_no1 = max(numbers, default=0) + 1
         plot_no2 = plot_no1 + 1
 
-        pr.savefig(directory + '/' + evaluator_type + str(plot_no1) + '.png')
-        pr_zoom.savefig(directory + '/' + evaluator_type + str(plot_no2) + '.png')
+        pr.savefig(directory + '/' + self.evaluator_type + str(plot_no1) + '.png')
+        pr_zoom.savefig(directory + '/' + self.evaluator_type + str(plot_no2) + '.png')
 
         
         return pr, pr_zoom
@@ -1090,6 +1090,8 @@ class Evaluator:
     #     plt.savefig(directory + '/critical_points.png') 
 
 class BoxEvaluator(Evaluator):
+
+    evaluator_type = "box_eval"
     
     def __init__(self,*args,**kwargs):
         super().__init__(*args,**kwargs)
@@ -1107,6 +1109,8 @@ class BoxEvaluator(Evaluator):
             
 class SemanticEvaluator(Evaluator):
     
+    evaluator_type = "semantic_eval"
+
     def __init__(self,*args,**kwargs):
         super().__init__(*args,**kwargs)
         for pred_name,pred in self.predictors.items():
