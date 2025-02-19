@@ -199,7 +199,7 @@ def countcolors(img_file):
     #read color range in config folder
     final = img_file.copy()
     d = {}
-    color_range_file = open("configs\colors_range.txt")
+    color_range_file = open("config\colors_range.txt")
     color_range_dict={}
     for line in color_range_file.readlines():
         line=line.strip()

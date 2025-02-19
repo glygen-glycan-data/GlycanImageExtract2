@@ -19,30 +19,37 @@ from . semantics import Figure_Semantics, Glycan_Semantics
 
 class GlycanExtractorPipeline():
     
-    pipeline_stages = ['figure','glycan']
+    pipeline_stages = ['figure','glycan', 'clean']
 
     defaults = {
         'figure_steps': [],
-        'glycan_steps': []
+        'glycan_steps': [],
+        'clean_steps': []
     }
 
     def __init__(self,**kwargs):
         self.steps = {}
         for stage in self.pipeline_stages:
-            self.steps[stage] = Config.get_param(stage+'_steps', Config.STEPS, kwargs, self.defaults)
+            if stage == 'clean':
+                data = Config.get_param(stage+'_steps', Config.IMAGE_STEPS, kwargs, self.defaults) 
+                if data:
+                    self.steps[stage] = data
+            else:
+                self.steps[stage] = Config.get_param(stage+'_steps', Config.STEPS, kwargs, self.defaults)
+
 
     # step should be a finder instance
     def add_step(self,stage,step):
-        assert stage in ("figure","glycan"), "Bad stage specification: "+stage
+        assert stage in ("figure","glycan","clean_image"), "Bad stage specification: "+stage
         self.steps[stage].append(step)
             
     def get_steps(self,stage):
-        assert stage in ("figure","glycan"), "Bad stage specification: "+stage
+        assert stage in ("figure","glycan","clean_image"), "Bad stage specification: "+stage
         return self.steps[stage]
             
     # steps should be a list of finder instances, shallow copy!
     def set_steps(self,stage,steps):
-        assert stage in ("figure","glycan"), "Bad stage specification: "+stage
+        assert stage in ("figure","glycan","clean_image"), "Bad stage specification: "+stage
         self.steps[stage] = list(steps)
 
     # Shallow clone, finders should be stateless
@@ -98,6 +105,14 @@ class Config_Manager(object):
             # For DefaultOrientationRootFinder - it doesn't take any configs
             return findercls()
 
+    def get_image_finder(self, finder_name):
+        res = {}
+        conf = self.get_config("Image:" + finder_name)
+        res['crop_image'] = conf.get_bool('crop_image', False)
+        res['clean_image'] = conf.get_bool('clean_image', False)
+
+        return res
+
 
 class Config(object):
     def __init__(self,config_manager,section_name):
@@ -112,11 +127,26 @@ class Config(object):
         # Retrieve string value for key from the relevant section
         return self.config_manager.get(self.section_name,key,default).strip()
 
+    def step_names(self,key,default=None):
+        if self.has(key):
+            steps = [ s.strip() for s in self.get(key).split(',') ]
+            return steps
+        return default
+
     def get_steps(self,key,default=None):
         if self.has(key):
             steps = [ s.strip() for s in self.get(key).split(',') ]
+            other_steps = [ self.config_manager.get_finder(name) for name in steps ]
             return [ self.config_manager.get_finder(name) for name in steps ]
         return default
+
+    def get_image_steps(self,key,default=None):
+        if self.has(key):
+            name = self.get(key).strip()
+            step = self.config_manager.get_image_finder(name)
+            return step
+        return default
+
 
     def get_int(self,key,default=None):
         if self.has(key):
@@ -145,6 +175,7 @@ class Config(object):
     INT = 'get_int'
     FLOAT = 'get_float'
     STEPS = 'get_steps'
+    IMAGE_STEPS = 'get_image_steps'
 
     @staticmethod
     def get_param(key,datatype,kwargs={},defaults={}):

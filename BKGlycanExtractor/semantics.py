@@ -4,7 +4,8 @@ import numpy as np
 import json
 import copy
 import random
-from collections import defaultdict
+import math
+from collections import defaultdict, deque
 
 # Base class for any thing (figure, glycan) which has an image with width and height
 class Image_Semantics:
@@ -21,6 +22,9 @@ class Image_Semantics:
 
     def image(self):
         return self.semantics['image']
+
+    def set_image(self, image):
+        self.semantics['image'] = image
 
     def width(self):
         return self.semantics['width']
@@ -109,14 +113,16 @@ class Figure_Semantics(Image_Semantics):
         cv2.putText(image,org=(x1,y1),fontFace=cv2.FONT_HERSHEY_COMPLEX_SMALL,text=text, fontScale=0.5,thickness=1,color=color)
 
 
-    def label_image(self,image,name='default'):
+    def label_image(self,image,name='default',**kwargs):
+
+        idx = kwargs.get('idx',0)
         assert image is not None
 
-        directory = os.getcwd() + '/annotated_images/'
+        directory = os.getcwd() + '/wrong_IUPAC_str/'
         if not os.path.exists(directory):
             os.makedirs(directory)
 
-        glycan = self.semantics['glycans'][0]
+        glycan = self.semantics['glycans'][idx]
 
         # glycan annotation
         x1,y1,x2,y2 = glycan.glycan_box().corners()
@@ -128,7 +134,7 @@ class Figure_Semantics(Image_Semantics):
             x1,y1,x2,y2 = mono['box'].corners()
             text = mono.get('symbol','') + str(mono.get('id'))
             text = str(mono.get('classid')) + '-' + str(mono.get('id'))
-            # text = str(mono.get('id'))
+            text = str(mono.get('id'))
 
             # links
             if len(mono['links']) > 0:
@@ -147,13 +153,13 @@ class Figure_Semantics(Image_Semantics):
                     x_min, x_max = min(x_coords), max(x_coords)
                     y_min, y_max = min(y_coords), max(y_coords) 
 
-                    self.annotate(image,x_min,y_min,x_max,y_max,color=(255, 255, 0),thickness=1)
+                    # self.annotate(image,x_min,y_min,x_max,y_max,color=(255, 255, 0),thickness=1)
             
             color = (128, 0, 128) # purple for monos
             if mono['id'] == root_id:
                 color = (0,0,255) # red for root  
 
-            self.annotate(image,x1,y1,x2,y2,text=text,color=color,thickness=1)   
+            # self.annotate(image,x1,y1,x2,y2,text=text,color=color,thickness=1)   
         cv2.imwrite(directory + name + '.png', image)
         return image
 
@@ -196,8 +202,10 @@ class Glycan_Semantics(Image_Semantics):
             boxes.append(mono['box'])
         return boxes
 
-    def add_root(self,root_id=None):
+    def add_root(self,root_id=None,confidence=None):
         self.semantics['root'] = root_id 
+        self.semantics['root_confidence'] = float(confidence) if confidence is not None else 0.0
+
 
     def root(self):
         return self.semantics.get('root',None)
@@ -226,6 +234,55 @@ class Glycan_Semantics(Image_Semantics):
 
     #     return json.dumps(data,indent=2,sort_keys=True)
 
+    def glycan_orientation(self):
+        # print("Orientation",self.semantics['root'])
+
+        root_id = self.semantics['root']
+
+        if root_id == -1:
+            return "RL"
+
+        # determine the position of the next connected element from the root
+        # do not take fucose into account
+        # depending on which side the the next element is - that will be the orientation
+
+        try:
+            root_mono = self.semantics['monos'][root_id]
+            root_box = root_mono.get('box')
+
+            root_link_ids = root_mono['links']
+
+            for link_id, confidence in root_link_ids:
+                linked_mono = self.semantics['monos'][link_id]
+
+                sym = linked_mono.get("symbol")
+
+                if sym == 'Fuc':
+                    continue
+
+                linked_mono_box = linked_mono.get('box')
+
+
+            r_x, r_y = root_box.center()
+            l_x, l_y = linked_mono_box.center()
+
+
+            dx = l_x - r_x  # Difference in X
+            dy = l_y - r_y  # Difference in Y
+
+            if abs(dx) > abs(dy):  # If movement in X is more dominant
+                if dx > 0:
+                    return "LR"  # Moving right
+                else:
+                    return "RL"  # Moving left
+            else:  # If movement in Y is more dominant
+                if dy > 0:
+                    return "TB"  # Moving downward
+                else:
+                    return "BT"  # Moving upward
+        except:
+            return "RL"
+
 
     def tojson(self):
         data = {}
@@ -241,8 +298,12 @@ class Glycan_Semantics(Image_Semantics):
             for k, v in mono.items():
                 if k not in ('image', 'box', 'links'):
                     monodict[k] = v
-                elif k == 'links' and len(v) > 0:
+                elif k == 'links':
                     monodict[k] = [item if isinstance(item, int) else item[0] for item in v]
+                    monodict['links_confidence'] = [None if isinstance(item, int) else float(item[1]) for item in v]
+
+                if k == 'box':
+                    monodict['mono_confidence'] = float(v.get('confidence',0.0))
             data['monos'].append(monodict)
         
         return json.dumps(data, indent=2, sort_keys=True)
@@ -264,6 +325,53 @@ class Glycan_Semantics(Image_Semantics):
 
     mono_syms = ["GlcNAc","NeuAc","Fuc","Man","GalNAc","Gal","Glc","NeuGc"]
     
+    # remove
+    @staticmethod
+    def all_monos_reachable(data):
+        links_adj = Glycan_Semantics.build_adjacency_list(data)
+        visited = set()
+        source = next(iter(links_adj))
+        Glycan_Semantics.DFS(links_adj,visited,-1,source)
+        return len(visited)
+
+
+    # returns true if there is a cycle else false
+    @staticmethod
+    def DFS(adj, visited, parent, u):
+        visited.add(u)
+
+        for v in adj[u]:
+            if v == parent:
+                continue
+            elif v in visited:
+                return True
+            
+            elif Glycan_Semantics.DFS(adj, visited, u, v):
+                return True
+
+        return False
+
+    @staticmethod
+    def link_count(data):
+
+        links_adj = Glycan_Semantics.build_adjacency_list(data, cleaned=True)
+
+        # no. of links = no. of monos - 1
+        # num_links = []
+        num_links = 0
+        monos_collections = set()
+
+        # links_adj = Utility.build_adjacency_list(pred_data)
+        for box_id, linked_id in links_adj.items():
+            for link_id in linked_id:
+                monos_collections.add(box_id)
+                monos_collections.add(link_id)
+
+                num_links += 1
+
+        return int(num_links/2), tuple(sorted(monos_collections))      # because the links are bi-directional, every link is counted twice
+
+    
     @staticmethod
     def compstr(monosaccharides):
         comp = Glycan_Semantics.composition(monosaccharides)
@@ -274,21 +382,24 @@ class Glycan_Semantics(Image_Semantics):
         return retval
 
     @staticmethod
-    def IUPAC(monosaccharides, root_id):
+    def IUPAC(mono_data):
         iupac = []
-        # root_id = monosaccharides['root']
 
-        if root_id == -1:
+        root_id = mono_data.root()
+
+        if not root_id or root_id == -1:
             return None
 
-        # root_mono = self.monosaccharide(root_id)
+        adj = Glycan_Semantics.build_adjacency_list(mono_data, cleaned=True)
 
-        adj = Glycan_Semantics.build_adjecency_list(monosaccharides)
+        other_adj = Glycan_Semantics.build_adjacency_list(mono_data, cleaned=True)
 
         visited = set()
         ans = []
-                
-        Glycan_Semantics.DFS(iupac,adj,visited,-1,root_id,monosaccharides)
+
+        monos = mono_data.semantics['monos']
+        ans = Glycan_Semantics.generate_iupac(iupac, adj, visited, -1, root_id, monos)
+       
         iupac = iupac[::-1] # IUPAC sequence are read in reverse order
         return ''.join(iupac)
 
@@ -308,10 +419,60 @@ class Glycan_Semantics(Image_Semantics):
             adj[mono.get('id')] = filtered_links
         return adj
 
-    @staticmethod
-    def DFS(iupac, adj, visited, parent, u, monosaccharides):
-        visited.add(monosaccharides[u].get('id'))
 
+    @staticmethod
+    def floor_precision(value, precision):
+        scale = 10 ** precision
+        return math.floor(value * scale) / scale
+
+
+    @staticmethod
+    def build_adjacency_list(data, cleaned=False):
+        # adj = {}
+        monos = data.semantics['monos']
+
+        adj = defaultdict(list)
+        for id, mono_data in monos.items():
+            # links = mono.get('links')
+            # Process links to keep only integer IDs
+            filtered_links = []
+            for link_data in mono_data.get('links'):
+                if isinstance(link_data, list):  # Handle case with confidence value - for pred data case
+                    linked_id, conf = link_data
+                    # filtered_links.append(link[0])
+                    try:
+                        adj[mono_data['box']].append([monos[linked_id]['box'], Glycan_Semantics.floor_precision(conf,8)])
+                    except KeyError as k:
+                        print("Key doesnt exist:", k)
+                else:  # Handle case without confidence - for known data case
+                    linked_id = link_data
+                    adj[mono_data['box']].append(monos[linked_id]['box'])
+
+        if cleaned:
+            return Glycan_Semantics.adjacenecy_list_cleaned(adj)
+
+        return adj
+
+    @staticmethod
+    def adjacenecy_list_cleaned(adj):
+
+        cleaned_adj = {}
+
+        for key, vals in adj.items():
+            try:
+                linked_ids = [linked_box.get('id') for linked_box in vals]
+            except:
+                linked_ids = [linked_box.get('id') for linked_box, _ in vals]
+
+            cleaned_adj[key.get('id')] = linked_ids
+
+        return cleaned_adj
+
+            
+
+    @staticmethod
+    def generate_iupac(iupac, adj, visited, parent, u, monosaccharides):
+        visited.add(monosaccharides[u].get('id'))
 
         # Get the current node's data
         symbol = monosaccharides[u].get('symbol')
@@ -330,107 +491,23 @@ class Glycan_Semantics(Image_Semantics):
         branch_strings = []
         for v in filtered_adj:
             branch_iupac = []
-            Glycan_Semantics.DFS(branch_iupac, adj, visited, u, v, monosaccharides)  # Recurse for each child
+            Glycan_Semantics.generate_iupac(branch_iupac, adj, visited, u, v, monosaccharides)  # Recurse for each child
             
-            branch_str = ''
-            for i in range(len(branch_iupac)-1,-1,-1):
-                branch_str += branch_iupac[i]
-
-            branch_strings.append(branch_str)  # Collect each branch as a string
+            # Convert the branch into a single string
+            branch_str = ''.join(branch_iupac[::-1])  # Reverse the list and join it into a string
+            branch_strings.append(branch_str)
 
         # Sort branches lexicographically after recursion
         branch_strings.sort()
 
-        # If there are multiple branches, open a parenthesis to indicate a branch
-        if len(branch_strings) > 1:
-            iupac.append(')')
-
-        # Append branches, enclosing only the first branch with parentheses
+        # Handle parentheses for branches based on the rule
         for idx, branch in enumerate(branch_strings):
-            if idx == 0 and len(branch_strings) > 1:
-                iupac.append('(' + branch)  # Close after the first branch
-            else:
+            if idx < len(branch_strings) - 1:  # For all branches except the last
+                iupac.append('(' + branch + ')')
+            else:  # For the last branch
                 iupac.append(branch)
 
-
-
-    
-    # def IUPAC(self):
-    #     iupac = []
-    #     root_id = self.root()
-
-    #     if root_id == -1:
-    #         return None
-
-    #     # root_mono = self.monosaccharide(root_id)
-
-    #     adj = self.build_adjecency_list()
-
-    #     visited = set()
-    #     ans = []
-                
-    #     self.DFS(iupac,adj,visited,-1,root_id)
-    #     iupac = iupac[::-1] # IUPAC sequence are read in reverse order
-    #     return ''.join(iupac)
-
-
-
-    # def build_adjecency_list(self):
-    #     adj = {}
-    #     for mono in self.monosaccharides():
-    #         links = mono.get('links')
-    #         # Process links to keep only integer IDs
-    #         filtered_links = []
-    #         for link in links:
-    #             if isinstance(link, list):  # If link contains a list, extract the first element
-    #                 filtered_links.append(link[0])
-    #             else:  # Otherwise, it’s already an integer
-    #                 filtered_links.append(link)
-    #         adj[mono.get('id')] = filtered_links
-    #     return adj
-
-
-    # def DFS(self, iupac, adj, visited, parent, u):
-    #     visited.add(self.monosaccharide(u).get('id'))
-
-    #     # Get the current node's data
-    #     symbol = self.monosaccharide(u).get('symbol')
-    #     extension = '?1-?' if symbol not in ['NeuAc', 'NeuGc'] else '?2-?'
-    #     data = symbol + extension if parent != -1 else symbol
-
-    #     # Append the current node's data to the result
-    #     iupac.append(data)
-
-    #     # Filter adjacent nodes to only include unvisited ones
-    #     filtered_adj = [v for v in adj[u] if v not in visited]
-
-    #     # Sort the children (branches) lexicographically by their symbol for consistency
-    #     filtered_adj = sorted(filtered_adj, key=lambda x: self.monosaccharide(x).get('symbol'))
-
-    #     branch_strings = []
-    #     for v in filtered_adj:
-    #         branch_iupac = []
-    #         self.DFS(branch_iupac, adj, visited, u, v)  # Recurse for each child
-            
-    #         branch_str = ''
-    #         for i in range(len(branch_iupac)-1,-1,-1):
-    #             branch_str += branch_iupac[i]
-
-    #         branch_strings.append(branch_str)  # Collect each branch as a string
-
-    #     # Sort branches lexicographically after recursion
-    #     branch_strings.sort()
-
-    #     # If there are multiple branches, open a parenthesis to indicate a branch
-    #     if len(branch_strings) > 1:
-    #         iupac.append(')')
-
-    #     # Append branches, enclosing only the first branch with parentheses
-    #     for idx, branch in enumerate(branch_strings):
-    #         if idx == 0 and len(branch_strings) > 1:
-    #             iupac.append('(' + branch)  # Close after the first branch
-    #         else:
-    #             iupac.append(branch)
+        return iupac
 
 
 

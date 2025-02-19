@@ -11,9 +11,9 @@ start() {
         # Construct the command, including --p only if PIPELINE is provided
 		echo "PIPELINE argument: $PIPELINE"
 		if [ -z "$PIPELINE" ]; then
-			nohup .venv/bin/python ${FLASK_APP} > ${SERVICE}.log 2>&1 &
+			nohup .venv2/bin/python ${FLASK_APP} > ${SERVICE}.log 2>&1 &
 		else
-			nohup .venv/bin/python ${FLASK_APP} --p "${PIPELINE}" > ${SERVICE}.log 2>&1 &
+			nohup .venv2/bin/python ${FLASK_APP} --p "${PIPELINE}" > ${SERVICE}.log 2>&1 &
 		fi
 	RETVAL=$?
 	echo "done."

@@ -26,7 +26,7 @@ class YOLOModel:
         weights = config.get("weights",None)
         net = config.get("config",None)
 
-        self.conf_threshold = config.get('threshold')
+        self.conf_threshold = config.get('conf_threshold')
         self.iou_threshold = config.get('iou_threshold')
         self.expandimage = config.get('expandimage',0)
         self.boxpadding = config.get('boxpadding',0)
@@ -98,8 +98,14 @@ class YOLOModel:
 
             if len(confidences) != len(indexes):
                 DebugMode.info = "Runner up boxes were rejected"
+                # print("Log: Runner up boxes were rejected")
 
-            boxes.extend([class_boxes[class_id][i] for i in indexes.flatten()])
+            # flatten - converts a n-Dimensional array into a 1D flat array,
+            # but if no boxes satisfy the threshold NMSBoxes return an empty tuple(()) 
+            try:
+                boxes.extend([class_boxes[class_id][i] for i in indexes.flatten()])
+            except:
+                print("Log: No boxes passed NMS")
 
         return boxes
 

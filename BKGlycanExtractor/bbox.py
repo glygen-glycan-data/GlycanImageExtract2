@@ -87,7 +87,7 @@ class BoundingBox:
         return (int(self.x+self.w/2),int(self.y+self.h/2))
 
     def corners(self):
-        return (self.x,self.y,self.x+self.w,self.y+self.h)
+        return tuple(map(int,(self.x,self.y,self.x+self.w,self.y+self.h)))
 	
     def area(self):
         return (self.w+1) * (self.h+1)
@@ -125,7 +125,7 @@ class BoundingBox:
         return retval
 
     def crop(self,image):
-        (x1, y1, x2, y2) = self.corners()
+        (x1, y1, x2, y2) = map(int, list(self.corners()))
         return image[y1:y2, x1:x2].copy()
 
     def pad(self, padding):

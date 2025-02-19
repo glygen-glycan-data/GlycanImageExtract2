@@ -52,7 +52,7 @@ if args.d:
 print("\nAnnotating using", pipeline_name)
 
 # Converting SVG - to PNG and txt
-Image_Data(glycan_folder)
+# Image_Data(glycan_folder)
 
 images = Image_Manager(glycan_folder,pattern="*.png,*.jpg")
 config = Config_Manager()
@@ -77,27 +77,36 @@ for image in sorted(images):
 
     name = os.path.basename(image).split('.')[0]
     # Annotate Image
-    obj1.label_image(obj1.image().copy(), name = name + '_yolo')
-    obj0.label_image(obj0.image().copy(), name = name + '_known')
+    # obj1.label_image(obj1.image().copy(), name = name + '_yolo')
+    # obj0.label_image(obj0.image().copy(), name = name + '_known')
 
     for gly0,gly1 in zip(obj0.glycans(),obj1.glycans()):
-        # comp0 = gly0.compstr()
-        # comp1 = gly1.compstr()
+        # comp0 = Glycan_Semantics.compstr(gly0)
+        # comp1 = Glycan_Semantics.compstr(gly1)
         # print("known comp",comp0)
         # print("pred comp", comp1)
         # print(image,"GOOD" if comp0 == comp1 else "BAD",comp0,comp1)
 
-        # print("-->",gly0.semantics)
+    # #     # print("-->",gly0.semantics)
         
-        IUPAC0 = Glycan_Semantics.IUPAC(gly0.semantics['monos'], gly0.semantics['root'])
-        IUPAC1 = Glycan_Semantics.IUPAC(gly1.semantics['monos'], gly1.semantics['root'])
+        IUPAC0 = Glycan_Semantics.IUPAC(gly0)
+        IUPAC1 = Glycan_Semantics.IUPAC(gly1)
         
         print("Known IUPAC: ",IUPAC0)
         print("Detected IUPAC: ",IUPAC1 if IUPAC1 else 'No sequence detected')
         print("\nDo the IUPAC sequences match?", IUPAC0==IUPAC1)
 
-        # print("\nSemantics:",gly0.tojson())       
-        # print("\nSemantics:",gly1.tojson())   
+        print("\nSemantics:",gly0.tojson())       
+        print("\nSemantics:",gly1.tojson())   
+
+    # for gly1 in obj1.glycans():
+    #     IUPAC1 = Glycan_Semantics.IUPAC(gly1)
+    #     print("Detected IUPAC: ",IUPAC1 if IUPAC1 else 'No sequence detected')
+
+    #     print("composition",Glycan_Semantics.compstr(gly1.monosaccharides()))
+
+        # print("\nSemantics:",gly1.tojson())  
+
 
 
 

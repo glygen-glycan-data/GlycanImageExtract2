@@ -11,7 +11,7 @@ def loadPDFfile(master):
     master.filename = filedialog.askopenfilename(initialdir="/", title="Select file",
                                                  filetypes=(("PDF files", "*.pdf"), ("all files", "*.*")))
     path = master.filename
-    weight_v = "configs/Glycan_300img_5000iterations.weights"
+    weight_v = "config/Glycan_300img_5000iterations.weights"
     print("Loaded file:", path, type(path))
     try:
         checkpath()
@@ -26,7 +26,7 @@ def loadPDFfile(master):
 
 def loadImagefile(master):
     # Instruct pyinstaller to collect data files from resources package.
-    datas = collect_data_files('pygly3')
+    datas = collect_data_files('pygly')
     master.filename = filedialog.askopenfilename(initialdir="/", title="Select file",
                                                  filetypes=(("png files", "*.png"),("jpeg files", "*.jpg"), ("all files", "*.*")))
 

@@ -344,7 +344,7 @@ class OriginalConnector(HeuristicConnector):
 
 class ConnectYOLO(YOLOModel,GlycanConnector):
     defaults = {
-        'threshold': 0.5,
+        'conf_threshold': 0.5,
         'boxpadding': 0,
         'expandimage': 0,
         'iou_threshold': 0.4
@@ -355,7 +355,7 @@ class ConnectYOLO(YOLOModel,GlycanConnector):
         params = dict(
             config = Config.get_param('config', Config.CONFIGFILE, kwargs, self.defaults),
             weights = Config.get_param('weights', Config.CONFIGFILE, kwargs, self.defaults),
-            threshold = Config.get_param('threshold', Config.FLOAT, kwargs, self.defaults),
+            conf_threshold = Config.get_param('conf_threshold', Config.FLOAT, kwargs, self.defaults),
             iou_threshold = Config.get_param('iou_threshold', Config.FLOAT, kwargs, self.defaults),
             boxpadding = Config.get_param('boxpadding', Config.INT, kwargs, self.defaults),
             expandimage = Config.get_param('expandimage', Config.INT, kwargs, self.defaults)
@@ -415,12 +415,22 @@ class ConnectYOLO(YOLOModel,GlycanConnector):
                     links.append([farthest_pair,dbox.get('confidence')])
 
         id_link_map = defaultdict(list)
+        id_added = defaultdict(set)  # Track already added IDs for each key
 
         for link_pairs, conf in links:
             mono1, mono2 = link_pairs
+            id1, id2 = mono1.get('id'), mono2.get('id')
 
-            id_link_map[mono1.get('id')].append([mono2.get('id'),conf])
-            id_link_map[mono2.get('id')].append([mono1.get('id'),conf])
+            # Only add if the ID has not been added before
+            if id2 not in id_added[id1] and id1 not in id_added[id2]:
+                id_link_map[id1].append([id2, conf])
+                id_link_map[id2].append([id1, conf])
+
+                id_added[id1].add(id2)
+                id_added[id2].add(id1)
+
+            # id_link_map[mono1.get('id')].append([mono2.get('id'),conf])
+            # id_link_map[mono2.get('id')].append([mono1.get('id'),conf])
 
 
         for id in id_link_map:

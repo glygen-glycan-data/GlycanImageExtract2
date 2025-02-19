@@ -171,7 +171,7 @@ class YOLOOrientationRootFinder(YOLOModel, OrientationRootFinder):
 
 class YOLORootFinder(YOLOModel, RootFinder):
     defaults = {
-        'threshold': 0.5,
+        'conf_threshold': 0.5,
         'boxpadding': 0,
         'expandimage': 0,
         'iou_threshold': 0.4
@@ -182,7 +182,7 @@ class YOLORootFinder(YOLOModel, RootFinder):
         params = dict(
             config = Config.get_param('config', Config.CONFIGFILE, kwargs, self.defaults),
             weights = Config.get_param('weights', Config.CONFIGFILE, kwargs, self.defaults),
-            threshold = Config.get_param('threshold', Config.FLOAT, kwargs, self.defaults),
+            conf_threshold = Config.get_param('conf_threshold', Config.FLOAT, kwargs, self.defaults),
             iou_threshold = Config.get_param('iou_threshold', Config.FLOAT, kwargs, self.defaults),
             boxpadding = Config.get_param('boxpadding', Config.INT, kwargs, self.defaults),
             expandimage = Config.get_param('expandimage', Config.INT, kwargs, self.defaults)
@@ -262,7 +262,7 @@ class YOLORootFinder(YOLOModel, RootFinder):
             or (inter == d_area and comparison_alg.detection_sufficient(box, root_mono))
             or comparison_alg.is_overlapping(box, root_mono)):
                 root = semantic_monos[max_int_idx]
-                obj.add_root(root.get('id'))
+                obj.add_root(root.get('id'), root_mono.get('confidence'))
                 box.set('confidence',root_mono.get('confidence'))
             else:
                 obj.add_root(-1)  

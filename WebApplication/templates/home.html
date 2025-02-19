@@ -1,24 +1,277 @@
-{% include 'header.html' %}
+<!doctype html>
+<html lang="en">
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <h1 align="center">Glycan Image Extractor</h1>
-  <div align="center">
-  <form action="file_upload" method="post" enctype="multipart/form-data">
-     <!-- Manuscript/Image (PDF, PNG, JPG): -->
-     <input type="file" name="file" /><input type="submit" value="Extract"/>
-  </form>
-  <p id="demo">
-    <div id="circle" class="loader" style ="display:none">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+
+
+    <style>
+      .tooltip {
+          visibility: hidden;
+          width: 180px;
+          background-color: #373b3b;
+          color: white;
+          text-align: left;
+          border-radius: 5px;
+          padding: 8px;
+          position: absolute;
+          z-index: 1;
+          bottom: 125%;
+          left: 50%;
+          transform: translateX(-50%);
+          opacity: 0;
+          transition: opacity 0.3s;
+          pointer-events: none;
+      }
+  </style>
+
+
+  </head>
+  <body>
+    {% include 'header.html' %}
+
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.12.9/dist/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+
+    <div class="container d-flex justify-content-center">
+      <form action="file_upload" method="post" enctype="multipart/form-data" onsubmit="return validateForm()">
+        <div id="fileType" class="btn-group btn-group-toggle btn-group-lg" data-toggle="buttons">
+          <label class="btn btn-secondary active">
+            <input type="radio" name="fileType" value="manuscript" autocomplete="off" checked onchange="labelUpdate()"> Manuscript
+          </label>
+          <label class="btn btn-secondary">
+            <input type="radio" name="fileType" value="multi_glycan" autocomplete="off" onchange="labelUpdate()"> Multi-Glycan Image
+          </label>
+          <label class="btn btn-secondary">
+            <input type="radio" name="fileType" value="single_glycan" autocomplete="off" onchange="labelUpdate()"> Single-Glycan Image
+          </label>
+        </div>
+        
+        <div style="border: 1px solid #ccc; border-radius: 4px;">
+          
+          <div style="display: flex; flex-direction: column; align-items: center; margin: 25px 0;">
+          <!-- <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;"> -->
+
+            <label class="form-check-label mb-2"></label>
+            <div style="display: flex; gap: 25px">
+              <label>
+                <input type="radio" name="uploadOption" value="file" checked onclick="toggleInputFields()"> Upload File
+              </label>
+              <label>
+                <input type="radio" name="uploadOption" value="url" onclick="toggleInputFields()"> Provide Link
+              </label>
+            </div>
+            
+            <div style="display: flex; flex-direction: column; align-items: center; width: 70%; margin: auto; gap: 10px;">
+
+              <div style="display: flex; align-items: center; gap: 8px; margin-top:2rem;">
+                <label style="margin-bottom:0rem" id='uploadLabel'>Choose a file or enter a URL:</label>
+        
+                <span style="background: rgb(78, 78, 79); color: white; border-radius: 50%; padding: 3px 7px; font-size: 12px; cursor: pointer; position: relative; font-weight:bold; 
+                    transition: box-shadow 0.3s ease;"
+                    onmouseover="fileToolTip(event, this)" 
+                    onmouseout="fileToolTip(event, this)"
+                    aria-label="Tooltip for allowed formats">
+                    ?
+                    <span class="tooltip">
+                        <div id="tooltip-content"></div>
+                    </span>
+                </span>
+              </div>
+
+              <!-- File Upload Field -->
+              <div style="display: flex; flex-direction: column; gap: 10px; max-width: 400px; width: 70%;">
+                <div style="flex: 1; padding: 6px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;" id="fileUploadField">
+                  <input type="file" name="file" id="file"/>
+                </div>
+            
+                <!-- URL Input Field -->
+                <div id="urlInputField" style="display: none; align-items: center; gap: 10px; margin:5px;">
+                  <input type="text" name="fileURL" id="fileURL" placeholder="https://example.com" 
+                    style="height: 39px; flex: 1; padding: 6px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;" />
+                </div>
+              </div>
+
+            </div>
+            
+          
+            <!-- Submit Button Centered on the Next Line -->
+            <input style="background-color:#4e555b; color:white; margin:25px" type="submit" value="Submit" class="btn" style="margin-top: 20px;">
+          </div>
+          
+        </div>     
+      </form>
+        
+        <p id="demo">
+          <div id="circle" class="loader" style ="display:none">
+          </div>
+        </p>        
     </div>
-  </p>
-  <div width="500px">
-    <p align="left">
-      <a href=".">Glycan Image Extractor</a> accepts manuscripts
-      (PDF format) and image files (PNG, JPG format). Extraction
-      time depends on the number and complexity of the figures in
-      the manuscript, and the number of glycans in each figure or
-      image. Extraction may take a few minutes for large or complex
-      files. Please be patient!  
-    </p>
-  </div>
+   
+    <script>
 
-{% include 'footer.html' %}
+
+      document.addEventListener("DOMContentLoaded", function() {
+        labelUpdate();
+        toggleInputFields();
+        
+      });
+
+
+      function labelUpdate() {
+          // Get the selected radio button value
+          let selectedValue = document.querySelector('input[name="fileType"]:checked').value;
+
+          // Get the label element where the text will be updated
+          let uploadLabel = document.getElementById('uploadLabel');
+
+          var uploadOption = document.querySelector('input[name="uploadOption"]:checked').value;
+          // let content = document.getElementById('tooltip-content')
+
+          if (uploadOption === 'file') {
+            if (selectedValue === 'manuscript') {
+              uploadLabel.textContent = 'Upload a Manuscript:';
+              console.log("Manuscript selected");
+              
+              // content.textContent = ".pdf"
+            } else if (selectedValue === 'multi_glycan' || selectedValue === 'single_glycan') {
+                uploadLabel.textContent = 'Upload an Image:';
+                console.log("Image selected:");
+
+                // content.textContent = ".png, .jpg"
+            }
+
+            // displayInput();
+
+          } 
+  
+      }
+
+
+
+      // Form Validation
+      function validateForm() {
+          const fileType = document.querySelector('input[name="fileType"]:checked').value;
+          const uploadOption = document.querySelector('input[name="uploadOption"]:checked').value;
+
+          // Allowed formats based on the selected file type
+          const allowedFormats = {
+              manuscript: ['pdf'],
+              multi_glycan: ['png', 'jpg', 'jpeg'],
+              single_glycan: ['png', 'jpg', 'jpeg']
+          };
+
+        if (uploadOption === 'file') {
+          const fileInput = document.getElementById('file');
+          if (fileInput.files.length === 0) {
+              alert('Please upload a file.');
+              return false;
+          }
+
+          const fileName = fileInput.files[0].name;
+          const fileExtension = fileName.split('.').pop().toLowerCase();
+
+          if (!allowedFormats[fileType].includes(fileExtension)) {
+              alert(`Invalid file format. Allowed format for ${fileType.replace('_', ' ')} is: ${allowedFormats[fileType].join(', ')}`);
+              return false;
+          }
+        } 
+        else if (uploadOption === 'url') {
+          const urlInput = document.getElementById('fileURL').value.trim();  // Get the URL input value
+          console.log("URL input:", urlInput);
+          if (urlInput === '') {
+              alert('Please enter a URL.');
+              return false;
+          }
+
+          // Extract the file extension before the query parameters
+          const cleanURL = urlInput.split('?')[0];  // Remove query params
+          const urlExtension = cleanURL.split('.').pop().toLowerCase();  // Get extension
+
+          console.log("fileType", fileType, allowedFormats[fileType], urlExtension);
+
+          if (!allowedFormats[fileType].includes(urlExtension)) {
+              alert(`Invalid URL format. Allowed formats for ${fileType.replace('_', ' ')} are: ${allowedFormats[fileType].join(', ')}`);
+              return false;
+          }
+
+          return true; // Allow form submission
+        }
+      }
+
+        // Function to toggle the visibility of file input fields based on the selected radio button
+        function toggleInputFields() {
+
+          let uploadOption = document.querySelector('input[name="uploadOption"]:checked').value;
+
+          if (uploadOption === 'file') {
+            document.getElementById('fileUploadField').style.display = 'flex';
+            document.getElementById('urlInputField').style.display = 'none';
+            labelUpdate();
+
+          } else {
+            document.getElementById('fileUploadField').style.display = 'none';
+            document.getElementById('urlInputField').style.display = 'flex';
+
+            let uploadLabel = document.getElementById('uploadLabel');
+            uploadLabel.textContent = 'Enter URL:'
+          }
+        }
+
+        function fileToolTip(event, element) {
+          const tooltip = element.querySelector('.tooltip');
+
+          if (event.type === 'mouseover') {
+              tooltip.style.visibility = 'visible';
+              tooltip.style.opacity = '1';
+              tooltipContent();
+          } else if (event.type === 'mouseout') {
+              tooltip.style.visibility = 'hidden';
+              tooltip.style.opacity = '0';
+            }
+        }
+
+        function tooltipContent(){
+
+
+          const allowedFormats = {
+              manuscript: ['.pdf'],
+              multi_glycan: ['.png', '.jpg', '.jpeg'],
+              single_glycan: ['.png', '.jpg', '.jpeg']
+          };
+
+          let uploadOption = document.querySelector('input[name="uploadOption"]:checked').value;  // either file or url
+          let selectedValue = document.querySelector('input[name="fileType"]:checked').value;
+          let content = document.getElementById('tooltip-content')
+
+          console.log("selectedValue",selectedValue)
+          console.log("uploadOption",uploadOption)
+
+          // if (uploadOption === 'file') {
+          let acceptedFiles = allowedFormats[selectedValue];
+          let text = `Allowed formats:
+            <ul style="margin: 5px 0; padding-left: 15px; list-style-type: disc;">
+              ${acceptedFiles.map(format => `<li style="margin: 2px 0; padding: 0;">${format}</li>`).join('')} 
+            </ul>
+          `;
+
+          content.innerHTML = text
+          // }
+
+
+        }
+
+    </script>
+
+
+    {% include 'footer.html' %}
+
+  </body>
+  
+</html>

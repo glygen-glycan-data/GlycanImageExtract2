@@ -7,11 +7,17 @@ import copy
 import time
 import json
 import flask
+import requests
 import werkzeug
 import atexit
 import hashlib
 import multiprocessing
 import json
+
+import os, ssl
+
+if (not os.environ.get('PYTHONHTTPSVERIFY', '') and getattr(ssl,'_create_unverified_context', None)):
+    ssl._create_default_https_context = ssl._create_unverified_context
 
 try:
     # Python3 import
@@ -309,28 +315,68 @@ class APIFrameWork:
 
     def upload_file(self):
         if flask.request.method == 'POST':
+            
+            file = flask.request.files.get('file')  
+            file_url = flask.request.form.get("fileURL")
+            file_type = flask.request.form.get('fileType')
+            
 
-            if 'file' not in flask.request.files:
-                return flask.abort(400)
+            if not file and not file_url:
+                return flask.abort(400, "No file or url provided")
 
-            file = flask.request.files['file']
-            filename = werkzeug.utils.secure_filename(file.filename)
+            # print("FILE", file, file_type)
+            # print("file_type",file_type)
+            # print("file url", file_url)
+            if file and file.filename:
+                filename = werkzeug.utils.secure_filename(file.filename)
 
-            if file.filename == '':
-                return flask.jsonify('No selected file')
+            elif file_url:
+                filename = werkzeug.utils.secure_filename(os.path.basename(file_url.split('?')[0]))
+                # print("URL FILE",filename)
 
-            task_detail = self.form_task({"original_file_name": file.filename})
-            list_id = task_detail["id"]
+                if not os.path.splitext(filename)[1]:  
+                    content_disposition = requests.head(file_url).headers.get('content-disposition')
+                    if content_disposition:
+                        filename = content_disposition.split('filename=')[-1].strip('"')
 
-            if file and self.allow_file_ext(file.filename):
-                file.save(os.path.join(self.input_file_folder(), list_id))
             else:
-                return flask.jsonify('File extension is not supported: %s'%(file.filename,))
+                return flask.jsonify("Invalid file or URL"), 400
+
+
+            # Create task details
+            task_detail = self.form_task({"original_file_name": filename, "file_type": file_type})
+            list_id = task_detail["id"]
+            file_path = os.path.join(self.input_file_folder(), list_id)
+
+            try:
+                if file and self.allow_file_ext(file.filename):
+                    file.save(file_path)
+                elif file_url:
+                    headers = {
+                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36',
+                        'Accept': '*/*'
+                    }
+
+                    with requests.get(file_url, headers=headers, stream=True, timeout=10) as response:
+                        response.raise_for_status()
+                        with open(file_path, "wb") as f:
+                            for chunk in response.iter_content(1024):
+                                f.write(chunk)
+
+                else:
+                    return flask.jsonify(f"Unsupported file type: {filename}"), 400
+
+            except requests.exceptions.RequestException as e:
+                return flask.jsonify(f"Failed to download file: {str(e)}"), 400
+            except Exception as e:
+                return flask.jsonify(f"Unexpected error: {str(e)}"), 500
+
 
             status = {
                 "id": list_id,
                 "submission_detail": task_detail,
                 "finished": False,
+                "file_type": file_type,
                 "result": {}
             }
 
@@ -342,6 +388,7 @@ class APIFrameWork:
             self.output(1, "Job received by API: %s" % (task_detail))
 
         return self.file_upload_finished_page(list_id=list_id)
+
 
 
     def download_file(self):
@@ -469,7 +516,7 @@ class APIFrameWork:
 
         self.cleanup()
 
-        self._flask_app.run(self.host(), self.port(), False)
+        self._flask_app.run(self.host(), self.port(), debug=True)
 
     def cleanup(self):
         atexit.register(self.terminate_all)

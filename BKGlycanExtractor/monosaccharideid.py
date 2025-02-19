@@ -267,7 +267,7 @@ class HeuristicMonos(MonoID):
 class YOLOMonos(YOLOModel,MonoID):
 
     defaults = {
-        'threshold': 0.5,
+        'conf_threshold': 0.5,
         'boxpadding': 0,
         'expandimage': 0,
         'iou_threshold': 0.4
@@ -278,7 +278,7 @@ class YOLOMonos(YOLOModel,MonoID):
         params = dict(
             config = Config.get_param('config', Config.CONFIGFILE, kwargs, self.defaults),
             weights = Config.get_param('weights', Config.CONFIGFILE, kwargs, self.defaults),
-            threshold = Config.get_param('threshold', Config.FLOAT, kwargs, self.defaults),
+            conf_threshold = Config.get_param('conf_threshold', Config.FLOAT, kwargs, self.defaults),
             iou_threshold = Config.get_param('iou_threshold', Config.FLOAT, kwargs, self.defaults),
             boxpadding = Config.get_param('boxpadding', Config.INT, kwargs, self.defaults),
             expandimage = Config.get_param('expandimage', Config.INT, kwargs, self.defaults)

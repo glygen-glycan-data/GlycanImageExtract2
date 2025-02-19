@@ -41,14 +41,16 @@ class GlycanFinder(object):
 class YOLOGlycanFinder(YOLOModel,GlycanFinder):
 
     defaults = {
-        'threshold': 0.0,
+        'conf_threshold': 0.5,
         'boxpadding': 0,
+        'iou_threshold': 0.5
     }
 
     def __init__(self,**kwargs):
         params = dict(
            boxpadding = Config.get_param('boxpadding', Config.FLOAT, kwargs, self.defaults),
-           threshold = Config.get_param('threshold', Config.FLOAT, kwargs, self.defaults),
+           conf_threshold = Config.get_param('conf_threshold', Config.FLOAT, kwargs, self.defaults),
+           iou_threshold = Config.get_param('iou_threshold', Config.FLOAT, kwargs, self.defaults),
            config = Config.get_param('config', Config.CONFIGFILE, kwargs, self.defaults),
            weights = Config.get_param('weights', Config.CONFIGFILE, kwargs, self.defaults),
         )
@@ -59,14 +61,22 @@ class YOLOGlycanFinder(YOLOModel,GlycanFinder):
     def find_boxes(self, image):
         return self.get_YOLO_output(image)
 
-    def find_objects(self, figure_semantics):
-        image = figure_semantics.image()
+    def find_objects(self, obj):
+        image = obj.image()
+        print("Beofr",image.shape)
 
+        # do expand_image in init instead of here
+        image = self.expand_image(image, expand=200)
+        obj.set_image(image)
+        
         boxes = self.find_boxes(image)
+        print("find_objects",image.shape)
 
-        figure_semantics.clear_glycans()
+        print("semantics_image",obj.image().shape)
+
+        obj.clear_glycans()
         for box in boxes:
-            figure_semantics.add_glycan(box=box)
+            obj.add_glycan(box=box)
     
     
 class SingleGlycanImage(GlycanFinder):

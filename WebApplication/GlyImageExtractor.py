@@ -3,15 +3,6 @@ import sys
 import os
 import argparse
 
-# Add the path to BKGlycanExtractor
-# sys.path.append('/home/nmathias/GlycanImageExtract2')
-
-# # Get the absolute path of the parent directory of the current script
-# script_dir = os.path.dirname(os.path.abspath(__file__))
-
-# # Add the parent directory to sys.path
-# project_dir = os.path.dirname(script_dir)
-# sys.path.append(project_dir)
 
 parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 
@@ -33,6 +24,7 @@ import multiprocessing
 import secrets
 import flask
 import json
+import cv2
 import traceback
 
 
@@ -43,10 +35,10 @@ class ReferenceAPIParaBased(APIFrameWork):
 import subprocess
 class ReferenceAPIFileBased(APIFrameWork):
 
-    def __init__(self,pipeline_name):
+    def __init__(self):
         super().__init__()
 
-        self.pipeline_name = pipeline_name
+        # self.pipeline_name = pipeline_name
 
     def form_task(self, p):
         res = {}
@@ -58,6 +50,8 @@ class ReferenceAPIFileBased(APIFrameWork):
 
         res["id"] = list_id
         res["original_file_name"] = p["original_file_name"]
+
+        res['file_type'] = p['file_type']
 
         return res
 
@@ -86,6 +80,7 @@ class ReferenceAPIFileBased(APIFrameWork):
             output_file_abs_path = os.path.abspath(os.path.join("output", list_id))
 
             origfilename = task_detail["original_file_name"]
+            file_type = task_detail["file_type"]
             token = list_id
 
             os.makedirs(os.path.join("./static/files", token, "input"))
@@ -108,30 +103,36 @@ class ReferenceAPIFileBased(APIFrameWork):
                 "origfilename": str(origfilename),
                 "outfilename2": str(outfilename2),
                 "input_file": str(input_file),
-                "pipeline_name": str(pipeline_name)
+                "file_type": str(file_type)
             }
 
-            '''print("#############calling subprocess here################\n\n\n\n")
-            print("python3", "python3example.py", work_dict["token"], "workdir", work_dict["workdir"],"infilename", work_dict["infilename"], "outfilename", work_dict["outfilename"], "base_configs",work_dict["base_configs"], "origfilename", work_dict["origfilename"], "outfilename2",work_dict["outfilename2"])
-            print("python", "python3example.py", work_dict["token"], work_dict["workdir"],work_dict["infilename"], work_dict["outfilename"], work_dict["base_configs"],work_dict["origfilename"], work_dict["outfilename2"], work_dict["input_file"])
-            subprocess.call(["python", "python3example.py", work_dict["token"], work_dict["workdir"],work_dict["infilename"], work_dict["outfilename"], work_dict["base_configs"],work_dict["origfilename"], work_dict["outfilename2"], work_dict["input_file"]])
-            '''
             try:
                 copyfile(work_dict["input_file"], work_dict["infilename"])
             except FileNotFoundError:
                 time.sleep(5)
                 copyfile(work_dict["input_file"], work_dict["infilename"])
 
-            extn = origfilename.lower().rsplit('.',1)[1]
+            extn = origfilename.lower().rsplit('.', 1)[-1]
+            print("origfilename and extension",origfilename, extn)
+
             if extn in ('png','jpg','jpeg'):
                 try:
                     annotatePNGGlycan(work_dict) 
+                    
+
+                    if "file_format_error" in work_dict:
+                        error.append(work_dict["file_format_error"])
+
                 except Exception as e:
                     error.append('File %s generated an exception in annotatePNGGlycan: %s'%(origfilename,repr(e)))
                     print(traceback.format_exc(),file=sys.stderr)
-            elif extn in ('pdf',):
+            elif extn in ('pdf'):
                 try:
                     annotatePDFGlycan(work_dict)
+
+                    if "file_format_error" in work_dict:
+                        error.append(work_dict["file_format_error"])
+
                 except Exception as e:
                     error.append('File %s generated an exception in annotatePDFGlycan: %s'%(origfilename,repr(e)))
                     print(traceback.format_exc(),file=sys.stderr)
@@ -153,6 +154,10 @@ class ReferenceAPIFileBased(APIFrameWork):
             # option = {"as_attachment": True}
             option = {"as_attachment": True, "mimetype": 'application/pdf'}
 
+            total_glycan_count = sum(len(data['image_data']) for data in work_dict['file_data'])
+
+            # print("--->>count",count)
+
             res = {
                 "id": list_id,
                 "start time": calculation_start_time,
@@ -160,14 +165,18 @@ class ReferenceAPIFileBased(APIFrameWork):
                 "runtime": calculation_time_cost,
                 "error": error,
                 "glycans": work_dict.get('results',[]),
-                "rename": "annotated_"+original_file_name,
                 "output_file_abs_path": output_file_abs_path,
                 "flask_download_option": option,
-                "inputtype": extn
+                "inputtype": extn,
+                "original_file": infilename,
+                "annotated_file_path": outfilename,
+                "annotated_filename": "annotated_"+original_file_name,
+                "file_data": work_dict['file_data'],
+                "total_glycan_count": total_glycan_count
             }
-        
+
             result_queue.put(res)
-            res = dict(id=list_id,result=res,finished=True,submission_detail=task_detail)
+            res = dict(id=list_id,result=res,file_data=work_dict['file_data'],finished=True,submission_detail=task_detail)
             wh = open(f"static/files/{list_id}/results.json",'w')
             wh.write(json.dumps(res))
             wh.close()
@@ -189,16 +198,7 @@ class ReferenceAPIFileBased(APIFrameWork):
 if __name__ == '__main__':
     multiprocessing.freeze_support()
 
-    # Parse command-line arguments
-    parser = argparse.ArgumentParser(description="GlyImageExtractor")
-    parser.add_argument(
-        '--p', type=str, required=False, default='None', 
-        help='Pipeline for the Flask application (e.g., SingleGlycanImage-YOLOFinders)'
-    )
-    args = parser.parse_args()
-    pipeline_name = args.p
-
-    fb_api = ReferenceAPIFileBased(pipeline_name)
+    fb_api = ReferenceAPIFileBased()
     fb_api.parse_config("GlyImageExtractor.ini")
 
     fb_api.start()
