@@ -765,17 +765,13 @@ class Worker:
         
 class Evaluator:
 
-    basepipeline = 'SingleGlycanImage-YOLOFinders'
-
-    def __init__(self, predictors, workers=None, **kwargs):
-        self.predictors = predictors
+    def __init__(self, known_pipeline, prediction_pipelines, compare_strategies, workers=None, boxeval=False):
+        # prediction_pipelines and compare_strategies are dictionaries, providing a name as the key
+        self.known_pipeline = known_pipeline
+        self.pred_pipelines = pipelines
+        self.compare = compare_strategy
         self.workers = workers
-        self.eval_params = kwargs
-        for pred_name in predictors:
-            # doesn't matter which one? Need to fix this stuff...
-            self.loaded_pipeline,self.end_known_step = Worker.build_pipeline(self.basepipeline, pred_name)
-            break
-        pass
+        self.boxeval = boxeval
 
     @staticmethod
     def check_data_monotonicity(predict, **kwargs):
@@ -809,20 +805,31 @@ class Evaluator:
                 else:
                     print("CONFIDENCE IS NOT ORDERED")
 
+                    def run_pipeline(self,pipeline,image):
+        return pipeline.run_evaluation(image, boxesonly=True)
+    
+    def isboxeval(self):
+        return self.boxeval
+
+    def pred_items(self,*args):
+        return list(args[0])
+
+    def known_items(self,*args):
+        return list(args[0])
+
     def process_image(self, image, **kwargs):
-        if self.verbose:
-            procspec = "%(hostname)s:%(worker_index)s"%kwargs
-            print(procspec,"image:",os.path.split(image)[1],file=sys.stderr)
 
-        figure_semantics = self.loaded_pipeline.run(image)
-        glycan_semantics = figure_semantics.glycans()[0]
-        
-        known_data = self.known(glycan_semantics)
+        results = dict()
+        known_results = self.known_pipeline.run_evaluation(image,self.isboxeval())
 
-        results = {}
-        for pred_name, pred in self.predictors.items():
-            pred_data = self.predictions(pred,glycan_semantics)
-            results[pred_name] = self.compare_strategy.compare(pred_data,known_data)
+        for prname,pl in self.pred_pipelines.items():
+            pred_results = pl.run_evaluation(image,self.isboxeval())
+            for i,(kres,pres) in enumerate(zip(known_results,pred_results)):
+                known_items = self.known_items(*kres)
+                pred_items = self.pred_items(*pres)
+                for cpname,cmp in self.compare.items():
+                    results[(prname,cpname,i)] = cmp.compare(pred_items, known_items)
+
         return image,results
 
     def runall(self, image_folder):
@@ -838,6 +845,9 @@ class Evaluator:
             images = Image_Manager(image_folder,pattern="*.png,*.jpg")
             for result in DistributedProcessing(target=self.process_image).serial(images):
                 image = result['result'][0]
+                if self.verbose:
+                    procspec = "%(hostname)s:%(worker_index)s"%result
+                    print(procspec,"image:",os.path.split(image)[1],file=sys.stderr)
                 for pred_name, content in result['result'][1].items():
                     collected_results[pred_name][os.path.basename(image)] = content
 
@@ -849,6 +859,9 @@ class Evaluator:
             p = DistributedProcessing(target=self.process_image,workerargs=(sys.argv[1:] + ["--worker","%(ncpus)s:%(server)s"])).server()
             for result in p.execute(images,workers=self.workers[1]):
                 image = result['result'][0]
+                if self.verbose:
+                    procspec = "%(hostname)s:%(worker_index)s"%result
+                    print(procspec,"image:",os.path.split(image)[1],file=sys.stderr)
                 for pred_name, content in result['result'][1].items():
                     collected_results[pred_name][os.path.basename(image)] = content
 
@@ -1089,40 +1102,4 @@ class Evaluator:
 
     #     plt.savefig(directory + '/critical_points.png') 
 
-class BoxEvaluator(Evaluator):
-
-    evaluator_type = "box_eval"
-    
-    def __init__(self,*args,**kwargs):
-        super().__init__(*args,**kwargs)
-        for pred_name,pred in self.predictors.items():
-            # only need one, any one with do?
-            self.compare_strategy = pred.box_components(**self.eval_params)
-            break
-        self.verbose = self.compare_strategy.verbose
-        
-    def predictions(self,pred,glycan_semantics):
-        return pred.find_boxes(glycan_semantics.image())
-
-    def known(self,glycan_semantics):
-        return self.end_known_step.find_boxes(glycan_semantics.image_path())
-            
-class SemanticEvaluator(Evaluator):
-    
-    evaluator_type = "semantic_eval"
-
-    def __init__(self,*args,**kwargs):
-        super().__init__(*args,**kwargs)
-        for pred_name,pred in self.predictors.items():
-            # only need one, any one with do?
-            self.compare_strategy = pred.semantic_components(**self.eval_params)
-            break
-        self.verbose = self.compare_strategy.verbose
-
-    def predictions(self,pred,glycan_semantics):
-        semantics = copy.deepcopy(glycan_semantics)
-        return pred.find_objects(semantics)
-
-    def known(self,glycan_semantics):
-        return self.end_known_step.find_objects(glycan_semantics)
             

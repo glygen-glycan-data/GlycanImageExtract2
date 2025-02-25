@@ -9,21 +9,13 @@ import numpy as np
 from .bbox import BoundingBox
 from .yolomodels import YOLOModel
 from .glycanannotator import Config
+from .finder import Finder
 from .compareboxes import CompareBoxes
 from BKGlycanExtractor import RootCompare, BoxCompare, DebugMode
 
             
-class RootFinder:
-    orientation_type = ["left_right","right_left","top_bottom","bottom_top"]
-    mono_type = ["root_mono","nonroot"]
-    mono_syms = ["GlcNAc","NeuAc","Fuc","Man","GalNAc","Gal","Glc","NeuGc"]
+class RootFinder(Finder):
     
-
-    def execute(self, obj):
-        self.find_objects(obj)
-
-    def find_objects(self, obj):
-        raise NotImplementedError
 
     @staticmethod
     def box_components(iou):
@@ -89,13 +81,12 @@ class OrientationRootFinder(RootFinder):
         for mono in mono_boxes:
             for mono_semantics in obj.monosaccharides():
                 if mono_semantics['box'] == mono and mono_semantics['symbol'] != 'Fuc':
-                    obj.add_root(mono_semantics['id'])
+                    obj.set_root(mono_semantics['id'])
                     break
                 else:
-                    obj.add_root(None)
+                    obj.no_root()
 
-
-
+        return [ obj.root() ]
 
 # this class needs links to work before root finding
 class DefaultOrientationRootFinder(OrientationRootFinder):    
@@ -136,6 +127,7 @@ class YOLOOrientationRootFinder(YOLOModel, OrientationRootFinder):
         'boxpadding': 0,
         'expandimage': 0,
     }
+    labels = ["left_right","right_left","top_bottom","bottom_top"]
 
     def __init__(self,**kwargs):
 
@@ -176,6 +168,7 @@ class YOLORootFinder(YOLOModel, RootFinder):
         'expandimage': 0,
         'iou_threshold': 0.4
     }
+    labels = ['redend','not_redend']
 
     def __init__(self,**kwargs):
 
@@ -230,7 +223,7 @@ class YOLORootFinder(YOLOModel, RootFinder):
             root_mono = root_boxes[best_index]
         elif len(root_boxes) == 0:
             print("Log: No root was detected")
-            obj.add_root(-1) 
+            obj.no_root()
         else:
             root_mono = root_boxes[0]
 
@@ -262,15 +255,11 @@ class YOLORootFinder(YOLOModel, RootFinder):
             or (inter == d_area and comparison_alg.detection_sufficient(box, root_mono))
             or comparison_alg.is_overlapping(box, root_mono)):
                 root = semantic_monos[max_int_idx]
-                obj.add_root(root.get('id'), root_mono.get('confidence'))
-                box.set('confidence',root_mono.get('confidence'))
+                obj.set_root(root.get('id'),confidence=root_mono.get('confidence'))
             else:
-                obj.add_root(-1)  
+                obj.no_root()  
 
-        root_id = obj.root()
-
-        return obj
-
+        return [ obj.root() ]
 
 class KnownRoot(RootFinder):
 
@@ -283,8 +272,8 @@ class KnownRoot(RootFinder):
             boxpadding = Config.get_param('boxpadding', Config.INT, kwargs, self.defaults),
         )
 
-    def find_boxes(self, image):
-        
+    def find_boxes(self, obj):
+        image_path = obj.image_path()
         box_dict = {}
 
         image_path = image.rsplit('.',1)[0] + "_map.txt"
@@ -335,14 +324,12 @@ class KnownRoot(RootFinder):
         return list(box_dict.values())
                                       
     def find_objects(self, obj):
-        image_path = obj.image_path()
-        boxes = self.find_boxes(image_path)
+        boxes = self.find_boxes(obj)
 
         for box in boxes:
             classid = box.get('classid')
             if classid == 0:
-                obj.add_root(box.get('id'))
+                obj.set_root(box.get('id'))
 
-            box.set('classid',self.mono_syms.index(box.get('symbol')))
+        return [ obj.root() ]
 
-        return obj

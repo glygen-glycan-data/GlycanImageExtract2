@@ -25,20 +25,23 @@ class YOLOModel:
     def __init__(self, config):
         weights = config.get("weights",None)
         net = config.get("config",None)
+        labels = net.replace(".cfg",".labels")
 
         self.conf_threshold = config.get('conf_threshold')
         self.iou_threshold = config.get('iou_threshold')
         self.expandimage = config.get('expandimage',0)
         self.boxpadding = config.get('boxpadding',0)
         
-        if weights is not None and (not os.path.isfile(weights)):
+        if not os.path.isfile(weights):
             raise FileNotFoundError()
-        if net is not None and (not os.path.isfile(net)):
+        if not os.path.isfile(net):
             raise FileNotFoundError()
-        
-        self.net = cv2.dnn.readNet(weights,net)
-        self.classes = self.get_num_classes(net)
+        if not os.path.isfile(labels)
+            raise FileNotFoundError()
 
+        assert self.labels == [ l.strip() for l in open(labels).read().split() ]
+
+        self.net = cv2.dnn.readNet(weights,net)
         
         layer_names = self.net.getLayerNames()
         #compatibility with new opencv versions
@@ -51,6 +54,8 @@ class YOLOModel:
 
     def get_YOLO_output(self, image):
         original_image = image.copy()
+        if self.expandimage > 0:
+            image = self.expand_image(image,self.expandimage)
         blob = self.format_image(image)
                 
         self.net.setInput(blob)

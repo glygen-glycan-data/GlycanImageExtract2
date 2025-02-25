@@ -94,7 +94,6 @@ class Figure_Semantics(Image_Semantics):
     def random_color(self):
         return tuple(random.randint(0, 255) for _ in range(3))
 
-
     def annotate(self,image,x1,y1,x2,y2,**kwargs):
         font_scale = kwargs.get('font_scale',0.5)
         color = kwargs.get('color',(0,255,0))
@@ -171,7 +170,7 @@ class Glycan_Semantics(Image_Semantics):
         self.semantics['box'] = box
         self.semantics['bbox'] = box.bbox()
         self.semantics['monos'] = {}
-        self.semantics.update(copy.deepcopy(kwargs))
+        self.semantics.update(kwargs)
 
     def glycan_box(self):
         return self.semantics['box']
@@ -190,7 +189,10 @@ class Glycan_Semantics(Image_Semantics):
         self.semantics['monos'][kwargs['id']] = mono
 
     def monosaccharides(self):
-        return self.semantics['monos'].values()
+        return list(self.semantics['monos'].values())
+
+    def monosaccharideids(self):
+        return list(self.semantics['monos'].keys())
 
     def monosaccharide(self,id):
         assert id is not None
@@ -202,20 +204,39 @@ class Glycan_Semantics(Image_Semantics):
             boxes.append(mono['box'])
         return boxes
 
-    def add_root(self,root_id=None,confidence=None):
-        self.semantics['root'] = root_id 
-        self.semantics['root_confidence'] = float(confidence) if confidence is not None else 0.0
+    def set_root(self,root_id,**kwargs):
+        self.semantics['root'] = { 'mono_id': root_id, **kwargs}
 
+    def no_root(self):
+        if 'root' in self.semantics:
+            del self.semantics['root']
 
     def root(self):
         return self.semantics.get('root',None)
 
-    def add_link(self,id,link_ids):
-        assert id is not None
-        self.semantics['monos'][id]['links'] = link_ids
+    def add_link(self,fromid,toid,**kwargs):
+        assert fromid is not None
+        assert toid is not None
+        assert fromid in self.semantics['monos']
+        assert toid in self.semantics['monos']
+        self.semantics['monos'][fromid]['links'].append({ 'from': fromid, 'to': toid, **kwargs })
 
+    def clear_links(self,fromid):
+        self.semantics['monos'][fromid]['links'] = []
+
+    def clear_all_links(self):
+        for fromid in self.monosaccharideids():
+            self.clear_links(fromid)
+        
     def links(self,id):
-        return list(self.semantics['monos'][id]['links'])
+        return self.semantics['monos'][id]['links']
+
+    def all_links(self):
+        result = []
+        for fromid in self.monosaccharideids():
+            for l in self.links(fromid):
+                result.append(l)
+        return result
 
     # def tojson(self):
     #     data = {}

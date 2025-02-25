@@ -58,8 +58,9 @@ class GlycanExtractorPipeline():
         for stage in self.pipeline_stages:
             gep.set_steps(self,stage,self.get_steps(stage))
         return gep
-            
+    
     def run(self,image):
+        # empty figure semantics
         figure_semantics = Figure_Semantics(image)
         
         for figstep in self.steps['figure']:
@@ -70,7 +71,39 @@ class GlycanExtractorPipeline():
                 glystep.execute(glycan_semantics)
 
         return figure_semantics
-    
+
+    def run_evaluation(self,image,boxesonly=False):
+
+        figure_semantics = Figure_Semantics(image)
+        
+        if len(self.steps['glycan']) == 0:
+
+            # special case for testing glycan finders
+            assert boxesonly == True
+
+            for figstep in self.steps['figure'][:-1]:
+                figstep.execute(figure_semantics)
+
+            final_step = self.steps['figure'][-1]
+
+            result = final_step.execute(figure_semantics,boxesonly=boxesonly)
+            return [ (result,figure_semantics) ]
+        
+        # typical case
+        
+        for figstep in self.steps['figure']:
+            figstep.execute(figure_semantics)
+
+        final_step = self.steps['glycan'][-1]
+
+        results = []
+        for glycan_semantics in figure_semantics.glycans():
+            for glystep in self.steps['glycan'][:-1]:
+                glystep.execute(glycan_semantics)
+            results.append((final_step.execute(glycan_semantics,boxesonly=boxesonly),glycan_semantics))
+
+        return results
+
 class Config_Manager(object):
 
     default_config_folder = os.path.join(os.path.split(__file__)[0],"config")

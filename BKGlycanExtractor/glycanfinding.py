@@ -24,12 +24,6 @@ from BKGlycanExtractor import DebugMode
 # Base class
 class GlycanFinder(object):  
 
-    def execute(self, obj):
-        self.find_objects(obj)
-
-    def find_objects(self, obj):
-        raise NotImplementedError
-        
     def set_logger(self, logger_name=''):
         self.logger = logging.getLogger(logger_name+'.glycanfinding')
 
@@ -43,35 +37,29 @@ class YOLOGlycanFinder(YOLOModel,GlycanFinder):
     defaults = {
         'conf_threshold': 0.5,
         'boxpadding': 0,
+        'expandimage': 200,
         'iou_threshold': 0.5
     }
+    labels = [ 'glycan' ]
 
     def __init__(self,**kwargs):
         params = dict(
            boxpadding = Config.get_param('boxpadding', Config.FLOAT, kwargs, self.defaults),
+           expandimage = Config.get_param('expandimage', Config.FLOAT, kwargs, self.defaults),
            conf_threshold = Config.get_param('conf_threshold', Config.FLOAT, kwargs, self.defaults),
            iou_threshold = Config.get_param('iou_threshold', Config.FLOAT, kwargs, self.defaults),
            config = Config.get_param('config', Config.CONFIGFILE, kwargs, self.defaults),
            weights = Config.get_param('weights', Config.CONFIGFILE, kwargs, self.defaults),
         )
         YOLOModel.__init__(self,params)
-        assert self.classes == 1
         GlycanFinder.__init__(self)
 
-    def find_boxes(self, image):
+    def find_boxes(self, obj):
+        image = obj.image()
         return self.get_YOLO_output(image)
 
     def find_objects(self, obj):
-        image = obj.image()
-        print("Beofr",image.shape)
-
-        # do expand_image in init instead of here
-        image = self.expand_image(image, expand=200)
-        obj.set_image(image)
-        
-        boxes = self.find_boxes(image)
-        print("find_objects",image.shape)
-
+        boxes = self.find_boxes(obj)
         print("semantics_image",obj.image().shape)
 
         obj.clear_glycans()
@@ -93,12 +81,13 @@ class SingleGlycanImage(GlycanFinder):
 
     def find_objects(self, obj):
         obj.clear_glycans()
-        boxes = self.find_boxes(obj.image())
+        boxes = self.find_boxes(obj)
         obj.add_glycan(box=boxes[0],image_path=obj.image_path())
+        return obj.glycans()
 
-
-    def find_boxes(self, image):
+    def find_boxes(self, obj):
         #implement crop and padding?
+        image = obj.image()
         height, width, _ = image.shape
         return [ BoundingBox(image=image, x=0, y=0, width=width, height=height) ]
 

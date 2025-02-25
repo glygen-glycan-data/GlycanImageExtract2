@@ -13,23 +13,14 @@ import json
 from .bbox import BoundingBox
 from .yolomodels import YOLOModel
 from .glycanannotator import Config
+from .finder import Finder
 from BKGlycanExtractor import MonosCompare, BoxCompare, DebugMode
 
 
-class MonoID(object): 
+class MonoID(Finder): 
     
-    mono_syms = ["GlcNAc","NeuAc","Fuc","Man","GalNAc","Gal","Glc","NeuGc"]
+    labels = ["GlcNAc","NeuAc","Fuc","Man","GalNAc","Gal","Glc","NeuGc"]
     finder_class = 'Monosaccharide'
-
-    def get_mono_sym(self, index):
-        return self.mono_syms[index]
-
-    def get_mono_index(self, name):
-        assert name in self.mono_syms
-        return self.mono_syms.index(name)
-
-    def execute(self, obj):
-        self.find_objects(obj)
 
     @staticmethod
     def box_components(*args,**kwargs):
@@ -65,9 +56,6 @@ class MonoID(object):
         out2 = cv2.bitwise_or(out, img)
         return out2
     
-    def find_objects(self, obj):
-        raise NotImplementedError
-        
     def resize_image(self, img):
         bigwhite = np.zeros(
             [img.shape[0] + 30, img.shape[1] + 30, 3], dtype=np.uint8
@@ -210,6 +198,8 @@ class HeuristicMonos(MonoID):
                     box.set('classid',classid)
                     # box.set('symbol',mono)
                     obj.add_mono(classid=classid,symbol=mono,box=box)
+
+        return obj.monosaccharides()
         
     def get_masks(self, hsv_image):
         color_range_dict = self.color_range
@@ -286,26 +276,23 @@ class YOLOMonos(YOLOModel,MonoID):
 
         self.name = Config.get_finder_name(kwargs)
         YOLOModel.__init__(self,params)
-        assert self.classes == len(self.mono_syms)
-
         MonoID.__init__(self)
 
-
-    def find_objects(self, obj, **kwargs):
-        image = obj.image()
-        mono_boxes = self.find_boxes(image)
+    def find_objects(self, obj):
+        mono_boxes = self.find_boxes(obj)
         obj.clear_monos()
 
         for id, box in enumerate(mono_boxes):
             classid = box.get('classid')
-            symbol = self.mono_syms[classid]
+            symbol = self.get_label(classid)
             obj.add_mono(classid=classid,symbol=symbol,box=box,id=id)
             box.set('id', id)
             box.set('symbol', symbol)
 
-        return obj
+        return obj.monosaccharides()
 
-    def find_boxes(self, image, **kwargs):
+    def find_boxes(self, obj):
+        image = obj.image()
         boxes = self.get_YOLO_output(image)
         
         if DebugMode.debug:
@@ -332,17 +319,17 @@ class KnownMono(MonoID):
         )
     
     def find_objects(self, obj):
-        image_path = obj.image_path()
-        assert image_path, "KnownMono can only run on SingleGlycanImage glycan finder semantics objects"
-        mono_boxes = self.find_boxes(image_path)
+        mono_boxes = self.find_boxes(obj)
         obj.clear_monos()
         for box in mono_boxes:
             box.set_image_dimensions(image_width=obj.width(),image_height=obj.height())
             obj.add_mono(classid=self.get_mono_index(box.get('symbol')),symbol=box.get('symbol'),box=box,id=box.get('id'))
 
-        return obj
+        return obj.monosaccharides()
 
-    def find_boxes(self, image_path):
+    def find_boxes(self, obj):
+        image_path = obj.image_path()
+        assert image_path, "KnownMono can only run on SingleGlycanImage glycan finder semantics objects"
         boxes = []
         image_path = image_path.rsplit('.',1)[0] + "_map.txt"
         with open(image_path, 'r') as file:
@@ -365,7 +352,7 @@ class KnownMono(MonoID):
                     x_max = max(x_coords)
                     y_max = max(y_coords)
 
-                    box = BoundingBox(x1=x_min, y1=y_min, x2=x_max, y2=y_max, symbol=name,classid=self.mono_syms.index(name),id=int(mono_id))
+                    box = BoundingBox(x1=x_min, y1=y_min, x2=x_max, y2=y_max, symbol=name,classid=self.get_label_index(name),id=int(mono_id))
                     box.pad(self.params['boxpadding']) # known data is absolute
                     boxes.append(box)
 
