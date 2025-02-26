@@ -300,7 +300,8 @@ class HeuristicConnector(GlycanConnector):
                         break
 
         for id in id_link_map:
-            obj.add_link(id,list(id_link_map[id]))
+            for toid in id_link_map[id]:
+                obj.add_link(id,toid)
         
         return obj, v_count, h_count
 
@@ -523,7 +524,8 @@ class KnownLink(GlycanConnector):
 
         for mono in obj.monosaccharides():
             mono_id = mono['id']
-            mono['links'] = links[mono_id]
+            for toid in links[mono_id]:
+                obj.add_link(mono_id,toid)
 
         # if DebugMode.debug:
         #     self.find_boxes(obj.image_path())
