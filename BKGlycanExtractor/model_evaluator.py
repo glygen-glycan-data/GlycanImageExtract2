@@ -805,9 +805,7 @@ class Evaluator:
                 else:
                     print("CONFIDENCE IS NOT ORDERED")
 
-                    def run_pipeline(self,pipeline,image):
-        return pipeline.run_evaluation(image, boxesonly=True)
-    
+
     def isboxeval(self):
         return self.boxeval
 
@@ -821,14 +819,13 @@ class Evaluator:
 
         results = dict()
         known_results = self.known_pipeline.run_evaluation(image,self.isboxeval())
+        known_items = self.known_items(*known_results)
 
         for prname,pl in self.pred_pipelines.items():
             pred_results = pl.run_evaluation(image,self.isboxeval())
-            for i,(kres,pres) in enumerate(zip(known_results,pred_results)):
-                known_items = self.known_items(*kres)
-                pred_items = self.pred_items(*pres)
-                for cpname,cmp in self.compare.items():
-                    results[(prname,cpname,i)] = cmp.compare(pred_items, known_items)
+            pred_items = self.pred_items(*pred_results)
+            for cpname,cmp in self.compare.items():
+                results[(prname,cpname,i)] = cmp.compare(pred_items, known_items)
 
         return image,results
 

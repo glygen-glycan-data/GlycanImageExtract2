@@ -87,22 +87,24 @@ class GlycanExtractorPipeline():
             final_step = self.steps['figure'][-1]
 
             result = final_step.execute(figure_semantics,boxesonly=boxesonly)
-            return [ (result,figure_semantics) ]
+            return result,figure_semantics
         
         # typical case
         
         for figstep in self.steps['figure']:
             figstep.execute(figure_semantics)
 
+        assert len(figure_semantics.glycans()) == 1
+
         final_step = self.steps['glycan'][-1]
 
-        results = []
+        result =  None
         for glycan_semantics in figure_semantics.glycans():
             for glystep in self.steps['glycan'][:-1]:
                 glystep.execute(glycan_semantics)
-            results.append((final_step.execute(glycan_semantics,boxesonly=boxesonly),glycan_semantics))
+            result = (final_step.execute(glycan_semantics,boxesonly=boxesonly),glycan_semantics)
 
-        return results
+        return result
 
 class Config_Manager(object):
 
