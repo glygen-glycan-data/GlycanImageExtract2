@@ -307,7 +307,7 @@ class YOLOMonos(YOLOModel,MonoID):
                     continue
                 m2 = sortedmono[i2]
                 if self.cb.have_intersection(m1.get('box'),m2.get('box')):
-                    m2['iou'] = self.cp.iou(m1.get('box'),m2.get('box'))
+                    obj.monosaccharide(m2['id'])['iou'] = self.cb.iou(m1.get('box'),m2.get('box'))
                     obj.make_alternative_mono(m1['id'],m2['id'])
                     removed.add(i2)
 
