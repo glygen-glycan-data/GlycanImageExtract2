@@ -13,18 +13,20 @@ import multiprocessing
 import traceback
 import threading
 import subprocess
+import signal
 from collections import defaultdict
 
 from multiprocessing.managers import SyncManager
 
 class DistributedProcessing(object):
-    def __init__(self,target=None,workerargs=None,host=None,port=None,secret=None):
+    def __init__(self,target=None,host=None,port=None,secret=None,verbose=False):
         self.hostname = socket.gethostname()
         self.target = target
-        if workerargs is not None:
-            self.workerargs = workerargs
-        else:
-            self.workerargs = [ "worker", "%(ncpus)s", "%(server)s" ]
+        self.verbose = verbose
+        self.manager = None
+        self.worker_procs = []
+        self.procs = []
+        self.incleanup = False
         if host:
             self.host = host
         else:
@@ -69,9 +71,11 @@ class DistributedProcessing(object):
         JobQueueManager.register('get_manager_queue', callable=lambda: self._manager)
         JobQueueManager.register('get_shared_data', callable=lambda: self._data)
         
+        self.register_cleanup()
         self.manager = JobQueueManager(address=("", self.port), authkey=self.secret)
         self.manager.start()
-        print('Server started at port %s' % self.port, file=sys.stderr)
+        if self.verbose:
+            print('Server started at port %s' % self.port, file=sys.stderr)
         self.tasks = self.manager.get_task_queue()
         self.results = self.manager.get_result_queue()
         self.worker_messages = self.manager.get_worker_queue()
@@ -89,6 +93,7 @@ class DistributedProcessing(object):
         ServerQueueManager.register('get_manager_queue')
         ServerQueueManager.register('get_shared_data')
 
+        self.register_cleanup()
         self.manager = ServerQueueManager(address=(self.host, self.port), authkey=self.secret)
         ntries = 4
         for i in range(ntries):
@@ -100,7 +105,8 @@ class DistributedProcessing(object):
                     raise
                 print('Client failed to connect, attempt %d'%(i+1,),file=sys.stderr)
                 time.sleep(5)
-        print('Client connected to %s:%s' % (self.host, self.port), file=sys.stderr)
+        if self.verbose:
+            print('Client connected to %s:%s' % (self.host, self.port), file=sys.stderr)
         self.tasks = self.manager.get_task_queue()
         self.results = self.manager.get_result_queue()
         self.worker_messages = self.manager.get_worker_queue()
@@ -108,32 +114,45 @@ class DistributedProcessing(object):
         self.shared_data = self.manager.get_shared_data()
 
     def start_workers(self,ncpus):
-        self.procs = []
+        self.worker_procs = []
         pid = os.getpid()
         for i in range(ncpus):
             workerid = "%s:%s"%(pid,i+1)
-            proc = multiprocessing.Process(target=self.worker,args=(workerid,))
-            self.procs.append(proc)
+            proc = multiprocessing.Process(target=self.worker,args=(workerid,),daemon=True)
+            self.worker_procs.append(proc)
             proc.start()
 
     def put_task(self,task_index,task):
-        self.tasks.put(dict(task_index=task_index,task=task))
+        try:
+            self.tasks.put(dict(task_index=task_index,task=task))
+        except (BrokenPipeError,EOFError):
+            pass
 
     def get_task(self):
-        return self.tasks.get()
+        try:
+            return self.tasks.get()
+        except (BrokenPipeError,EOFError):
+            pass
+        return None
 
-    def put_result(self,worker_index,task_index,result):
-        self.results.put(dict(status="RESULT",hostname=self.hostname,worker_index=worker_index,
-                              task_index=task_index,result=result))
+    def put_result(self,worker_index,task,task_index,result):
+        try:
+            self.results.put(dict(status="RESULT",hostname=self.hostname,worker_index=worker_index,
+                                  task=task,task_index=task_index,result=result))
+        except (BrokenPipeError,EOFError):
+            pass
 
-    def put_error(self,worker_index,task_index,excep):
-        self.results.put(dict(status="ERROR",hostname=self.hostname,worker_index=worker_index,
-                              task_index=task_index,traceback=traceback.format_exception(excep)))
+    def put_error(self,worker_index,task,task_index,excep):
+        try:
+            self.results.put(dict(status="ERROR",hostname=self.hostname,worker_index=worker_index,
+                                  task=task,task_index=task_index,traceback=traceback.format_exception(excep)))
+        except (BrokenPipeError,EOFError):
+            pass
 
     def get_result(self,timeout=-1):
         try:
             return self.results.get(timeout=timeout)
-        except queue.Empty:
+        except (queue.Empty,BrokenPipeError,EOFError):
             return None
 
     def do_task(self,task,**kwargs):
@@ -157,6 +176,8 @@ class DistributedProcessing(object):
         init_called = False
         while True:
             task = self.get_task()
+            if task is None:
+                break
             task_index = task['task_index']
             task = task['task']
             if task is None:
@@ -168,13 +189,13 @@ class DistributedProcessing(object):
             try:
                 result = self.do_task(task,hostname=self.hostname,worker_index=worker_index,task_index=task_index,shared_data=self.shared_data)
             except Exception as excep:
-                self.put_error(worker_index,task_index,excep)
+                self.put_error(worker_index,task,task_index,excep)
             else:
-                self.put_result(worker_index,task_index,result)
+                self.put_result(worker_index,task,task_index,result)
         return
 
     def wait_workers(self):
-        for p in self.procs:
+        for p in self.worker_procs:
             p.join()
 
     def shutdown(self):
@@ -186,11 +207,29 @@ class DistributedProcessing(object):
         self.start_workers(ncpus)
         self.wait_workers()
 
+    def cleanup(self,*args):
+        self.incleanup = True
+        for p in self.worker_procs:
+            while p.is_alive():
+                p.kill()
+        if self.manager is not None:
+            self.manager.shutdown()
+        os._exit(130)
+
+    def register_cleanup(self):
+        signal.signal(signal.SIGINT, self.cleanup)
+
     def server(self):
         self.make_server_manager()
         return self
 
     def procspec(self,arg):
+        worker_args = []
+        for argi in sys.argv[1:]:
+            if argi == arg:
+                worker_args.append("__%(ncpus)s:%(server)s__")
+            else:
+                worker_args.append(argi)
         procspec = {None: 0}
         for ps in arg.split(','):
             sps = ps.split(':')
@@ -201,22 +240,53 @@ class DistributedProcessing(object):
         for k,v in procspec.items():
             if not k:
                 continue
-            self.start_remote_workers(k,v)
+            if k == "slurm":
+                self.start_slurm_workers(v,worker_args)
+            else:
+                self.start_remote_workers(k,v,worker_args)
         return procspec[None]
 
-    def start_remote_workers(self,worker,ncpus):
-        dirname,progname = os.path.split(os.path.abspath(sys.argv[0]))
-        cmd = 'ssh %s nohup %s %s'%(worker,sys.executable,os.path.abspath(sys.argv[0]))
-        for arg in self.workerargs:
+    def start_remote_workers(self,worker,ncpus,worker_args):
+        cmd = 'ssh -n -f %s nohup sh -c \\\'"cd %s; %s %s'%(worker,os.getcwd(),sys.executable,sys.argv[0])
+        for arg in worker_args:
             cmd += " "+arg%dict(server=self.hostname,ncpus=ncpus)
-        cmd += " &"
-        subprocess.run(cmd,shell=True,check=True)
+        cmd += " &\"\\\'"
+        p = subprocess.run(cmd,shell=True,check=True,stdin=subprocess.DEVNULL,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+        self.procs.append(p)
+
+    def start_slurm_workers(self,ncpus,worker_args):
+        sbatch = 'sbatch -n 1 --output=/dev/null --array=1-%d'%(ncpus,)
+        cmd = '%s %s'%(sys.executable,os.path.abspath(sys.argv[0]))
+        for arg in worker_args:
+            cmd += " "+arg%dict(server=self.hostname,ncpus=1)
+        stdinstr = "\n".join(map(str.lstrip,filter(None,"""
+        #!/bin/sh
+        srun %s
+        """.splitlines())))
+        # print(sbatch)
+        # print(stdinstr%(cmd,))
+        subprocess.run(sbatch,input=stdinstr%(cmd,),text=True,check=True,shell=True)
 
     def execute(self,tasks,workers="",**shared_data):
         self.shared_data.update(shared_data)
         self.alltasks = list(tasks)
         self.start_workers(self.procspec(workers))
         return self
+
+
+    def tasksempty(self):
+        try:
+            return self.tasks.empty()
+        except (BrokenPipeError,EOFError):
+            pass
+        return True
+
+    def worker_messages_empty(self):
+        try:
+            return self.worker_messages.empty()
+        except (BrokenPipeError,EOFError):
+            pass
+        return True
 
     def __iter__(self):
         return self.iterresults()
@@ -232,9 +302,9 @@ class DistributedProcessing(object):
         self.failedtasks = set()
         self.heartbeat = defaultdict(float)
         self.task2worker = dict()
-        while not self.tasks.empty() or (len(self.donetasks) + len(self.failedtasks)) < len(self.alltasks):
+        while not self.tasksempty() or (len(self.donetasks) + len(self.failedtasks)) < len(self.alltasks):
  
-            while not self.worker_messages.empty():
+            while not self.worker_messages_empty():
                 msg = self.worker_messages.get()
                 # print(msg,file=sys.stderr)
                 if msg[0] == "WORKERID":
@@ -244,7 +314,7 @@ class DistributedProcessing(object):
                 elif msg[0] == "HEARTBEAT":
                     self.heartbeat[msg[1]] = time.time()
 
-            if self.tasks.empty():
+            if self.tasksempty() and not self.incleanup:
                 for i,task in enumerate(self.alltasks):
                     taskid = (i+1)
                     if taskid not in self.donetasks and taskid not in self.failedtasks:
@@ -277,9 +347,10 @@ class DistributedProcessing(object):
             else:
                 raise RuntimeError("Bad result status")
 
-        print("Task summary: %s tasks completed, %s tasks failed."%(len(self.donetasks),len(self.failedtasks)),file=sys.stderr)
+        if self.verbose:
+            print("Task summary: %s tasks completed, %s tasks failed."%(len(self.donetasks),len(self.failedtasks)),file=sys.stderr)
 
-        while not self.worker_messages.empty():
+        while not self.worker_messages_empty():
             msg = self.worker_messages.get()
             if msg[0] == "WORKERID":
                 self.workerids.add(msg[1])
@@ -304,8 +375,57 @@ class DistributedProcessing(object):
         self.init()
         for i,task in enumerate(self.alltasks):
             result = self.do_task(task,hostname=self.hostname,task_index=(i+1),worker_index=workerid,shared_data=self.shared_data)
-            yield dict(status='RESULT',hostname=self.hostname,worker_index=workerid,task_index=(i+1),result=result)
+            yield dict(status='RESULT',hostname=self.hostname,worker_index=workerid,task=task,task_index=(i+1),result=result)
 
+    @staticmethod
+    def add_arguments(parser,argname="workers"):
+        helpstr = " ".join("""
+                  Enable distributed processing: WORKERS = 
+                  [<n0>,][remote1:<n1>[,remote2:<n2>,...]]. n0 is cpus on host node
+                  (optional), ni is cpus on optional remote nodes. Remote
+                  nodes yion, bion, proton, and maldi with 8 cpus each are
+                  available. Use remote node name "slurm" for shared
+                  computing resources, with 32 cpus available. Default:
+                  serial, single cpu, processing.
+        """.split())
+        parser.add_argument('--'+argname, dest="__distproc__", metavar="WORKERS", type=str, default  = "", help = helpstr)
+        return parser
+
+    @staticmethod
+    def parse_args(parser):
+        args = parser.parse_args()
+        distproc = args.__distproc__.strip()
+        if distproc.startswith('__') and distproc.endswith('__'):
+            return ('worker',distproc.strip('_'))
+        if distproc == "":
+            return None
+        return ('manager',distproc)
+
+    @staticmethod
+    def process(workers,target,tasks,verbose=False,
+                logtempl="%(hostname)s:%(worker_index)s task: %(task)s"):
+        if workers is None: 
+            # serial processing
+            for result in DistributedProcessing(target=target,verbose=verbose).serial(tasks):
+                if verbose:
+                    print(logtempl%result,file=sys.stderr)
+                yield result['result']
+
+        elif workers[0] == "manager":
+            # manager/server/hostnode
+            p = DistributedProcessing(target=target,verbose=verbose).server()
+            for result in p.execute(tasks,workers=workers[1]):
+                if verbose:
+                    print(logtempl%result,file=sys.stderr)
+                yield result['result']
+
+        elif workers[0] == "worker":
+            # worker
+            ncpus,server = workers[1].split(':')
+            DistributedProcessing(target=target,host=server).client(int(ncpus))
+            sys.exit(0)
+
+                                                                                                         
 def do_task(task,**kwargs):
     # print("Worker %s:%s: Task %s delay %s starting..."%(kwargs.get('hostname'),kwargs.get('worker_index'),
     #                                                     kwargs.get('task_index'),task),file=sys.stderr)
