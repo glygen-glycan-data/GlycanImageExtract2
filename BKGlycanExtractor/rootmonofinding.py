@@ -213,11 +213,13 @@ class YOLORootFinder(YOLOModel, RootFinder):
         if len(root_boxes) > 1:
             print("Log data: Multiple Roots were detected")
             # print("Log data: Multiple Roots were detected", [(mono.get('confidence'), dir(mono)) for mono in root_boxes])
+            obj.log("Multiple roots (%d) were detected"%(len(root_boxes),))
             confidences = [mono.get('confidence') for mono in root_boxes]
             best_index = np.argmax(confidences)
             root_mono = root_boxes[best_index]
         elif len(root_boxes) == 0:
             print("Log: No root was detected")
+            obj.log("No root was detected")
             obj.no_root()
         else:
             root_mono = root_boxes[0]

@@ -6,6 +6,7 @@ import copy
 import random
 import math
 from collections import defaultdict, deque
+from . lineno import callsig
 
 # Base class for any thing (figure, glycan) which has an image with width and height
 class Image_Semantics:
@@ -41,6 +42,10 @@ class Image_Semantics:
     def get(self,key,default=None):
         return self.semantics.get(key,default)
 
+    def log(self,message):
+        if 'log' not in self.semantics:
+            self.semantics['log'] = []
+        self.semantics['log'].append("[%s] %s"%(callsig(1),message))
 
 # Class for whole figure/image containing glycans
 class Figure_Semantics(Image_Semantics):
