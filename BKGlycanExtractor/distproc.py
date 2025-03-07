@@ -145,7 +145,8 @@ class DistributedProcessing(object):
     def put_error(self,worker_index,task,task_index,excep):
         try:
             self.results.put(dict(status="ERROR",hostname=self.hostname,worker_index=worker_index,
-                                  task=task,task_index=task_index,traceback=traceback.format_exception(excep)))
+                                  task=task,task_index=task_index,
+                                  traceback=traceback.format_exception(*excep)))
         except (BrokenPipeError,EOFError):
             pass
 
@@ -188,8 +189,8 @@ class DistributedProcessing(object):
                 init_called = True
             try:
                 result = self.do_task(task,hostname=self.hostname,worker_index=worker_index,task_index=task_index,shared_data=self.shared_data)
-            except Exception as excep:
-                self.put_error(worker_index,task,task_index,excep)
+            except Exception:
+                self.put_error(worker_index,task,task_index,sys.exc_info())
             else:
                 self.put_result(worker_index,task,task_index,result)
         return
@@ -330,7 +331,7 @@ class DistributedProcessing(object):
             if status == "ERROR":
                 print("Worker %s:%s: Task %s error...\n%s"%(result.get('hostname'),result.get('worker_index'),
                                                             result.get('task_index'),"".join(result.get('traceback',[]))),
-                                                            file=sys.stderr)
+                                                            end="",file=sys.stderr)
                 taskid = result.get('task_index')
                 self.taskattempts[taskid] += 1
                 if self.taskattempts[taskid] < 3:
