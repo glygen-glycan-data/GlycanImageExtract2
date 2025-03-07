@@ -45,4 +45,4 @@ images.exclude("*.annotated.*")
 for sem in pipeline.runall(images,workers=workers,verbose=args.verbose):
     sem.write_json()
     sem.annotate_monos()
-    sem.write_image(filename_template="%(basename)s.annotated.%(extension)s")
+    sem.write_image(extension=".annotated.png")
