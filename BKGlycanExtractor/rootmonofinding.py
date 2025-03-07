@@ -15,7 +15,6 @@ from BKGlycanExtractor import RootCompare, BoxCompare, DebugMode
 
             
 class RootFinder(Finder):
-    
 
     @staticmethod
     def box_components(iou):
@@ -184,10 +183,6 @@ class YOLORootFinder(YOLOModel, RootFinder):
         RootFinder.__init__(self)
         YOLOModel.__init__(self,params)
 
-        # YOLO detects two classes for roots - either 0 (root) or 1 (non-root)
-        assert self.classes == 2
-
-
     def find_boxes(self, image, **kwargs):
 
         boxes = self.get_YOLO_output(image)
@@ -255,7 +250,7 @@ class YOLORootFinder(YOLOModel, RootFinder):
             or (inter == d_area and comparison_alg.detection_sufficient(box, root_mono))
             or comparison_alg.is_overlapping(box, root_mono)):
                 root = semantic_monos[max_int_idx]
-                obj.set_root(root.get('id'),confidence=root_mono.get('confidence'))
+                obj.set_root(root.get('id'),confidence=float(root_mono.get('confidence')))
             else:
                 obj.no_root()  
 
@@ -276,7 +271,7 @@ class KnownRoot(RootFinder):
         image_path = obj.image_path()
         box_dict = {}
 
-        image_path = image.rsplit('.',1)[0] + "_map.txt"
+        image_path = image_path.rsplit('.',1)[0] + "_map.txt"
         with open(image_path, 'r') as file:
             root_id = float('inf')
 

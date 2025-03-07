@@ -17,11 +17,13 @@ from collections import defaultdict
 from .yolomodels import YOLOModel
 from .glycanannotator import Config 
 from .bbox import BoundingBox
-from .finder import finder
+from .finder import Finder
 from BKGlycanExtractor import LinksCompare, BoxCompare, DebugMode
 
 
 class GlycanConnector(Finder):
+
+    labels = [ 'link' ]
 
     @staticmethod
     def box_components(iou):
@@ -345,7 +347,6 @@ class ConnectYOLO(YOLOModel,GlycanConnector):
         'expandimage': 0,
         'iou_threshold': 0.4
     }
-    labels = [ 'link' ]
 
     def __init__(self,**kwargs):
 
@@ -359,6 +360,7 @@ class ConnectYOLO(YOLOModel,GlycanConnector):
         )
 
         YOLOModel.__init__(self,params)
+        GlycanConnector.__init__(self)
 
     def find_boxes(self, obj):
         image = obj.image()
@@ -388,7 +390,7 @@ class ConnectYOLO(YOLOModel,GlycanConnector):
                     linked_monos.append(mono)
 
             if len(linked_monos) == 2:
-                links.append([linked_monos, dbox.get('confidence')])
+                links.append([linked_monos, float(dbox.get('confidence'))])
 
             elif len(linked_monos) > 2 and len(linked_monos) <= 4:
 
@@ -406,7 +408,7 @@ class ConnectYOLO(YOLOModel,GlycanConnector):
                                 farthest_pair = [linked_monos[i], linked_monos[j]]
 
                 if farthest_pair != (None, None):
-                    links.append([farthest_pair,dbox.get('confidence')])
+                    links.append([farthest_pair,float(dbox.get('confidence'))])
 
         id_link_map = defaultdict(list)
         id_added = defaultdict(set)  # Track already added IDs for each key
@@ -450,6 +452,7 @@ class KnownLink(GlycanConnector):
         self.params = dict(
             boxpadding = Config.get_param('boxpadding', Config.INT, kwargs, self.defaults),
         )
+        GlycanConnector.__init__(self)
 
     def find_boxes(self,obj):
         image = obj.image_path()

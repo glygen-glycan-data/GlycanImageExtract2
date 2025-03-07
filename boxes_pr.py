@@ -3,6 +3,7 @@ import os
 import sys
 import argparse
 from BKGlycanExtractor import Image_Manager, BoxEvaluator, Config_Manager, DebugMode
+from BKGlycanExtractor import DistributedProcessing as dp
  
 parser = argparse.ArgumentParser(description="Start")
 
@@ -48,21 +49,7 @@ parser.add_argument(
     help = "Precision for confidence values. Default: 8."
 )
 
-# optional argument
-parser.add_argument(
-    '--distproc',
-    type=str,
-    default  = "",
-    help = "Enables distributed processing: <n0>,remote1:<n1>,remote2:<n2>. n0 is cpus on host node (optional), ni is cpus on optional remotei node."
-)
-
-# optional argument
-parser.add_argument(
-    '--worker',
-    type=str,
-    default = "",
-    help = "Indicates that script should be run as a worker client for distributed processing: <n>:server. n is cpus, server is the host node."
-)
+dp.add_arguments(parser)
 
 # optional argument
 parser.add_argument(
@@ -85,14 +72,8 @@ parser.add_argument(
 
 
 args = parser.parse_args()
-
-assert os.path.isdir(args.images) or args.worker
-
+workers = dp.parse_args(parser)
 distproc = None
-if args.worker:
-    distproc = ("worker",args.worker)
-elif args.distproc:
-    distproc = ("manager",args.distproc)
 
 # if args.d:
 #     DebugMode.debug = True
@@ -122,10 +103,12 @@ for name in args.finders:
     predictors[name] = finder
 
 evaluator = BoxEvaluator(predictors, 
-                         workers=distproc,
+                         workers=workers,
                          iou=args.iou,
                          whole_image=args.wholeimage,
                          precision=args.precision,
                          verbose=args.verbose)
-evaluator.runall(args.images)
+images = Image_Manager(image_folder,pattern="*.png,*.jpg")
+images.exclude('*.annotated.*')
+evaluator.runall(images)
 

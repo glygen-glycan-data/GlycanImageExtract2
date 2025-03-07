@@ -69,7 +69,7 @@ opaque_options = [ True, False ]
 valid_monos_str = """
 Glc Gal Man
 NeuAc NeuGc
-Fuc
+Fuc Xyl
 GlcNAc GalNAc
 """
 valid_monos = valid_monos_str.split()

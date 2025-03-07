@@ -22,7 +22,7 @@ from .build_pipeline import BuildPipeline
 
 from .glycanannotator import Config_Manager
 
-from .distproc import DistributedProcessing
+from .distproc import DistributedProcessing as dp
 
 class Utility:
 
@@ -829,45 +829,15 @@ class Evaluator:
 
         return image,results
 
-    def runall(self, image_folder):
-
-        cv2.setNumThreads(1)    # uncommenting this will disable cv2 multi core processing
+    def runall(self, images):
 
         collected_results = defaultdict(lambda: defaultdict(dict))
-
         start_time = time.time()
-        if self.workers is None: 
-            # serial processing
-            mode = "serial"
-            images = Image_Manager(image_folder,pattern="*.png,*.jpg")
-            for result in DistributedProcessing(target=self.process_image).serial(images):
-                image = result['result'][0]
-                if self.verbose:
-                    procspec = "%(hostname)s:%(worker_index)s"%result
-                    print(procspec,"image:",os.path.split(image)[1],file=sys.stderr)
-                for pred_name, content in result['result'][1].items():
-                    collected_results[pred_name][os.path.basename(image)] = content
 
-        elif self.workers[0] == "manager":
-            # manager/server/hostnode
-            mode = "distributed"
-            self.compare_strategy.verbose = False
-            images = [ os.path.abspath(f) for f in Image_Manager(image_folder,pattern="*.png,*.jpg") ]
-            p = DistributedProcessing(target=self.process_image,workerargs=(sys.argv[1:] + ["--worker","%(ncpus)s:%(server)s"])).server()
-            for result in p.execute(images,workers=self.workers[1]):
-                image = result['result'][0]
-                if self.verbose:
-                    procspec = "%(hostname)s:%(worker_index)s"%result
-                    print(procspec,"image:",os.path.split(image)[1],file=sys.stderr)
-                for pred_name, content in result['result'][1].items():
-                    collected_results[pred_name][os.path.basename(image)] = content
-
-        elif self.workers[0] == "worker":
-            # worker
-            self.compare_strategy.verbose = False
-            ncpus,server = self.workers[1].split(':')
-            DistributedProcessing(target=self.process_image,host=server).client(int(ncpus))
-            sys.exit(0)
+        for result in dp.process(workers=self.workers,target=self.process_image,
+                                 tasks=images,verbose=self.verbose):
+            for pred_name, content in result[1].items():
+                collected_results[pred_name][os.path.basename(result[0])] = content
 
         final_structure = self.process_results(collected_results)        
 

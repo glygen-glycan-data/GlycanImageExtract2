@@ -48,6 +48,8 @@ class Figure_Semantics(Image_Semantics):
         image = self.format_image(image_path)
         super().__init__(image)
         self.semantics['image_path'] = os.path.abspath(image_path)
+        if self.semantics['image_path'].startswith(os.getcwd()):
+            self.semantics['image_path'] = self.semantics['image_path'][len(os.getcwd())+1:]
         self.semantics['file_name'] = os.path.basename(image_path) 
         self.semantics['glycans'] = []
         self.semantics.update(copy.deepcopy(kwargs))
@@ -94,11 +96,17 @@ class Figure_Semantics(Image_Semantics):
     def random_color(self):
         return tuple(random.randint(0, 255) for _ in range(3))
 
-    def annotate(self,image,x1,y1,x2,y2,**kwargs):
+    def annotate(self,x1,y1,x2,y2,**kwargs):
         font_scale = kwargs.get('font_scale',0.5)
         color = kwargs.get('color',(0,255,0))
         thickness = kwargs.get('thickness',1)
         text = kwargs.get('text','')
+        xt=kwargs.get('xt',x2)
+        yt=kwargs.get('yt',y1)
+        xtoff=kwargs.get('xtoff',0)
+        ytoff=kwargs.get('ytoff',0)
+        xt += xtoff
+        yt += ytoff
 
         # uncomment below to apply random colors for monos, links, root
         # # Define overlay for transparency
@@ -108,42 +116,62 @@ class Figure_Semantics(Image_Semantics):
         # alpha = 0.5  # Transparency factor
         # cv2.addWeighted(overlay, alpha, image, 1 - alpha, 0, image)
 
-        cv2.rectangle(image,(x1,y1),(x2,y2),color=color,thickness=thickness)
-        cv2.putText(image,org=(x1,y1),fontFace=cv2.FONT_HERSHEY_COMPLEX_SMALL,text=text, fontScale=0.5,thickness=1,color=color)
+        cv2.rectangle(self.image(),(x1,y1),(x2,y2),color=color,thickness=thickness)
+        if text:
+            cv2.putText(self.image(),org=(xt,yt),fontFace=cv2.FONT_HERSHEY_PLAIN,text=text,fontScale=font_scale,thickness=1,color=(0,0,0),lineType=cv2.LINE_AA)
 
+    def make_filename(self,filename=None,outdir=None,basename=None,extension=None,overwrite=False,filename_template=None):
+        if filename is None or outdir is None:
+            idr,ifn = os.path.split(self.image_path())
+            iba,iex = ifn.rsplit('.',1)
+            if outdir is None:
+                outdir = idr
+            if basename is None:
+                basename = iba
+            if extension is None:
+                extension = iex
+            if filename_template is None:
+                filename_template = '%(basename)s.%(extension)s'
+            if filename is None:
+                filename = filename_template%dict(basename=basename,extension=extension)
+        if not overwrite and self.image_path() == os.path.join(outdir,filename):
+            raise IOError("Will not overwrite image file %s, use overwrite=True to override."%(self.image_path(),))
+        return os.path.join(outdir,filename)
 
-    def label_image(self,image,name='default',**kwargs):
+    def write_json(self,**kwargs):
+        wh = open(self.make_filename(extension='json',**kwargs),'w')
+        wh.write(self.tojson())
+        wh.close()
 
-        idx = kwargs.get('idx',0)
-        assert image is not None
+    def annotate_glycans(self):
+        for glycan in self.semantics['glycans']:
+            # glycan annotation
+            x1,y1,x2,y2 = glycan.glycan_box().corners()
+            self.annotate(x1,y1,x2,y2,color=(0,255,0)) # green for glycan
 
-        directory = os.getcwd() + '/wrong_IUPAC_str/'
-        if not os.path.exists(directory):
-            os.makedirs(directory)
+    def annotate_monos(self):
+        for glycan in self.semantics['glycans']:
+            # monosaccharides and root labelling
+            root_id = None
+            if glycan.root():
+                root_id = glycan.root()['mono_id']
+            for mono in glycan.monosaccharides():
+                x1,y1,x2,y2 = mono['box'].corners()
+                text = mono.get('classlabel','') + ":" + str(mono.get('id'))
+                color = (128, 0, 128) # purple for monos
+                if mono['id'] == root_id:
+                    color = (0,0,255) # red for root  
+                if mono.get('alternative') is not None:
+                    color = (0, 165, 255) # orange for alternatives
+                self.annotate(x1,y1,x2,y2,text=text,xtoff=2,ytoff=-2,color=color,thickness=1)   
 
-        glycan = self.semantics['glycans'][idx]
-
-        # glycan annotation
-        x1,y1,x2,y2 = glycan.glycan_box().corners()
-        self.annotate(image,*glycan.glycan_box().corners(),color=(0,255,0)) # green for glycan
-
-        # monosaccharides, root and link labelling
-        root_id = glycan.root()
-        for mono in glycan.monosaccharides():
-            x1,y1,x2,y2 = mono['box'].corners()
-            text = mono.get('symbol','') + str(mono.get('id'))
-            text = str(mono.get('classid')) + '-' + str(mono.get('id'))
-            text = str(mono.get('id'))
-
-            # links
-            if len(mono['links']) > 0:
-                for link_id in mono['links']:
-                    try:
-                        id = link_id[0]
-                    except:
-                        id = link_id
-
-                    linked_mono = glycan.monosaccharide(id)
+    def annotate_links(self):
+        for glycan in self.semantics['glycans']:
+            # monosaccharides and root labelling
+            for mono in glycan.monosaccharides():
+                for link in mono['links']:
+                    toid = link['to']
+                    linked_mono = glycan.monosaccharide(toid)
                     _x1,_y1,_x2,_y2 = linked_mono['box'].corners()
 
                     x_coords = [x1,x2,_x1,_x2]
@@ -152,17 +180,10 @@ class Figure_Semantics(Image_Semantics):
                     x_min, x_max = min(x_coords), max(x_coords)
                     y_min, y_max = min(y_coords), max(y_coords) 
 
-                    # self.annotate(image,x_min,y_min,x_max,y_max,color=(255, 255, 0),thickness=1)
-            
-            color = (128, 0, 128) # purple for monos
-            if mono['id'] == root_id:
-                color = (0,0,255) # red for root  
+                    self.annotate(x_min,y_min,x_max,y_max,color=(255, 255, 0),thickness=1)
 
-            # self.annotate(image,x1,y1,x2,y2,text=text,color=color,thickness=1)   
-        cv2.imwrite(directory + name + '.png', image)
-        return image
-
-
+    def write_image(self,**kwargs):
+        cv2.imwrite(self.make_filename(**kwargs), self.image())
 
 class Glycan_Semantics(Image_Semantics):
     def __init__(self,image,box,**kwargs):
@@ -185,8 +206,8 @@ class Glycan_Semantics(Image_Semantics):
             else:
                 kwargs['id'] = max(self.semantics['monos'])+1
         mono = dict(classid=classid,symbol=symbol,box=box,bbox=box.bbox(),center=box.center(),links=[],**kwargs)
-        assert kwargs['id'] not in self.semantics['monos']
-        self.semantics['monos'][kwargs['id']] = mono
+        assert mono['id'] not in self.semantics['monos']
+        self.semantics['monos'][mono['id']] = mono
 
     def monosaccharides(self):
         return list(self.semantics['monos'].values())
@@ -198,10 +219,28 @@ class Glycan_Semantics(Image_Semantics):
         assert id is not None
         return self.semantics['monos'][id]
 
+    def delete_mono(self,id):
+        assert id is not None
+        m = self.semantics['monos'][id]
+        del self.semantics['monos'][id]
+        return m
+
+    def add_alternative_mono(self,id,altm):
+        m = self.monosaccharide(id)
+        if 'alternative' not in m:
+            m['alternative'] = []
+        m['alternative'].append(altm)
+
+    def make_alternative_mono(self,id,altid):
+        alt = self.delete_mono(altid)
+        self.add_alternative_mono(id,alt)
+
     def mono_boxes(self):
         boxes = []
         for id,mono in self.semantics['monos'].items():
             boxes.append(mono['box'])
+            for alt in m.get('alternative',[]):
+                boxes.append(alt['box'])
         return boxes
 
     def set_root(self,root_id,**kwargs):
@@ -227,7 +266,7 @@ class Glycan_Semantics(Image_Semantics):
     def clear_all_links(self):
         for fromid in self.monosaccharideids():
             self.clear_links(fromid)
-        
+
     def links(self,id):
         return self.semantics['monos'][id]['links']
 
@@ -306,28 +345,24 @@ class Glycan_Semantics(Image_Semantics):
 
 
     def tojson(self):
-        data = {}
-        
-        # Iterate through all the items in the semantics dictionary
-        for k, v in self.semantics.items():
-            if k not in ('image', 'box', 'monos'):
-                data[k] = v
-
-        data['monos'] = []
-        for mono in self.semantics['monos'].values():
-            monodict = {}
-            for k, v in mono.items():
-                if k not in ('image', 'box', 'links'):
-                    monodict[k] = v
-                elif k == 'links':
-                    monodict[k] = [item if isinstance(item, int) else item[0] for item in v]
-                    monodict['links_confidence'] = [None if isinstance(item, int) else float(item[1]) for item in v]
-
-                if k == 'box':
-                    monodict['mono_confidence'] = float(v.get('confidence',0.0))
-            data['monos'].append(monodict)
-        
+        data = self.remove_binary_values(copy.deepcopy(self.semantics))
+        data['monos'] = sorted(data['monos'].values(),key=lambda m: m['id'])        
         return json.dumps(data, indent=2, sort_keys=True)
+
+    def remove_binary_values(self,d):
+        if isinstance(d,dict):
+            for k,v in list(d.items()):
+                if not isinstance(v,list) and not isinstance(v,dict):
+                    try:
+                        json.dumps(v)
+                    except (TypeError,ValueError):
+                        del d[k]
+                else:
+                    v = self.remove_binary_values(v)
+        elif isinstance(d,list):
+            for v in d:
+                v = self.remove_binary_values(v)
+        return d
 
     def image_path(self):
         # for single glycan images, the glycan image "has" a path

@@ -7,15 +7,19 @@ import cv2
 import numpy as np
 import random
 import traceback
+from fnmatch import fnmatch
 from . svg_parse_path import get_points
 
 class Image_Manager:
-    def __init__(self,glycan_folder,pattern='*.png,*.jpg,*.txt'):
+    def __init__(self,glycan_folder,pattern='*.png,*.jpg'):
         self.glob = [pattern_type.strip()[1:] if pattern_type.strip().startswith('*') else pattern_type.strip() for pattern_type in pattern.split(',')]
         self.images = self.get_images(glycan_folder)
 
     def __iter__(self):
         return iter(self.images)
+
+    def exclude(self,pattern="*.annotated.*"):
+        self.images = list(filter(lambda fn: not fnmatch(fn,pattern), self.images))
 
     def get_images(self,glycan_folder):
         images = []

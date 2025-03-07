@@ -22,7 +22,7 @@ from .debug_methods import DebugMode
 
 class YOLOModel:
     
-    def __init__(self, config):
+    def __init__(self, config, multicore=False):
         weights = config.get("weights",None)
         net = config.get("config",None)
         labels = net.replace(".cfg",".labels")
@@ -36,10 +36,14 @@ class YOLOModel:
             raise FileNotFoundError()
         if not os.path.isfile(net):
             raise FileNotFoundError()
-        if not os.path.isfile(labels)
+        if not os.path.isfile(labels):
             raise FileNotFoundError()
 
         assert self.labels == [ l.strip() for l in open(labels).read().split() ]
+
+
+        if not multicore:
+            cv2.setNumThreads(1)
 
         self.net = cv2.dnn.readNet(weights,net)
         

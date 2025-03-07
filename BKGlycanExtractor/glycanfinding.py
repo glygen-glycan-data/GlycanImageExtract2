@@ -19,10 +19,11 @@ import json
 from . bbox import BoundingBox
 from . yolomodels import YOLOModel 
 from . glycanannotator import Config
+from . finder import Finder
 from BKGlycanExtractor import DebugMode
 
 # Base class
-class GlycanFinder(object):  
+class GlycanFinder(Finder):  
 
     def set_logger(self, logger_name=''):
         self.logger = logging.getLogger(logger_name+'.glycanfinding')

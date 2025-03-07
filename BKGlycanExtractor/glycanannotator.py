@@ -16,6 +16,7 @@ import copy
 import importlib
 
 from . semantics import Figure_Semantics, Glycan_Semantics
+from . distproc import DistributedProcessing as dp
 
 class GlycanExtractorPipeline():
     
@@ -71,6 +72,13 @@ class GlycanExtractorPipeline():
                 glystep.execute(glycan_semantics)
 
         return figure_semantics
+
+    def dorun(self,image,**kwargs):
+        return self.run(image)
+
+    def runall(self,images,workers=None,verbose=False):
+        return dp.process(workers=workers,target=self.dorun,
+                          tasks=images,verbose=verbose)
 
     def run_evaluation(self,image,boxesonly=False):
 

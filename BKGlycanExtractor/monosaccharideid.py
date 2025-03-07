@@ -14,6 +14,7 @@ from .bbox import BoundingBox
 from .yolomodels import YOLOModel
 from .glycanannotator import Config
 from .finder import Finder
+from .compareboxes import CompareBoxes
 from BKGlycanExtractor import MonosCompare, BoxCompare, DebugMode
 
 
@@ -94,7 +95,7 @@ class HeuristicMonos(MonoID):
         color_range_file.close()
         self.color_range = color_range_dict
 
-        # MonoID has no constructor...
+        MonoID.__init__(self)
 
     def compare_to_img(self, img1, img2):
         if img1.shape == img2.shape:
@@ -194,7 +195,7 @@ class HeuristicMonos(MonoID):
                 else:
                     continue
                 if "???" not in mono:
-                    classid = self.get_mono_index(mono)
+                    classid = self.get_label_index(mono)
                     box.set('classid',classid)
                     # box.set('symbol',mono)
                     obj.add_mono(classid=classid,symbol=mono,box=box)
@@ -275,6 +276,7 @@ class YOLOMonos(YOLOModel,MonoID):
         )        
 
         self.name = Config.get_finder_name(kwargs)
+        self.cb = CompareBoxes()
         YOLOModel.__init__(self,params)
         MonoID.__init__(self)
 
@@ -284,10 +286,30 @@ class YOLOMonos(YOLOModel,MonoID):
 
         for id, box in enumerate(mono_boxes):
             classid = box.get('classid')
+            conf = float(box.get('confidence'))
             symbol = self.get_label(classid)
-            obj.add_mono(classid=classid,symbol=symbol,box=box,id=id)
             box.set('id', id)
             box.set('symbol', symbol)
+            box.set('classlabel', symbol)
+            obj.add_mono(classid=classid,classlabel=symbol,symbol=symbol,box=box,id=id,confidence=conf)
+
+        # check for overlaps, necessarily with different classes, keep
+        # highest confidence as primary - do not expect bad
+        # cases, predictions are not expected to partially overlap
+        sortedmono = sorted(obj.monosaccharides(),key=lambda m: -m['confidence'])
+        removed = set()
+        for i1 in range(0,len(sortedmono)-1):
+            if i1 in removed:
+                continue
+            m1 = sortedmono[i1]
+            for i2 in range(i1+1,len(sortedmono)):
+                if i2 in removed:
+                    continue
+                m2 = sortedmono[i2]
+                if self.cb.have_intersection(m1.get('box'),m2.get('box')):
+                    m2['iou'] = self.cp.iou(m1.get('box'),m2.get('box'))
+                    obj.make_alternative_mono(m1['id'],m2['id'])
+                    removed.add(i2)
 
         return obj.monosaccharides()
 
@@ -309,6 +331,8 @@ class YOLOMonos(YOLOModel,MonoID):
 
 class KnownMono(MonoID):
 
+    # Need to be able to support any monosaccharide symbol in generated code
+    labels = ["GlcNAc","NeuAc","Fuc","Man","GalNAc","Gal","Glc","NeuGc","Xyl"]
     defaults = {
         'boxpadding': 0,
     }
@@ -317,13 +341,14 @@ class KnownMono(MonoID):
         self.params = dict(
             boxpadding = Config.get_param('boxpadding', Config.INT, kwargs, self.defaults),
         )
+        MonoID.__init__(self)
     
     def find_objects(self, obj):
         mono_boxes = self.find_boxes(obj)
         obj.clear_monos()
         for box in mono_boxes:
             box.set_image_dimensions(image_width=obj.width(),image_height=obj.height())
-            obj.add_mono(classid=self.get_mono_index(box.get('symbol')),symbol=box.get('symbol'),box=box,id=box.get('id'))
+            obj.add_mono(classid=self.get_label_index(box.get('symbol')),symbol=box.get('symbol'),box=box,id=box.get('id'))
 
         return obj.monosaccharides()
 
@@ -352,7 +377,7 @@ class KnownMono(MonoID):
                     x_max = max(x_coords)
                     y_max = max(y_coords)
 
-                    box = BoundingBox(x1=x_min, y1=y_min, x2=x_max, y2=y_max, symbol=name,classid=self.get_label_index(name),id=int(mono_id))
+                    box = BoundingBox(x1=x_min,y1=y_min,x2=x_max,y2=y_max,symbol=name,classid=self.get_label_index(name),id=int(mono_id))
                     box.pad(self.params['boxpadding']) # known data is absolute
                     boxes.append(box)
 
