@@ -366,6 +366,9 @@ class ConnectYOLO(YOLOModel,GlycanConnector):
         image = obj.image()
         boxes = self.get_YOLO_output(image)
 
+        for b in boxes:
+            b.set('classlabel',self.get_label(b.get('classid')))
+
         # if DebugMode.debug:
         #     DebugMode.log_data(
         #         identifier = DebugMode.curr_image,
@@ -492,7 +495,7 @@ class KnownLink(GlycanConnector):
                 width = x_max - x_min 
                 height = y_max - y_min
 
-                box = BoundingBox(x1=x_min, y1=y_min, x2=x_max, y2=y_max, id=box_id, classid=0) 
+                box = BoundingBox(x1=x_min, y1=y_min, x2=x_max, y2=y_max, id=box_id, classid=0, classlabel=self.get_label(0)) 
                 box.pad(self.params['boxpadding']) # known data is absolute
                 boxes.append(box)
                 

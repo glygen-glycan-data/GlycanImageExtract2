@@ -304,12 +304,13 @@ class KnownRoot(RootFinder):
                 
                     # Note: YOLO predicts 0 or 1 as the classid for roots, 
                     # known_items will also have classid = 0 for root and 1 for rest of the monos
-                    box = BoundingBox(x1=x_min, y1=y_min, x2=x_max, y2=y_max, symbol=name,classid=1,id=int(mono_id))
+                    box = BoundingBox(x1=x_min, y1=y_min, x2=x_max, y2=y_max, symbol=name,classid=1,classlabel=self.get_label(1),id=int(mono_id))
                     box.pad(self.params['boxpadding']) # known data is absolute
                     # boxes.append(box)
                     box_dict[int(mono_id)] = box
 
             box_dict[int(root_id)].set('classid',0)            
+            box_dict[int(root_id)].set('classname',self.get_label(0))            
 
         if DebugMode.debug:
             DebugMode.log_data(

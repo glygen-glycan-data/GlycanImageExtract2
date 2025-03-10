@@ -348,7 +348,9 @@ class KnownMono(MonoID):
         obj.clear_monos()
         for box in mono_boxes:
             box.set_image_dimensions(image_width=obj.width(),image_height=obj.height())
-            obj.add_mono(classid=self.get_label_index(box.get('symbol')),symbol=box.get('symbol'),box=box,id=box.get('id'))
+            obj.add_mono(classid=self.get_label_index(box.get('symbol')),
+                         classlabel=box.get('symbol'),
+                         symbol=box.get('symbol'),box=box,id=box.get('id'))
 
         return obj.monosaccharides()
 
@@ -377,7 +379,7 @@ class KnownMono(MonoID):
                     x_max = max(x_coords)
                     y_max = max(y_coords)
 
-                    box = BoundingBox(x1=x_min,y1=y_min,x2=x_max,y2=y_max,symbol=name,classid=self.get_label_index(name),id=int(mono_id))
+                    box = BoundingBox(x1=x_min,y1=y_min,x2=x_max,y2=y_max,symbol=name,classid=self.get_label_index(name),classlabel=name,id=int(mono_id))
                     box.pad(self.params['boxpadding']) # known data is absolute
                     boxes.append(box)
 
