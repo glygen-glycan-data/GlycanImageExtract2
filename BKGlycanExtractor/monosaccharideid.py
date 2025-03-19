@@ -15,7 +15,7 @@ from .yolomodels import YOLOModel
 from .glycanannotator import Config
 from .finder import Finder
 from .compareboxes import CompareBoxes
-from BKGlycanExtractor import MonosCompare, BoxCompare, DebugMode
+from BKGlycanExtractor import MonosCompare, DebugMode
 
 
 class MonoID(Finder): 
@@ -23,17 +23,7 @@ class MonoID(Finder):
     labels = ["GlcNAc","NeuAc","Fuc","Man","GalNAc","Gal","Glc","NeuGc"]
     finder_class = 'Monosaccharide'
 
-    @staticmethod
-    def box_components(*args,**kwargs):
-        return BoxCompare(*args,**kwargs)
-
-    @staticmethod
-    def semantic_components(*args,**kwargs):
-        return MonosCompare(*args,**kwargs)
-
-    @staticmethod
-    def known_predictor():
-        return KnownMono()
+    semantic_compare = MonosCompare
 
     def crop_largest(self, image):
         img = image
@@ -275,7 +265,6 @@ class YOLOMonos(YOLOModel,MonoID):
             expandimage = Config.get_param('expandimage', Config.INT, kwargs, self.defaults)
         )        
 
-        self.name = Config.get_finder_name(kwargs)
         self.cb = CompareBoxes()
         YOLOModel.__init__(self,params)
         MonoID.__init__(self)
@@ -287,11 +276,10 @@ class YOLOMonos(YOLOModel,MonoID):
         for id, box in enumerate(mono_boxes):
             classid = box.get('classid')
             conf = float(box.get('confidence'))
-            symbol = self.get_label(classid)
+            classlabel = box.get('classlabel')
             box.set('id', id)
-            box.set('symbol', symbol)
-            box.set('classlabel', symbol)
-            obj.add_mono(classid=classid,classlabel=symbol,symbol=symbol,box=box,id=id,confidence=conf)
+            box.set('symbol', classlabel)
+            obj.add_mono(classlabel=classlabel,symbol=classlabel,box=box,id=id,confidence=conf)
 
         # check for overlaps, necessarily with different classes, keep
         # highest confidence as primary - do not expect bad
@@ -316,7 +304,7 @@ class YOLOMonos(YOLOModel,MonoID):
     def find_boxes(self, obj):
         image = obj.image()
         boxes = self.get_YOLO_output(image)
-        
+
         if DebugMode.debug:
             DebugMode.log_data(
             identifier= DebugMode.curr_image,
@@ -348,9 +336,7 @@ class KnownMono(MonoID):
         obj.clear_monos()
         for box in mono_boxes:
             box.set_image_dimensions(image_width=obj.width(),image_height=obj.height())
-            obj.add_mono(classid=self.get_label_index(box.get('symbol')),
-                         classlabel=box.get('symbol'),
-                         symbol=box.get('symbol'),box=box,id=box.get('id'))
+            obj.add_mono(classlabel=box.get('classlabel'),symbol=box.get('symbol'),box=box,id=box.get('id'))
 
         return obj.monosaccharides()
 

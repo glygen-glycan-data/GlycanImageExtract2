@@ -18,25 +18,16 @@ from .yolomodels import YOLOModel
 from .glycanannotator import Config 
 from .bbox import BoundingBox
 from .finder import Finder
-from BKGlycanExtractor import LinksCompare, BoxCompare, DebugMode
+from .finder import Finder
+from BKGlycanExtractor import LinksCompare, DebugMode
 
 
 class GlycanConnector(Finder):
 
     labels = [ 'link' ]
+    finder_class = 'Links'
 
-    @staticmethod
-    def box_components(iou):
-        return BoxCompare(iou)
-        
-    @staticmethod
-    def semantic_components(proximity):
-        return LinksCompare(proximity)
-
-    @staticmethod
-    def known_predictor():
-        return KnownLink()
-        
+    semantic_compare = LinksCompare
 
     def set_logger(self, logger_name=''):
         self.logger = logging.getLogger(logger_name+'.glycanconnections')
@@ -79,7 +70,7 @@ class HeuristicConnector(GlycanConnector):
 
         obj, v_count, h_count = self.link_monos(black_masks, obj, average_mono_distance)
 
-        return obj.all_links()
+        return obj.undirected_links()
 
 
     def fill_mono_dict(self,monos_list,black_masks):
@@ -303,7 +294,7 @@ class HeuristicConnector(GlycanConnector):
 
         for id in id_link_map:
             for toid in id_link_map[id]:
-                obj.add_link(id,toid)
+                obj.add_undirected_link(id,toid)
         
         return obj, v_count, h_count
 
@@ -366,9 +357,6 @@ class ConnectYOLO(YOLOModel,GlycanConnector):
         image = obj.image()
         boxes = self.get_YOLO_output(image)
 
-        for b in boxes:
-            b.set('classlabel',self.get_label(b.get('classid')))
-
         # if DebugMode.debug:
         #     DebugMode.log_data(
         #         identifier = DebugMode.curr_image,
@@ -378,10 +366,18 @@ class ConnectYOLO(YOLOModel,GlycanConnector):
 
         return boxes
 
+# returns a list of connected monosaccharide objects 
     def find_objects(self, obj):
+        ''' returns list of undirected links'''
         detected_boxes = self.find_boxes(obj)
 
+        obj.semantics['undirected_links'] = []
+
         links = []
+
+        id_link_map = defaultdict(list)
+        id_added = defaultdict(set)  # Track already added IDs for each key
+
         for dbox in detected_boxes:
             linked_monos = []
             x1, y1, x2, y2 = dbox.corners()
@@ -413,30 +409,18 @@ class ConnectYOLO(YOLOModel,GlycanConnector):
                 if farthest_pair != (None, None):
                     links.append([farthest_pair,float(dbox.get('confidence'))])
 
-        id_link_map = defaultdict(list)
-        id_added = defaultdict(set)  # Track already added IDs for each key
 
-        for link_pairs, conf in links:
-            mono1, mono2 = link_pairs
+        id_added = defaultdict(set)  # Track already added IDs for each key
+        for (mono1, mono2), conf in links:
             id1, id2 = mono1.get('id'), mono2.get('id')
 
-            # Only add if the ID has not been added before
-            if id2 not in id_added[id1] and id1 not in id_added[id2]:
-                id_link_map[id1].append([id2, conf])
-                id_link_map[id2].append([id1, conf])
-
+            if id2 not in id_added[id1]:  
+                obj.add_undirected_link(id1, id2, confidence=float(dbox.get('confidence')), classlabel=dbox.get('classlabel'))
+                
                 id_added[id1].add(id2)
                 id_added[id2].add(id1)
 
-            # id_link_map[mono1.get('id')].append([mono2.get('id'),conf])
-            # id_link_map[mono2.get('id')].append([mono1.get('id'),conf])
-
-
-        for fromid in id_link_map:
-            for l in id_link_map[fromid]:
-                obj.add_link(fromid,l[0],confidence=l[1])
-            
-        return obj.all_links()
+        return obj.undirected_links()
 
 
     def euclidean_distance(self,mbox1,mbox2):
@@ -516,6 +500,7 @@ class KnownLink(GlycanConnector):
         assert image_path, "KnownMono can only run on SingleGlycanImage glycan finder semantics objects"
         
         links_path = image_path.rsplit('.',1)[0] + "_map.txt"
+        obj.semantics['undirected_links'] = []
 
         links = collections.defaultdict(list)
         with open(links_path, 'r') as file:
@@ -525,18 +510,9 @@ class KnownLink(GlycanConnector):
                     link1 = int(data_points[1])
                     link2 = int(data_points[2])
 
-                    links[link1].append(link2)
-                    links[link2].append(link1)
+                    obj.add_undirected_link(link1,link2,**{'classlabel':self.get_label(0)})
 
-        for mono in obj.monosaccharides():
-            mono_id = mono['id']
-            for toid in links[mono_id]:
-                obj.add_link(mono_id,toid)
-
-        # if DebugMode.debug:
-        #     self.find_boxes(obj.image_path())
-
-        return obj.all_links()
+        return obj.undirected_links()
 
 
 

@@ -1,8 +1,10 @@
 #!.venv/bin/python
 import os
 import sys
+import configparser
+import io
 import argparse
-from BKGlycanExtractor import Image_Manager, BoxEvaluator, Config_Manager, DebugMode
+from BKGlycanExtractor import BoxCompare, Image_Manager, Evaluator, Config_Manager, DebugMode, GlycanExtractorPipeline
 from BKGlycanExtractor import DistributedProcessing as dp
  
 parser = argparse.ArgumentParser(description="Start")
@@ -87,28 +89,125 @@ distproc = None
 
 
 
-config = Config_Manager()
+pipeline_descriptions = '''
+[Monosaccharide]
+figure_steps=SingleGlycanImage
+glycan_steps=
+known_step=KnownMono
 
-predictors = {}
-fclass = None
-for name in args.finders:
-    finder = config.get_finder(name)
-    if not fclass:
-        fclass = finder.finder_class
-    elif fclass != finder.finder_class:
-        sys.exit(
-            f"Error: Predictors must belong to the same class. "
-            f"Found conflicting classes: {fclass} and {finder.finder_class}."
-        )
-    predictors[name] = finder
+[Root]
+figure_steps=SingleGlycanImage
+glycan_steps=KnownMono
+known_step=KnownRoot
 
-evaluator = BoxEvaluator(predictors, 
-                         workers=workers,
-                         iou=args.iou,
-                         whole_image=args.wholeimage,
-                         precision=args.precision,
-                         verbose=args.verbose)
-images = Image_Manager(image_folder,pattern="*.png,*.jpg")
-images.exclude('*.annotated.*')
+[Links]
+figure_steps=SingleGlycanImage
+glycan_steps=KnownMono
+known_step=KnownLink
+
+[Glycan]
+figure_steps=
+glycan_steps=
+known_step=KnownGlycan
+'''
+
+
+config = configparser.ConfigParser()
+config.read_string(pipeline_descriptions)
+
+cm = Config_Manager()
+
+pipelines = {}
+compare_strategies = {}
+
+
+
+for i, finder_name in enumerate(args.finders):
+    pred_pipeline = GlycanExtractorPipeline()
+    
+    f = cm.get_finder(finder_name)
+    # finder_class = f.finder_class
+    finder_section = config[f.finder_class]
+
+    figure_step = finder_section.get('figure_steps')
+    glycan_step = finder_section.get('glycan_steps')
+
+    pred_pipeline.add_step('figure', cm.get_finder(figure_step)) if figure_step else None
+    pred_pipeline.add_step('glycan', cm.get_finder(glycan_step)) if glycan_step else None
+    pred_pipeline.add_step('glycan',f)
+
+    print("pred_pipeline",pred_pipeline.get_steps('figure'))
+    print("pred_pipeline",pred_pipeline.get_steps('glycan'))
+
+    pipelines[f"{f.finder_class}-{i}"] = pred_pipeline    
+
+    # use className of boxCompare directly
+    # make the dictinoary key naming better for the plot - box_compare-{i} -  like add IOU or more info      
+    compare_strategies[f"box_compare-{i}"] = BoxCompare(
+        iou=args.iou,
+        whole_image=args.wholeimage,
+        precision=args.precision,
+        verbose=args.verbose
+    )
+
+# use clone - but if you are not sure - its okay build them seperately
+
+
+
+for finder_name in args.finders:
+    known_pipeline = GlycanExtractorPipeline()
+    f = cm.get_finder(finder_name)
+    # finder_class = f.finder_class
+    finder_section = config[f.finder_class]
+
+
+    figure_step = finder_section.get('figure_steps')
+    glycan_step = finder_section.get('glycan_steps')
+    known_step = finder_section.get('known_step')
+
+    known_pipeline.add_step('figure', cm.get_finder(figure_step)) if figure_step else None
+    known_pipeline.add_step('glycan', cm.get_finder(glycan_step)) if glycan_step else None
+    known_pipeline.add_step('glycan',cm.get_finder(known_step)) if known_step else None
+
+    print("known_pipeline",known_pipeline.get_steps('figure'))
+    print("known_pipeline",known_pipeline.get_steps('glycan'))
+
+
+evaluator = Evaluator(known_pipeline=known_pipeline,
+                        prediction_pipelines=pipelines,
+                        compare_strategies=compare_strategies,
+                        workers=distproc,
+                        boxeval=True,
+                        verbose=args.verbose
+                    )
+
+images = Image_Manager(args.images)
+images.exclude("*.annotated.*")
+
 evaluator.runall(images)
+
+# predictors = {}
+# fclass = None
+# for name in args.finders:
+#     finder = config.get_finder(name)
+#     if not fclass:
+#         fclass = finder.finder_class
+#     elif fclass != finder.finder_class:
+#         sys.exit(
+#             f"Error: Predictors must belong to the same class. "
+#             f"Found conflicting classes: {fclass} and {finder.finder_class}."
+#         )
+#     predictors[name] = finder
+
+evaluator.plotprecisionrecall(
+    dir="plots",
+    filename="box_plot",
+    title="Custom Precision-Recall Curve",
+    figsize=(10, 8),
+    legend_loc="upper right",
+    xlim=(0, 1),
+    ylim=(0, 1),
+    grid=True,
+)
+
 

@@ -11,23 +11,16 @@ from .yolomodels import YOLOModel
 from .glycanannotator import Config
 from .finder import Finder
 from .compareboxes import CompareBoxes
-from BKGlycanExtractor import RootCompare, BoxCompare, DebugMode
+from BKGlycanExtractor import RootCompare, DebugMode
 
             
 class RootFinder(Finder):
 
-    @staticmethod
-    def box_components(iou):
-        return BoxCompare(iou)
-        
-    @staticmethod
-    def semantic_components(proximity):
-        return RootCompare(proximity)
+    labels = ['redend','not_redend']
+    finder_class = 'Root'
 
-    @staticmethod
-    def known_predictor():
-        return KnownRoot()
-        
+    semantic_compare = RootCompare
+    
     def set_logger(self, logger_name=''):
         self.logger = logging.getLogger(logger_name+'.rootmonofinding')
         
@@ -167,7 +160,7 @@ class YOLORootFinder(YOLOModel, RootFinder):
         'expandimage': 0,
         'iou_threshold': 0.4
     }
-    labels = ['redend','not_redend']
+
 
     def __init__(self,**kwargs):
 
@@ -180,11 +173,13 @@ class YOLORootFinder(YOLOModel, RootFinder):
             expandimage = Config.get_param('expandimage', Config.INT, kwargs, self.defaults)
         )
 
-        RootFinder.__init__(self)
+        # YOLOModel gets the labels from the current Class and you can use this to set classlabels in the YOLOclass
         YOLOModel.__init__(self,params)
+        RootFinder.__init__(self)
+        
 
-    def find_boxes(self, image, **kwargs):
-
+    def find_boxes(self, obj):
+        image = obj.image()
         boxes = self.get_YOLO_output(image)
 
         if DebugMode.debug:
@@ -196,15 +191,11 @@ class YOLORootFinder(YOLOModel, RootFinder):
 
         return boxes
     
-
-    def find_objects(self, obj, **kwargs):
-        image = obj.image()
-
-        boxes = self.find_boxes(image)
+    def find_objects(self, obj):
+        boxes = self.find_boxes(obj)
 
         root_boxes = []
         root_mono = None
-
 
         for box in boxes:
             if box.get('classid') == 0:
@@ -224,8 +215,6 @@ class YOLORootFinder(YOLOModel, RootFinder):
         else:
             root_mono = root_boxes[0]
 
-        # assert root_mono is not None  # remove it because it should not break the whole semantics PR
-        # treat is as FN on the sequence - for PR curves of knownSemantics
         if root_mono:
             semantic_monos = list(obj.monosaccharides())
             
@@ -252,13 +241,15 @@ class YOLORootFinder(YOLOModel, RootFinder):
             or (inter == d_area and comparison_alg.detection_sufficient(box, root_mono))
             or comparison_alg.is_overlapping(box, root_mono)):
                 root = semantic_monos[max_int_idx]
-                obj.set_root(root.get('id'),confidence=float(root_mono.get('confidence')))
+                obj.set_root(root.get('id'),**{'confidence':float(root_mono.get('confidence')),'classlabel': root_mono.get('classlabel')})
             else:
                 obj.no_root()  
 
         return [ obj.root() ]
 
 class KnownRoot(RootFinder):
+
+    labels = ['redend','not_redend']
 
     defaults = {
         'boxpadding': 0,
@@ -268,6 +259,8 @@ class KnownRoot(RootFinder):
         self.params = dict(
             boxpadding = Config.get_param('boxpadding', Config.INT, kwargs, self.defaults),
         )
+
+        RootFinder.__init__(self)
 
     def find_boxes(self, obj):
         image_path = obj.image_path()
@@ -310,7 +303,7 @@ class KnownRoot(RootFinder):
                     box_dict[int(mono_id)] = box
 
             box_dict[int(root_id)].set('classid',0)            
-            box_dict[int(root_id)].set('classname',self.get_label(0))            
+            box_dict[int(root_id)].set('classlabel',self.get_label(0)) 
 
         if DebugMode.debug:
             DebugMode.log_data(
@@ -320,14 +313,14 @@ class KnownRoot(RootFinder):
             )
 
         return list(box_dict.values())
-                                      
+
     def find_objects(self, obj):
         boxes = self.find_boxes(obj)
-
+        
         for box in boxes:
-            classid = box.get('classid')
-            if classid == 0:
-                obj.set_root(box.get('id'))
+            if box.get('classid') == 0:
+                obj.set_root(box.get('id'),classlabel=box.get('classlabel'))
+                break
 
         return [ obj.root() ]
 

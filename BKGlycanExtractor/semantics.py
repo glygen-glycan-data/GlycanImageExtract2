@@ -73,11 +73,11 @@ class Figure_Semantics(Image_Semantics):
                 glycan_image = cv2.imread(image)
                 return glycan_image
             elif image.endswith('.pdf'):
-                raise ValueError("Can't handle PDF format: "+image)
+                raise ValueError("Can't handle PDF format: ",image)
                 return pdf
         elif isinstance(image, np.ndarray):
             return image
-        raise ValueError("Can't handle image format: "+image)
+        raise ValueError("Can't handle image format: ",image)
 
     def image_path(self):
         return self.semantics['image_path']
@@ -204,13 +204,13 @@ class Glycan_Semantics(Image_Semantics):
     def clear_monos(self):
         self.semantics['monos'] = {}
 
-    def add_mono(self,classid,symbol,box,**kwargs):
+    def add_mono(self,classlabel,symbol,box,**kwargs):
         if kwargs.get('id') is None:
             if len(self.monosaccharides()) == 0:
                 kwargs['id'] = 1
             else:
                 kwargs['id'] = max(self.semantics['monos'])+1
-        mono = dict(classid=classid,symbol=symbol,box=box,bbox=box.bbox(),center=box.center(),links=[],**kwargs)
+        mono = dict(classlabel=classlabel,symbol=symbol,box=box,bbox=box.bbox(),center=box.center(),**kwargs)
         assert mono['id'] not in self.semantics['monos']
         self.semantics['monos'][mono['id']] = mono
 
@@ -258,13 +258,9 @@ class Glycan_Semantics(Image_Semantics):
     def root(self):
         return self.semantics.get('root',None)
 
-    def add_link(self,fromid,toid,**kwargs):
-        assert fromid is not None
-        assert toid is not None
-        assert fromid in self.semantics['monos']
-        assert toid in self.semantics['monos']
-        self.semantics['monos'][fromid]['links'].append({ 'from': fromid, 'to': toid, **kwargs })
-
+    def add_undirected_link(self,id1,id2,**kwargs):
+        self.semantics['undirected_links'].append({"mono_ids": list(sorted((id1,id2))),**kwargs})
+        
     def clear_links(self,fromid):
         self.semantics['monos'][fromid]['links'] = []
 
@@ -272,15 +268,79 @@ class Glycan_Semantics(Image_Semantics):
         for fromid in self.monosaccharideids():
             self.clear_links(fromid)
 
+    # remove/modify
     def links(self,id):
         return self.semantics['monos'][id]['links']
 
-    def all_links(self):
+    # remove/modify
+    def delete_link(self,fromid,toid):
+        new_links = [
+            link for link in self.semantics['monos'][fromid]['links']
+            if not (link['from'] == fromid and link['to'] == toid)
+        ]
+
+        self.semantics['monos'][fromid]['links'] = new_links  
+
+    def undirected_links(self):
+        return self.semantics.get('undirected_links')
+
+
+    # modify/remove
+    # method to update links in semantics to directed links when we have information about the reducing end
+    def directed_links(self):
+        root = self.root()
+        monos = self.semantics['monos']
+
+        if root:
+            directed_dict = defaultdict(list)
+
+            # Initialize directed_dict with links
+            for mono_id, mono in monos.items():
+                directed_dict[mono_id] = mono['links']
+
+            q = [root['mono_id']]
+            visited = set()
+
+            while q:
+                from_id = q.pop(0)
+
+                if from_id in visited:
+                    continue
+                visited.add(from_id)
+
+                mono = monos[from_id]
+                to_ids = [link['to'] for link in mono['links'] if link['to'] not in visited]
+
+                while to_ids:
+                    to_id = to_ids.pop(0)
+
+                    # Remove bi-directional edges by checking if the reverse exists
+                    directed_edges = []
+                    for item in directed_dict[to_id]:
+                        if item['to'] == from_id:
+                            continue  # Skip the reverse edge (bi-directional removal)
+
+                        directed_edges.append(item)
+
+                        if to_id not in visited:
+                            q.append(to_id)
+
+                    directed_dict[to_id] = directed_edges
+
+
+            for mono_id, links in directed_dict.items():
+                # monos[mono_id]['directed_links'] = links
+                monos[mono_id]['links'] = links
+
+
+
+    def all_directed_links(self):
         result = []
         for fromid in self.monosaccharideids():
-            for l in self.links(fromid):
+            for l in self.directed_links(fromid):
                 result.append(l)
         return result
+                       
 
     # def tojson(self):
     #     data = {}
@@ -372,7 +432,7 @@ class Glycan_Semantics(Image_Semantics):
     def image_path(self):
         # for single glycan images, the glycan image "has" a path
         return self.semantics.get('image_path',None)
-    
+
     @staticmethod
     def composition(monosaccharides):
         count = defaultdict(int)
@@ -415,7 +475,7 @@ class Glycan_Semantics(Image_Semantics):
     @staticmethod
     def link_count(data):
 
-        links_adj = Glycan_Semantics.build_adjacency_list(data, cleaned=True)
+        links_adj = Glycan_Semantics.build_adjacency_list(data)
 
         # no. of links = no. of monos - 1
         # num_links = []
@@ -426,7 +486,7 @@ class Glycan_Semantics(Image_Semantics):
         for box_id, linked_id in links_adj.items():
             for link_id in linked_id:
                 monos_collections.add(box_id)
-                monos_collections.add(link_id)
+                monos_collections.add(link_id['to'])
 
                 num_links += 1
 
@@ -448,7 +508,8 @@ class Glycan_Semantics(Image_Semantics):
 
         root_id = mono_data.root()
 
-        if not root_id or root_id == -1:
+        if root_id == -1:
+            print("******NO root",root_id)
             return None
 
         adj = Glycan_Semantics.build_adjacency_list(mono_data, cleaned=True)
@@ -465,20 +526,57 @@ class Glycan_Semantics(Image_Semantics):
         return ''.join(iupac)
 
 
+    # @staticmethod
+    # def build_adjecency_list(monosaccharides):
+    #     adj = {}
+    #     for id, mono in monosaccharides.items():
+    #         links = mono.get('links')
+    #         # Process links to keep only integer IDs
+    #         filtered_links = []
+    #         for link in links:
+    #             if isinstance(link, list):  # If link contains a list, extract the first element
+    #                 filtered_links.append(link[0])
+    #             else:  # Otherwise, it’s already an integer
+    #                 filtered_links.append(link)
+    #         adj[mono.get('id')] = filtered_links
+    #     return adj
+
     @staticmethod
-    def build_adjecency_list(monosaccharides):
-        adj = {}
-        for id, mono in monosaccharides.items():
-            links = mono.get('links')
-            # Process links to keep only integer IDs
-            filtered_links = []
-            for link in links:
-                if isinstance(link, list):  # If link contains a list, extract the first element
-                    filtered_links.append(link[0])
-                else:  # Otherwise, it’s already an integer
-                    filtered_links.append(link)
-            adj[mono.get('id')] = filtered_links
+    def build_adjacency_list(mono_semantics):
+        adj = defaultdict(list)
+
+        id_box_dict = {}
+
+        for mono in mono_semantics.monosaccharides():
+            id_box_dict[mono['id']] = mono['box']
+
+        for mono in mono_semantics.monosaccharides():
+            for link_data in mono['links']:
+                from_box = id_box_dict[link_data['from']]
+                to_box = id_box_dict[link_data['to']]
+                to_id = link_data['to']
+                from_id = link_data['from']
+                confidence = link_data.get('confidence')
+
+                data = {'from': from_id ,'to': to_id,'from_box': from_box,'to_box': to_box}
+
+                if confidence:
+                    data['confidence'] = confidence
+
+                adj[mono['id']].append(data)
         return adj
+
+        # for id, mono in monosaccharides.items():
+        #     links = mono.get('links')
+        #     # Process links to keep only integer IDs
+        #     filtered_links = []
+        #     for link in links:
+        #         if isinstance(link, list):  # If link contains a list, extract the first element
+        #             filtered_links.append(link[0])
+        #         else:  # Otherwise, it’s already an integer
+        #             filtered_links.append(link)
+        #     adj[mono.get('id')] = filtered_links
+        # return adj
 
 
     @staticmethod
@@ -487,32 +585,32 @@ class Glycan_Semantics(Image_Semantics):
         return math.floor(value * scale) / scale
 
 
-    @staticmethod
-    def build_adjacency_list(data, cleaned=False):
-        # adj = {}
-        monos = data.semantics['monos']
+    # @staticmethod
+    # def build_adjacency_list(data, cleaned=False):
+    #     # adj = {}
+    #     monos = data.semantics['monos']
 
-        adj = defaultdict(list)
-        for id, mono_data in monos.items():
-            # links = mono.get('links')
-            # Process links to keep only integer IDs
-            filtered_links = []
-            for link_data in mono_data.get('links'):
-                if isinstance(link_data, list):  # Handle case with confidence value - for pred data case
-                    linked_id, conf = link_data
-                    # filtered_links.append(link[0])
-                    try:
-                        adj[mono_data['box']].append([monos[linked_id]['box'], Glycan_Semantics.floor_precision(conf,8)])
-                    except KeyError as k:
-                        print("Key doesnt exist:", k)
-                else:  # Handle case without confidence - for known data case
-                    linked_id = link_data
-                    adj[mono_data['box']].append(monos[linked_id]['box'])
+    #     adj = defaultdict(list)
+    #     for id, mono_data in monos.items():
+    #         # links = mono.get('links')
+    #         # Process links to keep only integer IDs
+    #         filtered_links = []
+    #         for link_data in mono_data.get('links'):
+    #             if isinstance(link_data, list):  # Handle case with confidence value - for pred data case
+    #                 linked_id, conf = link_data
+    #                 # filtered_links.append(link[0])
+    #                 try:
+    #                     adj[mono_data['box']].append([monos[linked_id]['box'], Glycan_Semantics.floor_precision(conf,8)])
+    #                 except KeyError as k:
+    #                     print("Key doesnt exist:", k)
+    #             else:  # Handle case without confidence - for known data case
+    #                 linked_id = link_data
+    #                 adj[mono_data['box']].append(monos[linked_id]['box'])
 
-        if cleaned:
-            return Glycan_Semantics.adjacenecy_list_cleaned(adj)
+    #     if cleaned:
+    #         return Glycan_Semantics.adjacenecy_list_cleaned(adj)
 
-        return adj
+    #     return adj
 
     @staticmethod
     def adjacenecy_list_cleaned(adj):

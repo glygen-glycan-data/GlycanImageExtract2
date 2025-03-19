@@ -4,6 +4,8 @@ methods to compare bounding boxes
 assess ovelap, intersection over union value, class comparison, etc
 """
 
+import math
+
 class CompareBoxes:
 
     def __init__(self, **kw):
@@ -17,12 +19,25 @@ class CompareBoxes:
         return False
         
     def detection_sufficient(self, training, detected):
-        if self.iou(training, detected) > self.detection_threshold:
+        if CompareBoxes.iou(training, detected) > self.detection_threshold:
             return True
         else:
             return False
-        
-    def have_intersection(self, training, detected):
+
+    @staticmethod
+    def euclidean_distance(obj1,obj2):
+        obj1_cen_x, obj1_cen_y = obj1['center']
+        obj2_cen_x, obj2_cen_y = obj2['center']
+        return math.sqrt((obj1_cen_x - obj2_cen_x)**2 + (obj1_cen_y - obj2_cen_y)**2) 
+
+    @staticmethod
+    def proximity(known_box,pred_box):
+        distance = CompareBoxes.euclidean_distance(known_box, pred_box)
+        x,y,w,h = known_box['bbox']
+        return distance/min(w, h)
+
+    @staticmethod    
+    def have_intersection(training, detected):
         t_x, t_y, t_x2, t_y2 = training.corners()
         d_x, d_y, d_x2, d_y2 = detected.corners()
         assert t_x <= t_x2
@@ -38,74 +53,10 @@ class CompareBoxes:
             return False
         if d_y2 < t_y:
             return False
-        return True
+        return True   
 
-    # # new
-    # def intersect(self,training,detected):
-    #     # print("---->>>",dir(training), training.bbox())
-    #     t_x, t_y, t_w, t_h = training.bbox()
-    #     d_x, d_y, d_w, d_h = detected.bbox()
-
-    #     if t_x <= d_x <= t_x + t_w and \
-    #         t_y  <= d_y <= t_y +t_y :
-    #         return True
-    #     if t_x <= d_x + d_w <= t_x + t_w and \
-    #         t_y  <= d_y  <= t_y +t_y :
-    #             return True
-    #     if t_x <= d_x <= t_x + t_w and \
-    #         t_y  <= d_y + d_h <= t_y +t_y :
-    #             return True
-    #     if t_x <= d_x + d_w <= t_x + t_w and \
-    #         t_y  <= d_y + d_h <= t_y +t_y :
-    #             return True
-    #     if d_x <= t_x <= d_x + d_w and \
-    #         d_y  <= t_y  <= d_y +d_y :
-    #             return True
-    #     if d_x <= t_x+t_w <= d_x + d_w and \
-    #         d_y  <= t_y  <= d_y +d_y :
-    #             return True
-    #     if d_x <= t_x <= d_x + d_w and \
-    #         d_y  <= t_y + t_h <= d_y +d_y :
-    #             return True
-    #     if d_x <= t_x+t_w <= d_x + d_w and \
-    #         d_y  <= t_y + t_h <= d_y +d_y :
-    #             return True
-    #     return False
-
-    # # new
-    # def intersection(self,training,detected):
-    #     assert self.intersect(training,detected)
-
-    #     t_x, t_y, t_w, t_h = training.bbox()
-    #     d_x, d_y, d_w, d_h = detected.bbox()
-
-    #     ix=max(t_x, d_x)
-    #     iy=max(t_y, d_y)
-    #     iw=max(min(t_x + t_w, d_x + d_w)-ix,0)
-    #     ih=max(min(t_y + t_h, d_y + d_h)-iy,0)  
-    #     return dict(cx=ix+iw//2,cy=iy+ih//2,x=ix,y=iy,w=iw,h=ih)
-
-    # # new
-    # def area(self,box):
-    #     # print("box",box['w'])
-    #     return (box['w']+1)*(box['h']+1)
-    # # new
-    # def bbox_dict(self,box):
-    #     x,y,w,h = box.bbox()
-    #     return dict(x=x,y=y,w=w,h=h)
-
-    # # new
-    # def iou_score(self,training,detected):
-    #     if self.intersect(training,detected):
-    #         i = self.intersection(training,detected)
-
-    #         print("dict",training.bbox())
-    #         return float(self.area(i))/(self.area(self.bbox_dict(training))+self.area(self.bbox_dict(detected))-self.area(i))
-    #     return 0
-
-
-    
-    def intersection_area(self, training, detected):
+    @staticmethod
+    def intersection_area(training, detected):
         t_x, t_y, t_x2, t_y2 = training.corners()
         d_x, d_y, d_x2, d_y2 = detected.corners()
         xA = max(t_x, d_x)
@@ -114,15 +65,18 @@ class CompareBoxes:
         yB = min(t_y2, d_y2)
         return (xB - xA + 1)*(yB - yA + 1)
     
-    def iou(self, training, detected):
-        i = self.intersection_area(training, detected)
-        u = self.union_area(training, detected)
-        iou = float(i/u)
-        # assert float('-inf') <= iou <= 1
-        return iou
+    @staticmethod
+    def iou(training, detected):
+        if CompareBoxes.have_intersection(training, detected):
+            i = CompareBoxes.intersection_area(training, detected)
+            u = CompareBoxes.union_area(training, detected)
+            iou = float(i/u)
+            # assert float('-inf') <= iou <= 1
+            return iou
+        return 0.0
     
     def is_overlapping(self, training, detected):
-        if self.iou(training, detected) > self.overlap_threshold:
+        if CompareBoxes.iou(training, detected) > self.overlap_threshold:
             return True
         else:
             return False
@@ -139,8 +93,8 @@ class CompareBoxes:
                 dbox_name = str(d_idx)
                 dbox.set_name(dbox_name)
                 dbox.corners()
-                if self.have_intersection(tbox, dbox):
-                    iou = self.iou(tbox, dbox)
+                if CompareBoxes.have_intersection(tbox, dbox):
+                    iou = CompareBoxes.iou(tbox, dbox)
                     intersecting_boxes.append((iou, dbox))
             
             # sort by first element (iou)
@@ -154,7 +108,7 @@ class CompareBoxes:
                 else:
                     t_area = tbox.area()
                     d_area = dbox.area()
-                    inter = self.intersection_area(tbox, dbox)
+                    inter = CompareBoxes.intersection_area(tbox, dbox)
                     if inter == 0:
                         break
                     elif inter == t_area:
@@ -184,14 +138,15 @@ class CompareBoxes:
                     
         
     def training_contained(self, training, detected):
-        if (self.iou(training, detected) > self.containment_threshold):
+        if (CompareBoxes.iou(training, detected) > self.containment_threshold):
             return True
         else:
             return False
-        
-    def union_area(self, training, detected):
+
+    @staticmethod   
+    def union_area(training, detected):
         d_area = detected.area()
         t_area = training.area()
-        intersection = self.intersection_area(training, detected)
+        intersection = CompareBoxes.intersection_area(training, detected)
         return float(d_area + t_area - intersection)
         

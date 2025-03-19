@@ -16,6 +16,8 @@ some set of coordinates, and confidence of detection.
 import logging
 import os
 import json
+import cv2
+import numpy as np
 from . bbox import BoundingBox
 from . yolomodels import YOLOModel 
 from . glycanannotator import Config
@@ -61,8 +63,6 @@ class YOLOGlycanFinder(YOLOModel,GlycanFinder):
 
     def find_objects(self, obj):
         boxes = self.find_boxes(obj)
-        print("semantics_image",obj.image().shape)
-
         obj.clear_glycans()
         for box in boxes:
             obj.add_glycan(box=box)
@@ -93,4 +93,83 @@ class SingleGlycanImage(GlycanFinder):
         return [ BoundingBox(image=image, x=0, y=0, width=width, height=height) ]
 
         
+# handles one/many glycans 
+class CleanGlycanImage(GlycanFinder):
+
+    def __init__(self):
+        super().__init__()
+
+    def find_boxes(self, obj):
+        print("\nCLEAN IMAGE")
+        boxes = []
+        for gly in obj.glycans():
+            img = gly.image()
+            cleaned_img, (x, y, w, h) = self.process_image(img)
+            box = gly.get('box') 
+            # print("box",box)
+
+            new_box = box.clone()
+            new_box.update_bbox(x=x,y=y,w=w,h=h)
+            # print("new_box",new_box)
+
+            box.set('image',cleaned_img)
+
+            # box = BoundingBox(image=cleaned_img,x=x,y=y,w=w,h=h)
+            # cleaned_image_dimensions={'x':x,'y':y,'w':w,'h':h}
+            box_details = dict(id=gly.get('id'), box=box, image=cleaned_img)
+            boxes.append(box_details)
+
+        return boxes
+
+    def find_objects(self, obj):
+        boxes = self.find_boxes(obj)
+        for gly in obj.glycans():
+            gly_id = gly.get('id')
+
+            for box_details in boxes:
+                if box_details['id'] == gly_id:
+                    gly.set_image(box_details['image'])
+                    # gly.set("cleaned_image_dimensions",box_details['cleaned_image_dimensions'])
+                    # gly.set("box", box_details['box'])
+                    
+        return obj.glycans()
+
+    def image_contour(self,img):
+        # Convert to grayscale and apply Binary inverse thresholding
+        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        _, gray = cv2.threshold(gray, 230, 255, cv2.THRESH_BINARY_INV)
+
+        contours, _ = cv2.findContours(gray, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+
+        if contours:
+            largest_index = max(range(len(contours)), key=lambda i: cv2.contourArea(contours[i]))
+            return contours, largest_index
+
+        return contours, None
+
+    # Crop and clean the largest detected component in the image
+    def process_image(self,img):
+        contours, largest_index = self.image_contour(img)
+
+        if largest_index is None:
+            return img
+
+        # crop image - offset (x, y) and the cropped region size (w, h)
+        # need to store this information - required when we annotate details on the entire image
+        x, y, w, h = cv2.boundingRect(contours[largest_index])
+        cropped_image = img[y:y+h, x:x+w]
+
+        # clean image
+        contours, largest_index = self.image_contour(cropped_image)
+        out = np.zeros_like(cropped_image)
+        cv2.drawContours(out, contours, largest_index, (255, 255, 255), -1)
+        _, out = cv2.threshold(out, 230, 255, cv2.THRESH_BINARY_INV)
+        cleaned_image = cv2.bitwise_or(out, cropped_image)
+        return cleaned_image, (x, y, w, h)
+
+    # def save_cleaned_image(self, obj, img):
+    #     print("-->image_path",obj.image_path())
+    #     img_path = os.path.splitext(obj.image_path()) + ".cleaned.png"
+    #     cv2.imwrite(img_path, img)
+    #     return img_path
 

@@ -83,7 +83,7 @@ class YOLOModel:
                         box = BoundingBox(image=image,
                             rcx=detection[0], rcy=detection[1], 
                             rw=detection[2], rh=detection[3],
-                            classid=class_id, confidence=confidence)
+                            classid=class_id, confidence=confidence, classlabel=self.get_label(class_id))
 
                         if self.expandimage != 0:
                             box.set_image_dimensions(image=original_image)
