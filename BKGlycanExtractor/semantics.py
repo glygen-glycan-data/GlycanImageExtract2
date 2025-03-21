@@ -148,11 +148,11 @@ class Figure_Semantics(Image_Semantics):
         wh.write(self.tojson())
         wh.close()
 
-    def annotate_glycans(self):
+    def annotate_glycans(self,color=(0,255,0)):
         for glycan in self.semantics['glycans']:
             # glycan annotation
             x1,y1,x2,y2 = glycan.glycan_box().corners()
-            self.annotate(x1,y1,x2,y2,color=(0,255,0)) # green for glycan
+            self.annotate(x1,y1,x2,y2,color=color) # green for glycan
 
     def annotate_monos(self):
         for glycan in self.semantics['glycans']:

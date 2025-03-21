@@ -38,7 +38,6 @@ class GlycanExtractorPipeline():
             else:
                 self.steps[stage] = Config.get_param(stage+'_steps', Config.STEPS, kwargs, self.defaults)
 
-
     # step should be a finder instance
     def add_step(self,stage,step):
         assert stage in ("figure","glycan","clean_image"), "Bad stage specification: "+stage
@@ -222,7 +221,7 @@ class Config(object):
 
     @staticmethod
     def get_param(key,datatype,kwargs={},defaults={}):
-        value = defaults.get(key)
+        value = copy.copy(defaults.get(key))
         config = kwargs.get('__config__')
         if config:
             value = getattr(config,datatype)(key,value)

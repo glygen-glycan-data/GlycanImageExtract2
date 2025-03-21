@@ -27,6 +27,8 @@ from BKGlycanExtractor import DebugMode
 # Base class
 class GlycanFinder(Finder):  
 
+    finder_class = 'Glycan'
+
     def set_logger(self, logger_name=''):
         self.logger = logging.getLogger(logger_name+'.glycanfinding')
 
@@ -54,8 +56,8 @@ class YOLOGlycanFinder(YOLOModel,GlycanFinder):
            config = Config.get_param('config', Config.CONFIGFILE, kwargs, self.defaults),
            weights = Config.get_param('weights', Config.CONFIGFILE, kwargs, self.defaults),
         )
-        YOLOModel.__init__(self,params)
         GlycanFinder.__init__(self)
+        YOLOModel.__init__(self,params)
 
     def find_boxes(self, obj):
         image = obj.image()
@@ -65,7 +67,8 @@ class YOLOGlycanFinder(YOLOModel,GlycanFinder):
         boxes = self.find_boxes(obj)
         obj.clear_glycans()
         for box in boxes:
-            obj.add_glycan(box=box)
+            obj.add_glycan(box=box,classid=box.get('classid'),classlabel=box.get('classlabel'))
+        return obj.glycans()
     
     
 class SingleGlycanImage(GlycanFinder):
@@ -92,6 +95,42 @@ class SingleGlycanImage(GlycanFinder):
         height, width, _ = image.shape
         return [ BoundingBox(image=image, x=0, y=0, width=width, height=height) ]
 
+class KnownGlycanBoxes(GlycanFinder):
+
+    labels = ["glycan"]
+    defaults = {
+        'boxpadding': 0,
+    }
+
+    def __init__(self,**kwargs):
+        self.params = dict(
+            boxpadding = Config.get_param('boxpadding', Config.FLOAT, kwargs, self.defaults),
+        )
+        self.boxpadding = self.params['boxpadding']
+        super().__init__()
+
+    def find_boxes(self, obj):
+        yoloannot = obj.image_path().rsplit('.',1)[0] + ".txt"
+        image = obj.image()
+        boxes = []
+        for l in open(yoloannot):
+            classid,rcx,rcy,rw,rh = map(float,l.split())
+            classid = int(classid)
+            box = BoundingBox(rcx=rcx,rcy=rcy,rw=rw,rh=rh,image=image,
+                              classid=classid,classlabel=self.get_label(classid))
+            if 0 < self.boxpadding <= 1:
+                box.pad_relative(self.boxpadding)
+            elif 1 < self.boxpadding:
+                box.pad(self.boxpadding)
+            boxes.append(box)
+        return boxes
+
+    def find_objects(self, obj):
+        boxes = self.find_boxes(obj)
+        obj.clear_glycans()
+        for box in boxes:
+            obj.add_glycan(box=box)
+        return obj.glycans()
         
 # handles one/many glycans 
 class CleanGlycanImage(GlycanFinder):

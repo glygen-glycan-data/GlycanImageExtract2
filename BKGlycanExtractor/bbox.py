@@ -38,9 +38,9 @@ class BoundingBox:
             if self.imwidth is None or self.imheight is None:
                 raise ValueError("required arguments missing")
             self.x = int(self.imwidth*kwargs['rx'])
-            self.y = int(self.imwidth*kwargs['ry'])
+            self.y = int(self.imheight*kwargs['ry'])
             self.w = int(self.imwidth*kwargs['rw'])
-            self.h = int(self.imwidth*kwargs['rh'])
+            self.h = int(self.imheight*kwargs['rh'])
         elif hasall(kwargs,'rcx','rcy','rw','rh'):
             if self.imwidth is None or self.imheight is None:
                 raise ValueError("required arguments missing")

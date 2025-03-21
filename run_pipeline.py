@@ -5,6 +5,7 @@ import argparse
 import logging
 from BKGlycanExtractor import Image_Manager, Config_Manager
 from BKGlycanExtractor.distproc import DistributedProcessing as dp
+from BKGlycanExtractor.glycanfinding import KnownGlycanBoxes
  
 parser = argparse.ArgumentParser(description="Start")
 
@@ -42,7 +43,12 @@ pipeline = config.get_pipeline(args.pipeline)
 images = Image_Manager(args.images)
 images.exclude("*.annotated.*")
 
+# changes specific for glycan finding make here...
+kgb = config.get_finder("KnownGlycanBoxes")
+
 for sem in pipeline.runall(images,workers=workers,verbose=args.verbose):
     sem.write_json()
-    sem.annotate_monos()
+    sem.annotate_glycans(color=(0,0,255))
+    kgb.find_objects(sem)
+    sem.annotate_glycans(color=(0,255,0))
     sem.write_image(extension="annotated.png")

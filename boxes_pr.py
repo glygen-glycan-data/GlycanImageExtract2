@@ -74,8 +74,7 @@ parser.add_argument(
 
 
 args = parser.parse_args()
-workers = dp.parse_args(parser)
-distproc = None
+distproc = dp.parse_args(parser)
 
 # if args.d:
 #     DebugMode.debug = True
@@ -86,8 +85,6 @@ distproc = None
 
 #     if isinstance(args.d, int):
 #         DebugMode.level = args.d
-
-
 
 pipeline_descriptions = '''
 [Monosaccharide]
@@ -108,7 +105,7 @@ known_step=KnownLink
 [Glycan]
 figure_steps=
 glycan_steps=
-known_step=KnownGlycan
+known_step=KnownGlycanBoxes
 '''
 
 
@@ -119,8 +116,6 @@ cm = Config_Manager()
 
 pipelines = {}
 compare_strategies = {}
-
-
 
 for i, finder_name in enumerate(args.finders):
     pred_pipeline = GlycanExtractorPipeline()
@@ -134,7 +129,10 @@ for i, finder_name in enumerate(args.finders):
 
     pred_pipeline.add_step('figure', cm.get_finder(figure_step)) if figure_step else None
     pred_pipeline.add_step('glycan', cm.get_finder(glycan_step)) if glycan_step else None
-    pred_pipeline.add_step('glycan',f)
+    if f.finder_class == "Glycan":
+        pred_pipeline.add_step('figure',f)
+    else:
+        pred_pipeline.add_step('glycan',f)
 
     print("pred_pipeline",pred_pipeline.get_steps('figure'))
     print("pred_pipeline",pred_pipeline.get_steps('glycan'))
@@ -160,18 +158,20 @@ for finder_name in args.finders:
     # finder_class = f.finder_class
     finder_section = config[f.finder_class]
 
-
     figure_step = finder_section.get('figure_steps')
     glycan_step = finder_section.get('glycan_steps')
     known_step = finder_section.get('known_step')
 
     known_pipeline.add_step('figure', cm.get_finder(figure_step)) if figure_step else None
     known_pipeline.add_step('glycan', cm.get_finder(glycan_step)) if glycan_step else None
-    known_pipeline.add_step('glycan',cm.get_finder(known_step)) if known_step else None
+    if f.finder_class == "Glycan":
+        known_pipeline.add_step('figure',cm.get_finder(known_step)) if known_step else None
+    else:
+        known_pipeline.add_step('glycan',cm.get_finder(known_step)) if known_step else None
 
     print("known_pipeline",known_pipeline.get_steps('figure'))
     print("known_pipeline",known_pipeline.get_steps('glycan'))
-
+    break
 
 evaluator = Evaluator(known_pipeline=known_pipeline,
                         prediction_pipelines=pipelines,
