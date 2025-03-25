@@ -27,8 +27,8 @@ from .build_pipeline import BuildPipeline
 from .glycanannotator import Config_Manager
 from .distproc import DistributedProcessing as dp
 
-class CompareBase:
-    def __init__(self,precision=8,verbose=False,whole_image=False,**kwargs):
+class CompareBase(object):
+    def __init__(self,precision=8,verbose=False,whole_image=False,restrict_class=None,**kwargs):
         self.verbose = verbose
         self.whole_image = whole_image
         self.precision = precision
@@ -36,6 +36,9 @@ class CompareBase:
         self.scaled_onepluseps = (self.scale+1)
         while self.float_trunc_conf(self.scaled_onepluseps) <= 1.0:
             self.scaled_onepluseps += 1
+        self.classrestriction = None
+        if restrict_class is not None:
+            self.classrestriction = set(restrict_class)
 
     def scaled_trunc_conf(self,value):
         return int(math.floor(value*self.scale))
@@ -76,6 +79,9 @@ class CompareBase:
             self._update_metrics(results,confidence,TP,FP,FN)
 
     def compare(self,pred_objs,known_objs,**kwargs):
+        if self.classrestriction is not None:
+            pred_objs = [ obj for obj in pred_objs if obj.get('classlabel') in self.classrestriction ]
+            known_objs = [ obj for obj in known_objs if obj.get('classlabel') in self.classrestriction ]
         edges, confidence_scores = self.matched_data(pred_objs, known_objs, **kwargs)
         return self.compare_data(known_objs, pred_objs, edges,confidence_scores)
 
@@ -432,12 +438,18 @@ class Evaluator:
         # known_items = self.known_items(*known_results)
         known_items, known_semantics = self.known_pipeline.run_evaluation(image,self.isboxeval())
 
+        i = 1
+        j = 1
         for prname,pl in self.pred_pipelines.items():
             # pred_results = pl.run_evaluation(image,self.isboxeval())
             # pred_items = self.pred_items(*pred_results)
             pred_items, pred_semantics = pl.run_evaluation(image,self.isboxeval())
-            for i,(cpname,cmp) in enumerate(self.compare.items()):
-                results[(prname,cpname,i)] = cmp.compare(pred_items, known_items, **{'pred_semantics':pred_semantics,'known_semantics':known_semantics})
+            k = 1
+            for cpname,cmp in self.compare.items():
+                results[(i,prname,j,cpname,k)] = cmp.compare(pred_items, known_items, **{'pred_semantics':pred_semantics,'known_semantics':known_semantics})
+                i += 1
+                k += 1
+            j += 1
 
         return image,results
 
@@ -494,14 +506,11 @@ class Evaluator:
                     else:
                         print("NOT RELEVANT")
         
-        for strategy_name, compare_strategy in self.compare.items():
-            for k,v in aggregated_results.items():
-                if self.verbose:
-                    print("-",k,file=sys.stderr)
+        for k,v in aggregated_results.items():
+            if self.verbose:
+                print("-",k,file=sys.stderr)
                 for k1,v1 in v.items():
-                    if self.verbose:
-                        # print("self,",self.compare)
-                        print("-->>",compare_strategy.str_trunc_conf(k1),v1,file=sys.stderr)
+                    print("-->>",k1,v1,file=sys.stderr)
              
         # print("\naggregated_results",aggregated_results)
 
@@ -530,7 +539,8 @@ class Evaluator:
         # user defined options, with default behaviour
         directory = kwargs.get('dir', os.path.join(os.getcwd(), 'PR_curves'))
         custom_filename = kwargs.get('filename', None)
-        title = kwargs.get('title', None)
+        title = kwargs.get('title', "Precision-Recall Curve")
+        label = kwargs.get('label',"%(predictor)s, %(comparitor)s")
         figsize = kwargs.get('figsize', (8, 6))  # Default size if not provided
         legend_loc = kwargs.get('legend_loc', 'best')
         xlim = kwargs.get('xlim', (0.0, 1.1))
@@ -552,9 +562,10 @@ class Evaluator:
             
             # print("pipeline name:",pipeline_name)
             # collect = defaultdict(list)
-            pipeline_name, compare_type, id = pipeline_details
-            print("compare_type",compare_type)
-
+            # pipeline_name, compare_type, id = pipeline_details
+            # print("compare_type",compare_type)
+            fields = "curve_index,predictor,predictor_index,comparitor,comparitor_index".split(',')
+            details = dict(zip(fields,pipeline_details))
 
             precision = []
             recall = []
@@ -627,19 +638,18 @@ class Evaluator:
             # print("\nstep_prec",step_precision)
             # print("\nstep_recall",step_recall)
 
-
             # Plot on figure 1
             plt.figure(1)
-            plt.plot(step_recall, step_precision, ".-", label=f"{pipeline_name}")
+            plt.plot(step_recall, step_precision, ".-", label=label%details)
             # plt.plot(recall, precision, "r.",)
 
             plt.figure(2)
-            plt.plot(step_recall, step_precision, ".-", label=f"{pipeline_name}")
-            plt.plot(recall, precision, "r.",)
+            plt.plot(step_recall, step_precision, ".-", label=label%details)
+            # plt.plot(recall, precision, "r.",)
 
         # Plot figure 1
         plt.figure(1)
-        plt.title(title if title else f'{compare_type} PR Curve')
+        plt.title(title%details)
         plt.ylabel('Precision')
         plt.xlabel('Recall')
         xlim = (xlim[0], min(1.1, xlim[1] + 0.1))
@@ -654,7 +664,7 @@ class Evaluator:
 
         # Zoomed-in graph (figure 2)
         plt.figure(2)
-        plt.title(title if title else f'{compare_type} PR Curve')
+        plt.title(title%details)
         plt.ylabel('Precision')
         plt.xlabel('Recall')
         plt.xlim([0.5, 1.1])

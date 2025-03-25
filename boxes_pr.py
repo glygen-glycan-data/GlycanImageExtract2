@@ -31,8 +31,18 @@ parser.add_argument(
 parser.add_argument(
     '--iou',
     type = float,
-    default = 0.5,
+    default = [ 0.5 ],
+    nargs = '+', # allows one or more values
     help = 'IOU Threshold value. Default: 0.5.'
+)
+
+# optional argument
+parser.add_argument(
+    '--class_restriction',
+    type = str,
+    default = [ None ],
+    nargs = '+', # allows zero, one, or more values
+    help = 'Class restriction. Default: No class restriction.'
 )
 
 # optional argument
@@ -75,6 +85,13 @@ parser.add_argument(
 
 args = parser.parse_args()
 distproc = dp.parse_args(parser)
+
+class_restriction = []
+for clsres in args.class_restriction:
+    if clsres in ("","-","*","None"):
+        class_restriction.append(None)
+    else:
+        class_restriction.append(clsres)
 
 # if args.d:
 #     DebugMode.debug = True
@@ -134,19 +151,10 @@ for i, finder_name in enumerate(args.finders):
     else:
         pred_pipeline.add_step('glycan',f)
 
-    print("pred_pipeline",pred_pipeline.get_steps('figure'))
-    print("pred_pipeline",pred_pipeline.get_steps('glycan'))
+    # print("pred_pipeline",pred_pipeline.get_steps('figure'))
+    # print("pred_pipeline",pred_pipeline.get_steps('glycan'))
 
-    pipelines[f"{f.finder_class}-{i}"] = pred_pipeline    
-
-    # use className of boxCompare directly
-    # make the dictinoary key naming better for the plot - box_compare-{i} -  like add IOU or more info      
-    compare_strategies[f"box_compare-{i}"] = BoxCompare(
-        iou=args.iou,
-        whole_image=args.wholeimage,
-        precision=args.precision,
-        verbose=args.verbose
-    )
+    pipelines[f"{finder_name}"] = pred_pipeline    
 
 # use clone - but if you are not sure - its okay build them seperately
 
@@ -169,45 +177,63 @@ for finder_name in args.finders:
     else:
         known_pipeline.add_step('glycan',cm.get_finder(known_step)) if known_step else None
 
-    print("known_pipeline",known_pipeline.get_steps('figure'))
-    print("known_pipeline",known_pipeline.get_steps('glycan'))
+    # print("known_pipeline",known_pipeline.get_steps('figure'))
+    # print("known_pipeline",known_pipeline.get_steps('glycan'))
     break
 
+if len(class_restriction) > 1 and len(args.iou) == 1:
+    cmptempl = "class=%(class)s"
+elif len(class_restriction) == 1 and len(args.iou) > 1:
+    cmptempl = "iou=%(iou)s"
+elif class_restriction[0] is None:
+    cmptempl = "iou=%(iou)s"
+else:
+    cmptempl = "class=%(class)s, iou=%(iou)s"
+    
+for j,cls in enumerate(class_restriction):
+  for i,iou in enumerate(args.iou):
+    cmpstr = cmptempl%{'class': cls, 'iou': iou}
+    restcls = None
+    if cls != None:
+        restcls = [ cls ]
+    compare_strategies[cmpstr] = BoxCompare(
+        iou=iou,
+        whole_image=args.wholeimage,
+        precision=args.precision,
+        verbose=args.verbose,
+        restrict_class = restcls
+    )
+
 evaluator = Evaluator(known_pipeline=known_pipeline,
-                        prediction_pipelines=pipelines,
-                        compare_strategies=compare_strategies,
-                        workers=distproc,
-                        boxeval=True,
-                        verbose=args.verbose
-                    )
+                      prediction_pipelines=pipelines,
+                      compare_strategies=compare_strategies,
+                      workers=distproc,
+                      boxeval=True,
+                      verbose=args.verbose)
 
 images = Image_Manager(args.images)
 images.exclude("*.annotated.*")
 
 evaluator.runall(images)
 
-# predictors = {}
-# fclass = None
-# for name in args.finders:
-#     finder = config.get_finder(name)
-#     if not fclass:
-#         fclass = finder.finder_class
-#     elif fclass != finder.finder_class:
-#         sys.exit(
-#             f"Error: Predictors must belong to the same class. "
-#             f"Found conflicting classes: {fclass} and {finder.finder_class}."
-#         )
-#     predictors[name] = finder
+extra_args = {}
+if len(compare_strategies) > 1 and len(args.finders) == 1:
+    label = "%(comparitor)s"
+    title = "%(predictor)s"
+    extra_args=dict(title=title,label=label)
+elif len(args.finders) > 1 and len(compare_strategies) == 1:
+    label = "%(predictor)s"
+    title = "%(comparitor)s"
+    extra_args=dict(title=title,label=label)
 
 evaluator.plotprecisionrecall(
     dir="plots",
-    filename="box_plot",
-    title="Custom Precision-Recall Curve",
+    filename="boxpr",
     figsize=(10, 8),
-    legend_loc="upper right",
     xlim=(0, 1),
     ylim=(0, 1),
     grid=True,
+    **extra_args
 )
 
 
