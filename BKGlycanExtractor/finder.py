@@ -8,9 +8,8 @@ class Finder(object):
       
     def execute(self, obj, boxesonly=False):
         if boxesonly:
-           return self.find_boxes(obj)
-        else:
-           return self.find_objects(obj)
+            return self.find_boxes(obj)
+        return self.find_objects(obj)
 
     def find_boxes(self, obj):
         raise NotImplementedError

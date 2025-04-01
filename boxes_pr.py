@@ -105,7 +105,7 @@ for clsres in args.class_restriction:
 
 pipeline_descriptions = '''
 [Monosaccharide]
-figure_steps=SingleGlycanImage
+figure_steps=SingleGlycanImage,SingleGlycanImage
 glycan_steps=
 known_step=KnownMono
 
@@ -141,8 +141,8 @@ for i, finder_name in enumerate(args.finders):
     # finder_class = f.finder_class
     finder_section = config[f.finder_class]
 
-    figure_step = finder_section.get('figure_steps')
-    glycan_step = finder_section.get('glycan_steps')
+    figure_steps = finder_section.get('figure_steps')
+    glycan_steps = finder_section.get('glycan_steps')
 
     pred_pipeline.add_step('figure', cm.get_finder(figure_step)) if figure_step else None
     pred_pipeline.add_step('glycan', cm.get_finder(glycan_step)) if glycan_step else None
@@ -156,7 +156,7 @@ for i, finder_name in enumerate(args.finders):
 
     pipelines[f"{finder_name}"] = pred_pipeline    
 
-# use clone - but if you are not sure - its okay build them seperately
+# # use clone - but if you are not sure - its okay build them seperately
 
 
 
@@ -166,9 +166,9 @@ for finder_name in args.finders:
     # finder_class = f.finder_class
     finder_section = config[f.finder_class]
 
-    figure_step = finder_section.get('figure_steps')
-    glycan_step = finder_section.get('glycan_steps')
-    known_step = finder_section.get('known_step')
+#     figure_step = finder_section.get('figure_steps')
+#     glycan_step = finder_section.get('glycan_steps')
+#     known_step = finder_section.get('known_step')
 
     known_pipeline.add_step('figure', cm.get_finder(figure_step)) if figure_step else None
     known_pipeline.add_step('glycan', cm.get_finder(glycan_step)) if glycan_step else None
@@ -211,10 +211,10 @@ evaluator = Evaluator(known_pipeline=known_pipeline,
                       boxeval=True,
                       verbose=args.verbose)
 
-images = Image_Manager(args.images)
-images.exclude("*.annotated.*")
+# images = Image_Manager(args.images)
+# images.exclude("*.annotated.*")
 
-evaluator.runall(images)
+# evaluator.runall(images)
 
 extra_args = {}
 if len(compare_strategies) > 1 and len(args.finders) == 1:

@@ -163,7 +163,7 @@ class CompareBase(object):
         last_threshold = self.scaled_onepluseps
         self.update_metrics(results,last_threshold,gt_count,0,0,gt_count)
         return results
-
+        
 
 class BoxCompare(CompareBase):
     def __init__(self, iou=0.5, **kwargs):

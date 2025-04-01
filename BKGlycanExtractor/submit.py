@@ -39,38 +39,13 @@ def request2(target,**kw):
     return json.loads(response)
 
 
-# def request_post(endpoint, payload, baseurl):
-#     url = baseurl + endpoint
-#     try:
-#         response = requests.post(url, json=payload, timeout=10)
-#         response.raise_for_status()  # Raises an HTTPError if the response was unsuccessful
-#         return response.json()
-#     except requests.exceptions.RequestException as e:
-#         print(f"POST request failed: {e}")
-#         return None
-
-
-
 def searchGlyImage(*seqs, orientation='RL',display='normal', delay=1, maxretry=10):
-
-    # if orientation not in ["RL", "LR", "BT", "TB"]:
-    # if orientation == 'UK' or orientation not in ["RL", "LR", "BT", "TB"]:
-    #     orientation = "RL"
 
     baseurl = "https://glymage.glyomics.org/"
     
-    for seq in seqs:
-        print("---->>>seq",seq)
     tasks = [{"seq": seq.strip() if seq else "", "orientation": orientation, "display": display} for seq in seqs]
 
-    # POST request
-    # submit_payload = {"tasks": tasks, "developer_email": devemail}
-    # submit_response = request_post("submit", submit_payload, baseurl)
-
-    # print("submit_response",submit_response)
-
     data = request2("submit",tasks=json.dumps(tasks), developer_email=devemail, baseurl=baseurl)
-    # print("data",data)
     jobids = []
     for job in data:
         jobids.append(job["id"])
@@ -93,7 +68,7 @@ def searchGlyImage(*seqs, orientation='RL',display='normal', delay=1, maxretry=1
 
     retval = []
     for job in data:
-        retval.append(f"{baseurl}/image/hash/{job['result']}.{job['task']['image_format']}")
+        retval.append(f"{baseurl}/{job['result']}")
 
     if len(seqs) == 1:
         return retval[0]
@@ -111,7 +86,7 @@ def sendToGNOme(*seqs):
         jobids.append(job["id"])
     return jobids[-1]
 
-# if IUAPC sequence is None - pass name
+# if IUPAC sequence is None - pass name
 # change the name of this function
 def searchGlyLookup(*seqs, delay=1, maxretry=10):
     params = []

@@ -319,6 +319,7 @@ class APIFrameWork:
             file = flask.request.files.get('file')  
             file_url = flask.request.form.get("fileURL")
             file_type = flask.request.form.get('fileType')
+            # pipeline_name = flask.request.form.get('fileType')
             
 
             if not file and not file_url:

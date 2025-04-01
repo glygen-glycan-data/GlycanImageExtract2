@@ -135,7 +135,7 @@ class KnownGlycanBoxes(GlycanFinder):
 # handles one/many glycans 
 class CleanGlycanImage(GlycanFinder):
 
-    def __init__(self):
+    def __init__(self,**kwargs):
         super().__init__()
 
     def find_boxes(self, obj):
@@ -151,11 +151,18 @@ class CleanGlycanImage(GlycanFinder):
             new_box.update_bbox(x=x,y=y,w=w,h=h)
             # print("new_box",new_box)
 
+
+            # saving the cleaned_image and original seperately - so that we have access to both the 
+            # original and cleaned image for the webpage, but question is whether I should update the
+            # coordinates (offset it) of the bounding boxes wrt to the cleaned image?
             box.set('image',cleaned_img)
+            box.set('unprocessed_image', img)
+
+            
 
             # box = BoundingBox(image=cleaned_img,x=x,y=y,w=w,h=h)
             # cleaned_image_dimensions={'x':x,'y':y,'w':w,'h':h}
-            box_details = dict(id=gly.get('id'), box=box, image=cleaned_img)
+            box_details = dict(id=gly.get('id'), box=box, image=cleaned_img, unprocessed_image=img)
             boxes.append(box_details)
 
         return boxes
@@ -168,6 +175,7 @@ class CleanGlycanImage(GlycanFinder):
             for box_details in boxes:
                 if box_details['id'] == gly_id:
                     gly.set_image(box_details['image'])
+                    gly.set('unprocessed_image', box_details['unprocessed_image'])
                     # gly.set("cleaned_image_dimensions",box_details['cleaned_image_dimensions'])
                     # gly.set("box", box_details['box'])
                     

@@ -12,6 +12,9 @@ sys.path.append(parent_dir)
 
 from APIFramework import APIFrameWork
 from BKGlycanExtractor.annotatePDF import annotatePDFGlycan, annotatePNGGlycan
+from BKGlycanExtractor.glycan_file import process_image, process_manuscript
+# from BKGlycanExtractor import GlycanAnnotator
+from BKGlycanExtractor import JobInstance
 
 from shutil import copyfile
 
@@ -50,10 +53,10 @@ class ReferenceAPIFileBased(APIFrameWork):
 
         res["id"] = list_id
         res["original_file_name"] = p["original_file_name"]
-
         res['file_type'] = p['file_type']
 
         return res
+
 
     @staticmethod
     def worker(pid, task_queue, result_queue, params):
@@ -62,124 +65,51 @@ class ReferenceAPIFileBased(APIFrameWork):
         while True:
             task_detail = task_queue.get(block=True)
 
-            error = []
             calculation_start_time = time.time()
+            error = []
 
-            original_file_name = task_detail["original_file_name"]
-
-
-            list_id = task_detail["id"]
-
-            # TODO finished by you from here##############################################################
-            input_folder = os.path.join(os.getcwd(), "input")
-            print("task_detail",task_detail)
-
-            print(task_detail["original_file_name"])
-
-            input_file = os.path.join("input", task_detail["id"])
-            output_file_abs_path = os.path.abspath(os.path.join("output", list_id))
-
-            origfilename = task_detail["original_file_name"]
-            file_type = task_detail["file_type"]
-            token = list_id
-
-            os.makedirs(os.path.join("./static/files", token, "input"))
-            os.makedirs(os.path.join("./static/files", token, "output"))
+            token = task_detail["id"]
             workdir = os.path.join("./static/files", token)
+            os.makedirs(os.path.join(workdir, "input"), exist_ok=True)
+            os.makedirs(os.path.join(workdir, "output"), exist_ok=True)
 
-            #infilename = os.path.join(workdir, "input", origfilename)
-            infilename = os.path.join(workdir, "input", origfilename)
-            outfilename = os.path.join(workdir, "output", "annotated_" + origfilename)
+            # Factory method - class reference is passed via get_prcessor() 
+            # which is instantiated below
+            job_class = JobInstance.get_processor(task_detail)
+            job_instance = job_class(task_detail)
+            job_instance.process_file()
 
-
-            base_configs = "../BKGlycanExtractor/config/"
-            outfilename2 = output_file_abs_path
-            work_dict = {
-                "token": str(token),
-                "workdir": str(workdir),
-                "infilename": str(infilename),
-                "outfilename": str(outfilename),
-                "base_configs": str(base_configs),
-                "origfilename": str(origfilename),
-                "outfilename2": str(outfilename2),
-                "input_file": str(input_file),
-                "file_type": str(file_type)
-            }
-
-            try:
-                copyfile(work_dict["input_file"], work_dict["infilename"])
-            except FileNotFoundError:
-                time.sleep(5)
-                copyfile(work_dict["input_file"], work_dict["infilename"])
-
-            extn = origfilename.lower().rsplit('.', 1)[-1]
-            print("origfilename and extension",origfilename, extn)
-
-            if extn in ('png','jpg','jpeg'):
-                try:
-                    annotatePNGGlycan(work_dict) 
-                    
-
-                    if "file_format_error" in work_dict:
-                        error.append(work_dict["file_format_error"])
-
-                except Exception as e:
-                    error.append('File %s generated an exception in annotatePNGGlycan: %s'%(origfilename,repr(e)))
-                    print(traceback.format_exc(),file=sys.stderr)
-            elif extn in ('pdf'):
-                try:
-                    annotatePDFGlycan(work_dict)
-
-                    if "file_format_error" in work_dict:
-                        error.append(work_dict["file_format_error"])
-
-                except Exception as e:
-                    error.append('File %s generated an exception in annotatePDFGlycan: %s'%(origfilename,repr(e)))
-                    print(traceback.format_exc(),file=sys.stderr)
-            else:
-                error.append('File %s had an Unsupported file extension: %s.'%(origfilename,extn))
-                # self.output(1,'File %s had an Unsupported file extension: %s.'%(origfilename,extn))
-
-
-            #print("#############end calling subprocess here################\n\n\n\n")
-
-
-            # TODO END#####################################################################################
-
-
+            result = job_instance.get_results()
 
             calculation_end_time = time.time()
             calculation_time_cost = calculation_end_time - calculation_start_time
 
-            # option = {"as_attachment": True}
-            option = {"as_attachment": True, "mimetype": 'application/pdf'}
+            final_results = []
 
-            total_glycan_count = sum(len(data['image_data']) for data in work_dict['file_data'])
+            # Iterate over the list of dictionaries
+            for data in result:
+                # for key, json_string in item.items():
+                json_data = json.loads(data)
+                final_results.append(json_data)
 
-            # print("--->>count",count)
+            # json.dump(self.results,self.json_log_file)
 
+            # information for webservice (API Framework)
             res = {
-                "id": list_id,
+                "id": token,
                 "start time": calculation_start_time,
                 "end time": calculation_end_time,
                 "runtime": calculation_time_cost,
                 "error": error,
-                "glycans": work_dict.get('results',[]),
-                "output_file_abs_path": output_file_abs_path,
-                "flask_download_option": option,
-                "inputtype": extn,
-                "original_file": infilename,
-                "annotated_file_path": outfilename,
-                "annotated_filename": "annotated_"+original_file_name,
-                "file_data": work_dict['file_data'],
-                "total_glycan_count": total_glycan_count
+                "result": final_results
             }
 
             result_queue.put(res)
-            res = dict(id=list_id,result=res,file_data=work_dict['file_data'],finished=True,submission_detail=task_detail)
-            wh = open(f"static/files/{list_id}/results.json",'w')
-            wh.write(json.dumps(res))
-            wh.close()
+
+            file_path = os.path.join(workdir, "output" "results.json")
+            with open(file_path, 'w') as wh:
+                json.dump(res, wh)  
+
 
     def home(self):
         return flask.render_template(self._home_html)
