@@ -7,7 +7,6 @@ from . debug_methods import DebugMode
 from . build_pipeline import BuildPipeline
 from . json_logger import log_data
 from . distproc import DistributedProcessing
-from . annotateFile import GlycanAnnotator
 from . webapp_processjob import JobInstance
 # from .scripts import parse_path
 # from . yolomodels import YOLOModel
