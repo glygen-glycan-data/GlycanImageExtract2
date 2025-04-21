@@ -9,6 +9,7 @@ import numpy as np
 import os
 import sys
 import json
+from PIL import Image
 
 from .bbox import BoundingBox
 from .yolomodels import YOLOModel
@@ -19,8 +20,21 @@ from BKGlycanExtractor import MonosCompare, DebugMode
 
 
 class MonoID(Finder): 
+    '''
+    Base class 'Finder' requires that labels should be defined.
+    Either set labels in this class or other child classes inherting from MonoID can set it.
     
-    labels = ["GlcNAc","NeuAc","Fuc","Man","GalNAc","Gal","Glc","NeuGc"]
+    It is preferred to have the child class inheriting from MonoID set the labels 
+    from the .labels file that was used for training,
+    so that multiple different finders trained on different labels can be used
+    collectively at once.
+
+    Note: Some models were trained with/without Xylose (Xyl), hence it 
+    required to refer to the .labels file if using a specific training model.
+    '''
+
+    labels = None
+    # labels = ["GlcNAc","NeuAc","Fuc","Man","GalNAc","Gal","Glc","NeuGc"]
     finder_class = 'Monosaccharide'
 
     semantic_compare = MonosCompare
@@ -262,7 +276,8 @@ class YOLOMonos(YOLOModel,MonoID):
             conf_threshold = Config.get_param('conf_threshold', Config.FLOAT, kwargs, self.defaults),
             iou_threshold = Config.get_param('iou_threshold', Config.FLOAT, kwargs, self.defaults),
             boxpadding = Config.get_param('boxpadding', Config.INT, kwargs, self.defaults),
-            expandimage = Config.get_param('expandimage', Config.INT, kwargs, self.defaults)
+            expandimage = Config.get_param('expandimage', Config.INT, kwargs, self.defaults),
+            labels = self.labels
         )        
 
         self.cb = CompareBoxes()
@@ -340,6 +355,7 @@ class KnownMono(MonoID):
 
         return obj.monosaccharides()
 
+    # original
     def find_boxes(self, obj):
         image_path = obj.image_path()
         assert image_path, "KnownMono can only run on SingleGlycanImage glycan finder semantics objects"
@@ -377,3 +393,38 @@ class KnownMono(MonoID):
             )
 
         return boxes
+
+    # created for training txt files data -  delete later
+    # def find_boxes(self,obj):
+    #     image_path = obj.image_path()
+    #     assert image_path, "KnownMono can only run on SingleGlycanImage glycan finder semantics objects"
+    #     boxes = []
+
+    #     img = Image.open(image_path)
+    #     cv2_img = cv2.imread(image_path)
+    #     imwidth, imheight = img.size
+
+    #     image_path = image_path.rsplit('.',1)[0] + ".txt"
+    #     with open(image_path, 'r') as file:
+    #         for id, line in enumerate(file):
+    #             c_id, rcx, rcy, rw, rh = map(float, line.strip().split())
+    #             c_id = int(c_id)
+    #             symbol = self.get_label(c_id)
+    #             box = BoundingBox(rcx=rcx, rcy=rcy, rw=rw, rh=rh,
+    #                         image_width=imwidth, image_height=imheight,
+    #                         classid=c_id,classlabel=symbol, symbol=symbol,id=id)
+                
+    #             # box = BoundingBox(x1=x_min,y1=y_min,x2=x_max,y2=y_max,symbol=name,classid=self.get_label_index(name),classlabel=name,id=int(mono_id))
+    #             box.pad(self.params['boxpadding']) # known data is absolute
+    #             boxes.append(box)
+
+    #     if DebugMode.debug:
+    #         DebugMode.log_data(
+    #             identifier= DebugMode.curr_image,
+    #             data={'monos_known':len(boxes)},
+    #             image_path = DebugMode.image_path,
+    #         )
+
+    #     return boxes
+
+

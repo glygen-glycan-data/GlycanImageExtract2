@@ -110,6 +110,7 @@ class GlycanExtractorPipeline():
             for glystep in self.steps['glycan'][:-1]:
                 glystep.execute(glycan_semantics)
             result = (final_step.execute(glycan_semantics,boxesonly=boxesonly),glycan_semantics)
+            break
 
         return result
 
@@ -136,14 +137,15 @@ class Config_Manager(object):
         conf = self.get_config("Pipeline:" + pipeline_name)
         return GlycanExtractorPipeline(__config__=conf)
 
-    def get_finder(self, finder_name):
+    # added kwargs here
+    def get_finder(self, finder_name, **kwargs):
         module = importlib.import_module(".pipeline",package="BKGlycanExtractor")
         conf = self.get_config("Finder:" + finder_name)
         assert conf.has("class"), "Finder %s: class not specified"
         findercls = getattr(module,conf.get("class"))
         new_conf = copy.deepcopy(conf)
 
-        return findercls(__config__=new_conf)
+        return findercls(__config__=new_conf, **kwargs)
 
     # add get_finders - for comma seperated finders
     def get_finders(self,finder_names):

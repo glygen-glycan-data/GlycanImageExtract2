@@ -115,61 +115,71 @@
             innerdiv += "<tr>";
             innerdiv += "<td colspan='2' style='padding: 20px; text-align: center;'><img style='max-width: 550px; width: auto; height: auto; display: block; margin: auto;' src='" + figure.annotated_image_path + "'/></td>";
             innerdiv += "</tr>";
-         
-            innerdiv += "<tr style='background-color: #7c7d7d;'>";
-            innerdiv += "<th style='color: #ffffff;text-align: center;'>Extracted Structure</th>";
-            innerdiv += "<th style='color: #ffffff; text-align: center;'>Generated Structure</th>";
-            innerdiv += "</tr>";
-
 
             var glycans = figure['glycans'] || []
 
-            glycans.forEach(function(glycan, gly_idx) {
-                innerdiv += "<tr>";
-                innerdiv += `
-                    <td style="vertical-align:middle;">
-                        <img style="max-width: 300px; min-height: 90px; max-height:300px; min-width: 90px; display: block; margin: auto;" 
-                            src="${glycan.unprocessed_image_path}" 
-                            alt="Glycan Image" />
-                    </td>`;
-
-
-                innerdiv += `
-                    <td style=''>
-                        <figure style='margin: 0;'>
-                        <img style='max-width: 300px; min-height: 90px; min-width: 90px; width: auto; height: auto; display: block; margin: auto;' 
-                            src="${glycan.glyImage || ''}"
-                            alt='Glycan Image Not Found' />
-                        <figcaption style='font-size: 14px; color: #555; margin-top: 5px;'>Accession: ${glycan.accession || 'Not found'}
-                            <div style="position: relative; display: inline-block;">
-                            ${glycan.errors.length > 0 ?
-                                `<span style="margin-left: 10px; background: red; color: white; border-radius: 50%; padding: 2px 6px; font-size: 12px; cursor: pointer; position: relative; 
-                        transition: box-shadow 0.3s ease; box-shadow: 0 0 10px rgba(255, 0, 0, 0.8);"
-                                    onmouseover="errorMessage(this)" 
-                                    onmouseout="errorMessage(this)">
-                                    ⚠️
-                                    <span class="tooltip" style="visibility: hidden; width: 180px; background-color: #373b3b;; color: white; text-align: left; border-radius: 5px; padding: 8px;
-                                                                position: absolute; z-index: 1; bottom: 125%; left: 50%; transform: translateX(-50%);
-                                                                opacity: 0; transition: opacity 0.3s;">
-                                        ${glycan.errors.map(e => `<div>• ${e} </div>`).join('')}
-                                    </span>
-                                </span>`
-
-                                : ''
-                            }  
-                        </div>
-                        
-                        </figcaption>
-                        </figure>
-
-                        <br>
-                        <a href="${glycan.gnomeurl || ''}" target="_blank">View Potential Glycan Structures</a>
-
-                    </td>`;
+            if (glycans.length > 0) {
+                innerdiv += "<tr style='background-color: #7c7d7d;'>";
+                innerdiv += "<th style='color: #ffffff;text-align: center;'>Extracted Structure</th>";
+                innerdiv += "<th style='color: #ffffff; text-align: center;'>Generated Structure</th>";
                 innerdiv += "</tr>";
 
-            });
-            
+
+                glycans.forEach(function(glycan, gly_idx) {
+                    innerdiv += "<tr>";
+                    innerdiv += `
+                        <td style="vertical-align:middle;">
+                            <img style="max-width: 300px; min-height: 90px; max-height:300px; min-width: 90px; display: block; margin: auto;" 
+                                src="${glycan.unprocessed_image_path}" 
+                                alt="Glycan Image" />
+                        </td>`;
+
+
+                    innerdiv += `
+                        <td style=''>
+                            <figure style='margin: 0;'>
+                                ${glycan.glyImage ? `
+                                    <img style='max-width: 300px; min-height: 90px; min-width: 90px; width: auto; height: auto; display: block; margin: auto;' 
+                                    src="${glycan.glyImage}"
+                                    alt='Glycan Image' />
+                                    ` : `<div style="font-size: 16px; color: #555; text-align: center; margin-top: 10px;">No Glycan found</div>`
+                                }
+                            
+                            <figcaption style='font-size: 14px; color: #555; margin-top: 5px;'>
+                                Accession: ${glycan.accession || 'Not found'}
+
+                                <div style="position: relative; display: inline-block;">
+                                ${glycan.errors.length > 0 ?
+                                    `<span style="margin-left: 10px; background: red; color: white; border-radius: 50%; padding: 2px 6px; font-size: 12px; cursor: pointer; position: relative; 
+                                        transition: box-shadow 0.3s ease; box-shadow: 0 0 10px rgba(255, 0, 0, 0.8);"
+                                        onmouseover="errorMessage(this)" 
+                                        onmouseout="errorMessage(this)">
+                                        ⚠️
+                                        <span class="tooltip" style="visibility: hidden; width: 180px; background-color: #373b3b;; color: white; text-align: left; border-radius: 5px; padding: 8px;
+                                                                    position: absolute; z-index: 1; bottom: 125%; left: 50%; transform: translateX(-50%);
+                                                                    opacity: 0; transition: opacity 0.3s;">
+                                            ${glycan.errors.map(e => `<div>• ${e} </div>`).join('')}
+                                        </span>
+                                    </span>`
+
+                                    : ''
+                                }  
+                            </div>
+                            
+                            </figcaption>
+                            </figure>
+
+                            <br>
+                            ${glycan.gnomeurl ? `<br><a href="${glycan.gnomeurl}" target="_blank">View Potential Glycan Structures</a>` : ''}
+
+                        </td>`;
+                    innerdiv += "</tr>";
+
+                });
+
+            }
+         
+                  
         });
 
         innerdiv += "</tbody>"

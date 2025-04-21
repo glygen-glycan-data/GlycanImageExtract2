@@ -189,7 +189,8 @@ elif class_restriction[0] is None:
     cmptempl = "iou=%(iou)s"
 else:
     cmptempl = "class=%(class)s, iou=%(iou)s"
-    
+
+
 for j,cls in enumerate(class_restriction):
   for i,iou in enumerate(args.iou):
     cmpstr = cmptempl%{'class': cls, 'iou': iou}
@@ -212,8 +213,7 @@ evaluator = Evaluator(known_pipeline=known_pipeline,
                       verbose=args.verbose)
 
 images = Image_Manager(args.images)
-images.exclude("*.annotated.*")
-
+images.exclude("*._annotated.*")
 evaluator.runall(images)
 
 extra_args = {}

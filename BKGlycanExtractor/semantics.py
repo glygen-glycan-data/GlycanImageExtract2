@@ -7,9 +7,9 @@ import random
 import math
 from collections import defaultdict, deque, Counter
 from . lineno import callsig
+import importlib
+import shutil
 
-# to get the correct mono labels used while running the pipeline
-# from .monosaccharideid import MonoID
 
 # Base class for any thing (figure, glycan) which has an image with width and height
 class Image_Semantics:
@@ -157,7 +157,7 @@ class Figure_Semantics(Image_Semantics):
             x1,y1,x2,y2 = glycan.glycan_box().corners()
             self.annotate(x1,y1,x2,y2,color=color) # green for glycan
 
-    def annotate_monos(self):
+    def annotate_monos(self,color=(128, 0, 128)):
         for glycan in self.semantics['glycans']:
             # monosaccharides and root labelling
             root_id = None
@@ -166,7 +166,7 @@ class Figure_Semantics(Image_Semantics):
             for mono in glycan.monosaccharides():
                 x1,y1,x2,y2 = mono['box'].corners()
                 text = mono.get('classlabel','') + ":" + str(mono.get('id'))
-                color = (128, 0, 128) # purple for monos
+                # color = (128, 0, 128) # purple for monos
                 if mono['id'] == root_id:
                     color = (0,0,255) # red for root  
                 if mono.get('alternative') is not None:
@@ -193,9 +193,42 @@ class Figure_Semantics(Image_Semantics):
     def write_image(self,**kwargs):
         cv2.imwrite(self.make_filename(**kwargs), self.image())
 
+    # delete later
+    def training_data(self,pipeline,folder_name):
+        # print("\nself.params",pipeline.get_steps("glycan")[0].labels)
+        # classid_mappings = {"GlcNAc": 0, "NeuAc":1,"Fuc":2,"Man":3,"GalNAc":4,"Gal":5,"Glc":6,"NeuGc":7, "Xyl": 8}
+        labels = pipeline.get_steps("glycan")[0].labels
+        classid_mappings = {label:idx for idx,label in enumerate(labels)}
+
+        image_path = self.image_path()
+        image_filename = os.path.basename(image_path)
+        base_filename = os.path.splitext(image_filename)[0]
+
+        os.makedirs(folder_name, exist_ok=True)
+        metadata_dir = os.path.join(folder_name, "metadata")
+        os.makedirs(metadata_dir, exist_ok=True)
+        metadata_file = os.path.join(metadata_dir, "metadata.txt")
+
+        print("file",metadata_file)
+
+        with open(metadata_file,'w') as f:
+            f.write('labels: ' + ', '.join(labels) + '\n')
+
+            for k,v in pipeline.get_steps("glycan")[0].params.items():
+                f.write(f"{k}: {v}\n")
+
+        
+        training_file_path = os.path.join(folder_name, base_filename + ".txt")
+        with open(training_file_path, 'w') as f:  # Open the file to write annotations
+            for glycan in self.semantics['glycans']:
+                for mono in glycan.monosaccharides():
+                    x,y,w,h = mono['box'].center_relative()
+                    class_id = classid_mappings[mono.get('classlabel')]
+                    f.write(f"{class_id} {x} {y} {w} {h}\n") 
+
+        shutil.copy(image_path, folder_name)
+
 class Glycan_Semantics(Image_Semantics):
-    mono_syms = ["GlcNAc","NeuAc","Fuc","Man","GalNAc","Gal","Glc","NeuGc"]
-    # mono_syms = MonoID.labels
 
     def __init__(self,image,box,**kwargs):
         super().__init__(image)  
@@ -206,6 +239,9 @@ class Glycan_Semantics(Image_Semantics):
 
     def glycan_box(self):
         return self.semantics['box']
+
+    def glycan(self):
+        return [self.semantics]
 
     def image(self):
         return self.semantics['image']
@@ -267,48 +303,149 @@ class Glycan_Semantics(Image_Semantics):
     def root(self):
         return self.semantics.get('root',None)
 
-    # used after undirected_links are already populated 
-    def build_adjacency_list(self):
 
-        adj = defaultdict(list)
+    def find(self, u):
+        if u not in self.parent:
+            self.parent[u] = u
+        if self.parent[u] != u:
+            self.parent[u] = self.find(self.parent[u])
+        return self.parent[u]
 
-        for link in self.undirected_links():
+    def union(self, u, v):
+        pu, pv = self.find(u), self.find(v)
+        if pu == pv:
+            return False  # cycle detected
+        self.parent[pu] = pv
+        return True
+
+
+    def filter_links_to_tree(self):
+        links = self.undirected_links()
+        # uf = UnionFind()
+
+        kept_links = []
+        cycle_links = []
+
+        for link in links:
             id1, id2 = link["mono_ids"]
-             # removed 'mono_ids' because it has undirected_links which are in sorted order - since we dont want to propagate this pattern in the adjacency list
-            link_without_ids = {k: v for k, v in link.items() if k != "mono_ids"} 
-            adj[id1].append((id2, link_without_ids)) 
+            if self.union(id1, id2):
+                kept_links.append(link)
+            else:
+                cycle_links.append(link)
+
+        if cycle_links:
+            # Drop the link with the lowest confidence
+            cycle_links.sort(key=lambda l: l.get('confidence', 0.0))
+            dropped = cycle_links[0]
+            print(f"Cycle found. Dropping least confident link: {dropped}")
+            cycle_links.remove(dropped)
+            kept_links += cycle_links  # If you want to keep the rest
+
+        return kept_links
+
+
+    def build_adjacency_list(self):
+        error_msg = ''
+        adj = defaultdict(list)
+        parent = {}
+
+        def find(u):
+            while parent.get(u, u) != u:
+                parent[u] = parent.get(parent[u], parent[u])
+                u = parent[u]
+            return u
+
+        def union(u, v):
+            pu, pv = find(u), find(v)
+            if pu == pv:
+                return False  # cycle detected
+            parent[pu] = pv
+            return True
+
+        links = self.undirected_links()
+        kept_links = []
+        cycle_links = []
+
+        for link in links:
+            id1, id2 = link["mono_ids"]
+            if union(id1, id2):
+                kept_links.append(link)
+            else:
+                cycle_links.append(link)
+
+        # Drop least confident cycle-forming link
+        if cycle_links:
+            cycle_links.sort(key=lambda l: l.get('confidence', 0.0))
+            dropped = cycle_links.pop(0)
+            print(f"Cycle found. Dropping least confident link: {dropped}")
+            error_msg = f"Cycle found. Dropping least confident link: {dropped}"
+            kept_links += cycle_links  # Keep remaining cycle links, optional
+
+        for link in kept_links:
+            id1, id2 = link["mono_ids"]
+            link_without_ids = {k: v for k, v in link.items() if k != "mono_ids"}
+            adj[id1].append((id2, link_without_ids))
             adj[id2].append((id1, link_without_ids))
 
-        return adj
+        return adj, error_msg
 
+    # used after undirected_links are already populated 
+    # def build_adjacency_list(self):
+
+    #     adj = defaultdict(list)
+
+    #     for link in self.undirected_links():
+    #         id1, id2 = link["mono_ids"]
+    #          # removed 'mono_ids' because it has undirected_links which are in sorted order - since we dont want to propagate this pattern in the adjacency list
+    #         link_without_ids = {k: v for k, v in link.items() if k != "mono_ids"} 
+    #         adj[id1].append((id2, link_without_ids)) 
+    #         adj[id2].append((id1, link_without_ids))
+
+    #     return adj
+
+    # build adjacency list from undirected links
+    # if root is present - use that as the start to traverse the tree, if not use any random node and traverse the tree.
+    # During the traversal if node is already visited - then there must be a cycle
+    # At the end - if all nodes are not visited - then the tree must be disjointed
 
     def traverse_tree(self):
-        '''
-        returns (mono_count,links_count) after traversing the glycan structure using undirected links.
-        This is a way of checking if we are able to get all monosaccharides by traversing the links
-        '''
-        graph = self.build_adjacency_list()
+        adj,error_msg = self.build_adjacency_list()
         visited = set()
-        stack = [list(graph.keys())[0]]  # Start with any node
-        monos_count = Counter()
-        links_count = 0
+
+        root = self.root()
+
+        if root:
+            first_node = root['mono_id']
+        elif adj:
+            first_node = next(iter(adj))
+        else:
+            return False, "Graph is empty: no root and no nodes in adjacency list."
+
+        stack = [(first_node, -1)]      # current_node, parent
+
+        visited.add(first_node)
 
         while stack:
-            node = stack.pop()
-            if node not in visited:
-                visited.add(node)
-                # Collect monosaccharide info
-                mono = next(m for m in self.monosaccharides() if m['id'] == node)
-                monos_count[mono['classlabel']] += 1
+            u, parent = stack.pop()
+            for v, other_info in adj[u]:
+                if v not in visited:
+                    visited.add(v)
+                    stack.append((v,u))
+                else:
+                    if v == parent:
+                        continue
+                    else:
+                        return False, f"Cycle detected at node '{v}' (visited from node '{u}')."
 
-                # Traverse neighbors
-                for neighbor,_ in graph[node]:
-                    if neighbor not in visited:
-                        stack.append(neighbor)
-                        links_count += 1  # Count each link
+        # check if all nodes were visited
+        all_nodes = set(m['id'] for m in self.monosaccharides())
+        unvisited = all_nodes - visited
+        if unvisited:
+            return False, f"Tree is disjointed. Unvisited nodes: {', '.join(unvisited)}"
 
-        return sorted(monos_count.items()), links_count
-
+        print("tree traversal", error_msg)
+        return True, error_msg
+                    
     def clear_links(self,mono_id):
         self.semantics['monos'][mono_id]['links'] = []
 
@@ -316,9 +453,12 @@ class Glycan_Semantics(Image_Semantics):
         for mono_id in self.monosaccharideids():
             self.clear_links(mono_id)
 
+    def all_links(self):
+        # a mono could have multiple links
+        return [link for item in self.monosaccharides() if item.get('links') for link in item['links']]  
+
     def links(self,id):
         return self.semantics['monos'][id]['links']
-
 
     def delete_link(self,fromid,toid):
         new_links = [
@@ -344,7 +484,7 @@ class Glycan_Semantics(Image_Semantics):
 
 
     def create_links(self):
-        adj = self.build_adjacency_list()
+        adj,_ = self.build_adjacency_list()
         root_id = self.root().get("mono_id")
 
         visited = set()
@@ -391,15 +531,18 @@ class Glycan_Semantics(Image_Semantics):
         for m in self.monosaccharides():
             count[m.get('classlabel')] += 1
         return count
-
-    # mono_syms = ["GlcNAc","NeuAc","Fuc","Man","GalNAc","Gal","Glc","NeuGc"]
-    # mono_syms = MonoID.labels
-    
     
     def compstr(self):
+        # circular import issue for monosaccharideid
+        #  need the same labels from the Monosaccideid class - so that any updates to the class varibale labels
+        # will also persist here 
+        # Mono = importlib.import_module('.monosaccharideid', package='BKGlycanExtractor')
+        labels = ["GlcNAc","NeuAc","Fuc","Man","GalNAc","Gal","Glc","NeuGc","Xyl"]
+        mono_syms = labels
+
         comp = self.composition()
         retval = ""
-        for sym in Glycan_Semantics.mono_syms:
+        for sym in mono_syms:
             if comp[sym] > 0:
                 retval += sym + "(" + str(comp[sym]) + ")"
         return retval
@@ -414,7 +557,7 @@ class Glycan_Semantics(Image_Semantics):
 
         root_id = root.get('mono_id')
         iupac = []
-        adj = self.build_adjacency_list()
+        adj,_ = self.build_adjacency_list()
         visited = set()
 
         self.generate_iupac(iupac, adj, visited, -1, root_id)

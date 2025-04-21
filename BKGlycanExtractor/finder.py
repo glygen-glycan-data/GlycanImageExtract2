@@ -1,10 +1,17 @@
-
+'''
+Subclasses inherting from Finder must define labels
+'''
 class Finder(object):
+    labels = None
 
     def __init__(self):
-        self._labels = []
-        if hasattr(self,'labels'):
-            self._labels = list(self.labels)
+        # self._labels = []
+        # if hasattr(self,'labels'):
+        #     self._labels = list(self.labels)
+
+        if self.labels is None:
+            raise NotImplementedError(f"Class '{self.__class__.__name__}' must define a 'labels' attribute before calling Finder.__init__()")
+        self._labels = list(self.labels)
       
     def execute(self, obj, boxesonly=False):
         if boxesonly:

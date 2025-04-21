@@ -46,7 +46,7 @@ class APIParameterError(APIErrorBase):
     pass
 
 
-class APIFrameWork:
+class APIFramework:
 
     def __init__(self):
 
@@ -530,6 +530,5 @@ class APIFrameWork:
 
 if __name__ == '__main__':
     multiprocessing.freeze_support()
-
 
 

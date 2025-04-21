@@ -4,7 +4,8 @@ import sys
 import configparser
 import argparse
 from BKGlycanExtractor import Image_Manager, Evaluator, Config_Manager, DebugMode, GlycanExtractorPipeline
- 
+from BKGlycanExtractor import DistributedProcessing as dp
+
 parser = argparse.ArgumentParser(description="Start")
 
 # required argument
@@ -24,13 +25,22 @@ parser.add_argument(
     help = 'Directory path where image files are stored. Required.'
 )
 
-
 # optional argument
 parser.add_argument(
     '--proximity',
     type = float,
-    default = 0.25,
+    default = [ 0.25 ],
+    nargs = '+', # allows one or more values
     help = 'Proximity value. Default: 0.25.'
+)
+
+# optional argument
+parser.add_argument(
+    '--class_restriction',
+    type = str,
+    default = [ None ],
+    nargs = '+', # allows zero, one, or more values
+    help = 'Class restriction. Default: No class restriction.'
 )
 
 # optional argument
@@ -49,21 +59,7 @@ parser.add_argument(
     help = "Precision for confidence values. Default: 8."
 )
 
-# optional argument
-parser.add_argument(
-    '--distproc',
-    type=str,
-    default  = "",
-    help = "Enables distributed processing: <n0>,remote1:<n1>,remote2:<n2>. n0 is cpus on host node (optional), ni is cpus on optional remotei node."
-)
-
-# optional argument
-parser.add_argument(
-    '--worker',
-    type=str,
-    default = "",
-    help = "Indicates that script should be run as a worker client for distributed processing: <n>:server. n is cpus, server is the host node."
-)
+dp.add_arguments(parser)
 
 # optional argument
 parser.add_argument(
@@ -86,36 +82,36 @@ parser.add_argument(
 
 
 args = parser.parse_args()
+distproc = dp.parse_args(parser)
 
-assert os.path.isdir(args.images) or args.worker
 
-distproc = None
-if args.worker:
-    distproc = ("worker",args.worker)
-elif args.distproc:
-    distproc = ("manager",args.distproc)
-
+class_restriction = []
+for clsres in args.class_restriction:
+    if clsres in ("","-","*","None"):
+        class_restriction.append(None)
+    else:
+        class_restriction.append(clsres)
 
 pipeline_descriptions = '''
 [Monosaccharide]
 figure_steps=SingleGlycanImage
 glycan_steps=
-known_steps=KnownMono
+known_step=KnownMono
 
 [Root]
 figure_steps=SingleGlycanImage
 glycan_steps=KnownMono
-known_steps=KnownRoot
+known_step=KnownRoot
 
 [Links]
 figure_steps=SingleGlycanImage
 glycan_steps=KnownMono
-known_steps=KnownLink
+known_step=KnownLink
 
 [Glycan]
 figure_steps=
 glycan_steps=
-known_steps=KnownGlycan
+known_step=KnownGlycanBoxes
 '''
 
 
@@ -124,94 +120,105 @@ config.read_string(pipeline_descriptions)
 
 cm = Config_Manager()
 
-# # pred_pipelines = GlycanExtractorPipeline()
-
 pipelines = {}
 compare_strategies = {}
 
-
+comparator = None
 
 for i, finder_name in enumerate(args.finders):
     pred_pipeline = GlycanExtractorPipeline()
-#     cm = Config_Manager()
+    
     f = cm.get_finder(finder_name)
-    finder_class = f.finder_class
+    # finder_class = f.finder_class
+    comparator = f.semantic_compare
+    finder_section = config[f.finder_class]
 
-    figure_step = config[f.finder_class].get('figure_steps')
-    glycan_step = config[f.finder_class].get('glycan_steps')
+    figure_step = finder_section.get('figure_steps')
+    glycan_step = finder_section.get('glycan_steps')
 
-    print("--->>>",cm.get_finder(config[f.finder_class].get('figure_steps')))
     pred_pipeline.add_step('figure', cm.get_finder(figure_step)) if figure_step else None
     pred_pipeline.add_step('glycan', cm.get_finder(glycan_step)) if glycan_step else None
-    pred_pipeline.add_step('glycan',f)
+    if f.finder_class == "Glycan":
+        pred_pipeline.add_step('figure',f)
+    else:
+        pred_pipeline.add_step('glycan',f)
 
-    print("pred_pipeline",pred_pipeline.get_steps('figure'))
-    print("pred_pipeline",pred_pipeline.get_steps('glycan'))
+    pipelines[f"{finder_name}"] = pred_pipeline
 
-    pipelines[f"{finder_class}-{i}"] = pred_pipeline 
 
-    compare_strategies[f"semantic_compare-{i}"] = f.semantic_compare(
-        proximity=args.proximity,
-        whole_image=args.wholeimage,
-        precision=args.precision,
-        verbose=args.verbose
-    )  
-
+# use clone - but if you are not sure - its okay build them seperately
 
 for finder_name in args.finders:
     known_pipeline = GlycanExtractorPipeline()
-#     cm = Config_Manager()
     f = cm.get_finder(finder_name)
-    finder_class = f.finder_class
+    # finder_class = f.finder_class
+    finder_section = config[f.finder_class]
 
-    figure_step = config[f.finder_class].get('figure_steps')
-    glycan_step = config[f.finder_class].get('glycan_steps')
-    known_steps = config[f.finder_class].get('known_steps')
+    figure_step = finder_section.get('figure_steps')
+    glycan_step = finder_section.get('glycan_steps')
+    known_step = finder_section.get('known_step')
 
-    print("--->>>",cm.get_finder(config[f.finder_class].get('figure_steps')))
     known_pipeline.add_step('figure', cm.get_finder(figure_step)) if figure_step else None
     known_pipeline.add_step('glycan', cm.get_finder(glycan_step)) if glycan_step else None
-    known_pipeline.add_step('glycan',cm.get_finder(known_steps)) if known_steps else None
+    if f.finder_class == "Glycan":
+        known_pipeline.add_step('figure',cm.get_finder(known_step)) if known_step else None
+    else:
+        known_pipeline.add_step('glycan',cm.get_finder(known_step)) if known_step else None
+    break
 
-    print("known_pipeline",known_pipeline.get_steps('figure'))
-    print("known_pipeline",known_pipeline.get_steps('glycan'))
+if len(class_restriction) > 1 and len(args.proximity) == 1:
+    cmptempl = "class=%(class)s"
+elif len(class_restriction) == 1 and len(args.proximity) > 1:
+    cmptempl = "proximity=%(proximity)s"
+elif class_restriction[0] is None:
+    cmptempl = "proximity=%(proximity)s"
+else:
+    cmptempl = "class=%(class)s, proximity=%(proximity)s"
+    
+for j,cls in enumerate(class_restriction):
+  for i,proximity in enumerate(args.proximity):
+    cmpstr = cmptempl%{'class': cls, 'proximity': proximity}
+    restcls = None
+    if cls != None:
+        restcls = [ cls ]
+    compare_strategies[cmpstr] = comparator(
+        proximity=proximity,
+        whole_image=args.wholeimage,
+        precision=args.precision,
+        verbose=args.verbose,
+        restrict_class = restcls
+    )
 
 
 evaluator = Evaluator(known_pipeline=known_pipeline,
-                        prediction_pipelines=pipelines,
-                        compare_strategies=compare_strategies,
-                        workers=distproc,
-                        boxeval=False,
-                        verbose=args.verbose
-                    )
+                      prediction_pipelines=pipelines,
+                      compare_strategies=compare_strategies,
+                      workers=distproc,
+                      boxeval=False,
+                      verbose=args.verbose)
 
 images = Image_Manager(args.images)
-images.exclude("*.annotated.*")
+images.exclude("*._annotated.*")
 
 evaluator.runall(images)
 
-# predictors = {}
-# fclass = None
-# for name in args.finders:
-#     finder = config.get_finder(name)
-#     if not fclass:
-#         fclass = finder.finder_class
-#     elif fclass != finder.finder_class:
-#         sys.exit(
-#             f"Error: Predictors must belong to the same class. "
-#             f"Found conflicting classes: {fclass} and {finder.finder_class}."
-#         )
-#     predictors[name] = finder
+extra_args = {}
+if len(compare_strategies) > 1 and len(args.finders) == 1:
+    label = "%(comparitor)s"
+    title = "%(predictor)s"
+    extra_args=dict(title=title,label=label)
+elif len(args.finders) > 1 and len(compare_strategies) == 1:
+    label = "%(predictor)s"
+    title = "%(comparitor)s"
+    extra_args=dict(title=title,label=label)
 
 evaluator.plotprecisionrecall(
     dir="plots",
-    filename="box_plot",
-    title="Custom Precision-Recall Curve",
+    filename="semanticpr",
     figsize=(10, 8),
-    legend_loc="upper right",
     xlim=(0, 1),
     ylim=(0, 1),
     grid=True,
+    **extra_args
 )
-
 

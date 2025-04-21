@@ -25,7 +25,8 @@ class YOLOModel:
     def __init__(self, config, multicore=False):
         weights = config.get("weights",None)
         net = config.get("config",None)
-        labels = net.replace(".cfg",".labels")
+        user_labels = config.get("labels",None)
+        file_labels = net.replace(".cfg",".labels")
 
         self.conf_threshold = config.get('conf_threshold')
         self.iou_threshold = config.get('iou_threshold')
@@ -36,10 +37,13 @@ class YOLOModel:
             raise FileNotFoundError()
         if not os.path.isfile(net):
             raise FileNotFoundError()
-        if not os.path.isfile(labels):
+        if not os.path.isfile(file_labels):   # maybe .labels file should exist irrespective of - if the user provides their own labels or not, so that there is some record of the the true labels used during during training 
             raise FileNotFoundError()
 
-        assert self.labels == [ l.strip() for l in open(labels).read().split() ]
+        if isinstance(user_labels, list) and len(user_labels) > 0:
+            self.labels = user_labels
+        else:
+            self.labels = [ l.strip() for l in open(file_labels).read().split() ]
 
 
         if not multicore:

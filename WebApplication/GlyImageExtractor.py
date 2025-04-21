@@ -10,11 +10,9 @@ parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.append(parent_dir)
 
 
-from APIFramework import APIFrameWork
-from BKGlycanExtractor.annotatePDF import annotatePDFGlycan, annotatePNGGlycan
-from BKGlycanExtractor.glycan_file import process_image, process_manuscript
-# from BKGlycanExtractor import GlycanAnnotator
-from BKGlycanExtractor import JobInstance
+from APIFramework import APIFramework
+# from BKGlycanExtractor import JobInstance
+from processjob import JobInstance
 
 from shutil import copyfile
 
@@ -31,12 +29,12 @@ import cv2
 import traceback
 
 
-class ReferenceAPIParaBased(APIFrameWork):
+class ReferenceAPIParaBased(APIFramework):
     pass
 
 
 import subprocess
-class ReferenceAPIFileBased(APIFrameWork):
+class ReferenceAPIFileBased(APIFramework):
 
     def __init__(self):
         super().__init__()
@@ -84,13 +82,13 @@ class ReferenceAPIFileBased(APIFrameWork):
             calculation_end_time = time.time()
             calculation_time_cost = calculation_end_time - calculation_start_time
 
-            final_results = []
+            # final_results = []
 
-            # Iterate over the list of dictionaries
-            for data in result:
-                # for key, json_string in item.items():
-                json_data = json.loads(data)
-                final_results.append(json_data)
+            # # Iterate over the list of dictionaries
+            # for data in result:
+            #     # for key, json_string in item.items():
+            #     json_data = json.loads(data)
+            #     final_results.append(json_data)
 
             # json.dump(self.results,self.json_log_file)
 
@@ -101,14 +99,18 @@ class ReferenceAPIFileBased(APIFrameWork):
                 "end time": calculation_end_time,
                 "runtime": calculation_time_cost,
                 "error": error,
-                "result": final_results
+                "result": result
             }
 
             result_queue.put(res)
 
-            file_path = os.path.join(workdir, "output" "results.json")
-            with open(file_path, 'w') as wh:
-                json.dump(res, wh)  
+            # file_path = os.path.join(workdir, "results.json")
+            # with open(file_path, 'w') as wh:
+            #     json.dump(res, wh)  
+
+            file_path = os.path.join(workdir, "results.json")
+            with open(file_path, 'w') as f:
+                json.dump(res,f,indent=2)
 
 
     def home(self):

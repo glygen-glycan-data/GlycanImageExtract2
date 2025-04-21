@@ -214,6 +214,12 @@ for j in range(iterations):
         except ValueError:
             os.unlink(outfile)
             continue
+
+        # If mapfile is None, skip the rest of the code
+        if mapfile is None:
+            print(f"Error: mapfile is None for {outfile}. Skipping...")
+            continue
+
         h = open(mapfile)
         mapfiledata = h.read()
         h.close()
@@ -241,7 +247,7 @@ for j in range(iterations):
         print("# topo:",topo_iupac,file=wh)
         wh.write(mapfiledata)
         wh.close()
-        print(acc1,file=sys.stderr)
+        print(outputcount,acc1,file=sys.stderr)
         monofreq.add(comp)
         os.unlink(outfile)
         count += 1
