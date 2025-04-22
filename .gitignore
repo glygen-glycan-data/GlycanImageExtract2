@@ -127,10 +127,8 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
 *.cfg
 *.weights
-
-# Specific testing files, images
-/glycan
-/1000monotestingimgs
-
+*.labels
+*.cache.*
