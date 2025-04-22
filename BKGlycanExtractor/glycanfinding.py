@@ -28,6 +28,7 @@ from BKGlycanExtractor import DebugMode
 class GlycanFinder(Finder):  
 
     finder_class = 'Glycan'
+    labels = ['glycan']
 
     def set_logger(self, logger_name=''):
         self.logger = logging.getLogger(logger_name+'.glycanfinding')
@@ -135,7 +136,7 @@ class KnownGlycanBoxes(GlycanFinder):
 # handles one/many glycans 
 class CleanGlycanImage(GlycanFinder):
 
-    def __init__(self):
+    def __init__(self,**kwargs):
         super().__init__()
 
     def find_boxes(self, obj):
@@ -143,7 +144,7 @@ class CleanGlycanImage(GlycanFinder):
         boxes = []
         for gly in obj.glycans():
             img = gly.image()
-            cleaned_img, (x, y, w, h) = self.process_image(img)
+            cropped_img, cleaned_img, (x, y, w, h) = self.process_image(img)
             box = gly.get('box') 
             # print("box",box)
 
@@ -151,11 +152,13 @@ class CleanGlycanImage(GlycanFinder):
             new_box.update_bbox(x=x,y=y,w=w,h=h)
             # print("new_box",new_box)
 
-            box.set('image',cleaned_img)
 
-            # box = BoundingBox(image=cleaned_img,x=x,y=y,w=w,h=h)
-            # cleaned_image_dimensions={'x':x,'y':y,'w':w,'h':h}
-            box_details = dict(id=gly.get('id'), box=box, image=cleaned_img)
+            # saving the cleaned_image and original seperately - so that we have access to both the 
+            # original and cleaned image for the webpage, but question is whether I should update the
+            # coordinates (offset it) of the bounding boxes wrt to the cleaned image?
+            box.set('image',cleaned_img)
+            box.set('unprocessed_image', cropped_img)
+            box_details = dict(id=gly.get('id'), box=box, image=cleaned_img, unprocessed_image=cropped_img)
             boxes.append(box_details)
 
         return boxes
@@ -168,6 +171,7 @@ class CleanGlycanImage(GlycanFinder):
             for box_details in boxes:
                 if box_details['id'] == gly_id:
                     gly.set_image(box_details['image'])
+                    gly.set('unprocessed_image', box_details['unprocessed_image'])
                     # gly.set("cleaned_image_dimensions",box_details['cleaned_image_dimensions'])
                     # gly.set("box", box_details['box'])
                     
@@ -198,17 +202,11 @@ class CleanGlycanImage(GlycanFinder):
         x, y, w, h = cv2.boundingRect(contours[largest_index])
         cropped_image = img[y:y+h, x:x+w]
 
-        # clean image
+        # clean image 
         contours, largest_index = self.image_contour(cropped_image)
         out = np.zeros_like(cropped_image)
         cv2.drawContours(out, contours, largest_index, (255, 255, 255), -1)
         _, out = cv2.threshold(out, 230, 255, cv2.THRESH_BINARY_INV)
         cleaned_image = cv2.bitwise_or(out, cropped_image)
-        return cleaned_image, (x, y, w, h)
-
-    # def save_cleaned_image(self, obj, img):
-    #     print("-->image_path",obj.image_path())
-    #     img_path = os.path.splitext(obj.image_path()) + ".cleaned.png"
-    #     cv2.imwrite(img_path, img)
-    #     return img_path
-
+        
+        return cropped_image, cleaned_image, (x, y, w, h)

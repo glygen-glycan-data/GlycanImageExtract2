@@ -46,7 +46,7 @@ class APIParameterError(APIErrorBase):
     pass
 
 
-class APIFrameWork:
+class APIFramework:
 
     def __init__(self):
 
@@ -319,6 +319,7 @@ class APIFrameWork:
             file = flask.request.files.get('file')  
             file_url = flask.request.form.get("fileURL")
             file_type = flask.request.form.get('fileType')
+            # pipeline_name = flask.request.form.get('fileType')
             
 
             if not file and not file_url:
@@ -529,6 +530,5 @@ class APIFrameWork:
 
 if __name__ == '__main__':
     multiprocessing.freeze_support()
-
 
 

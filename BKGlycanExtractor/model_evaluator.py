@@ -17,13 +17,13 @@ import sys
 import time
 import queue
 import importlib
+from functools import partial
 
 from . import Image_Manager
 from .semantics import Figure_Semantics, Glycan_Semantics
 from .bbox import BoundingBox
 from .compareboxes import CompareBoxes
 from .debug_methods import DebugMode
-from .build_pipeline import BuildPipeline
 from .glycanannotator import Config_Manager
 from .distproc import DistributedProcessing as dp
 
@@ -61,7 +61,8 @@ class CompareBase(object):
 
     def _update_metrics(self,results,confidence,TP,FP,FN):
         if self.verbose:
-            print(self.str_trunc_conf(confidence),"TP",TP,"FP",FP,"FN",FN,file=sys.stderr)
+            # print(self.str_trunc_conf(confidence),"TP",TP,"FP",FP,"FN",FN,file=sys.stderr)
+            print(self.str_trunc_conf(confidence),"TP",TP,"FP",FP,"FN",FN)
         results[confidence] = dict(TP=TP,FP=FP,FN=FN)        
 
     def update_metrics(self,results,confidence,nTRUE,TP,FP,FN):
@@ -91,8 +92,6 @@ class CompareBase(object):
         edges = []
         confidence_scores = set()
 
-        pred_semantics = kwargs.get('pred_semantics')
-        known_semantics = kwargs.get('known_semantics')
 
         for p_id, pred_obj in enumerate(pred_objs):
             scaled_trunc_conf = self.scaled_trunc_conf(pred_obj.get('confidence'))
@@ -148,7 +147,6 @@ class CompareBase(object):
                 matched_gt.add(known_id)
                 matched_pred.add(pred_id)
 
-                # print("item['classlabel'][0],item['classlabel'][1]",item['classlabel'][0],item['classlabel'][1])
                 if item['classlabel'][0] == item['classlabel'][1]:
                     TP += 1
                 else:
@@ -162,8 +160,9 @@ class CompareBase(object):
 
         last_threshold = self.scaled_onepluseps
         self.update_metrics(results,last_threshold,gt_count,0,0,gt_count)
-        return results
 
+        return results
+        
 
 class BoxCompare(CompareBase):
     def __init__(self, iou=0.5, **kwargs):
@@ -215,163 +214,38 @@ class LinksCompare(CompareBase):
         return pred_obj['mono_ids'] == known_obj['mono_ids']
 
 
-# ignore the below class - need to work on this 
-class SemanticGlycanCompare:
+# class GlycanCompare(CompareBase): 
+#     def __init__(self, iou=0.5, **kwargs):
+#         super().__init__(**kwargs)
+#         self.iou_threshold = iou
 
-    def __init__(self, base_pipeline, known_pipeline, radius_threshold):
-        self.base_pipeline = base_pipeline
-        self.known_pipeline = known_pipeline
-        self.radius_threshold = radius_threshold
+#     def valid_assignemnt(self, known_obj, pred_obj, match_info={}):
+#         iou = CompareBoxes.iou(known_obj, pred_obj)
+#         match_info['iou'] = iou
+#         return iou >= self.iou_threshold
 
-    # Data structure: Considering pipeline_name incase we want to include multiple pipelines in the future
-    # {pipeline_name: image1: {TP: 1, FP:2, FN: 3}, image2: {TP: 1, FP:2, FN: 3}}
-    def runall(self,images):
-
-        start_time = time.time()
-
-        observations = {}
-
-        # for loop for all the different Pipelines
-        observations[self.base_pipeline.name] = {}
-
-        # self.critical_values = []
-
-        selected_critical_value = 0.77913584    # chosen after analyzing confidence values geenrated from all images after using their predictors
-        for idx, image in enumerate(images):
-            print("image:",idx, image)
-
-            pred_semantics = self.base_pipeline.run(image)
-            glycan = pred_semantics.glycans()[0]
-
-            known_semantics = self.known_pipeline.run(image)
-            known_glycan = known_semantics.glycans()[0]
-
-            results = self.compare(glycan,known_glycan,selected_critical_value)
-
-            observations[self.base_pipeline.name][os.path.basename(image)] = results
+#     def secondary_sorting_criteria(self, x):
+#         '''Sorting criteria for matches between known and predicted data.
+#         Primary sorting criteria is confidence'''
+#         return x['iou']  # Ascending order
 
 
-        end_time = time.time()
-        self.plotprecisionrecall(observations, 'Whole_Glycan', **dict(sort_results=False))
+class GlycanCompare(CompareBase):
 
-        execution_time = end_time - start_time
-        print(f"\nExecution Time {execution_time} seconds")
+    def __init__(self, proximity=0.25, **kwargs):
+        super().__init__(**kwargs)
+        self.proximity_threshold = proximity
 
+    def valid_assignemnt(self, known_obj, pred_obj, match_info={}):
+        proximity = CompareBoxes.proximity(known_obj, pred_obj)
+        match_info['proximity'] = proximity
+        return proximity <= self.proximity_threshold
 
-
-    # get one minimum confidence value for all images
-    def compare(self, pred_data, known_data, threshold):
-        compare_classes = [MonosCompare, RootCompare, LinksCompare]
-
-        # known IUPAC
-        k_monos, k_root_id = known_data.semantics['monos'], known_data.semantics['root']
-        known_IUPAC = Glycan_Semantics.IUPAC(k_monos, k_root_id)
-
-
-        # comment this for loop - it is only for experimentation to find best confidence threshold
-        # for class_name in compare_classes:      
-        #     results = class_name(self.radius_threshold).confidence_data(pred_data)
-        #     self.critical_values.append(min(results))
-            # print("\nresults:",class_name, results)
+    def secondary_sorting_criteria(self, x):
+        '''Sorting criteria for matches between known and predicted data.
+        Primary sorting criteria is confidence'''
+        return x['proximity']  # Ascending order
         
-
-        # Save the original state of pred_data
-        original_pred_data = copy.deepcopy(pred_data)
-
-        TP, FP, FN = 0, 0, 0
-        # for conf in sorted(self.critical_values[:1]):
-        # print("\nconf",conf)
-
-        # Reset pred_data to its original state
-        pred_data = copy.deepcopy(original_pred_data)
-
-        # pred_data is filtered based on threshold for the different predictors (compare_classes)
-        for class_name in compare_classes:
-            class_name(self.radius_threshold).filtered_predictions(pred_data, threshold)
-        
-
-        # monos and root_id is derived after the filtering process was done using a threshold value
-        monos, root_id = pred_data.semantics['monos'], pred_data.semantics['root']
-
-
-        # before building IUPAC - put checks about:
-        # if root exists
-        # if no.of links = monos - 1
-        # are all monos reachable from the link
-        # if all the above checks are true - build IUPAC 
-
-        if root_id == -1:
-            FN += 1
-            print("Log: Root doesn't exist")
-        elif self.link_count(pred_data) != len(k_monos) - 1:
-            FN += 1
-            print("Log: Insufficient Links")
-        elif self.all_monos_reachable(pred_data) != len(k_monos):
-            FN += 1
-            print("Log: Cannot traverse all nodes")
-        else:
-            try:
-                pred_IUPAC = Glycan_Semantics.IUPAC(monos, root_id)
-
-                if pred_IUPAC and pred_IUPAC == known_IUPAC:
-                    TP += 1
-                else:
-                    FP += 1
-                    FN += 1
-
-                    print("Log: The known and pred sequence's dont match")
-                    print("PRED SEQ", pred_IUPAC)
-                    print("KNOWN SEQ",known_IUPAC)
-                
-            except Exception as e:
-                print("EXCEPTION OCCURED",e)
-
-        return {'TP': TP, 'FP': FP, 'FN': FN}
-
-
-    
-    def link_count(self, pred_data):
-
-        # no. of links = no. of monos - 1
-        num_links = set()
-
-        links_adj = Utility.build_adjacency_list(pred_data)
-
-
-        for box, linked_boxes in links_adj.items():
-            # print("\n--->>",box.get('id'))
-            for link_box in linked_boxes:
-                # print(link_box[0].get('id'))
-                
-                link = tuple(sorted((box.get('id'), link_box[0].get('id'))))
-                num_links.add(link)
-
-        return len(num_links)
-
-    
-    def all_monos_reachable(self, pred_data):
-        links_adj = Utility.build_adjacency_list(pred_data)
-        visited = set()
-        source = next(iter(links_adj))
-        self.DFS(links_adj,visited,-1,source)
-        return len(visited)
-
-
-    def DFS(self,adj,visited,parent,u):
-        visited.add(u.get('id'))
-
-        for v,conf in adj[u]:
-            if v.get('id') == parent:
-                continue
-            elif v.get('id') in visited:
-                return True
-            
-            elif self.DFS(adj,visited,u.get('id'),v):
-                return True
-        
-        return False
-
-
 
         
 class Evaluator:
@@ -423,26 +297,26 @@ class Evaluator:
     def isboxeval(self):
         return self.boxeval
 
-    # # remove this
-    # def pred_items(self,*args):
-    #     return list(args[0])
-
-    # # remove this
-    # def known_items(self,*args):
-    #     return list(args[0])
 
     def process_image(self, image, **kwargs):
 
         results = dict()
-        # known_results = self.known_pipeline.run_evaluation(image,self.isboxeval())
-        # known_items = self.known_items(*known_results)
-        known_items, known_semantics = self.known_pipeline.run_evaluation(image,self.isboxeval())
+        # known_items, known_semantics = self.known_pipeline.run_evaluation(image,self.isboxeval())
+
+        single_known = not isinstance(self.known_pipeline, dict)
 
         i = 1
         j = 1
         for prname,pl in self.pred_pipelines.items():
             # pred_results = pl.run_evaluation(image,self.isboxeval())
             # pred_items = self.pred_items(*pred_results)
+            if single_known:
+                known_items, known_semantics = self.known_pipeline.run_evaluation(image,self.isboxeval())
+            else:
+                known_pipeline = self.known_pipeline.get(prname)
+                known_items, known_semantics = known_pipeline.run_evaluation(image, self.isboxeval())
+
+
             pred_items, pred_semantics = pl.run_evaluation(image,self.isboxeval())
             k = 1
             for cpname,cmp in self.compare.items():
@@ -453,10 +327,12 @@ class Evaluator:
 
         return image,results
 
+
     def runall(self, images):
 
         collected_results = defaultdict(lambda: defaultdict(dict))
         start_time = time.time()
+
 
         for result in dp.process(workers=self.workers,target=self.process_image,
                                  tasks=images,verbose=self.verbose):

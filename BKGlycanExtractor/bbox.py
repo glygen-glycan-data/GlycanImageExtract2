@@ -94,6 +94,17 @@ class BoundingBox:
 
     def bbox(self):
         return (self.x,self.y,self.w,self.h)
+    
+    def update_bbox(self,**kwargs):
+        """Update bounding box values dynamically if provided."""
+        if 'x' in kwargs:
+            self.x = int(kwargs['x'])
+        if 'y' in kwargs:
+            self.y = int(kwargs['y'])
+        if 'w' in kwargs:
+            self.w = int(kwargs['w'])
+        if 'h' in kwargs:
+            self.h = int(kwargs['h'])
  
     def tolist(self,*extra_keys):
         return list(self.bbox()) + [ self.data.get(k) for k in extra_keys ]

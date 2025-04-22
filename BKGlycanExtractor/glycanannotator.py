@@ -20,43 +20,45 @@ from . distproc import DistributedProcessing as dp
 
 class GlycanExtractorPipeline():
     
-    pipeline_stages = ['figure','glycan', 'clean']
+    pipeline_stages = ['figure','glycan']
 
-    defaults = {
-        'figure_steps': [],
-        'glycan_steps': [],
-        'clean_steps': []
-    }
+    # defaults = {
+    #     'figure_steps': [],
+    #     'glycan_steps': [],
+    # }
 
     def __init__(self,**kwargs):
+
+        # shifted it inside - so that a new instance of defaults 
+        # is created with ever new class initailization - otherwise the same class variable was getting modfied
+        self.defaults = {
+            'figure_steps': [],
+            'glycan_steps': [],
+        }
+
         self.steps = {}
         for stage in self.pipeline_stages:
-            if stage == 'clean':
-                data = Config.get_param(stage+'_steps', Config.IMAGE_STEPS, kwargs, self.defaults) 
-                if data:
-                    self.steps[stage] = data
-            else:
-                self.steps[stage] = Config.get_param(stage+'_steps', Config.STEPS, kwargs, self.defaults)
+            self.steps[stage] = Config.get_param(stage+'_steps', Config.STEPS, kwargs, self.defaults)
 
     # step should be a finder instance
     def add_step(self,stage,step):
-        assert stage in ("figure","glycan","clean_image"), "Bad stage specification: "+stage
+        assert stage in ("figure","glycan"), "Bad stage specification: "+stage
         self.steps[stage].append(step)
             
     def get_steps(self,stage):
-        assert stage in ("figure","glycan","clean_image"), "Bad stage specification: "+stage
-        return self.steps[stage]
+        assert stage in ("figure","glycan"), "Bad stage specification: "+stage
+        return self.steps.get(stage, None)
             
     # steps should be a list of finder instances, shallow copy!
     def set_steps(self,stage,steps):
-        assert stage in ("figure","glycan","clean_image"), "Bad stage specification: "+stage
-        self.steps[stage] = list(steps)
+        assert stage in ("figure","glycan"), "Bad stage specification: "+stage
+        self.steps[stage] = list(steps) if steps else []
 
     # Shallow clone, finders should be stateless
     def clone(self):
         gep = GlycanExtractorPipeline()
         for stage in self.pipeline_stages:
-            gep.set_steps(self,stage,self.get_steps(stage))
+            gep.set_steps(stage,self.get_steps(stage))
         return gep
     
     def run(self,image):
@@ -101,8 +103,6 @@ class GlycanExtractorPipeline():
         for figstep in self.steps['figure']:
             figstep.execute(figure_semantics)
 
-        assert len(figure_semantics.glycans()) == 1
-
         final_step = self.steps['glycan'][-1]
 
         result =  None
@@ -110,6 +110,7 @@ class GlycanExtractorPipeline():
             for glystep in self.steps['glycan'][:-1]:
                 glystep.execute(glycan_semantics)
             result = (final_step.execute(glycan_semantics,boxesonly=boxesonly),glycan_semantics)
+            break
 
         return result
 
@@ -136,24 +137,26 @@ class Config_Manager(object):
         conf = self.get_config("Pipeline:" + pipeline_name)
         return GlycanExtractorPipeline(__config__=conf)
 
-    def get_finder(self, finder_name):
+    # added kwargs here
+    def get_finder(self, finder_name, **kwargs):
         module = importlib.import_module(".pipeline",package="BKGlycanExtractor")
         conf = self.get_config("Finder:" + finder_name)
         assert conf.has("class"), "Finder %s: class not specified"
         findercls = getattr(module,conf.get("class"))
-        try:
-            return findercls(__config__=conf)
-        except:
-            # For DefaultOrientationRootFinder - it doesn't take any configs
-            return findercls()
+        new_conf = copy.deepcopy(conf)
 
-    def get_image_finder(self, finder_name):
-        res = {}
-        conf = self.get_config("Image:" + finder_name)
-        res['crop_image'] = conf.get_bool('crop_image', False)
-        res['clean_image'] = conf.get_bool('clean_image', False)
+        return findercls(__config__=new_conf, **kwargs)
 
-        return res
+    # add get_finders - for comma seperated finders
+    def get_finders(self,finder_names):
+        finder_names = [f.strip() for f in finder_names.split(',')]
+
+        finders = [self.get_finder(finder_name) for finder_name in finder_names]
+
+        return finders
+
+
+
 
 
 class Config(object):
@@ -175,20 +178,18 @@ class Config(object):
             return steps
         return default
 
-    def get_steps(self,key,default=None):
-        if self.has(key):
-            steps = [ s.strip() for s in self.get(key).split(',') ]
-            other_steps = [ self.config_manager.get_finder(name) for name in steps ]
-            return [ self.config_manager.get_finder(name) for name in steps ]
-        return default
+    # def get_steps(self,key,default=None):
+    #     if self.has(key):
+    #         steps = [ s.strip() for s in self.get(key).split(',') ]
+    #         other_steps = [ self.config_manager.get_finder(name) for name in steps ]
+    #         return [ self.config_manager.get_finder(name) for name in steps ]
+    #     return default
 
-    def get_image_steps(self,key,default=None):
+    def get_steps(self, key, default=None):
         if self.has(key):
-            name = self.get(key).strip()
-            step = self.config_manager.get_image_finder(name)
-            return step
+            steps = [s.strip() for s in self.get(key).split(',')]
+            return [self.config_manager.get_finder(name) for name in steps]
         return default
-
 
     def get_int(self,key,default=None):
         if self.has(key):
@@ -224,6 +225,7 @@ class Config(object):
         value = copy.copy(defaults.get(key))
         config = kwargs.get('__config__')
         if config:
+            # print("key",key,value,datatype)
             value = getattr(config,datatype)(key,value)
         return kwargs.get(key,value)
 

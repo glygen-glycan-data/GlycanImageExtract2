@@ -59,160 +59,134 @@
         let div = document.getElementById("list_id");
         div.style.backgroundColor = "#FFFFFF";
 
-        var glycans = result['result']['glycans'];
+        var figures = result['result']['result'];
+        var file_extension = result['submission_detail']['original_file_name'].split('.').pop();  
         
         var alert_str = ""
         var resstr = ""
 
-        // COMPLETE THIS CODE and add a ? to provide notes for the user
-        // Show alert if there are errors
-        if (result['result']['error'] && result['result']['error'].length > 0) {
-            console.log("WORKER DONE", result['result']['error']); // Debugging log
+        
+        // TO DO - Show alert if there are errors
+        // if (result['result']['errors'] && result['result']['error'].length > 0) {
+        //     console.log("WORKER DONE", result['result']['error']); // Debugging log
 
-            alert_str += `<div class="alert alert-danger" role="alert">
-                    ${result['result']['error'].join("<br>")}
-                    </div>`
-        }
-        else if (glycans.length < 1) {
-            alert_str += `<div class="alert alert-danger" role="alert">
-                Error: No glycans were detected/present; Try using another file!
-            </div>`
-        }
+        //     alert_str += `<div class="alert alert-danger" role="alert">
+        //             ${result['result']['errors'].join("<br>")}
+        //             </div>`
+        // }
+        // else if (glycans.length < 1) {
+        //     alert_str += `<div class="alert alert-danger" role="alert">
+        //         Error: No glycans were detected/present; Try using another file!
+        //     </div>`
+        // }
 
         alert_data.innerHTML = alert_str
 
         // resstr += "<h3>Analysis complete. ("+calculation_time+" sec)<h3>\n<ul>";
-            resstr += "<h3>Results: ";
+            resstr += "<h3 style='font-size:1.3rem;'>Results: ";
         // if (result.result.inputtype == "pdf") {
         //     resstr += "<A target=\"_blank\" href=\"file_download?list_id="+list_id+"\">Annotated PDF</A>, "
         //     }
-        resstr += "<A href=\"retrieve?list_ids=[%22"+list_id+"%22]\" target=\"_blank\">JSON format</A> (";
-        if (result.result.inputtype == "pdf") {
+        resstr += "<span> <a style='background-color:#e8e3e3; border-radius:20px; padding:1px 5px 1px 5px;' href=\"retrieve?list_ids=[%22"+list_id+"%22]\" target=\"_blank\">JSON data</a> | </span> ";
+        if (file_extension == "pdf") {
             // console.log("PDF",result.submission_detail)
-            resstr += "<A target=\"_blank\" href=\""+"static/files/"+result.id+"/input/"+encodeURIComponent(result.submission_detail.original_file_name)+"\">Original PDF</A>"
+            resstr += "<span><a style='background-color:#e8e3e3; border-radius:20px;padding:1px 5px 1px 5px;' target=\"_blank\" href=\""+"static/files/"+result.id+"/input/"+encodeURIComponent(result.submission_detail.original_file_name)+"\">Original PDF</a> | </span>"
         } else {
             // console.log("result",result)
-            resstr += "<A target=\"_blank\" href=\""+"static/files/"+result.id+"/input/"+encodeURIComponent(result.submission_detail.original_file_name)+"\">Original Image</A>"
+            resstr += "<span><a style='background-color:#e8e3e3;border-radius:20px;padding:1px 5px 1px 5px;' target=\"_blank\" href=\""+"static/files/"+result.id+"/input/"+encodeURIComponent(result.submission_detail.original_file_name)+"\">Original Image</a> | </span>"
         }
-            resstr += ") [<A href=\""+"result?id="+result.id+"\">Bookmark</A>].</h3>";
+            resstr += "<a style='background-color:#e8e3e3;border-radius:20px;padding:1px 5px 1px 5px;' href=\""+"result?id="+result.id+"\">Bookmark</a></h3>";
         reselt.innerHTML = resstr;
         
         document.getElementById("extracted").style="display: block;";
     
 
-        // console.log("WORKER DONE", result['result']['error'])
-        
-        // var file_errors = glycans['result']['error']
-
-        // if (glycans['finished'] && file_errors.length > 0){
-        //     <div class="alert alert-danger" role="alert">
-        //         This is a danger alert—check it out!
-        //     </div>
-
-        // }
-
-
-        // var innerdiv = "";
         var innerdiv = "<table style='width: 100%; border-collapse: collapse; text-align: center; background-color: #FFFFFF;'>";
         innerdiv += "<tbody>"
-        // var file_errors = glycans['result']['error']
-        // innerdiv += `<thead><tr> ${file_errors}</tr></thead><tbody>`;
 
-        // based on page_num -->
-        var num = -1;
+        figures.forEach(function(figure, fig_id) {
+            console.log("Figure", figure, "at index", fig_id);
 
-        var num_glycan = glycans.length;
-        console.log("num_glycan",num_glycan)
+            // code to add the page_num, annotated figure
+            innerdiv += "<tr style='background-color:#7c7d7d;'>"; 
+            innerdiv += `<th colspan='2' style='color:#ffffff'; text-align: center;'> </th>`;
+            innerdiv += "</tr>";
 
-        for (var i=0;i<glycans.length;i++) {
-            var gly = glycans[i];
-            console.log("gly",gly)
-            // var displayText = (gly.IUPAC && gly.IUPAC.trim() !== "") 
-            // ? gly.IUPAC 
-            // : gly.name; // Use gly.IUPAC if valid, otherwise gly.name
+            innerdiv += "<tr>";
+            innerdiv += "<td colspan='2' style='padding: 20px; text-align: center;'><img style='max-width: 550px; width: auto; height: auto; display: block; margin: auto;' src='" + figure.annotated_image_path + "'/></td>";
+            innerdiv += "</tr>";
 
-            // innerdiv += "<div><P align=\"center\" style=\"padding: 20px;\"><img width=\"300px\" src=\""+gly.imageurl+"\"/><br/><A href=\""+gly.gnomeurl+"\" target=\"_blank\">"+displayText+"</A><br/>("+gly.linkexpl+")</br><img width=\"300px\" src=\""+gly.glyImage+"\"/></P></div>\n";
-            console.log("-->num",num)
-            if (gly.page_num != num) {
-                console.log("num",num)
+            var glycans = figure['glycans'] || []
 
-                // if (num_glycan > 1) {
-                innerdiv += "<tr style='background-color:#7c7d7d;'>"; 
-                innerdiv += `<th colspan='2' style='color:#ffffff'; text-align: center;'>Annotated Image: <span style='font-weight: normal;'>(page. no ${gly.page_num}) <span> </th>`;
-                innerdiv += "</tr>";
-
-                innerdiv += "<tr>";
-                innerdiv += "<td colspan='2' style='padding: 20px; text-align: center;'><img style='max-width: 550px; width: auto; height: auto; display: block; margin: auto;' src='" + gly.entire_annotated_image + "'/></td>";
-                innerdiv += "</tr>";
-                // }
-        
-
+            if (glycans.length > 0) {
                 innerdiv += "<tr style='background-color: #7c7d7d;'>";
                 innerdiv += "<th style='color: #ffffff;text-align: center;'>Extracted Structure</th>";
                 innerdiv += "<th style='color: #ffffff; text-align: center;'>Generated Structure</th>";
                 innerdiv += "</tr>";
 
-                num = gly.page_num;
+
+                glycans.forEach(function(glycan, gly_idx) {
+                    innerdiv += "<tr>";
+                    innerdiv += `
+                        <td style="vertical-align:middle;">
+                            <img style="max-width: 300px; min-height: 90px; max-height:300px; min-width: 90px; display: block; margin: auto;" 
+                                src="${glycan.unprocessed_image_path}" 
+                                alt="Glycan Image" />
+                        </td>`;
+
+
+                    innerdiv += `
+                        <td style=''>
+                            <figure style='margin: 0;'>
+                                ${glycan.glyImage ? `
+                                    <img style='max-width: 300px; min-height: 90px; min-width: 90px; width: auto; height: auto; display: block; margin: auto;' 
+                                    src="${glycan.glyImage}"
+                                    alt='Glycan Image' />
+                                    ` : `<div style="font-size: 16px; color: #555; text-align: center; margin-top: 10px;">No Glycan found</div>`
+                                }
+                            
+                            <figcaption style='font-size: 14px; color: #555; margin-top: 5px;'>
+                                Accession: ${glycan.accession || 'Not found'}
+
+                                <div style="position: relative; display: inline-block;">
+                                ${glycan.errors.length > 0 ?
+                                    `<span style="margin-left: 10px; background: red; color: white; border-radius: 50%; padding: 2px 6px; font-size: 12px; cursor: pointer; position: relative; 
+                                        transition: box-shadow 0.3s ease; box-shadow: 0 0 10px rgba(255, 0, 0, 0.8);"
+                                        onmouseover="errorMessage(this)" 
+                                        onmouseout="errorMessage(this)">
+                                        ⚠️
+                                        <span class="tooltip" style="visibility: hidden; width: 180px; background-color: #373b3b;; color: white; text-align: left; border-radius: 5px; padding: 8px;
+                                                                    position: absolute; z-index: 1; bottom: 125%; left: 50%; transform: translateX(-50%);
+                                                                    opacity: 0; transition: opacity 0.3s;">
+                                            ${glycan.errors.map(e => `<div>• ${e} </div>`).join('')}
+                                        </span>
+                                    </span>`
+
+                                    : ''
+                                }  
+                            </div>
+                            
+                            </figcaption>
+                            </figure>
+
+                            <br>
+                            ${glycan.gnomeurl ? `<br><a href="${glycan.gnomeurl}" target="_blank">View Potential Glycan Structures</a>` : ''}
+
+                        </td>`;
+                    innerdiv += "</tr>";
+
+                });
+
             }
+         
+                  
+        });
 
-            innerdiv += "<tr>";
-            // innerdiv += "<td style='padding: 20px; text-align: center;'><img style='width: 300px; height: 300px; display: block; margin: auto;' src='" + gly.imageurl + "'/></td>";
-            // innerdiv += "<td style='padding: 20px; text-align: center;'><img style='width: 300px; height: 300px; display: block; margin: auto;' src='" + gly.glyImage + "'/></td>";
-
-            innerdiv += `
-                <td style="padding: 20px; text-align: center; position: relative;">
-                    <img style="max-width: 300px; min-height: 90px; min-width: 90px; width: auto; height: auto; display: block; margin: auto;" 
-                        src="${gly.imageurl}" 
-                        alt="Glycan Image" />
-                    <div>${gly.name}</div>
-                </td>`;
-
-            // innerdiv += "<td style='padding: 20px; text-align: center;'><img style='max-width: 300px; min-height: 90px; min-width: 90px; width: auto; height: auto; display: block; margin: auto;' src='" + gly.glyImage + "'/></td>";
-
-            innerdiv += `
-                <td style='padding: 20px; text-align: center;'>
-                    <figure style='margin: 0;'>
-                    <img style='max-width: 300px; min-height: 90px; min-width: 90px; width: auto; height: auto; display: block; margin: auto;' 
-                        src="${gly.glyImage}"
-                        alt='Glycan Image' />
-                    <figcaption style='font-size: 14px; color: #555; margin-top: 5px;'>Accession: ${gly.accession || 'Not found'}
-                        <div style="position: relative; display: inline-block;">
-                        ${gly.errors.length > 0 ?
-                            `<span style="margin-left: 10px; background: red; color: white; border-radius: 50%; padding: 2px 6px; font-size: 12px; cursor: pointer; position: relative; 
-                    transition: box-shadow 0.3s ease; box-shadow: 0 0 10px rgba(255, 0, 0, 0.8);"
-                                onmouseover="errorMessage(this)" 
-                                onmouseout="errorMessage(this)">
-                                ⚠️
-                                <span class="tooltip" style="visibility: hidden; width: 180px; background-color: #373b3b;; color: white; text-align: left; border-radius: 5px; padding: 8px;
-                                                            position: absolute; z-index: 1; bottom: 125%; left: 50%; transform: translateX(-50%);
-                                                            opacity: 0; transition: opacity 0.3s;">
-                                    ${gly.errors.map(e => `<div>• ${e} </div>`).join('')}
-                                </span>
-                            </span>`
-
-                            : ''
-                        }  
-                    </div>
-                    
-                    </figcaption>
-                    </figure>
-
-                    <br>
-                    <a href="${gly.gnomeurl}" target="_blank">View Potential Glycan Structures</a>
-
-                </td>`;
-            innerdiv += "</tr>";
-            
-            // Add text row below images
-            // innerdiv += "<tr>";
-            // innerdiv += "<td colspan='2' style='text-align: center; padding: 10px;'><a href='" + gly.gnomeurl + "' target='_blank'>" + displayText + "</a><br/>(" + gly.linkexpl + ")</td>";
-            // // innerdiv += "<td colspan='3' style='text-align: center; padding: 10px;'><a href='" + gly.gnomeurl + "' target='_blank'>" + gly.name + "</a><br/>(" + gly.linkexpl + ")</td>";
-            // innerdiv += "</tr>";
-        }
         innerdiv += "</tbody>"
         innerdiv += "</table>";
         div.innerHTML = innerdiv;
-        }
+
+    }
 
     query();
 
@@ -229,7 +203,5 @@
             tooltip.style.opacity = '0';
         }
     }
-
-
 
 </script>

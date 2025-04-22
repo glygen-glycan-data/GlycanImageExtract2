@@ -17,17 +17,17 @@ def request(target,**kw):
 #     baseurl = "https://subsumption.glyomics.org/"
 #     return json.loads(urlopen(baseurl+target,urlencode(kw).encode('utf8')).read())
 
-def request1(target, task, developer_email):
-    params = {"task": task, "developer_email": developer_email}
-    print("task",task)
-    baseurl = "https://subsumption.glyomics.org/"
-    try:
-        response = urlopen(baseurl + target, urlencode(params).encode('utf8')) 
-        return json.loads(response.read())
+# def request1(target, task, developer_email):
+#     params = {"task": task, "developer_email": developer_email}
+#     print("task",task)
+#     baseurl = "https://subsumption.glyomics.org/"
+#     try:
+#         response = urlopen(baseurl + target, urlencode(params).encode('utf8')) 
+#         return json.loads(response.read())
 
-    except Exception as e:
-        print(f"Error during request: {e}")
-        return None
+#     except Exception as e:
+#         print(f"Error during request: {e}")
+#         return None
 
 
 def request2(target,**kw):
@@ -75,16 +75,16 @@ def searchGlyImage(*seqs, orientation='RL',display='normal', delay=1, maxretry=1
     return retval
     
 
-def sendToGNOme(*seqs):
-    seqparams = dict()
-    for i,seq in enumerate(seqs):
-        seqparams['Query'] = seq.strip()
-    params = dict(seqs=seqparams)
-    data = request1("submit",task=json.dumps(params),developer_email=devemail)
-    jobids = []
-    for job in data:
-        jobids.append(job["id"])
-    return jobids[-1]
+# def sendToGNOme(*seqs):
+#     seqparams = dict()
+#     for i,seq in enumerate(seqs):
+#         seqparams['Query'] = seq.strip()
+#     params = dict(seqs=seqparams)
+#     data = request1("submit",task=json.dumps(params),developer_email=devemail)
+#     jobids = []
+#     for job in data:
+#         jobids.append(job["id"])
+#     return jobids[-1]
 
 # if IUPAC sequence is None - pass name
 # change the name of this function

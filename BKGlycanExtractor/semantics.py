@@ -5,8 +5,11 @@ import json
 import copy
 import random
 import math
-from collections import defaultdict, deque
+from collections import defaultdict, deque, Counter
 from . lineno import callsig
+import importlib
+import shutil
+
 
 # Base class for any thing (figure, glycan) which has an image with width and height
 class Image_Semantics:
@@ -62,10 +65,10 @@ class Figure_Semantics(Image_Semantics):
     def tojson(self):
         data = {}
         for k,v in self.semantics.items():
-            if k not in ('image','box','glycans'):
+            if k not in ('image','processed_image','box','glycans'):
                 data[k] = v
         data['glycans'] = [ json.loads(gly.tojson()) for gly in self.glycans() ]
-        return json.dumps(data,indent=2,sort_keys=True)
+        return json.dumps(data,sort_keys=True)
 
     def format_image(self,image):
         if isinstance(image, str):
@@ -154,7 +157,7 @@ class Figure_Semantics(Image_Semantics):
             x1,y1,x2,y2 = glycan.glycan_box().corners()
             self.annotate(x1,y1,x2,y2,color=color) # green for glycan
 
-    def annotate_monos(self):
+    def annotate_monos(self,color=(128, 0, 128)):
         for glycan in self.semantics['glycans']:
             # monosaccharides and root labelling
             root_id = None
@@ -163,7 +166,7 @@ class Figure_Semantics(Image_Semantics):
             for mono in glycan.monosaccharides():
                 x1,y1,x2,y2 = mono['box'].corners()
                 text = mono.get('classlabel','') + ":" + str(mono.get('id'))
-                color = (128, 0, 128) # purple for monos
+                # color = (128, 0, 128) # purple for monos
                 if mono['id'] == root_id:
                     color = (0,0,255) # red for root  
                 if mono.get('alternative') is not None:
@@ -190,7 +193,43 @@ class Figure_Semantics(Image_Semantics):
     def write_image(self,**kwargs):
         cv2.imwrite(self.make_filename(**kwargs), self.image())
 
+    # delete later
+    def training_data(self,pipeline,folder_name):
+        # print("\nself.params",pipeline.get_steps("glycan")[0].labels)
+        # classid_mappings = {"GlcNAc": 0, "NeuAc":1,"Fuc":2,"Man":3,"GalNAc":4,"Gal":5,"Glc":6,"NeuGc":7, "Xyl": 8}
+        labels = pipeline.get_steps("glycan")[0].labels
+        classid_mappings = {label:idx for idx,label in enumerate(labels)}
+
+        image_path = self.image_path()
+        image_filename = os.path.basename(image_path)
+        base_filename = os.path.splitext(image_filename)[0]
+
+        os.makedirs(folder_name, exist_ok=True)
+        metadata_dir = os.path.join(folder_name, "metadata")
+        os.makedirs(metadata_dir, exist_ok=True)
+        metadata_file = os.path.join(metadata_dir, "metadata.txt")
+
+        print("file",metadata_file)
+
+        with open(metadata_file,'w') as f:
+            f.write('labels: ' + ', '.join(labels) + '\n')
+
+            for k,v in pipeline.get_steps("glycan")[0].params.items():
+                f.write(f"{k}: {v}\n")
+
+        
+        training_file_path = os.path.join(folder_name, base_filename + ".txt")
+        with open(training_file_path, 'w') as f:  # Open the file to write annotations
+            for glycan in self.semantics['glycans']:
+                for mono in glycan.monosaccharides():
+                    x,y,w,h = mono['box'].center_relative()
+                    class_id = classid_mappings[mono.get('classlabel')]
+                    f.write(f"{class_id} {x} {y} {w} {h}\n") 
+
+        shutil.copy(image_path, folder_name)
+
 class Glycan_Semantics(Image_Semantics):
+
     def __init__(self,image,box,**kwargs):
         super().__init__(image)  
         self.semantics['box'] = box
@@ -200,6 +239,12 @@ class Glycan_Semantics(Image_Semantics):
 
     def glycan_box(self):
         return self.semantics['box']
+
+    def glycan(self):
+        return [self.semantics]
+
+    def image(self):
+        return self.semantics['image']
 
     def clear_monos(self):
         self.semantics['monos'] = {}
@@ -258,161 +303,209 @@ class Glycan_Semantics(Image_Semantics):
     def root(self):
         return self.semantics.get('root',None)
 
-    def add_undirected_link(self,id1,id2,**kwargs):
-        self.semantics['undirected_links'].append({"mono_ids": list(sorted((id1,id2))),**kwargs})
-        
-    def clear_links(self,fromid):
-        self.semantics['monos'][fromid]['links'] = []
+
+    def find(self, u):
+        if u not in self.parent:
+            self.parent[u] = u
+        if self.parent[u] != u:
+            self.parent[u] = self.find(self.parent[u])
+        return self.parent[u]
+
+    def union(self, u, v):
+        pu, pv = self.find(u), self.find(v)
+        if pu == pv:
+            return False  # cycle detected
+        self.parent[pu] = pv
+        return True
+
+
+    def filter_links_to_tree(self):
+        links = self.undirected_links()
+        # uf = UnionFind()
+
+        kept_links = []
+        cycle_links = []
+
+        for link in links:
+            id1, id2 = link["mono_ids"]
+            if self.union(id1, id2):
+                kept_links.append(link)
+            else:
+                cycle_links.append(link)
+
+        if cycle_links:
+            # Drop the link with the lowest confidence
+            cycle_links.sort(key=lambda l: l.get('confidence', 0.0))
+            dropped = cycle_links[0]
+            print(f"Cycle found. Dropping least confident link: {dropped}")
+            cycle_links.remove(dropped)
+            kept_links += cycle_links  # If you want to keep the rest
+
+        return kept_links
+
+
+    def build_adjacency_list(self):
+        error_msg = ''
+        adj = defaultdict(list)
+        parent = {}
+
+        def find(u):
+            while parent.get(u, u) != u:
+                parent[u] = parent.get(parent[u], parent[u])
+                u = parent[u]
+            return u
+
+        def union(u, v):
+            pu, pv = find(u), find(v)
+            if pu == pv:
+                return False  # cycle detected
+            parent[pu] = pv
+            return True
+
+        links = self.undirected_links()
+        kept_links = []
+        cycle_links = []
+
+        for link in links:
+            id1, id2 = link["mono_ids"]
+            if union(id1, id2):
+                kept_links.append(link)
+            else:
+                cycle_links.append(link)
+
+        # Drop least confident cycle-forming link
+        if cycle_links:
+            cycle_links.sort(key=lambda l: l.get('confidence', 0.0))
+            dropped = cycle_links.pop(0)
+            print(f"Cycle found. Dropping least confident link: {dropped}")
+            error_msg = f"Cycle found. Dropping least confident link: {dropped}"
+            kept_links += cycle_links  # Keep remaining cycle links, optional
+
+        for link in kept_links:
+            id1, id2 = link["mono_ids"]
+            link_without_ids = {k: v for k, v in link.items() if k != "mono_ids"}
+            adj[id1].append((id2, link_without_ids))
+            adj[id2].append((id1, link_without_ids))
+
+        return adj, error_msg
+
+    # used after undirected_links are already populated 
+    # def build_adjacency_list(self):
+
+    #     adj = defaultdict(list)
+
+    #     for link in self.undirected_links():
+    #         id1, id2 = link["mono_ids"]
+    #          # removed 'mono_ids' because it has undirected_links which are in sorted order - since we dont want to propagate this pattern in the adjacency list
+    #         link_without_ids = {k: v for k, v in link.items() if k != "mono_ids"} 
+    #         adj[id1].append((id2, link_without_ids)) 
+    #         adj[id2].append((id1, link_without_ids))
+
+    #     return adj
+
+    # build adjacency list from undirected links
+    # if root is present - use that as the start to traverse the tree, if not use any random node and traverse the tree.
+    # During the traversal if node is already visited - then there must be a cycle
+    # At the end - if all nodes are not visited - then the tree must be disjointed
+
+    def traverse_tree(self):
+        adj,error_msg = self.build_adjacency_list()
+        visited = set()
+
+        root = self.root()
+
+        if root:
+            first_node = root['mono_id']
+        elif adj:
+            first_node = next(iter(adj))
+        else:
+            return False, "Graph is empty: no root and no nodes in adjacency list."
+
+        stack = [(first_node, -1)]      # current_node, parent
+
+        visited.add(first_node)
+
+        while stack:
+            u, parent = stack.pop()
+            for v, other_info in adj[u]:
+                if v not in visited:
+                    visited.add(v)
+                    stack.append((v,u))
+                else:
+                    if v == parent:
+                        continue
+                    else:
+                        return False, f"Cycle detected at node '{v}' (visited from node '{u}')."
+
+        # check if all nodes were visited
+        all_nodes = set(m['id'] for m in self.monosaccharides())
+        unvisited = all_nodes - visited
+        if unvisited:
+            return False, f"Tree is disjointed. Unvisited nodes: {', '.join(unvisited)}"
+
+        print("tree traversal", error_msg)
+        return True, error_msg
+                    
+    def clear_links(self,mono_id):
+        self.semantics['monos'][mono_id]['links'] = []
 
     def clear_all_links(self):
-        for fromid in self.monosaccharideids():
-            self.clear_links(fromid)
+        for mono_id in self.monosaccharideids():
+            self.clear_links(mono_id)
 
-    # remove/modify
+    def all_links(self):
+        # a mono could have multiple links
+        return [link for item in self.monosaccharides() if item.get('links') for link in item['links']]  
+
     def links(self,id):
         return self.semantics['monos'][id]['links']
 
-    # remove/modify
     def delete_link(self,fromid,toid):
         new_links = [
             link for link in self.semantics['monos'][fromid]['links']
-            if not (link['from'] == fromid and link['to'] == toid)
+            if ([link['fromid'], link['toid']] != [fromid, toid])
         ]
-
         self.semantics['monos'][fromid]['links'] = new_links  
 
     def undirected_links(self):
         return self.semantics.get('undirected_links')
 
 
-    # modify/remove
-    # method to update links in semantics to directed links when we have information about the reducing end
-    def directed_links(self):
-        root = self.root()
-        monos = self.semantics['monos']
+    def add_undirected_link(self,id1,id2,**kwargs):
+        self.semantics['undirected_links'].append({"mono_ids": list(sorted((id1,id2))),**kwargs})
 
-        if root:
-            directed_dict = defaultdict(list)
+    def add_link(self,id1,id2,**kwargs):
+        mono = self.monosaccharide(id1)
 
-            # Initialize directed_dict with links
-            for mono_id, mono in monos.items():
-                directed_dict[mono_id] = mono['links']
+        if 'links' not in mono:
+            mono['links'] = []
 
-            q = [root['mono_id']]
-            visited = set()
-
-            while q:
-                from_id = q.pop(0)
-
-                if from_id in visited:
-                    continue
-                visited.add(from_id)
-
-                mono = monos[from_id]
-                to_ids = [link['to'] for link in mono['links'] if link['to'] not in visited]
-
-                while to_ids:
-                    to_id = to_ids.pop(0)
-
-                    # Remove bi-directional edges by checking if the reverse exists
-                    directed_edges = []
-                    for item in directed_dict[to_id]:
-                        if item['to'] == from_id:
-                            continue  # Skip the reverse edge (bi-directional removal)
-
-                        directed_edges.append(item)
-
-                        if to_id not in visited:
-                            q.append(to_id)
-
-                    directed_dict[to_id] = directed_edges
+        mono['links'].append({"fromid":id1,"toid":id2, **kwargs})
 
 
-            for mono_id, links in directed_dict.items():
-                # monos[mono_id]['directed_links'] = links
-                monos[mono_id]['links'] = links
+    def create_links(self):
+        adj,_ = self.build_adjacency_list()
+        root_id = self.root().get("mono_id")
 
+        visited = set()
+        queue = deque([root_id])
 
+        while queue:
+            node = queue.popleft()
+            if node in visited:
+                continue
+            visited.add(node)
 
-    def all_directed_links(self):
-        result = []
-        for fromid in self.monosaccharideids():
-            for l in self.directed_links(fromid):
-                result.append(l)
-        return result
-                       
-
-    # def tojson(self):
-    #     data = {}
-    #     for k,v in self.semantics.items():
-    #         if k not in ('image','box','monos'):
-    #             data[k] = v
-    #     data['monos'] = []
-    #     for mono in self.semantics['monos'].values():
-    #         monodict = {}
-    #         for k,v in mono.items():
-    #             if k not in ('image','box','links'):
-    #                 monodict[k] = v
-    #             elif k == 'links' and len(v) > 0:
-    #                 monodict[k] = [item if isinstance(item,int) else item[0] for item in v]
-    #         data['monos'].append(monodict)
-
-    #     return json.dumps(data,indent=2,sort_keys=True)
-
-    def glycan_orientation(self):
-        # print("Orientation",self.semantics['root'])
-
-        root_id = self.semantics['root']
-
-        if root_id == -1:
-            return "RL"
-
-        # determine the position of the next connected element from the root
-        # do not take fucose into account
-        # depending on which side the the next element is - that will be the orientation
-
-        try:
-            root_mono = self.semantics['monos'][root_id]
-            root_box = root_mono.get('box')
-
-            root_link_ids = root_mono['links']
-
-            for link_id, confidence in root_link_ids:
-                linked_mono = self.semantics['monos'][link_id]
-
-                sym = linked_mono.get("symbol")
-
-                if sym == 'Fuc':
-                    continue
-
-                linked_mono_box = linked_mono.get('box')
-
-
-            r_x, r_y = root_box.center()
-            l_x, l_y = linked_mono_box.center()
-
-
-            dx = l_x - r_x  # Difference in X
-            dy = l_y - r_y  # Difference in Y
-
-            if abs(dx) > abs(dy):  # If movement in X is more dominant
-                if dx > 0:
-                    return "LR"  # Moving right
-                else:
-                    return "RL"  # Moving left
-            else:  # If movement in Y is more dominant
-                if dy > 0:
-                    return "TB"  # Moving downward
-                else:
-                    return "BT"  # Moving upward
-        except:
-            return "RL"
-
+            for neighbor, link_info in adj[node]:
+                if neighbor not in visited:
+                    self.add_link(node, neighbor, **link_info) 
+                    queue.append(neighbor)
+               
 
     def tojson(self):
         data = self.remove_binary_values(copy.deepcopy(self.semantics))
         data['monos'] = sorted(data['monos'].values(),key=lambda m: m['id'])        
-        return json.dumps(data, indent=2, sort_keys=True)
+        return json.dumps(data, sort_keys=True)
 
     def remove_binary_values(self,d):
         if isinstance(d,dict):
@@ -433,208 +526,51 @@ class Glycan_Semantics(Image_Semantics):
         # for single glycan images, the glycan image "has" a path
         return self.semantics.get('image_path',None)
 
-    @staticmethod
-    def composition(monosaccharides):
+    def composition(self):
         count = defaultdict(int)
-        for m in monosaccharides:
-            sym = Glycan_Semantics.mono_syms[m['classid']]
-            if sym not in count:
-                count[sym] = 1
-            else:
-                count[sym] += 1
+        for m in self.monosaccharides():
+            count[m.get('classlabel')] += 1
         return count
-
-    mono_syms = ["GlcNAc","NeuAc","Fuc","Man","GalNAc","Gal","Glc","NeuGc"]
     
-    # remove
-    @staticmethod
-    def all_monos_reachable(data):
-        links_adj = Glycan_Semantics.build_adjacency_list(data)
-        visited = set()
-        source = next(iter(links_adj))
-        Glycan_Semantics.DFS(links_adj,visited,-1,source)
-        return len(visited)
+    def compstr(self):
+        # circular import issue for monosaccharideid
+        #  need the same labels from the Monosaccideid class - so that any updates to the class varibale labels
+        # will also persist here 
+        # Mono = importlib.import_module('.monosaccharideid', package='BKGlycanExtractor')
+        labels = ["GlcNAc","NeuAc","Fuc","Man","GalNAc","Gal","Glc","NeuGc","Xyl"]
+        mono_syms = labels
 
-
-    # returns true if there is a cycle else false
-    @staticmethod
-    def DFS(adj, visited, parent, u):
-        visited.add(u)
-
-        for v in adj[u]:
-            if v == parent:
-                continue
-            elif v in visited:
-                return True
-            
-            elif Glycan_Semantics.DFS(adj, visited, u, v):
-                return True
-
-        return False
-
-    @staticmethod
-    def link_count(data):
-
-        links_adj = Glycan_Semantics.build_adjacency_list(data)
-
-        # no. of links = no. of monos - 1
-        # num_links = []
-        num_links = 0
-        monos_collections = set()
-
-        # links_adj = Utility.build_adjacency_list(pred_data)
-        for box_id, linked_id in links_adj.items():
-            for link_id in linked_id:
-                monos_collections.add(box_id)
-                monos_collections.add(link_id['to'])
-
-                num_links += 1
-
-        return int(num_links/2), tuple(sorted(monos_collections))      # because the links are bi-directional, every link is counted twice
-
-    
-    @staticmethod
-    def compstr(monosaccharides):
-        comp = Glycan_Semantics.composition(monosaccharides)
+        comp = self.composition()
         retval = ""
-        for sym in Glycan_Semantics.mono_syms:
+        for sym in mono_syms:
             if comp[sym] > 0:
                 retval += sym + "(" + str(comp[sym]) + ")"
         return retval
-
-    @staticmethod
-    def IUPAC(mono_data):
-        iupac = []
-
-        root_id = mono_data.root()
-
-        if root_id == -1:
-            print("******NO root",root_id)
+        
+    def IUPAC(self):
+        root = self.root()
+        if not root:
             return None
 
-        adj = Glycan_Semantics.build_adjacency_list(mono_data, cleaned=True)
+        # adds directed links in semantics
+        self.create_links()
 
-        other_adj = Glycan_Semantics.build_adjacency_list(mono_data, cleaned=True)
-
+        root_id = root.get('mono_id')
+        iupac = []
+        adj,_ = self.build_adjacency_list()
         visited = set()
-        ans = []
 
-        monos = mono_data.semantics['monos']
-        ans = Glycan_Semantics.generate_iupac(iupac, adj, visited, -1, root_id, monos)
+        self.generate_iupac(iupac, adj, visited, -1, root_id)
        
-        iupac = iupac[::-1] # IUPAC sequence are read in reverse order
+        iupac = iupac[::-1] # IUPAC sequences are read in reverse order
         return ''.join(iupac)
 
 
-    # @staticmethod
-    # def build_adjecency_list(monosaccharides):
-    #     adj = {}
-    #     for id, mono in monosaccharides.items():
-    #         links = mono.get('links')
-    #         # Process links to keep only integer IDs
-    #         filtered_links = []
-    #         for link in links:
-    #             if isinstance(link, list):  # If link contains a list, extract the first element
-    #                 filtered_links.append(link[0])
-    #             else:  # Otherwise, it’s already an integer
-    #                 filtered_links.append(link)
-    #         adj[mono.get('id')] = filtered_links
-    #     return adj
-
-    @staticmethod
-    def build_adjacency_list(mono_semantics):
-        adj = defaultdict(list)
-
-        id_box_dict = {}
-
-        for mono in mono_semantics.monosaccharides():
-            id_box_dict[mono['id']] = mono['box']
-
-        for mono in mono_semantics.monosaccharides():
-            for link_data in mono['links']:
-                from_box = id_box_dict[link_data['from']]
-                to_box = id_box_dict[link_data['to']]
-                to_id = link_data['to']
-                from_id = link_data['from']
-                confidence = link_data.get('confidence')
-
-                data = {'from': from_id ,'to': to_id,'from_box': from_box,'to_box': to_box}
-
-                if confidence:
-                    data['confidence'] = confidence
-
-                adj[mono['id']].append(data)
-        return adj
-
-        # for id, mono in monosaccharides.items():
-        #     links = mono.get('links')
-        #     # Process links to keep only integer IDs
-        #     filtered_links = []
-        #     for link in links:
-        #         if isinstance(link, list):  # If link contains a list, extract the first element
-        #             filtered_links.append(link[0])
-        #         else:  # Otherwise, it’s already an integer
-        #             filtered_links.append(link)
-        #     adj[mono.get('id')] = filtered_links
-        # return adj
-
-
-    @staticmethod
-    def floor_precision(value, precision):
-        scale = 10 ** precision
-        return math.floor(value * scale) / scale
-
-
-    # @staticmethod
-    # def build_adjacency_list(data, cleaned=False):
-    #     # adj = {}
-    #     monos = data.semantics['monos']
-
-    #     adj = defaultdict(list)
-    #     for id, mono_data in monos.items():
-    #         # links = mono.get('links')
-    #         # Process links to keep only integer IDs
-    #         filtered_links = []
-    #         for link_data in mono_data.get('links'):
-    #             if isinstance(link_data, list):  # Handle case with confidence value - for pred data case
-    #                 linked_id, conf = link_data
-    #                 # filtered_links.append(link[0])
-    #                 try:
-    #                     adj[mono_data['box']].append([monos[linked_id]['box'], Glycan_Semantics.floor_precision(conf,8)])
-    #                 except KeyError as k:
-    #                     print("Key doesnt exist:", k)
-    #             else:  # Handle case without confidence - for known data case
-    #                 linked_id = link_data
-    #                 adj[mono_data['box']].append(monos[linked_id]['box'])
-
-    #     if cleaned:
-    #         return Glycan_Semantics.adjacenecy_list_cleaned(adj)
-
-    #     return adj
-
-    @staticmethod
-    def adjacenecy_list_cleaned(adj):
-
-        cleaned_adj = {}
-
-        for key, vals in adj.items():
-            try:
-                linked_ids = [linked_box.get('id') for linked_box in vals]
-            except:
-                linked_ids = [linked_box.get('id') for linked_box, _ in vals]
-
-            cleaned_adj[key.get('id')] = linked_ids
-
-        return cleaned_adj
-
-            
-
-    @staticmethod
-    def generate_iupac(iupac, adj, visited, parent, u, monosaccharides):
-        visited.add(monosaccharides[u].get('id'))
+    def generate_iupac(self,iupac, adj, visited, parent, u):
+        visited.add(u)
 
         # Get the current node's data
-        symbol = monosaccharides[u].get('symbol')
+        symbol = self.monosaccharide(u).get('symbol')
         extension = '?1-?' if symbol not in ['NeuAc', 'NeuGc'] else '?2-?'
         data = symbol + extension if parent != -1 else symbol
 
@@ -642,15 +578,15 @@ class Glycan_Semantics(Image_Semantics):
         iupac.append(data)
 
         # Filter adjacent nodes to only include unvisited ones
-        filtered_adj = [v for v in adj[u] if v not in visited]
+        filtered_adj = [v[0] for v in adj[u] if v[0] not in visited]
 
         # Sort the children (branches) lexicographically by their symbol for consistency
-        filtered_adj = sorted(filtered_adj, key=lambda x: monosaccharides[x].get('symbol'))
+        filtered_adj = sorted(filtered_adj, key=lambda x: self.monosaccharide(x).get('symbol'))
 
         branch_strings = []
         for v in filtered_adj:
             branch_iupac = []
-            Glycan_Semantics.generate_iupac(branch_iupac, adj, visited, u, v, monosaccharides)  # Recurse for each child
+            self.generate_iupac(branch_iupac, adj, visited, u, v)  # Recurse for each child
             
             # Convert the branch into a single string
             branch_str = ''.join(branch_iupac[::-1])  # Reverse the list and join it into a string
@@ -669,4 +605,57 @@ class Glycan_Semantics(Image_Semantics):
         return iupac
 
 
+    def glycan_orientation(self):
+        root = self.root()
 
+        if not root:
+            return "RL"
+
+        root_id = root.get('mono_id')
+
+        # determine the position of the next connected element from the root
+        # do not take fucose into account
+        # depending on which side the the next element is - that will be the orientation
+
+        root_mono = self.monosaccharide(root_id)
+        root_box = root_mono.get('box')
+        root_links = self.links(root_id)
+
+        for link in root_links:
+            fromid, toid = link['fromid'], link['toid']
+            linked_mono = self.monosaccharide(toid)
+            sym = linked_mono.get('symbol')
+
+            if sym == 'Fuc':
+                continue
+
+            linked_mono_box = linked_mono.get('box')
+
+            r_x, r_y = root_box.center()
+            l_x, l_y = linked_mono_box.center()
+
+            dx = l_x - r_x  # Difference in X
+            dy = l_y - r_y  # Difference in Y
+
+            if abs(dx) > abs(dy):  # If movement in X is more dominant
+                if dx > 0:
+                    print("orientation","LR")
+                    return "LR"  # Moving right
+                else:
+                    print("orientation","RL")
+                    return "RL"  # Moving left
+            else:  # If movement in Y is more dominant
+                if dy > 0:
+                    print("orientation","TB")
+                    return "TB"  # Moving downward
+                else:
+                    print("orientation","BT")
+                    return "BT"  # Moving upward
+
+
+
+
+
+
+
+        

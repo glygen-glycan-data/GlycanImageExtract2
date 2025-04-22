@@ -43,13 +43,13 @@
       <form action="file_upload" method="post" enctype="multipart/form-data" onsubmit="return validateForm()">
         <div id="fileType" class="btn-group btn-group-toggle btn-group-lg" data-toggle="buttons">
           <label class="btn btn-secondary active">
-            <input type="radio" name="fileType" value="manuscript" autocomplete="off" checked onchange="labelUpdate()"> Manuscript
+            <input type="radio" name="fileType" id="manuscript" value="multi_figure_pdf" autocomplete="off" checked onchange="labelUpdate()"> Manuscript
           </label>
           <label class="btn btn-secondary">
-            <input type="radio" name="fileType" value="multi_glycan" autocomplete="off" onchange="labelUpdate()"> Multi-Glycan Image
+            <input type="radio" name="fileType" id="multi_figure" value="multi_figure_img" autocomplete="off" onchange="labelUpdate()"> Multi-Glycan Image
           </label>
           <label class="btn btn-secondary">
-            <input type="radio" name="fileType" value="single_glycan" autocomplete="off" onchange="labelUpdate()"> Single-Glycan Image
+            <input type="radio" name="fileType" id="single_figure" value="single_figure_img" autocomplete="off" onchange="labelUpdate()"> Single-Glycan Image
           </label>
         </div>
         
@@ -73,7 +73,7 @@
               <div style="display: flex; align-items: center; gap: 8px; margin-top:2rem;">
                 <label style="margin-bottom:0rem" id='uploadLabel'>Choose a file or enter a URL:</label>
         
-                <span style="background: rgb(78, 78, 79); color: white; border-radius: 50%; padding: 3px 7px; font-size: 12px; cursor: pointer; position: relative; font-weight:bold; 
+                <span style="background: rgb(78, 78, 79); color: white; border-radius: 50%; padding: 2px 8px; font-size: 12px; cursor: pointer; position: relative; font-weight:bold; 
                     transition: box-shadow 0.3s ease;"
                     onmouseover="fileToolTip(event, this)" 
                     onmouseout="fileToolTip(event, this)"
@@ -100,9 +100,7 @@
 
             </div>
             
-          
-            <!-- Submit Button Centered on the Next Line -->
-            <input style="background-color:#4e555b; color:white; margin:25px" type="submit" value="Submit" class="btn" style="margin-top: 20px;">
+            <input style="background-color:#4e555b; color:white; margin:15px" type="submit" value="Submit" class="btn" style="margin-top: 20px;">
           </div>
           
         </div>     
@@ -140,7 +138,7 @@
               console.log("Manuscript selected");
               
               // content.textContent = ".pdf"
-            } else if (selectedValue === 'multi_glycan' || selectedValue === 'single_glycan') {
+            } else if (selectedValue === 'multi_figure' || selectedValue === 'single_figure') {
                 uploadLabel.textContent = 'Upload an Image:';
                 console.log("Image selected:");
 
@@ -157,14 +155,16 @@
 
       // Form Validation
       function validateForm() {
-          const fileType = document.querySelector('input[name="fileType"]:checked').value;
+          // const selectedRadio = document.querySelector('input[name="fileType"]:checked')
+          const fileType = document.querySelector('input[name="fileType"]:checked').id;
+          console.log("fileType",fileType)
           const uploadOption = document.querySelector('input[name="uploadOption"]:checked').value;
 
           // Allowed formats based on the selected file type
           const allowedFormats = {
               manuscript: ['pdf'],
-              multi_glycan: ['png', 'jpg', 'jpeg'],
-              single_glycan: ['png', 'jpg', 'jpeg']
+              multi_figure: ['png', 'jpg', 'jpeg'],
+              single_figure: ['png', 'jpg', 'jpeg']
           };
 
         if (uploadOption === 'file') {
@@ -242,12 +242,12 @@
 
           const allowedFormats = {
               manuscript: ['.pdf'],
-              multi_glycan: ['.png', '.jpg', '.jpeg'],
-              single_glycan: ['.png', '.jpg', '.jpeg']
+              multi_figure: ['.png', '.jpg', '.jpeg'],
+              single_figure: ['.png', '.jpg', '.jpeg']
           };
 
           let uploadOption = document.querySelector('input[name="uploadOption"]:checked').value;  // either file or url
-          let selectedValue = document.querySelector('input[name="fileType"]:checked').value;
+          let selectedValue = document.querySelector('input[name="fileType"]:checked').id;
           let content = document.getElementById('tooltip-content')
 
           console.log("selectedValue",selectedValue)
