@@ -3,7 +3,7 @@
 
 import requests, re, json, os
 
-def download_fileids_from_google_drive(fid, destination_dir,level=0):
+def download_fileids_from_google_drive(fid, destination_dir, extns, level=0):
     URL = "https://drive.google.com/drive/u/2/folders/"
     session = requests.Session()
 
@@ -27,11 +27,14 @@ def download_fileids_from_google_drive(fid, destination_dir,level=0):
                     files[i] = itdata
 
     for k in sorted(dirs):
-        print("%s%s/"%(" "*level*2,dirs[k]['name']))
-        download_fileids_from_google_drive(dirs[k]['id'],dirs[k]['name'],level=level+1)
+        # print("%s%s/"%(" "*level*2,dirs[k]['name']))
+        download_fileids_from_google_drive(dirs[k]['id'],dirs[k]['name'],extns,level=level+1)
 
     for k in sorted(files):
         f = files[k]
+        extn = f['name'].rsplit('.',1)[-1]
+        if extn not in extns:
+            continue
         print("%s%s (%d bytes)..."%(" "*level*2,f['name'],f['size']),end=" ")
         sys.stdout.flush()
         os.makedirs(destination_dir,exist_ok=True)
@@ -75,10 +78,11 @@ def save_response_content(response, destination):
 if __name__ == "__main__":
 
     import sys
-    folder_id = '1cK7xwAKl5jwezDBZRUDyYVltVHv1NsRf'
     dest_dir = '.'
+    folder_id = '1cK7xwAKl5jwezDBZRUDyYVltVHv1NsRf'
     if len(sys.argv) >= 2:
-        folder_id = sys.argv[1]
+        dest_dir = sys.argv[1]
     if len(sys.argv) >= 3:
-        dest_dir = sys.argv[2]
-    download_fileids_from_google_drive(folder_id, dest_dir)
+        folder_id = sys.argv[2]
+    extensions = ("weights","labels","cfg")
+    download_fileids_from_google_drive(folder_id, dest_dir, extensions)
