@@ -7,6 +7,6 @@ from . glycanfinding import *
 from . monosaccharideid import *
 from . glycanconnections import *
 from . rootmonofinding import *
-from . glycansemantics import *
+# from . glycansemantics import *
 # from . glycanbuilding import *
 # from . glycansearch import *
