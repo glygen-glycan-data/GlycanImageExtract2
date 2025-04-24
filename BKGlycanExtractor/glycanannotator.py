@@ -222,12 +222,16 @@ class Config(object):
 
     @staticmethod
     def get_param(key,datatype,kwargs={},defaults={}):
+        # if kwrags were provided by a user - it takes precedence over the parameters in the config file
+        if key in kwargs:
+            return kwargs[key]
         value = copy.copy(defaults.get(key))
         config = kwargs.get('__config__')
         if config:
             # print("key",key,value,datatype)
             value = getattr(config,datatype)(key,value)
-        return kwargs.get(key,value)
+        # return kwargs.get(key,value)
+        return value
 
     @staticmethod
     def get_finder_name(kwargs={}):

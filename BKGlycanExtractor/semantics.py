@@ -211,11 +211,11 @@ class Figure_Semantics(Image_Semantics):
 
         print("file",metadata_file)
 
-        with open(metadata_file,'w') as f:
-            f.write('labels: ' + ', '.join(labels) + '\n')
+        # with open(metadata_file,'w') as f:
+        #     f.write('labels: ' + ', '.join(labels) + '\n')
 
-            for k,v in pipeline.get_steps("glycan")[0].params.items():
-                f.write(f"{k}: {v}\n")
+            # for k,v in pipeline.get_steps("glycan")[0].params.items():
+            #     f.write(f"{k}: {v}\n")
 
         
         training_file_path = os.path.join(folder_name, base_filename + ".txt")

@@ -253,7 +253,7 @@ class Evaluator:
     def __init__(self, known_pipeline, prediction_pipelines, compare_strategies, workers=None, boxeval=False, verbose=False):
         # prediction_pipelines and compare_strategies are dictionaries, providing a name as the key
         self.known_pipeline = known_pipeline
-        self.pred_pipelines = prediction_pipelines
+        self.prediction_pipelines = prediction_pipelines
         self.compare = compare_strategies
         self.workers = workers
         self.boxeval = boxeval
@@ -307,7 +307,7 @@ class Evaluator:
 
         i = 1
         j = 1
-        for prname,pl in self.pred_pipelines.items():
+        for prname,pl in self.prediction_pipelines.items():
             # pred_results = pl.run_evaluation(image,self.isboxeval())
             # pred_items = self.pred_items(*pred_results)
             if single_known:
@@ -333,9 +333,10 @@ class Evaluator:
         collected_results = defaultdict(lambda: defaultdict(dict))
         start_time = time.time()
 
+        finder_key = list(self.prediction_pipelines.keys())[0]  # since only one per loop
 
         for result in dp.process(workers=self.workers,target=self.process_image,
-                                 tasks=images,verbose=self.verbose):
+                                 tasks=[images,finder_key],verbose=self.verbose):
             for pred_name, content in result[1].items():
                 collected_results[pred_name][os.path.basename(result[0])] = content
 
@@ -348,8 +349,10 @@ class Evaluator:
 
         execution_time = end_time - start_time
         print(f"\nExecution Time: {execution_time} seconds")
+        
 
     def process_results(self,collected_results):
+        print("all_pipelines",self.prediction_pipelines)
         aggregated_results = {}
 
         all_confidences = set()
@@ -370,6 +373,7 @@ class Evaluator:
         for conf in sorted_confidences:
             # print("\nconf",conf)
             for pred_name, data in collected_results.items():
+                print("pred_name",pred_name)
                 for image_name, results in data.items():
                     relevant_confs = [c for c in results.keys() if c >= conf]
                     if relevant_confs:
@@ -381,7 +385,7 @@ class Evaluator:
                         aggregated_results[pred_name][conf]['FN'] += metrics['FN']
                     else:
                         print("NOT RELEVANT")
-        
+            
         for k,v in aggregated_results.items():
             if self.verbose:
                 print("-",k,file=sys.stderr)

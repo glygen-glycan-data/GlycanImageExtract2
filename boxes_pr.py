@@ -6,6 +6,9 @@ import io
 import argparse
 from BKGlycanExtractor import BoxCompare, Image_Manager, Evaluator, Config_Manager, DebugMode, GlycanExtractorPipeline
 from BKGlycanExtractor import DistributedProcessing as dp
+
+import ast
+from collections import defaultdict
  
 parser = argparse.ArgumentParser(description="Start")
 
@@ -17,6 +20,15 @@ parser.add_argument(
     nargs = '+', # allows one or more values
     help = 'At least one glycan element finder. Required.'
 )
+
+# parser.add_argument(
+#     '--finder_kwargs',
+#     default={},
+#     type=str,
+#     nargs='+',
+#     help='Custom kwargs for each finder. Format: findername:key=value,key2=value2'
+#     # YOLOMonosRandom:boxpadding=5 YOLOMonosBiased:boxpadding=5
+# )
 
 # required argument
 parser.add_argument(
@@ -131,109 +143,223 @@ config.read_string(pipeline_descriptions)
 
 cm = Config_Manager()
 
-pipelines = {}
-compare_strategies = {}
+# add if required
+# pred_kwargs = {
+#     "YOLOMonosRandom": {"boxpadding":0},
+#     "YOLOMonosBiased": {"boxpadding":0}
+# }
 
-for i, finder_name in enumerate(args.finders):
+known_kwargs = {
+        "YOLOMonosRandom": {"boxpadding":2},
+        "YOLOMonosBiased": {"boxpadding":5}
+    }
+
+
+images = Image_Manager(args.images)
+images.exclude("*._annotated.*")
+images.exclude("*.annotated.*")
+
+all_results = {}
+
+for finder_name in args.finders:
+    print(f"\nProcessing pipeline for {finder_name}")
+    compare_strategies = {}
+
+    # ------------------------------
+    # Build prediction pipeline
+    # ------------------------------
     pred_pipeline = GlycanExtractorPipeline()
-    
     f = cm.get_finder(finder_name)
-    # finder_class = f.finder_class
     finder_section = config[f.finder_class]
 
     figure_step = finder_section.get('figure_steps')
     glycan_step = finder_section.get('glycan_steps')
 
-    pred_pipeline.add_step('figure', cm.get_finder(figure_step)) if figure_step else None
-    pred_pipeline.add_step('glycan', cm.get_finder(glycan_step)) if glycan_step else None
+    if figure_step:
+        pred_pipeline.add_step('figure', cm.get_finder(figure_step))
+    if glycan_step:
+        pred_pipeline.add_step('glycan', cm.get_finder(glycan_step))
+
+    # Add the main finder to the right stage
     if f.finder_class == "Glycan":
-        pred_pipeline.add_step('figure',f)
+        pred_pipeline.add_step('figure', f)
     else:
-        pred_pipeline.add_step('glycan',f)
+        pred_pipeline.add_step('glycan', f)
 
-    # print("pred_pipeline",pred_pipeline.get_steps('figure'))
-    # print("pred_pipeline",pred_pipeline.get_steps('glycan'))
+    # ------------------------------
+    # Build known pipeline
+    # ------------------------------
+    known_pipeline = GlycanExtractorPipeline()
 
-    pipelines[f"{finder_name}"] = pred_pipeline    
+    known_step_name = finder_section.get('known_step')
+    if figure_step:
+        known_pipeline.add_step('figure', cm.get_finder(figure_step))
+    if glycan_step:
+        known_pipeline.add_step('glycan', cm.get_finder(glycan_step))
+    if f.finder_class == "Glycan":
+        known_pipeline.add_step('figure', cm.get_finder(known_step_name),**known_kwargs.get(finder_name,{}))
+    else:
+        known_pipeline.add_step('glycan', cm.get_finder(known_step_name, **known_kwargs.get(finder_name,{})))
+
+    # Set up comparison strategy
+    # compare_strategies = {}
+    # for j, cls in enumerate(class_restriction):
+    #     for i, iou in enumerate(args.iou):
+    #         cmp_key = f"class={cls}" if cls else f"iou={iou}"
+    #         compare_strategies[cmp_key] = BoxCompare(
+    #             iou=iou,
+    #             whole_image=args.wholeimage,
+    #             precision=args.precision,
+    #             verbose=args.verbose,
+    #             restrict_class=[cls] if cls else None
+    #         )
+
+    # TO DO: change this to include iou and class res as done in old code
+    cmp_key = f"iou={args.iou[0]}"
+    compare_strategies[cmp_key] = BoxCompare(
+                iou=args.iou[0],
+                whole_image=args.wholeimage,
+                precision=args.precision,
+                verbose=args.verbose,
+            )
+
+
+    # Evaluate this pipeline pair
+    evaluator = Evaluator(
+        known_pipeline=known_pipeline,
+        prediction_pipelines={finder_name: pred_pipeline},
+        compare_strategies=compare_strategies,
+        workers=distproc,
+        boxeval=True,
+        verbose=args.verbose
+    )
+
+    evaluator.runall(images)
+    # all_results[finder_name] = evaluator.final_structure
+
+    print("---->>>>",evaluator.final_structure)
+
+# print("all_results",all_results)
+
+
+
+
+# -----------------------------
+# Old Code that works - all finder pipelines will have to use same config params
+# --------------------------------
+
+# pipelines = {}
+# compare_strategies = {}
+
+            
+# for i, finder_name in enumerate(args.finders):
+#     pred_pipeline = GlycanExtractorPipeline()
+    
+#     f = cm.get_finder(finder_name)
+#     # finder_class = f.finder_class
+#     finder_section = config[f.finder_class]
+
+#     figure_step = finder_section.get('figure_steps')
+#     glycan_step = finder_section.get('glycan_steps')
+
+#     pred_pipeline.add_step('figure', cm.get_finder(figure_step)) if figure_step else None
+#     pred_pipeline.add_step('glycan', cm.get_finder(glycan_step)) if glycan_step else None
+#     if f.finder_class == "Glycan":
+#         pred_pipeline.add_step('figure',f)
+#     else:
+#         pred_pipeline.add_step('glycan',f)
+
+#     # print("pred_pipeline",pred_pipeline.get_steps('figure'))
+#     # print("pred_pipeline",pred_pipeline.get_steps('glycan'))
+
+#     pipelines[f"{finder_name}"] = pred_pipeline    
 
 # use clone - but if you are not sure - its okay build them seperately
 
 
+# instead of taking known stuff automatically for thr last known_finder/pred_finder
+# maybe set it up to take args to override the config file - but for each finder - I want to add
+# different configs - the known finder can be same but with different settings
 
-for finder_name in args.finders:
-    known_pipeline = GlycanExtractorPipeline()
-    f = cm.get_finder(finder_name)
-    # finder_class = f.finder_class
-    finder_section = config[f.finder_class]
+# kwargs = {"boxpadding":5}
+# for finder_name in args.finders:
+#     known_pipeline = GlycanExtractorPipeline()
+#     f = cm.get_finder(finder_name)
+#     # finder_class = f.finder_class
+#     finder_section = config[f.finder_class]
 
-    figure_step = finder_section.get('figure_steps')
-    glycan_step = finder_section.get('glycan_steps')
-    known_step = finder_section.get('known_step')
+#     figure_step = finder_section.get('figure_steps')
+#     glycan_step = finder_section.get('glycan_steps')
+#     known_step = finder_section.get('known_step')
 
-    known_pipeline.add_step('figure', cm.get_finder(figure_step)) if figure_step else None
-    known_pipeline.add_step('glycan', cm.get_finder(glycan_step)) if glycan_step else None
-    if f.finder_class == "Glycan":
-        known_pipeline.add_step('figure',cm.get_finder(known_step)) if known_step else None
-    else:
-        known_pipeline.add_step('glycan',cm.get_finder(known_step)) if known_step else None
+#     known_pipeline.add_step('figure', cm.get_finder(figure_step)) if figure_step else None
+#     known_pipeline.add_step('glycan', cm.get_finder(glycan_step),**kwargs) if glycan_step else None
 
-    # print("known_pipeline",known_pipeline.get_steps('figure'))
-    # print("known_pipeline",known_pipeline.get_steps('glycan'))
-    break
+#     if f.finder_class == "Glycan":
+#         known_pipeline.add_step('figure',cm.get_finder(known_step)) if known_step else None
+#     else:
+#         known_pipeline.add_step('glycan',cm.get_finder(known_step)) if known_step else None
 
-if len(class_restriction) > 1 and len(args.iou) == 1:
-    cmptempl = "class=%(class)s"
-elif len(class_restriction) == 1 and len(args.iou) > 1:
-    cmptempl = "iou=%(iou)s"
-elif class_restriction[0] is None:
-    cmptempl = "iou=%(iou)s"
-else:
-    cmptempl = "class=%(class)s, iou=%(iou)s"
+#     # print("known_pipeline",known_pipeline.get_steps('figure'))
+#     # print("known_pipeline",known_pipeline.get_steps('glycan'))
+#     break
 
-
-for j,cls in enumerate(class_restriction):
-  for i,iou in enumerate(args.iou):
-    cmpstr = cmptempl%{'class': cls, 'iou': iou}
-    restcls = None
-    if cls != None:
-        restcls = [ cls ]
-    compare_strategies[cmpstr] = BoxCompare(
-        iou=iou,
-        whole_image=args.wholeimage,
-        precision=args.precision,
-        verbose=args.verbose,
-        restrict_class = restcls
-    )
-
-evaluator = Evaluator(known_pipeline=known_pipeline,
-                      prediction_pipelines=pipelines,
-                      compare_strategies=compare_strategies,
-                      workers=distproc,
-                      boxeval=True,
-                      verbose=args.verbose)
-
-images = Image_Manager(args.images)
-images.exclude("*._annotated.*")
-evaluator.runall(images)
-
-extra_args = {}
-if len(compare_strategies) > 1 and len(args.finders) == 1:
-    label = "%(comparitor)s"
-    title = "%(predictor)s"
-    extra_args=dict(title=title,label=label)
-elif len(args.finders) > 1 and len(compare_strategies) == 1:
-    label = "%(predictor)s"
-    title = "%(comparitor)s"
-    extra_args=dict(title=title,label=label)
-
-evaluator.plotprecisionrecall(
-    dir="plots",
-    filename="boxpr",
-    figsize=(10, 8),
-    xlim=(0, 1),
-    ylim=(0, 1),
-    grid=True,
-    **extra_args
-)
+# if len(class_restriction) > 1 and len(args.iou) == 1:
+#     cmptempl = "class=%(class)s"
+# elif len(class_restriction) == 1 and len(args.iou) > 1:
+#     cmptempl = "iou=%(iou)s"
+# elif class_restriction[0] is None:
+#     cmptempl = "iou=%(iou)s"
+# else:
+#     cmptempl = "class=%(class)s, iou=%(iou)s"
 
 
+# for j,cls in enumerate(class_restriction):
+#   for i,iou in enumerate(args.iou):
+#     cmpstr = cmptempl%{'class': cls, 'iou': iou}
+#     restcls = None
+#     if cls != None:
+#         restcls = [ cls ]
+#     compare_strategies[cmpstr] = BoxCompare(
+#         iou=iou,
+#         whole_image=args.wholeimage,
+#         precision=args.precision,
+#         verbose=args.verbose,
+#         restrict_class = restcls
+#     )
+
+# evaluator = Evaluator(known_pipeline=known_pipeline,
+#                       prediction_pipelines=pipelines,
+#                       compare_strategies=compare_strategies,
+#                       workers=distproc,
+#                       boxeval=True,
+#                       verbose=args.verbose)
+
+
+
+# images = Image_Manager(args.images)
+# images.exclude("*._annotated.*")
+# evaluator.runall(images)
+
+# print("--->evaluator.final_structure",evaluator.final_structure)
+
+# extra_args = {}
+# if len(compare_strategies) > 1 and len(args.finders) == 1:
+#     label = "%(comparitor)s"
+#     title = "%(predictor)s"
+#     extra_args=dict(title=title,label=label)
+# elif len(args.finders) > 1 and len(compare_strategies) == 1:
+#     label = "%(predictor)s"
+#     title = "%(comparitor)s"
+#     extra_args=dict(title=title,label=label)
+
+# print("--->>",evaluator.final_structure)
+# evaluator.plotprecisionrecall(
+#     dir="plots",
+#     filename="boxpr",
+#     figsize=(10, 8),
+#     xlim=(0, 1),
+#     ylim=(0, 1),
+#     grid=True,
+#     **extra_args
+# )
