@@ -149,7 +149,7 @@ class Config_Manager(object):
 
     # add get_finders - for comma seperated finders
     def get_finders(self,finder_names):
-        finder_names = [f.strip() for f in finder_names.split(',')]
+        finder_names = [f.strip() for f in finder_names.split(',') if f.strip()]
 
         finders = [self.get_finder(finder_name) for finder_name in finder_names]
 
