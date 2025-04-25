@@ -250,16 +250,14 @@ class GlycanCompare(CompareBase):
         
 class Evaluator:
 
-    def __init__(self, known_pipeline, prediction_pipelines, compare_strategies, workers=None, boxeval=False, verbose=False):
-        # prediction_pipelines and compare_strategies are dictionaries, providing a name as the key
-        self.known_pipeline = known_pipeline
-        self.prediction_pipelines = prediction_pipelines
-        self.compare = compare_strategies
+    def __init__(self, pipelines, compares, workers=None, boxeval=False, verbose=False):
+        # pipelines and compare are dictionaries, providing a name as the key
+        self.pipelines = pipelines
+        self.compares = compares
         self.workers = workers
         self.boxeval = boxeval
         self.verbose = verbose
         self.final_structure = None    # Data structure metrics: (TP, FP, FN) - created after all images are analyzed
-
 
     @staticmethod
     def check_data_monotonicity(predict, **kwargs):
@@ -301,42 +299,26 @@ class Evaluator:
     def process_image(self, image, **kwargs):
 
         results = dict()
-        # known_items, known_semantics = self.known_pipeline.run_evaluation(image,self.isboxeval())
-
-        single_known = not isinstance(self.known_pipeline, dict)
-
-        i = 1
-        j = 1
-        for prname,pl in self.prediction_pipelines.items():
-            # pred_results = pl.run_evaluation(image,self.isboxeval())
-            # pred_items = self.pred_items(*pred_results)
-            if single_known:
-                known_items, known_semantics = self.known_pipeline.run_evaluation(image,self.isboxeval())
-            else:
-                known_pipeline = self.known_pipeline.get(prname)
-                known_items, known_semantics = known_pipeline.run_evaluation(image, self.isboxeval())
-
-
-            pred_items, pred_semantics = pl.run_evaluation(image,self.isboxeval())
-            k = 1
-            for cpname,cmp in self.compare.items():
-                results[(i,prname,j,cpname,k)] = cmp.compare(pred_items, known_items, **{'pred_semantics':pred_semantics,'known_semantics':known_semantics})
+        i = 0
+        for j,prname in enumerate(sorted(self.pipelines)):
+            prpl,knpl = self.pipelines[prname]
+            pred_items, pred_semantics = prpl.run_evaluation(image,self.isboxeval())
+            known_items, known_semantics = knpl.run_evaluation(image,self.isboxeval())
+            for k,cmpname in enumerate(sorted(self.compares)):
+                cmp = self.compares[cmpname]
                 i += 1
-                k += 1
-            j += 1
-
+                results[(i,prname,j+1,cmpname,k+1)] = cmp.compare(pred_items, known_items, 
+                                                                 pred_semantics=pred_semantics, 
+                                                                 known_semantics=known_semantics)
         return image,results
-
 
     def runall(self, images):
 
         collected_results = defaultdict(lambda: defaultdict(dict))
         start_time = time.time()
 
-        finder_key = list(self.prediction_pipelines.keys())[0]  # since only one per loop
-
         for result in dp.process(workers=self.workers,target=self.process_image,
-                                 tasks=[images,finder_key],verbose=self.verbose):
+                                 tasks=images,verbose=self.verbose):
             for pred_name, content in result[1].items():
                 collected_results[pred_name][os.path.basename(result[0])] = content
 
@@ -352,7 +334,7 @@ class Evaluator:
         
 
     def process_results(self,collected_results):
-        print("all_pipelines",self.prediction_pipelines)
+        print("all_pipelines",self.pipelines)
         aggregated_results = {}
 
         all_confidences = set()

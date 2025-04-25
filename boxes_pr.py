@@ -161,24 +161,22 @@ images.exclude("*.annotated.*")
 
 all_results = {}
 
-for finder_name in args.finders:
-    print(f"\nProcessing pipeline for {finder_name}")
-    compare_strategies = {}
+pipelines = {}
+for i,finder_name in enumerate(args.finders):
+    print(f"Building pipeline for {finder_name}")
 
     # ------------------------------
     # Build prediction pipeline
     # ------------------------------
-    pred_pipeline = GlycanExtractorPipeline()
     f = cm.get_finder(finder_name)
+
     finder_section = config[f.finder_class]
+    figure_steps = finder_section.get('figure_steps')
+    glycan_steps = finder_section.get('glycan_steps')
 
-    figure_step = finder_section.get('figure_steps')
-    glycan_step = finder_section.get('glycan_steps')
-
-    if figure_step:
-        pred_pipeline.add_step('figure', cm.get_finder(figure_step))
-    if glycan_step:
-        pred_pipeline.add_step('glycan', cm.get_finder(glycan_step))
+    pred_pipeline = GlycanExtractorPipeline()
+    pred_pipeline.set_steps('figure', cm.get_finders(figure_steps))
+    pred_pipeline.set_steps('glycan', cm.get_finders(glycan_steps))
 
     # Add the main finder to the right stage
     if f.finder_class == "Glycan":
@@ -190,16 +188,16 @@ for finder_name in args.finders:
     # Build known pipeline
     # ------------------------------
     known_pipeline = GlycanExtractorPipeline()
+    known_pipeline.set_steps('figure', cm.get_finders(figure_steps))
+    known_pipeline.set_steps('glycan', cm.get_finders(glycan_steps))
 
     known_step_name = finder_section.get('known_step')
-    if figure_step:
-        known_pipeline.add_step('figure', cm.get_finder(figure_step))
-    if glycan_step:
-        known_pipeline.add_step('glycan', cm.get_finder(glycan_step))
     if f.finder_class == "Glycan":
         known_pipeline.add_step('figure', cm.get_finder(known_step_name),**known_kwargs.get(finder_name,{}))
     else:
         known_pipeline.add_step('glycan', cm.get_finder(known_step_name, **known_kwargs.get(finder_name,{})))
+
+    pipelines[finder_name] = (pred_pipeline,known_pipeline)
 
     # Set up comparison strategy
     # compare_strategies = {}
@@ -214,30 +212,29 @@ for finder_name in args.finders:
     #             restrict_class=[cls] if cls else None
     #         )
 
-    # TO DO: change this to include iou and class res as done in old code
-    cmp_key = f"iou={args.iou[0]}"
-    compare_strategies[cmp_key] = BoxCompare(
-                iou=args.iou[0],
-                whole_image=args.wholeimage,
-                precision=args.precision,
-                verbose=args.verbose,
-            )
+compares = {}
+# TO DO: change this to include iou and class res as done in old code
+cmp_key = f"iou={args.iou[0]}"
+compares[cmp_key] = BoxCompare(
+    iou=args.iou[0],
+    whole_image=args.wholeimage,
+    precision=args.precision,
+    verbose=args.verbose,
+)
 
+# Evaluate this pipeline pair
+evaluator = Evaluator(
+    pipelines=pipelines,
+    compares=compares,
+    workers=distproc,
+    boxeval=True,
+    verbose=args.verbose
+)
 
-    # Evaluate this pipeline pair
-    evaluator = Evaluator(
-        known_pipeline=known_pipeline,
-        prediction_pipelines={finder_name: pred_pipeline},
-        compare_strategies=compare_strategies,
-        workers=distproc,
-        boxeval=True,
-        verbose=args.verbose
-    )
+evaluator.runall(images)
+# all_results[finder_name] = evaluator.final_structure
 
-    evaluator.runall(images)
-    # all_results[finder_name] = evaluator.final_structure
-
-    print("---->>>>",evaluator.final_structure)
+print("---->>>>",evaluator.final_structure)
 
 # print("all_results",all_results)
 
