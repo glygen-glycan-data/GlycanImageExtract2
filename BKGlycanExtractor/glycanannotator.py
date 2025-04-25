@@ -174,7 +174,7 @@ class Config(object):
 
     def step_names(self,key,default=None):
         if self.has(key):
-            steps = [ s.strip() for s in self.get(key).split(',') ]
+            steps = [ s.strip() for s in self.get(key).split(',') if s.strip() ]
             return steps
         return default
 
@@ -187,7 +187,7 @@ class Config(object):
 
     def get_steps(self, key, default=None):
         if self.has(key):
-            steps = [s.strip() for s in self.get(key).split(',')]
+            steps = [s.strip() for s in self.get(key).split(',') if s.strip() ]
             return [self.config_manager.get_finder(name) for name in steps]
         return default
 
