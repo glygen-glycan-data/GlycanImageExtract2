@@ -139,7 +139,8 @@ class DistributedProcessing(object):
     def put_result(self,worker_index,task,task_index,elapsed,result):
         try:
             self.results.put(dict(status="RESULT",hostname=self.hostname,worker_index=worker_index,
-                                  task=task,task_index=task_index,runtime=elapsed,result=result))
+                                  task=task,task_index=task_index,runtime=elapsed,result=result,
+                                  stage=task.get('__stage__')))
         except (BrokenPipeError,EOFError):
             pass
 
@@ -147,7 +148,8 @@ class DistributedProcessing(object):
         try:
             self.results.put(dict(status="ERROR",hostname=self.hostname,worker_index=worker_index,
                                   task=task,task_index=task_index,runtime=elapsed,
-                                  traceback=traceback.format_exception(*excep)))
+                                  traceback=traceback.format_exception(*excep),
+                                  stage=task.get('__stage__')))
         except (BrokenPipeError,EOFError):
             pass
 
@@ -281,6 +283,8 @@ class DistributedProcessing(object):
     def startup(self,workers="",**shared_data):
         self.shared_data.update(shared_data)
         self.start_workers(self.procspec(workers))
+        self.workerids = set()
+        self.heartbeat = defaultdict(float)
         return self
 
     def execute(self,tasks,noshutdown=False,stage=None):
@@ -289,6 +293,7 @@ class DistributedProcessing(object):
             for t in self.alltasks:
                 t['__stage__'] = stage
         self.noshutdown=noshutdown
+        self.stage = stage        
         return self
 
     def tasksempty(self):
@@ -348,15 +353,16 @@ class DistributedProcessing(object):
 
     def iterresults(self):
 
+        if self.verbose:
+            print("Begin execution: %s tasks to complete."%(len(self.alltasks),),file=sys.stderr)
+
         for i,task in enumerate(self.alltasks):
             self.put_task(i+1,task)
 
         self.starttime = None
-        self.workerids = set()
         self.donetasks = set()
         self.taskattempts = defaultdict(int)
         self.failedtasks = set()
-        self.heartbeat = defaultdict(float)
         self.task2worker = dict()
         while not self.tasksempty() or (len(self.donetasks) + len(self.failedtasks)) < len(self.alltasks):
  
@@ -399,7 +405,7 @@ class DistributedProcessing(object):
                     self.failedtasks.add(taskid)
             elif status == "RESULT":
                 taskid = result.get('task_index')
-                if taskid not in self.donetasks:
+                if taskid not in self.donetasks and (not self.stage or self.stage == result.get('stage')):
                     self.donetasks.add(taskid)
                     self.update_progress(result)
                     yield result
@@ -420,7 +426,7 @@ class DistributedProcessing(object):
 
         for i in range(len(self.workerids)):
             self.put_task(-1,None)
-            
+        
         self.wait_workers()  
 
         time.sleep(5)
