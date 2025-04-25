@@ -257,7 +257,6 @@ class Evaluator:
         self.workers = workers
         self.boxeval = boxeval
         self.verbose = verbose
-        self.final_structure = None    # Data structure metrics: (TP, FP, FN) - created after all images are analyzed
 
     @staticmethod
     def check_data_monotonicity(predict, **kwargs):
@@ -296,15 +295,19 @@ class Evaluator:
         return self.boxeval
 
 
-    def process_image(self, image, **kwargs):
+    def process_image(self, task, **kwargs):
+
+        image = task['image_filename']
 
         results = dict()
         i = 0
-        for j,prname in enumerate(sorted(self.pipelines)):
+        prnames = list(self.pipelines)
+        cmpnames = list(self.compares)
+        for j,prname in enumerate(prnames):
             prpl,knpl = self.pipelines[prname]
             pred_items, pred_semantics = prpl.run_evaluation(image,self.isboxeval())
             known_items, known_semantics = knpl.run_evaluation(image,self.isboxeval())
-            for k,cmpname in enumerate(sorted(self.compares)):
+            for k,cmpname in enumerate(cmpnames):
                 cmp = self.compares[cmpname]
                 i += 1
                 results[(i,prname,j+1,cmpname,k+1)] = cmp.compare(pred_items, known_items, 
@@ -313,22 +316,20 @@ class Evaluator:
         return image,results
 
     def runall(self, images):
+        
+        tasks = [ {'image_filename': img} for img in images ]
 
         collected_results = defaultdict(lambda: defaultdict(dict))
         start_time = time.time()
 
         for result in dp.process(workers=self.workers,target=self.process_image,
-                                 tasks=images,verbose=self.verbose):
+                                 tasks=tasks,verbose=self.verbose):
             for pred_name, content in result[1].items():
                 collected_results[pred_name][os.path.basename(result[0])] = content
 
-        self.final_structure = self.process_results(collected_results)        
+        self.process_results(collected_results)        
 
-        end_time = time.time()
-        
-        # Plotting the results
-        # self.plotprecisionrecall(final_structure)
-
+        end_time = time.time()        
         execution_time = end_time - start_time
         print(f"\nExecution Time: {execution_time} seconds")
         
@@ -368,8 +369,8 @@ class Evaluator:
                     else:
                         print("NOT RELEVANT")
             
-        for k,v in aggregated_results.items():
-            if self.verbose:
+        if self.verbose:
+            for k,v in aggregated_results.items():
                 print("-",k,file=sys.stderr)
                 for k1,v1 in v.items():
                     print("-->>",k1,v1,file=sys.stderr)
@@ -378,8 +379,7 @@ class Evaluator:
 
         Evaluator.check_data_monotonicity(aggregated_results, sort_data=False)   # aggregated data should already be in sorted format
 
-        return aggregated_results
-
+        self.final_structure = aggregated_results
 
     def plotprecisionrecall(self, **kwargs):
         # title, other plot keywords?
@@ -597,3 +597,27 @@ class Evaluator:
     #     plt.savefig(directory + '/critical_points.png') 
 
             
+def runall_evaluators(evaluators, images, workers=None, verbose=False):
+
+    # ensure evaluators is in a deterministic order
+    evaluators = list(evaluators)
+    tasks = [ {'image_filename': img} for img in images ]
+    proc = dp.stage_process_init(workers,verbose,[eval.process_image for eval in evaluators])
+
+    for i,eval in enumerate(evaluators):
+
+        start_time = time.time()
+
+        collected_results = defaultdict(dict)
+        for result in proc.stage_process(i,tasks):
+            for pred_name, content in result[1].items():
+                collected_results[pred_name][os.path.basename(result[0])] = content
+
+        eval.process_results(collected_results)        
+
+        end_time = time.time()
+        execution_time = end_time - start_time
+        if verbose:
+            print(f"\nStage {i+1} Execution Time: {execution_time} seconds")
+
+    proc.stage_process_finish()

@@ -5,6 +5,7 @@ import configparser
 import io
 import argparse
 from BKGlycanExtractor import BoxCompare, Image_Manager, Evaluator, Config_Manager, DebugMode, GlycanExtractorPipeline
+from BKGlycanExtractor import runall_evaluators
 from BKGlycanExtractor import DistributedProcessing as dp
 
 import ast
@@ -159,9 +160,7 @@ images = Image_Manager(args.images)
 images.exclude("*._annotated.*")
 images.exclude("*.annotated.*")
 
-all_results = {}
-
-pipelines = {}
+evaluators = []
 for i,finder_name in enumerate(args.finders):
     print(f"Building pipeline for {finder_name}")
 
@@ -196,7 +195,8 @@ for i,finder_name in enumerate(args.finders):
         known_pipeline.add_step('figure', cm.get_finder(known_step_name),**known_kwargs.get(finder_name,{}))
     else:
         known_pipeline.add_step('glycan', cm.get_finder(known_step_name, **known_kwargs.get(finder_name,{})))
-
+    
+    pipelines = {}
     pipelines[finder_name] = (pred_pipeline,known_pipeline)
 
     # Set up comparison strategy
@@ -212,29 +212,29 @@ for i,finder_name in enumerate(args.finders):
     #             restrict_class=[cls] if cls else None
     #         )
 
-compares = {}
-# TO DO: change this to include iou and class res as done in old code
-cmp_key = f"iou={args.iou[0]}"
-compares[cmp_key] = BoxCompare(
-    iou=args.iou[0],
-    whole_image=args.wholeimage,
-    precision=args.precision,
-    verbose=args.verbose,
-)
+    compares = {}
+    # TO DO: change this to include iou and class res as done in old code
+    cmp_key = f"iou={args.iou[0]}"
+    compares[cmp_key] = BoxCompare(
+        iou=args.iou[0],
+        whole_image=args.wholeimage,
+        precision=args.precision,
+        verbose=args.verbose,
+    )
 
-# Evaluate this pipeline pair
-evaluator = Evaluator(
-    pipelines=pipelines,
-    compares=compares,
-    workers=distproc,
-    boxeval=True,
-    verbose=args.verbose
-)
+    # Build the evaluator...
+    evaluator = Evaluator(
+        pipelines=pipelines,
+        compares=compares,
+        boxeval=True,
+        verbose=args.verbose
+    )
+    evaluators.append(evaluator)
 
-evaluator.runall(images)
-# all_results[finder_name] = evaluator.final_structure
+runall_evaluators(evaluators,images,workers=distproc,verbose=args.verbose)
 
-print("---->>>>",evaluator.final_structure)
+for eval in evaluators:
+    print("---->>>>",eval.final_structure)
 
 # print("all_results",all_results)
 
