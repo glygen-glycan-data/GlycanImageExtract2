@@ -163,15 +163,16 @@ class Figure_Semantics(Image_Semantics):
             root_id = None
             if glycan.root():
                 root_id = glycan.root()['mono_id']
+            print("root_id",root_id)
             for mono in glycan.monosaccharides():
                 x1,y1,x2,y2 = mono['box'].corners()
                 text = mono.get('classlabel','') + ":" + str(mono.get('id'))
                 # color = (128, 0, 128) # purple for monos
                 if mono['id'] == root_id:
-                    color = (0,0,255) # red for root  
-                if mono.get('alternative') is not None:
-                    color = (0, 165, 255) # orange for alternatives
-                self.annotate(x1,y1,x2,y2,text=text,xtoff=2,ytoff=-2,color=color,thickness=1)   
+                    color = (0, 100, 0) # dark green for root
+                # if mono.get('alternative') is not None:
+                #     color = (0, 165, 255) # orange for alternatives
+                    self.annotate(x1,y1,x2,y2,text=text,xtoff=2,ytoff=-2,color=color,thickness=1)   
 
     def annotate_links(self):
         for glycan in self.semantics['glycans']:
@@ -441,7 +442,7 @@ class Glycan_Semantics(Image_Semantics):
         all_nodes = set(m['id'] for m in self.monosaccharides())
         unvisited = all_nodes - visited
         if unvisited:
-            return False, f"Tree is disjointed. Unvisited nodes: {', '.join(unvisited)}"
+            return False, f"Tree is disjointed. Unvisited nodes: {', '.join(str(node) for node in unvisited)}"
 
         print("tree traversal", error_msg)
         return True, error_msg
@@ -549,6 +550,7 @@ class Glycan_Semantics(Image_Semantics):
         
     def IUPAC(self):
         root = self.root()
+        print("IUPAC called",root)
         if not root:
             return None
 
@@ -561,6 +563,8 @@ class Glycan_Semantics(Image_Semantics):
         visited = set()
 
         self.generate_iupac(iupac, adj, visited, -1, root_id)
+
+        print("ii",iupac)
        
         iupac = iupac[::-1] # IUPAC sequences are read in reverse order
         return ''.join(iupac)

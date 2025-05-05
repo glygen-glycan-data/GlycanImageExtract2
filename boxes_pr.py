@@ -8,7 +8,6 @@ from BKGlycanExtractor import BoxCompare, Image_Manager, Evaluator, Config_Manag
 from BKGlycanExtractor import runall_evaluators
 from BKGlycanExtractor import DistributedProcessing as dp
 
-import ast
 from collections import defaultdict
  
 parser = argparse.ArgumentParser(description="Start")
@@ -161,6 +160,7 @@ images.exclude("*._annotated.*")
 images.exclude("*.annotated.*")
 
 evaluators = []
+compare_count = 0
 for i,finder_name in enumerate(args.finders):
     print(f"Building pipeline for {finder_name}")
 
@@ -200,27 +200,19 @@ for i,finder_name in enumerate(args.finders):
     pipelines[finder_name] = (pred_pipeline,known_pipeline)
 
     # Set up comparison strategy
-    # compare_strategies = {}
-    # for j, cls in enumerate(class_restriction):
-    #     for i, iou in enumerate(args.iou):
-    #         cmp_key = f"class={cls}" if cls else f"iou={iou}"
-    #         compare_strategies[cmp_key] = BoxCompare(
-    #             iou=iou,
-    #             whole_image=args.wholeimage,
-    #             precision=args.precision,
-    #             verbose=args.verbose,
-    #             restrict_class=[cls] if cls else None
-    #         )
-
     compares = {}
-    # TO DO: change this to include iou and class res as done in old code
-    cmp_key = f"iou={args.iou[0]}"
-    compares[cmp_key] = BoxCompare(
-        iou=args.iou[0],
-        whole_image=args.wholeimage,
-        precision=args.precision,
-        verbose=args.verbose,
-    )
+    for j, cls in enumerate(class_restriction):
+        for i, iou in enumerate(args.iou):
+            cmp_key = f"class={cls}" if cls else f"iou={iou}"
+            compares[cmp_key] = BoxCompare(
+                iou=iou,
+                whole_image=args.wholeimage,
+                precision=args.precision,
+                verbose=args.verbose,
+                restrict_class=[cls] if cls else None
+            )
+
+            compare_count += 1
 
     # Build the evaluator...
     evaluator = Evaluator(
@@ -236,9 +228,28 @@ runall_evaluators(evaluators,images,workers=distproc,verbose=args.verbose)
 for eval in evaluators:
     print("---->>>>",eval.final_structure)
 
-# print("all_results",all_results)
 
+extra_args = {}
+if compare_count > 1 and len(args.finders) == 1:
+    label = "%(comparitor)s"
+    title = "%(predictor)s"
+    extra_args=dict(title=title,label=label)
+elif len(args.finders) > 1 and compare_count == 1:
+    label = "%(predictor)s"
+    title = "%(comparitor)s"
+    extra_args=dict(title=title,label=label)
 
+# print("evaluators",evaluators)
+Evaluator.plotprecisionrecall(
+    evaluators,
+    dir="presentation",
+    filename="boxes",
+    figsize=(10, 8),
+    xlim=(0, 1),
+    ylim=(0, 1),
+    grid=True,
+    **extra_args
+)
 
 
 # -----------------------------

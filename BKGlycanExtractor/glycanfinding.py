@@ -157,8 +157,8 @@ class CleanGlycanImage(GlycanFinder):
             # original and cleaned image for the webpage, but question is whether I should update the
             # coordinates (offset it) of the bounding boxes wrt to the cleaned image?
             box.set('image',cleaned_img)
-            box.set('unprocessed_image', cropped_img)
-            box_details = dict(id=gly.get('id'), box=box, image=cleaned_img, unprocessed_image=cropped_img)
+            box.set('extracted_image', cropped_img)
+            box_details = dict(id=gly.get('id'), box=box, image=cleaned_img, extracted_image=cropped_img)
             boxes.append(box_details)
 
         return boxes
@@ -171,7 +171,7 @@ class CleanGlycanImage(GlycanFinder):
             for box_details in boxes:
                 if box_details['id'] == gly_id:
                     gly.set_image(box_details['image'])
-                    gly.set('unprocessed_image', box_details['unprocessed_image'])
+                    gly.set('extracted_image', box_details['extracted_image'])
                     # gly.set("cleaned_image_dimensions",box_details['cleaned_image_dimensions'])
                     # gly.set("box", box_details['box'])
                     

@@ -4,6 +4,7 @@ import sys
 import configparser
 import argparse
 from BKGlycanExtractor import Image_Manager, Evaluator, Config_Manager, DebugMode, GlycanExtractorPipeline
+from BKGlycanExtractor import runall_evaluators
 from BKGlycanExtractor import DistributedProcessing as dp
 
 parser = argparse.ArgumentParser(description="Start")
@@ -120,105 +121,108 @@ config.read_string(pipeline_descriptions)
 
 cm = Config_Manager()
 
-pipelines = {}
-compare_strategies = {}
+# add if required
+# pred_kwargs = {
+#     "YOLOMonosRandom": {"boxpadding":0},
+#     "YOLOMonosBiased": {"boxpadding":0}
+# }
 
-comparator = None
+known_kwargs = {}
 
-for i, finder_name in enumerate(args.finders):
-    pred_pipeline = GlycanExtractorPipeline()
-    
-    f = cm.get_finder(finder_name)
-    # finder_class = f.finder_class
-    comparator = f.semantic_compare
-    finder_section = config[f.finder_class]
-
-    figure_step = finder_section.get('figure_steps')
-    glycan_step = finder_section.get('glycan_steps')
-
-    pred_pipeline.add_step('figure', cm.get_finder(figure_step)) if figure_step else None
-    pred_pipeline.add_step('glycan', cm.get_finder(glycan_step)) if glycan_step else None
-    if f.finder_class == "Glycan":
-        pred_pipeline.add_step('figure',f)
-    else:
-        pred_pipeline.add_step('glycan',f)
-
-    pipelines[f"{finder_name}"] = pred_pipeline
-
-
-# use clone - but if you are not sure - its okay build them seperately
-
-for finder_name in args.finders:
-    known_pipeline = GlycanExtractorPipeline()
-    f = cm.get_finder(finder_name)
-    # finder_class = f.finder_class
-    finder_section = config[f.finder_class]
-
-    figure_step = finder_section.get('figure_steps')
-    glycan_step = finder_section.get('glycan_steps')
-    known_step = finder_section.get('known_step')
-
-    known_pipeline.add_step('figure', cm.get_finder(figure_step)) if figure_step else None
-    known_pipeline.add_step('glycan', cm.get_finder(glycan_step)) if glycan_step else None
-    if f.finder_class == "Glycan":
-        known_pipeline.add_step('figure',cm.get_finder(known_step)) if known_step else None
-    else:
-        known_pipeline.add_step('glycan',cm.get_finder(known_step)) if known_step else None
-    break
-
-if len(class_restriction) > 1 and len(args.proximity) == 1:
-    cmptempl = "class=%(class)s"
-elif len(class_restriction) == 1 and len(args.proximity) > 1:
-    cmptempl = "proximity=%(proximity)s"
-elif class_restriction[0] is None:
-    cmptempl = "proximity=%(proximity)s"
-else:
-    cmptempl = "class=%(class)s, proximity=%(proximity)s"
-    
-for j,cls in enumerate(class_restriction):
-  for i,proximity in enumerate(args.proximity):
-    cmpstr = cmptempl%{'class': cls, 'proximity': proximity}
-    restcls = None
-    if cls != None:
-        restcls = [ cls ]
-    compare_strategies[cmpstr] = comparator(
-        proximity=proximity,
-        whole_image=args.wholeimage,
-        precision=args.precision,
-        verbose=args.verbose,
-        restrict_class = restcls
-    )
-
-
-evaluator = Evaluator(known_pipeline=known_pipeline,
-                      prediction_pipelines=pipelines,
-                      compare_strategies=compare_strategies,
-                      workers=distproc,
-                      boxeval=False,
-                      verbose=args.verbose)
 
 images = Image_Manager(args.images)
 images.exclude("*._annotated.*")
+images.exclude("*.annotated.*")
 
-evaluator.runall(images)
+evaluators = []
+compare_count = 0
+for i,finder_name in enumerate(args.finders):
+    print(f"Building pipeline for {finder_name}")
+
+    # ------------------------------
+    # Build prediction pipeline
+    # ------------------------------
+    f = cm.get_finder(finder_name)
+    comparator = f.semantic_compare
+
+    finder_section = config[f.finder_class]
+    figure_steps = finder_section.get('figure_steps')
+    glycan_steps = finder_section.get('glycan_steps')
+
+    pred_pipeline = GlycanExtractorPipeline()
+    pred_pipeline.set_steps('figure', cm.get_finders(figure_steps))
+    pred_pipeline.set_steps('glycan', cm.get_finders(glycan_steps))
+
+    # Add the main finder to the right stage
+    if f.finder_class == "Glycan":
+        pred_pipeline.add_step('figure', f)
+    else:
+        pred_pipeline.add_step('glycan', f)
+
+    # ------------------------------
+    # Build known pipeline
+    # ------------------------------
+    known_pipeline = GlycanExtractorPipeline()
+    known_pipeline.set_steps('figure', cm.get_finders(figure_steps))
+    known_pipeline.set_steps('glycan', cm.get_finders(glycan_steps))
+
+    known_step_name = finder_section.get('known_step')
+    if f.finder_class == "Glycan":
+        known_pipeline.add_step('figure', cm.get_finder(known_step_name),**known_kwargs.get(finder_name,{}))
+    else:
+        known_pipeline.add_step('glycan', cm.get_finder(known_step_name, **known_kwargs.get(finder_name,{})))
+    
+    pipelines = {}
+    pipelines[finder_name] = (pred_pipeline,known_pipeline)
+
+    # Set up comparison strategy
+    compares = {}
+    for j, cls in enumerate(class_restriction):
+        for i, proximity in enumerate(args.proximity):
+            cmp_key = f"class={cls}" if cls else f"proximity={proximity}"
+            compares[cmp_key] = comparator(
+                proximity=proximity,
+                whole_image=args.wholeimage,
+                precision=args.precision,
+                verbose=args.verbose,
+                restrict_class=[cls] if cls else None
+            )
+
+            compare_count += 1
+
+    # Build the evaluator...
+    evaluator = Evaluator(
+        pipelines=pipelines,
+        compares=compares,
+        boxeval=False,
+        verbose=args.verbose
+    )
+    evaluators.append(evaluator)
+
+runall_evaluators(evaluators,images,workers=distproc,verbose=args.verbose)
+
+for eval in evaluators:
+    print("---->>>>",eval.final_structure)
+
 
 extra_args = {}
-if len(compare_strategies) > 1 and len(args.finders) == 1:
+if compare_count > 1 and len(args.finders) == 1:
     label = "%(comparitor)s"
     title = "%(predictor)s"
     extra_args=dict(title=title,label=label)
-elif len(args.finders) > 1 and len(compare_strategies) == 1:
+elif len(args.finders) > 1 and compare_count == 1:
     label = "%(predictor)s"
     title = "%(comparitor)s"
     extra_args=dict(title=title,label=label)
 
-evaluator.plotprecisionrecall(
-    dir="plots",
-    filename="semanticpr",
+# print("evaluators",evaluators)
+Evaluator.plotprecisionrecall(
+    evaluators,
+    dir="presentation",
+    filename="semantics",
     figsize=(10, 8),
     xlim=(0, 1),
     ylim=(0, 1),
     grid=True,
     **extra_args
 )
-

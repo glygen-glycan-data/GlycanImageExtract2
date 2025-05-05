@@ -147,6 +147,8 @@ class CompareBase(object):
                 matched_gt.add(known_id)
                 matched_pred.add(pred_id)
 
+                print("\nknown",item['classlabel'][0])
+                print("pred",item['classlabel'][1])
                 if item['classlabel'][0] == item['classlabel'][1]:
                     TP += 1
                 else:
@@ -229,7 +231,7 @@ class LinksCompare(CompareBase):
 #         Primary sorting criteria is confidence'''
 #         return x['iou']  # Ascending order
 
-
+# ----proximity--- (Note: this can be adapted for IOU as)
 class GlycanCompare(CompareBase):
 
     def __init__(self, proximity=0.25, **kwargs):
@@ -381,7 +383,8 @@ class Evaluator:
 
         self.final_structure = aggregated_results
 
-    def plotprecisionrecall(self, **kwargs):
+    @staticmethod
+    def plotprecisionrecall(results, **kwargs):
         # title, other plot keywords?
         """
         Plots Precision-Recall curves with full customization.
@@ -419,95 +422,97 @@ class Evaluator:
         plt.figure(1,figsize=figsize) 
         plt.figure(2,figsize=figsize)
 
+        for pipeline in results:
+            for pipeline_details, result_data in pipeline.final_structure.items():
 
-        for pipeline_details, result_data in self.final_structure.items():
+
             
-            # print("pipeline name:",pipeline_name)
-            # collect = defaultdict(list)
-            # pipeline_name, compare_type, id = pipeline_details
-            # print("compare_type",compare_type)
-            fields = "curve_index,predictor,predictor_index,comparitor,comparitor_index".split(',')
-            details = dict(zip(fields,pipeline_details))
+                # print("pipeline name:",pipeline_name)
+                # collect = defaultdict(list)
+                # pipeline_name, compare_type, id = pipeline_details
+                # print("compare_type",compare_type)
+                fields = "curve_index,predictor,predictor_index,comparitor,comparitor_index".split(',')
+                details = dict(zip(fields,pipeline_details))
 
-            precision = []
-            recall = []
+                precision = []
+                recall = []
 
-            # Use sorted only if sort_results is True - condition so that the
-            # same function if useful for Finders and Pipelines both
-            data_iterator = (
-                sorted(result_data.items(), key=lambda x: float(x[0]))
-                if sort_results
-                else result_data.items()
-            )
-            
-            for confidence, results in data_iterator:
-                # print("confidence",confidence)
-                tp = results['TP']
-                fp = results['FP']
-                fn = results['FN']
-
-                # Calculate precision and recall for each threshold
-                pos = tp + fp  # Total positive predictions
-                tpfn = tp + fn  # Total ground truth positives
-
-                try:
-                    prec = tp / pos if pos != 0 else 0
-                except ZeroDivisionError:
-                    prec = 0
+                # Use sorted only if sort_results is True - condition so that the
+                # same function if useful for Finders and Pipelines both
+                # data_iterator = (
+                #     sorted(result_data.items(), key=lambda x: float(x[0]))
+                #     if sort_results
+                #     else result_data.items()
+                # )
                 
-                try:
-                    rec = tp / tpfn if tpfn != 0 else 0
-                except ZeroDivisionError:
-                    rec = 0
+                for confidence, results in result_data.items():
+                    # print("confidence",confidence)
+                    tp = results['TP']
+                    fp = results['FP']
+                    fn = results['FN']
 
-                precision.append(prec)
-                recall.append(rec)
+                    # Calculate precision and recall for each threshold
+                    pos = tp + fp  # Total positive predictions
+                    tpfn = tp + fn  # Total ground truth positives
+
+                    try:
+                        prec = tp / pos if pos != 0 else 0
+                    except ZeroDivisionError:
+                        prec = 0
+                    
+                    try:
+                        rec = tp / tpfn if tpfn != 0 else 0
+                    except ZeroDivisionError:
+                        rec = 0
+
+                    precision.append(prec)
+                    recall.append(rec)
 
 
-            precision = list(precision)
-            recall = list(recall)
+                precision = list(precision)
+                recall = list(recall)
 
 
-            # remove non-monotonic values...
-            filtered_recall = []
-            filtered_precision = []
-            for i in range(len(recall)):
-                if len(filtered_recall) == 0:
-                    filtered_recall.append(recall[i])
-                    filtered_precision.append(precision[i])
-                elif precision[i] > filtered_precision[-1]:
-                    filtered_recall.append(recall[i])
-                    filtered_precision.append(precision[i])
+                # remove non-monotonic values...
+                filtered_recall = []
+                filtered_precision = []
+                for i in range(len(recall)):
+                    if len(filtered_recall) == 0:
+                        filtered_recall.append(recall[i])
+                        filtered_precision.append(precision[i])
+                    elif precision[i] > filtered_precision[-1]:
+                        filtered_recall.append(recall[i])
+                        filtered_precision.append(precision[i])
 
-            # print("\nfilter prec",filtered_precision)
-            # print("\nfilter recall", filtered_recall)
+                # print("\nfilter prec",filtered_precision)
+                # print("\nfilter recall", filtered_recall)
 
-            # and make step-based...
-            step_recall = [] 
-            step_precision = []
-            step_recall.append(filtered_recall[0])
-            step_precision.append(0)
-            step_recall.append(filtered_recall[0])
-            step_precision.append(filtered_precision[0])
-            for i in range(1,len(filtered_recall)):
-                step_recall.append(filtered_recall[i])
-                step_precision.append(filtered_precision[i-1])
-                step_recall.append(filtered_recall[i])
-                step_precision.append(filtered_precision[i])
-            step_recall.append(0)
-            step_precision.append(step_precision[-1])
+                # and make step-based...
+                step_recall = [] 
+                step_precision = []
+                step_recall.append(filtered_recall[0])
+                step_precision.append(0)
+                step_recall.append(filtered_recall[0])
+                step_precision.append(filtered_precision[0])
+                for i in range(1,len(filtered_recall)):
+                    step_recall.append(filtered_recall[i])
+                    step_precision.append(filtered_precision[i-1])
+                    step_recall.append(filtered_recall[i])
+                    step_precision.append(filtered_precision[i])
+                step_recall.append(0)
+                step_precision.append(step_precision[-1])
 
-            # print("\nstep_prec",step_precision)
-            # print("\nstep_recall",step_recall)
+                # print("\nstep_prec",step_precision)
+                # print("\nstep_recall",step_recall)
 
-            # Plot on figure 1
-            plt.figure(1)
-            plt.plot(step_recall, step_precision, ".-", label=label%details)
-            # plt.plot(recall, precision, "r.",)
+                # Plot on figure 1
+                plt.figure(1)
+                plt.plot(step_recall, step_precision, ".-", label=label%details)
+                # plt.plot(recall, precision, "r.",)
 
-            plt.figure(2)
-            plt.plot(step_recall, step_precision, ".-", label=label%details)
-            # plt.plot(recall, precision, "r.",)
+                plt.figure(2)
+                plt.plot(step_recall, step_precision, ".-", label=label%details)
+                # plt.plot(recall, precision, "r.",)
 
         # Plot figure 1
         plt.figure(1)
