@@ -197,8 +197,8 @@
           console.log("fileType", fileType, allowedFormats[fileType], urlExtension);
 
           if (!allowedFormats[fileType].includes(urlExtension)) {
-              alert(`Invalid URL format. Allowed formats for ${fileType.replace('_', ' ')} are: ${allowedFormats[fileType].join(', ')}`);
-              return false;
+            alert(`Invalid URL format, only DIRECT LINKS ending with: ${allowedFormats[fileType].join(', ')} are allowed`);
+            return false;
           }
 
           return true; // Allow form submission

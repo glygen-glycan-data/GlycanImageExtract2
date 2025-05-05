@@ -59,7 +59,7 @@
         let div = document.getElementById("list_id");
         div.style.backgroundColor = "#FFFFFF";
 
-        var figures = result['result']['result'];
+        var figures = result['result']['figure_result'];
         var file_extension = result['submission_detail']['original_file_name'].split('.').pop();  
         
         var alert_str = ""
@@ -130,7 +130,7 @@
                     innerdiv += `
                         <td style="vertical-align:middle;">
                             <img style="max-width: 300px; min-height: 90px; max-height:300px; min-width: 90px; display: block; margin: auto;" 
-                                src="${glycan.unprocessed_image_path}" 
+                                src="${glycan.extracted_image_path}" 
                                 alt="Glycan Image" />
                         </td>`;
 
@@ -170,7 +170,7 @@
                             </figure>
 
                             <br>
-                            ${glycan.gnomeurl ? `<br><a href="${glycan.gnomeurl}" target="_blank">View Potential Glycan Structures</a>` : ''}
+                            ${glycan.gnomeurl ? `<br><a href="${glycan.gnomeurl}" target="_blank">Explore glycan structure options...</a>` : ''}
 
                         </td>`;
                     innerdiv += "</tr>";

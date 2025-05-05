@@ -1,3 +1,6 @@
+'''
+This 
+'''
 import fitz, sys, os, cv2,shutil, pdfplumber, time, ntpath, json, base64
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from submit import searchGlyLookup, searchGlyImage
@@ -11,7 +14,7 @@ from BKGlycanExtractor import Config_Manager, Glycan_Semantics, Figure_Semantics
 # from .glycanannotator import GlycanExtractorPipeline
 from collections import Counter
 import numpy as np
-from shutil import *
+from shutil import copyfile
 
 
 class JobInstance:
@@ -27,22 +30,33 @@ class JobInstance:
         self.original_file_name = task_detail.get('original_file_name')
         self.file_type = task_detail.get('file_type')
 
-        # other instance variables
-        self.workdir = os.path.join("./static/files", self.id)
-        self.input_filepath = os.path.join(self.workdir, "input", self.original_file_name)
-        self.output_filepath = os.path.join(self.workdir, "output", "annotated_" + self.original_file_name)
+        # Base project directory (absolute)
+        self.base_dir = os.path.abspath(os.path.dirname(__file__))
+        self.workdir = os.path.join(self.base_dir, "static", "files", self.id)
+
+        # Structured input/output directories
+        self.input_dir = os.path.join(self.workdir, "input")
+        self.output_dir = os.path.join(self.workdir, "output")
+
+        # File paths
+        self.input_filepath = os.path.join(self.input_dir, self.original_file_name)
+        self.output_filename = f"annotated_{self.original_file_name}"
+        self.output_filepath = os.path.join(self.output_dir, self.output_filename)
+
+        self.log_file_path = os.path.splitext(self.output_filepath)[0] + "_log.txt"
+        self.json_filepath = os.path.splitext(self.output_filepath)[0] + "_job.json"
+
+        # Ensure necessary directories exist
+        os.makedirs(self.input_dir, exist_ok=True)
+        os.makedirs(self.output_dir, exist_ok=True)
+
+        # Open log file for writing
+        self.log_file = open(self.log_file_path, 'w')
 
         self.pipeline_name = None
         self.job_finished = False
         self.results = []
 
-        self.log_file = open(self.output_filepath.rsplit('.', 1)[0] + "_log.txt",'w')
-        self.json_filepath = self.output_filepath.rsplit('.', 1)[0] + "_job.json"
-
-        # input_file = os.path.join("input", task_detail["id"])
-        # copyfile(input_file, self.original_file_name)
-
-        self.create_directories(f"./static/files/{self.id}/input", f"./static/files/{self.id}/output")
     
     
     @staticmethod
@@ -70,17 +84,77 @@ class JobInstance:
             print(f"Error saving image at {path}: {e}")
 
 
-    def jobstate(self,state=False):
-        self.job_finished = state
+
+    def abs_to_rel(self, abs_path):
+        """
+        Converts absolute path to relative path based on the base directory
+        """
+        # Debugging: Print the absolute path before conversion
+        print(f"Converting absolute path: {abs_path}")
         
+        # Calculate the relative path using the base directory
+        rel_path = os.path.relpath(abs_path, self.base_dir)
+
+        # Prefix the relative path with './' to match your required format
+        final_path = './' + rel_path
+        
+        # Debugging: Print the relative path after conversion
+        print(f"Converted relative path: {final_path}")
+        
+        return final_path
+
+    def jobstate(self, state=False):
+        """
+        This function updates the paths in the JSON data to be relative.
+        """
+        self.job_finished = state
+
         if state:
+            # Parse the results into JSON data
             data = [json.loads(s) for s in self.results]
 
+            # Convert absolute paths to relative before saving to JSON
+            for result in data:
+                if 'annotated_image_path' in result:
+                    result['annotated_image_path'] = self.abs_to_rel(result['annotated_image_path'])
+                if 'image_path' in result:
+                    result['image_path'] = self.abs_to_rel(result['image_path'])
+
+                # Check if 'glycans' field exists and update paths inside it
+                if 'glycans' in result:
+                    for glycan in result['glycans']:
+                        if 'extracted_image_path' in glycan:
+                            glycan['extracted_image_path'] = self.abs_to_rel(glycan['extracted_image_path'])
+
+                        if 'image_path' in glycan:
+                            glycan['image_path'] = self.abs_to_rel(glycan['image_path'])
+
+                        # Add more fields if necessary in the glycan object
+
+
+            # Now propagate the same changes to self.results
+            self.results = [json.dumps(result) for result in data] 
+
+            # Write the updated data back to the JSON file
             with open(self.json_filepath, 'w') as f:
-                json.dump(data,f,indent=2)
+                json.dump(data, f, indent=2)
             self.log_file.close()
             print("-------->>>JOB COMPLETED", state)
+
         return True
+
+
+    # def jobstate(self,state=False):
+    #     self.job_finished = state
+        
+    #     if state:
+    #         data = [json.loads(s) for s in self.results]
+
+    #         with open(self.json_filepath, 'w') as f:
+    #             json.dump(data,f,indent=2)
+    #         self.log_file.close()
+    #         print("-------->>>JOB COMPLETED", state)
+    #     return True
 
     def get_results(self):
         return [json.loads(s) for s in self.results]
@@ -137,7 +211,7 @@ class JobInstance:
 
         # if conditions to log errors 
         if not gly_semantics.root():
-            error_message = f"Unable to detect reducing-end in the structure."
+            error_message = f"Unable to determine the root of the glycan structure."
             self.log_file.write(error_message + '\n')
             structure_errors.append(error_message)
             errors.append(error_message)
@@ -146,7 +220,7 @@ class JobInstance:
         is_tree, error_message = gly_semantics.traverse_tree()
         if not is_tree:
             error_found = True
-            errors.append("Error in detection of links.")
+            errors.append("Unable to identify all linkages in the glycan structure.")
 
         if error_message != '':
             self.log_file.write(error_message + '\n')
@@ -202,7 +276,7 @@ class JobInstance:
         basename = os.path.basename(figure_semantics.image_path()).split('.')[0]
 
         for i, gly_semantics in enumerate(figure_semantics.glycans()):
-            unprocessed_glycan_image = gly_semantics.semantics.get('unprocessed_image')
+            extracted_glycan_image = gly_semantics.semantics.get('extracted_image')
             glycan_image = gly_semantics.semantics.get('image')
 
             if glycan_image is None or glycan_image.size == 0:
@@ -221,12 +295,12 @@ class JobInstance:
             self.save_image(glycan_image,image_url)
 
             # save origial extracted imaged
-            unprocessed_image_url = os.path.join(image_folders['unprocessed_images_dir'], image_name)
-            self.save_image(unprocessed_glycan_image,unprocessed_image_url)
+            extracted_image_url = os.path.join(image_folders['extracted_images_dir'], image_name)
+            self.save_image(extracted_glycan_image,extracted_image_url)
 
             # gly_semantics.set('image_path',save_origin_url)      
             gly_semantics.set('image_path', image_url)    
-            gly_semantics.set('unprocessed_image_path',unprocessed_image_url)  
+            gly_semantics.set('extracted_image_path',extracted_image_url)  
             gly_semantics.set('image_name', image_name)
 
             for key, val in self.get_IUPAC_metadata(gly_semantics).items():
@@ -261,7 +335,8 @@ class ImageJob(JobInstance):
     def process_file(self):
         self.jobstate(False)
 
-        input_file = os.path.join("input", self.id)
+        base_path = os.path.dirname(os.path.abspath(__file__))
+        input_file = os.path.join(base_path, "input", self.id, self.original_file_name)
 
         try:
             copyfile(input_file, self.input_filepath)
@@ -272,10 +347,10 @@ class ImageJob(JobInstance):
         self.log_file.write(f"{self.id}\n{self.output_filepath}\n")
 
         figures_dir = os.path.join(self.workdir, "extracted_figures", "figures")
-        unprocessed_images_dir = os.path.join(self.workdir, "extracted_figures", "unprocessed_images")
+        extracted_images_dir = os.path.join(self.workdir, "extracted_figures", "extracted_images")
         images_dir = os.path.join(self.workdir, "extracted_figures", "images")
 
-        image_folders = {'figures_dir': figures_dir, 'images_dir': images_dir, 'unprocessed_images_dir': unprocessed_images_dir}
+        image_folders = {'figures_dir': figures_dir, 'images_dir': images_dir, 'extracted_images_dir': extracted_images_dir}
 
         self.create_directories(*image_folders.values())
 
@@ -304,7 +379,8 @@ class PDFJob(JobInstance):
         """
         self.jobstate(False)  
 
-        input_file = os.path.join("input", self.id)
+        base_path = os.path.dirname(os.path.abspath(__file__))
+        input_file = os.path.join(base_path, "input", self.id, self.original_file_name)
 
         try:
             copyfile(input_file, self.input_filepath)
@@ -315,10 +391,10 @@ class PDFJob(JobInstance):
         self.log_file.write(f"{self.id}\n{self.output_filepath}\n")
 
         figures_dir = os.path.join(self.workdir, "extracted_figures", "figures")
-        unprocessed_images_dir = os.path.join(self.workdir, "extracted_figures", "unprocessed_images")
+        extracted_images_dir = os.path.join(self.workdir, "extracted_figures", "extracted_images")
         images_dir = os.path.join(self.workdir, "extracted_figures", "images")
 
-        image_folders = {'figures_dir': figures_dir, 'images_dir': images_dir, 'unprocessed_images_dir': unprocessed_images_dir}
+        image_folders = {'figures_dir': figures_dir, 'images_dir': images_dir, 'extracted_images_dir': extracted_images_dir}
 
         self.create_directories(*image_folders.values())
 

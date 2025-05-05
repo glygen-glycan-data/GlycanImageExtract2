@@ -67,9 +67,13 @@ class ReferenceAPIFileBased(APIFramework):
             error = []
 
             token = task_detail["id"]
-            workdir = os.path.join("./static/files", token)
-            os.makedirs(os.path.join(workdir, "input"), exist_ok=True)
-            os.makedirs(os.path.join(workdir, "output"), exist_ok=True)
+            
+            # setting absolute paths - useful for docker
+            PROJECT_ROOT = os.path.abspath(os.path.dirname(__file__))
+            workdir = os.path.join(PROJECT_ROOT, "static", "files", token)
+            # workdir = os.path.join("./static/files", token)
+            # os.makedirs(os.path.join(workdir, "input"), exist_ok=True)
+            # os.makedirs(os.path.join(workdir, "output"), exist_ok=True)
 
             # Factory method - class reference is passed via get_prcessor() 
             # which is instantiated below
@@ -82,16 +86,6 @@ class ReferenceAPIFileBased(APIFramework):
             calculation_end_time = time.time()
             calculation_time_cost = calculation_end_time - calculation_start_time
 
-            # final_results = []
-
-            # # Iterate over the list of dictionaries
-            # for data in result:
-            #     # for key, json_string in item.items():
-            #     json_data = json.loads(data)
-            #     final_results.append(json_data)
-
-            # json.dump(self.results,self.json_log_file)
-
             # information for webservice (API Framework)
             res = {
                 "id": token,
@@ -99,14 +93,10 @@ class ReferenceAPIFileBased(APIFramework):
                 "end time": calculation_end_time,
                 "runtime": calculation_time_cost,
                 "error": error,
-                "result": result
+                "figure_result": result
             }
 
             result_queue.put(res)
-
-            # file_path = os.path.join(workdir, "results.json")
-            # with open(file_path, 'w') as wh:
-            #     json.dump(res, wh)  
 
             file_path = os.path.join(workdir, "results.json")
             with open(file_path, 'w') as f:
