@@ -16,6 +16,7 @@ import threading
 import subprocess
 import signal
 from collections import defaultdict, deque
+from tqdm import tqdm
 
 from multiprocessing.managers import SyncManager
 
@@ -74,7 +75,7 @@ class DistributedProcessing(object):
         self.register_cleanup()
         self.manager = JobQueueManager(address=("", self.port), authkey=self.secret)
         self.manager.start()
-        if self.verbose:
+        if self.verbose == True:
             print('Server started at port %s (secret: %s)' % (self.port, self.secret.decode()), file=sys.stderr)
         self.tasks = self.manager.get_task_queue()
         self.results = self.manager.get_result_queue()
@@ -93,7 +94,7 @@ class DistributedProcessing(object):
         ServerQueueManager.register('get_manager_queue')
         ServerQueueManager.register('get_shared_data')
 
-        if self.verbose:
+        if self.verbose == True:
             print('Client attempting connection to %s:%s (%s)' % (self.host, self.port, self.secret.decode()), file=sys.stderr)
         self.register_cleanup()
         self.manager = ServerQueueManager(address=(self.host, self.port), authkey=self.secret)
@@ -107,7 +108,7 @@ class DistributedProcessing(object):
                     raise
                 print('Client failed to connect, attempt %d'%(i+1,),file=sys.stderr)
                 time.sleep(5)
-        if self.verbose:
+        if self.verbose == True:
             print('Client connected to %s:%s (%s)' % (self.host, self.port, self.secret.decode()), file=sys.stderr)
         self.tasks = self.manager.get_task_queue()
         self.results = self.manager.get_result_queue()
@@ -279,7 +280,7 @@ class DistributedProcessing(object):
         """.splitlines())))
         # print(sbatch)
         # print(stdinstr%(cmd,))
-        subprocess.run(sbatch,input=stdinstr%(cmd,),text=True,check=True,shell=True)
+        subprocess.run(sbatch,input=stdinstr%(cmd,),capture_output=True,text=True,check=True,shell=True)
 
     def startup(self,workers="",**shared_data):
         self.shared_data.update(shared_data)
@@ -293,6 +294,9 @@ class DistributedProcessing(object):
         self.noshutdown=noshutdown
         self.stage = stage        
         return self
+
+    def ntasks(self):
+        return len(self.alltasks)
 
     def tasksempty(self):
         try:
@@ -335,6 +339,8 @@ class DistributedProcessing(object):
         alltasks = len(self.alltasks)
         remain = alltasks-done
  
+        result['done'] = done
+        result['percent_done'] = 100*done/alltasks
         result['progress'] = "%s/%s (%.2f%%)"%(done, alltasks, 100*done/alltasks)
         if start is not None:
             elapsed = now-start
@@ -351,7 +357,7 @@ class DistributedProcessing(object):
 
     def iterresults(self):
 
-        if self.verbose:
+        if self.verbose == True:
             print("Begin execution: %s tasks to complete."%(len(self.alltasks),),file=sys.stderr)
 
         for i,task in enumerate(self.alltasks):
@@ -410,7 +416,7 @@ class DistributedProcessing(object):
             else:
                 raise RuntimeError("Bad result status")
 
-        if self.verbose:
+        if self.verbose == True:
             print("Task summary: %s tasks completed, %s tasks failed."%(len(self.donetasks),len(self.failedtasks)),file=sys.stderr)
 
         if not self.noshutdown:
@@ -476,21 +482,24 @@ class DistributedProcessing(object):
     logtempl = "worker_id: %(hostname)s:%(worker_index)s task_id: %(task_index)s runtime: %(runtime)s progress: %(progress)s remaining: %(remaining)s"
 
     @staticmethod
-    def process(workers,target,tasks,verbose=False,logtempl=logtempl):
+    def process(workers,target,tasks,verbose='TQDM',logtempl=logtempl):
         if workers is None: 
             # serial processing
-            for result in DistributedProcessing(target=target,verbose=verbose).serial().execute(tasks):
+            for result in DistributedProcessing(target=target,verbose=(verbose==True)).serial().execute(tasks):
                 if verbose:
                     print(logtempl%result,file=sys.stderr)
                 yield result['result']
 
         elif workers[0] == "manager":
             # manager/server/hostnode
-            p = DistributedProcessing(target=target,verbose=verbose).server()
+            p = DistributedProcessing(target=target,verbose=(verbose==True)).server()
             p.startup(workers=workers[1])
             nextoutput = time.time()-10
-            for result in p.execute(tasks):
-                if verbose and time.time() > nextoutput:
+            iterator = p.execute(tasks)
+            if verbose == 'TQDM':
+                iterator = tqdm(iterator,ascii=True,total=p.ntasks())
+            for result in iterator:
+                if (verbose == True) and (time.time() > nextoutput):
                     print(logtempl%result,file=sys.stderr)
                     nextoutput = time.time()+15
                 yield result['result']
@@ -510,7 +519,7 @@ class DistributedProcessing(object):
             sys.exit(0)
 
     @staticmethod
-    def stage_process_init(workers,verbose,targets):
+    def stage_process_init(workers,targets,verbose='TQDM'):
         if workers is None: 
             # serial processing
             return DistributedProcessing(target=targets,verbose=verbose).serial()
@@ -525,8 +534,11 @@ class DistributedProcessing(object):
         
     def stage_process(self,stage,tasks):
         nextoutput = time.time()-10
-        for result in self.execute(tasks,noshutdown=True,stage=stage):
-            if self.verbose and time.time() > nextoutput:
+        iterator = self.execute(tasks,noshutdown=True,stage=stage)
+        if self.verbose == 'TQDM':
+            iterator = tqdm(iterator,desc="Stage %s"%(stage,),ascii=True,total=self.ntasks())
+        for result in iterator:
+            if (self.verbose == True) and (time.time() > nextoutput):
                 print(self.logtempl%result,file=sys.stderr)
                 nextoutput = time.time() + 15
             yield result['result']

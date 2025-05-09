@@ -598,18 +598,18 @@ class Evaluator:
     #     plt.savefig(directory + '/critical_points.png') 
 
             
-def runall_evaluators(evaluators, images, workers=None, verbose=False):
+def runall_evaluators(evaluators, images, workers=None, verbose="TQDM"):
 
     # ensure evaluators is in a deterministic order
     evaluators = list(evaluators)
-    proc = dp.stage_process_init(workers,verbose,[eval.process_image for eval in evaluators])
+    proc = dp.stage_process_init(workers,[None]+[eval.process_image for eval in evaluators],verbose)
 
     for i,eval in enumerate(evaluators):
 
         start_time = time.time()
 
         collected_results = defaultdict(dict)
-        for result in proc.stage_process(i,images):
+        for result in proc.stage_process(i+1,images):
             for pred_name, content in result[1].items():
                 collected_results[pred_name][os.path.basename(result[0])] = content
 

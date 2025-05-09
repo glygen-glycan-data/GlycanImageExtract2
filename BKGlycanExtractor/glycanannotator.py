@@ -77,7 +77,7 @@ class GlycanExtractorPipeline():
     def dorun(self,image,**kwargs):
         return self.run(image)
 
-    def runall(self,images,workers=None,verbose=False):
+    def runall(self,images,workers=None,verbose='TQDM'):
         return dp.process(workers=workers,target=self.dorun,
                           tasks=images,verbose=verbose)
 

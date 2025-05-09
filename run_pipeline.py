@@ -53,8 +53,12 @@ images.exclude("*.cleaned.*")
 
 # changes specific for glycan finding make here...
 kgb = config.get_finder("KnownGlycanBoxes")
+if args.verbose:
+    results = pipeline.runall(images,workers=workers,verbose=True)
+else:
+    results = pipeline.runall(images,workers=workers)
 
-for result in pipeline.runall(images,workers=workers,verbose=args.verbose):
+for result in results:
     # print("\nMono semnatics",sem.semantics['glycans'][0].semantics)
     result.write_json()
     # sem.annotate_glycans(color=(0,0,255))
