@@ -308,6 +308,8 @@ class APIFramework:
                 thing = self.result_cache[list_id]
             elif os.path.exists(f"static/files/{list_id}/results.json"):
                 thing = json.loads(open(f"static/files/{list_id}/results.json").read())
+            elif os.path.exists(f"static/examples/{list_id}/results.json"):
+                thing = json.loads(open(f"static/examples/{list_id}/results.json").read())
             res.append(thing)
 
         return flask.jsonify(res)
@@ -478,7 +480,7 @@ class APIFramework:
         self._flask_app.add_url_rule("/", "home", self.home, methods=["GET", "POST"])
         self._flask_app.add_url_rule("/retrieve", "retrieve", self.retrieve, methods=["GET", "POST"])
         self._flask_app.add_url_rule("/abstract", "abstract", self.abstract, methods=["GET", "POST"])
-        self._flask_app.add_url_rule("/examples", "examples", self.examples, methods=["GET", "POST"])
+        # self._flask_app.add_url_rule("/examples", "examples", self.examples, methods=["GET", "POST"])
         self._flask_app.add_url_rule("/result", "result", self.result, methods=["GET", "POST"])
 
         if self._file_based_job:

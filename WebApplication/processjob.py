@@ -93,10 +93,10 @@ class JobInstance:
         print(f"Converting absolute path: {abs_path}")
         
         # Calculate the relative path using the base directory
-        rel_path = os.path.relpath(abs_path, self.base_dir)
+        rel_path = os.path.relpath(abs_path, self.workdir)
 
         # Prefix the relative path with './' to match your required format
-        final_path = './' + rel_path
+        final_path = rel_path
         
         # Debugging: Print the relative path after conversion
         print(f"Converted relative path: {final_path}")

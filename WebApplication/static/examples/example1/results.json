@@ -1,0 +1,361 @@
+{
+  "id": "112dc19a3b85efd424852644cf34ecd1b822c5a7c43b2436019e4bdc0485e138",
+  "result": {
+    "id": "112dc19a3b85efd424852644cf34ecd1b822c5a7c43b2436019e4bdc0485e138",
+    "start time": 1746824187.7010858,
+    "end time": 1746824209.8500226,
+    "runtime": 22.14893674850464,
+    "error": [],
+    "figure_result": [
+      {
+        "annotated_image_path": "extracted_figures/annotated_figures/G57001BK.png",
+        "file_name": "G57001BK.png",
+        "glycans": [
+          {
+            "IUPAC": "NeuAc?2-?Gal?1-?GlcNAc?1-?Man?1-?(GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?(Fuc?1-?)GlcNAc",
+            "accession": "G21530HL",
+            "bbox": [
+              0,
+              0,
+              446,
+              160
+            ],
+            "composition_str": "GlcNAc(4)NeuAc(1)Fuc(1)Man(3)Gal(1)",
+            "errors": [],
+            "extracted_image_path": "extracted_figures/extracted_images/G57001BK-1.png",
+            "glyImage": "https://glymage.glyomics.org//image/hash/e0d7047764aaccb5ada85960494d4d58.png",
+            "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G21530HL",
+            "height": 160,
+            "id": 1,
+            "image_name": "G57001BK-1.png",
+            "image_path": "extracted_figures/images/G57001BK-1.png",
+            "linkexpl": "Extracted successfully using the accession",
+            "links_count": 9,
+            "monos": [
+              {
+                "bbox": [
+                  311,
+                  0,
+                  24,
+                  22
+                ],
+                "center": [
+                  323,
+                  11
+                ],
+                "classlabel": "Fuc",
+                "confidence": 0.9999758005142212,
+                "id": 0,
+                "symbol": "Fuc"
+              },
+              {
+                "bbox": [
+                  312,
+                  52,
+                  21,
+                  21
+                ],
+                "center": [
+                  322,
+                  62
+                ],
+                "classlabel": "GlcNAc",
+                "confidence": 0.9999978542327881,
+                "id": 1,
+                "links": [
+                  {
+                    "classlabel": "link",
+                    "confidence": 0.9988235831260681,
+                    "fromid": 1,
+                    "toid": 4
+                  },
+                  {
+                    "classlabel": "link",
+                    "confidence": 0.9988235831260681,
+                    "fromid": 1,
+                    "toid": 0
+                  }
+                ],
+                "symbol": "GlcNAc"
+              },
+              {
+                "bbox": [
+                  104,
+                  26,
+                  22,
+                  22
+                ],
+                "center": [
+                  115,
+                  37
+                ],
+                "classlabel": "GlcNAc",
+                "confidence": 0.9999942779541016,
+                "id": 2,
+                "symbol": "GlcNAc"
+              },
+              {
+                "bbox": [
+                  104,
+                  77,
+                  22,
+                  23
+                ],
+                "center": [
+                  115,
+                  88
+                ],
+                "classlabel": "GlcNAc",
+                "confidence": 0.9999662637710571,
+                "id": 3,
+                "links": [
+                  {
+                    "classlabel": "link",
+                    "confidence": 0.9988235831260681,
+                    "fromid": 3,
+                    "toid": 9
+                  }
+                ],
+                "symbol": "GlcNAc"
+              },
+              {
+                "bbox": [
+                  260,
+                  52,
+                  21,
+                  22
+                ],
+                "center": [
+                  270,
+                  63
+                ],
+                "classlabel": "GlcNAc",
+                "confidence": 0.999966025352478,
+                "id": 4,
+                "links": [
+                  {
+                    "classlabel": "link",
+                    "confidence": 0.9988235831260681,
+                    "fromid": 4,
+                    "toid": 5
+                  }
+                ],
+                "symbol": "GlcNAc"
+              },
+              {
+                "bbox": [
+                  208,
+                  52,
+                  22,
+                  22
+                ],
+                "center": [
+                  219,
+                  63
+                ],
+                "classlabel": "Man",
+                "confidence": 0.9999969005584717,
+                "id": 5,
+                "links": [
+                  {
+                    "classlabel": "link",
+                    "confidence": 0.9988235831260681,
+                    "fromid": 5,
+                    "toid": 6
+                  },
+                  {
+                    "classlabel": "link",
+                    "confidence": 0.9988235831260681,
+                    "fromid": 5,
+                    "toid": 7
+                  }
+                ],
+                "symbol": "Man"
+              },
+              {
+                "bbox": [
+                  156,
+                  26,
+                  21,
+                  22
+                ],
+                "center": [
+                  166,
+                  37
+                ],
+                "classlabel": "Man",
+                "confidence": 0.999995231628418,
+                "id": 6,
+                "links": [
+                  {
+                    "classlabel": "link",
+                    "confidence": 0.9988235831260681,
+                    "fromid": 6,
+                    "toid": 2
+                  }
+                ],
+                "symbol": "Man"
+              },
+              {
+                "bbox": [
+                  156,
+                  77,
+                  21,
+                  23
+                ],
+                "center": [
+                  166,
+                  88
+                ],
+                "classlabel": "Man",
+                "confidence": 0.9999910593032837,
+                "id": 7,
+                "links": [
+                  {
+                    "classlabel": "link",
+                    "confidence": 0.9988235831260681,
+                    "fromid": 7,
+                    "toid": 3
+                  }
+                ],
+                "symbol": "Man"
+              },
+              {
+                "bbox": [
+                  1,
+                  78,
+                  22,
+                  21
+                ],
+                "center": [
+                  12,
+                  88
+                ],
+                "classlabel": "NeuAc",
+                "confidence": 0.99991774559021,
+                "id": 8,
+                "symbol": "NeuAc"
+              },
+              {
+                "bbox": [
+                  52,
+                  78,
+                  21,
+                  22
+                ],
+                "center": [
+                  62,
+                  89
+                ],
+                "classlabel": "Gal",
+                "confidence": 0.9999940395355225,
+                "id": 9,
+                "links": [
+                  {
+                    "classlabel": "link",
+                    "confidence": 0.9988235831260681,
+                    "fromid": 9,
+                    "toid": 8
+                  }
+                ],
+                "symbol": "Gal"
+              }
+            ],
+            "monos_count": 10,
+            "orientation": "RL",
+            "root": {
+              "classlabel": "redend",
+              "confidence": 0.9994910955429077,
+              "mono_id": 1
+            },
+            "structure_errors": [],
+            "undirected_links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.9988235831260681,
+                "mono_ids": [
+                  5,
+                  6
+                ]
+              },
+              {
+                "classlabel": "link",
+                "confidence": 0.9988235831260681,
+                "mono_ids": [
+                  5,
+                  7
+                ]
+              },
+              {
+                "classlabel": "link",
+                "confidence": 0.9988235831260681,
+                "mono_ids": [
+                  2,
+                  6
+                ]
+              },
+              {
+                "classlabel": "link",
+                "confidence": 0.9988235831260681,
+                "mono_ids": [
+                  3,
+                  7
+                ]
+              },
+              {
+                "classlabel": "link",
+                "confidence": 0.9988235831260681,
+                "mono_ids": [
+                  3,
+                  9
+                ]
+              },
+              {
+                "classlabel": "link",
+                "confidence": 0.9988235831260681,
+                "mono_ids": [
+                  8,
+                  9
+                ]
+              },
+              {
+                "classlabel": "link",
+                "confidence": 0.9988235831260681,
+                "mono_ids": [
+                  4,
+                  5
+                ]
+              },
+              {
+                "classlabel": "link",
+                "confidence": 0.9988235831260681,
+                "mono_ids": [
+                  1,
+                  4
+                ]
+              },
+              {
+                "classlabel": "link",
+                "confidence": 0.9988235831260681,
+                "mono_ids": [
+                  0,
+                  1
+                ]
+              }
+            ],
+            "width": 446
+          }
+        ],
+        "height": 160,
+        "image_path": "input/G57001BK.png",
+        "width": 446
+      }
+    ]
+  },
+  "finished": true,
+  "submission_detail": {
+    "id": "112dc19a3b85efd424852644cf34ecd1b822c5a7c43b2436019e4bdc0485e138",
+    "original_file_name": "G57001BK.png",
+    "file_type": "single_figure_img"
+  }
+}

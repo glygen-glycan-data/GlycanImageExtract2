@@ -98,24 +98,29 @@ class ReferenceAPIFileBased(APIFramework):
 
             result_queue.put(res)
 
+            res1 = dict(id=token,result=res,finished=True,submission_detail=task_detail)
+
             file_path = os.path.join(workdir, "results.json")
             with open(file_path, 'w') as f:
-                json.dump(res,f,indent=2)
+                json.dump(res1,f,indent=2)
 
 
     def home(self):
         return flask.render_template(self._home_html)
 
-    def examples(self):
-        return flask.render_template(self._examples_html, basedir="static/examples")
+    # def examples(self):
+    #     return flask.render_template(self._examples_html, basedir="static/examples")
 
     def abstract(self):
         return flask.render_template(self._abstract_html)
 
     def result(self):
+        prefix='static/files'
         id = flask.request.args['id']
+        if id.startswith('example'):
+            prefix = 'static/examples'
         print(f"{id}\n",file=sys.stderr)
-        return flask.render_template(self._result_html, list_id=id)
+        return flask.render_template(self._result_html, list_id=id, prefix=prefix)
 
 if __name__ == '__main__':
     multiprocessing.freeze_support()
