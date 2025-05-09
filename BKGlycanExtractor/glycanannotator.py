@@ -137,6 +137,19 @@ class Config_Manager(object):
         conf = self.get_config("Pipeline:" + pipeline_name)
         return GlycanExtractorPipeline(__config__=conf)
 
+    def list(self, prefix):
+        names = []
+        for sec in self.config.sections():
+            if sec.startswith(prefix+":"):
+                names.append(sec.split(":",1)[1])
+        return sorted(names)
+
+    def list_finders(self):
+        return self.list("Finder")
+
+    def list_pipelines(self):
+        return self.list("Pipeline")
+
     # added kwargs here
     def get_finder(self, finder_name, **kwargs):
         module = importlib.import_module(".pipeline",package="BKGlycanExtractor")
@@ -161,7 +174,8 @@ class Config_Manager(object):
 
 class Config(object):
     def __init__(self,config_manager,section_name):
-        assert config_manager.config.has_section(section_name), "Configuration has no section: "+section_name
+        if not config_manager.config.has_section(section_name):
+            raise LookupError("Configuration has no section: "+section_name)
         self.section_name = section_name
         self.config_manager = config_manager
 

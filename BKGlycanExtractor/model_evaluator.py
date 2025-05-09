@@ -297,9 +297,7 @@ class Evaluator:
         return self.boxeval
 
 
-    def process_image(self, task, **kwargs):
-
-        image = task['image_filename']
+    def process_image(self, image, **kwargs):
 
         results = dict()
         i = 0
@@ -319,13 +317,11 @@ class Evaluator:
 
     def runall(self, images):
         
-        tasks = [ {'image_filename': img} for img in images ]
-
         collected_results = defaultdict(lambda: defaultdict(dict))
         start_time = time.time()
 
         for result in dp.process(workers=self.workers,target=self.process_image,
-                                 tasks=tasks,verbose=self.verbose):
+                                 tasks=images,verbose=self.verbose):
             for pred_name, content in result[1].items():
                 collected_results[pred_name][os.path.basename(result[0])] = content
 
@@ -606,7 +602,6 @@ def runall_evaluators(evaluators, images, workers=None, verbose=False):
 
     # ensure evaluators is in a deterministic order
     evaluators = list(evaluators)
-    tasks = [ {'image_filename': img} for img in images ]
     proc = dp.stage_process_init(workers,verbose,[eval.process_image for eval in evaluators])
 
     for i,eval in enumerate(evaluators):
@@ -614,7 +609,7 @@ def runall_evaluators(evaluators, images, workers=None, verbose=False):
         start_time = time.time()
 
         collected_results = defaultdict(dict)
-        for result in proc.stage_process(i,tasks):
+        for result in proc.stage_process(i,images):
             for pred_name, content in result[1].items():
                 collected_results[pred_name][os.path.basename(result[0])] = content
 

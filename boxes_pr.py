@@ -155,6 +155,16 @@ known_kwargs = {
     }
 
 
+for finder_name in args.finders:
+    try:
+        cm.get_finder(finder_name)
+    except LookupError:
+        print("Finder \"%s\" not found.\n\nAvailable finders:"%(finder_name,),file=sys.stderr)
+        for fdname in cm.list_finders():
+            print("  "+fdname,file=sys.stderr)
+        print(file=sys.stderr)
+        sys.exit(1)
+
 images = Image_Manager(args.images)
 images.exclude("*._annotated.*")
 images.exclude("*.annotated.*")

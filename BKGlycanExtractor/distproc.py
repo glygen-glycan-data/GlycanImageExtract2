@@ -22,7 +22,8 @@ from multiprocessing.managers import SyncManager
 class DistributedProcessing(object):
     def __init__(self,target=None,host=None,port=None,secret=None,verbose=False):
         self.hostname = socket.gethostname()
-        self.target = target
+        if target:
+            self.target = target
         self.verbose = verbose
         self.manager = None
         self.worker_procs = []
@@ -162,9 +163,9 @@ class DistributedProcessing(object):
     def do_task(self,task,**kwargs):
         if self.target is None:
             raise NotImplemented("Neither target nor derived class do_task method defined.")
-        if '__stage__' in task:
-            return self.target[task['__stage__']](task,**kwargs)
-        return self.target(task,**kwargs)
+        if task.get('__stage__') is not None:
+            return self.target[task['__stage__']](task['__task__'],**kwargs)
+        return self.target(task['__task__'],**kwargs)
 
     def init(self):
         return
@@ -288,10 +289,7 @@ class DistributedProcessing(object):
         return self
 
     def execute(self,tasks,noshutdown=False,stage=None):
-        self.alltasks = list(tasks)
-        if stage is not None:
-            for t in self.alltasks:
-                t['__stage__'] = stage
+        self.alltasks = [ {'__stage__': stage, '__task__': t} for t in tasks ]
         self.noshutdown=noshutdown
         self.stage = stage        
         return self
