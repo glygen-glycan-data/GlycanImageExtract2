@@ -87,7 +87,7 @@ class BoundingBox:
         return (int(self.x+self.w/2),int(self.y+self.h/2))
 
     def corners(self):
-        return tuple(map(int,(self.x,self.y,self.x+self.w,self.y+self.h)))
+        return tuple(map(int,(self.x,self.y,self.x+self.w-1,self.y+self.h-1)))
 	
     def area(self):
         return (self.w+1) * (self.h+1)
