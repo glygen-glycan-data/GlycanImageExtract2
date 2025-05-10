@@ -115,12 +115,9 @@ class ReferenceAPIFileBased(APIFramework):
         return flask.render_template(self._abstract_html)
 
     def result(self):
-        prefix='static/files'
         id = flask.request.args['id']
-        if id.startswith('example'):
-            prefix = 'static/examples'
         print(f"{id}\n",file=sys.stderr)
-        return flask.render_template(self._result_html, list_id=id, prefix=prefix)
+        return flask.render_template(self._result_html, list_id=id)
 
 if __name__ == '__main__':
     multiprocessing.freeze_support()

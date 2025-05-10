@@ -310,6 +310,8 @@ class APIFramework:
                 thing = json.loads(open(f"static/files/{list_id}/results.json").read())
             elif os.path.exists(f"static/examples/{list_id}/results.json"):
                 thing = json.loads(open(f"static/examples/{list_id}/results.json").read())
+                thing['location'] = 'examples'
+                
             res.append(thing)
 
         return flask.jsonify(res)

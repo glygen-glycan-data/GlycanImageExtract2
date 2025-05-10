@@ -9,11 +9,10 @@
   <h3 id="info">Please wait</h3>
 </div>
 <div id="extracted" style="display: none"></div>
-<div style="display: flex; flex-wrap: wrap;" id="list_id" data-list_id="{{list_id}}" data-prefix="{{prefix}}"></div>
+<div style="display: flex; flex-wrap: wrap;" id="list_id" data-list_id="{{list_id}}"></div>
 <script>
     "use strict";
     let list_id = document.getElementById("list_id").getAttribute("data-list_id");
-    let prefix = document.getElementById("list_id").getAttribute("data-prefix") || 'static/files';
 
     let start_time_stamp = new Date().getTime();
 
@@ -60,6 +59,7 @@
         let div = document.getElementById("list_id");
         div.style.backgroundColor = "#FFFFFF";
 
+        let location = result['location'] || "files";
         var figures = result['result']['figure_result'];
         var file_extension = result['submission_detail']['original_file_name'].split('.').pop();  
         
@@ -88,13 +88,13 @@
         // if (result.result.inputtype == "pdf") {
         //     resstr += "<A target=\"_blank\" href=\"file_download?list_id="+list_id+"\">Annotated PDF</A>, "
         //     }
-        resstr += "<span> <a style='background-color:#e8e3e3; border-radius:20px; padding:1px 5px 1px 5px;' href=\"retrieve?list_ids=[%22"+list_id+"%22]\" target=\"_blank\">JSON data</a> | </span> ";
+        resstr += "<span> <a style='background-color:#e8e3e3; border-radius:20px; padding:1px 5px 1px 5px;' href=\"/static/"+location+"/"+list_id+"/results.json"+"\" target=\"_blank\">JSON data</a> | </span> ";
         if (file_extension == "pdf") {
             // console.log("PDF",result.submission_detail)
-            resstr += "<span><a style='background-color:#e8e3e3; border-radius:20px;padding:1px 5px 1px 5px;' target=\"_blank\" href=\"/"+prefix+"/"+list_id+"/input/"+encodeURIComponent(result.submission_detail.original_file_name)+"\">Original PDF</a> | </span>"
+            resstr += "<span><a style='background-color:#e8e3e3; border-radius:20px;padding:1px 5px 1px 5px;' target=\"_blank\" href=\"/static/"+location+"/"+list_id+"/input/"+encodeURIComponent(result.submission_detail.original_file_name)+"\">Original PDF</a> | </span>"
         } else {
             // console.log("result",result)
-            resstr += "<span><a style='background-color:#e8e3e3;border-radius:20px;padding:1px 5px 1px 5px;' target=\"_blank\" href=\"/"+prefix+"/"+list_id+"/input/"+encodeURIComponent(result.submission_detail.original_file_name)+"\">Original Image</a> | </span>"
+            resstr += "<span><a style='background-color:#e8e3e3;border-radius:20px;padding:1px 5px 1px 5px;' target=\"_blank\" href=\"/static/"+location+"/"+list_id+"/input/"+encodeURIComponent(result.submission_detail.original_file_name)+"\">Original Image</a> | </span>"
         }
             resstr += "<a style='background-color:#e8e3e3;border-radius:20px;padding:1px 5px 1px 5px;' href=\""+"result?id="+list_id+"\">Bookmark</a></h3>";
         reselt.innerHTML = resstr;
@@ -114,7 +114,7 @@
             innerdiv += "</tr>";
 
             innerdiv += "<tr>";
-            innerdiv += "<td colspan='2' style='padding: 20px; text-align: center;'><img style='max-width: 550px; width: auto; height: auto; display: block; margin: auto;' src='/" + prefix + "/" + list_id + "/" + figure.annotated_image_path + "'/></td>";
+            innerdiv += "<td colspan='2' style='padding: 20px; text-align: center;'><img style='max-width: 550px; width: auto; height: auto; display: block; margin: auto;' src='/static/" + location + "/" + list_id + "/" + figure.annotated_image_path + "'/></td>";
             innerdiv += "</tr>";
 
             var glycans = figure['glycans'] || []
@@ -131,7 +131,7 @@
                     innerdiv += `
                         <td style="vertical-align:middle;">
                             <img style="max-width: 300px; min-height: 90px; max-height:300px; min-width: 90px; display: block; margin: auto;" 
-                                src="/${prefix}/${list_id}/${glycan.extracted_image_path}" 
+                                src="/static/${location}/${list_id}/${glycan.extracted_image_path}" 
                                 alt="Glycan Image" />
                         </td>`;
 
