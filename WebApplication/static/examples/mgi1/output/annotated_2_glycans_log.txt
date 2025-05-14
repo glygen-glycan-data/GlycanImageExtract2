@@ -1,0 +1,2 @@
+f92414eb1a2c617e7e8fab40bedd40f2d69c3fb7e6f2d87568a5501e2fa002ab
+/home/nmathias/GlycanImageExtract2/WebApplication/static/files/f92414eb1a2c617e7e8fab40bedd40f2d69c3fb7e6f2d87568a5501e2fa002ab/output/annotated_2_glycans.png

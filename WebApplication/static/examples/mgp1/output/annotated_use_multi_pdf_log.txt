@@ -1,0 +1,41 @@
+85a55f8ba1d79944e5e3584a60e91056ab7c979f3819247f44b0edd7e87c90ec
+/home/nmathias/GlycanImageExtract2/WebApplication/static/files/85a55f8ba1d79944e5e3584a60e91056ab7c979f3819247f44b0edd7e87c90ec/output/annotated_use_multi_pdf.pdf
+
+Found 6 figures in the PDF.
+Image ID: iid_0, Coordinates: (59.7342, 75.78800000000001, 556.1007, 316.4272), Width: 496.3665, Height: 240.63920000000002, Area: 119445.2374668
+
+Saved image to /home/nmathias/GlycanImageExtract2/WebApplication/static/files/85a55f8ba1d79944e5e3584a60e91056ab7c979f3819247f44b0edd7e87c90ec/extracted_figures/figures/22.png
+Image ID: iid_1, Coordinates: (119.8947, 405.6644, 495.9715, 526.4856), Width: 376.0768, Height: 120.82119999999998, Area: 45438.05026815999
+
+Saved image to /home/nmathias/GlycanImageExtract2/WebApplication/static/files/85a55f8ba1d79944e5e3584a60e91056ab7c979f3819247f44b0edd7e87c90ec/extracted_figures/figures/25.png
+Image ID: iid_2, Coordinates: (143.4013, 75.78800000000001, 472.3315, 428.7818), Width: 328.9302, Height: 352.99379999999996, Area: 116110.32123275999
+
+Saved image to /home/nmathias/GlycanImageExtract2/WebApplication/static/files/85a55f8ba1d79944e5e3584a60e91056ab7c979f3819247f44b0edd7e87c90ec/extracted_figures/figures/31.pngCycle detected at node '6' (visited from node '3').
+Cycle found. Dropping least confident link: {'mono_ids': [0, 1], 'confidence': 0.9512998461723328, 'classlabel': 'link'}
+Cycle found. Dropping least confident link: {'mono_ids': [8, 9], 'confidence': 0.8725206255912781, 'classlabel': 'link'}
+Cycle detected at node '1' (visited from node '3').
+Cycle detected at node '4' (visited from node '2').
+Cycle found. Dropping least confident link: {'mono_ids': [2, 5], 'confidence': 0.7535840272903442, 'classlabel': 'link'}
+Cycle found. Dropping least confident link: {'mono_ids': [0, 2], 'confidence': 0.9242473840713501, 'classlabel': 'link'}
+
+Image ID: iid_3, Coordinates: (63.29988, 75.78800000000001, 545.05488, 376.6988), Width: 481.755, Height: 300.9108, Area: 144965.282454
+
+Saved image to /home/nmathias/GlycanImageExtract2/WebApplication/static/files/85a55f8ba1d79944e5e3584a60e91056ab7c979f3819247f44b0edd7e87c90ec/extracted_figures/figures/35.png
+Image ID: iid_4, Coordinates: (107.3613, 75.78800000000001, 500.89020000000005, 588.2054), Width: 393.5289, Height: 512.4174, Area: 201651.05576286002
+
+Saved image to /home/nmathias/GlycanImageExtract2/WebApplication/static/files/85a55f8ba1d79944e5e3584a60e91056ab7c979f3819247f44b0edd7e87c90ec/extracted_figures/figures/40.png
+Image ID: iid_5, Coordinates: (118.5015, 75.78800000000001, 497.4189, 630.0945), Width: 378.91740000000004, Height: 554.3065, Area: 210036.37778310003
+
+Saved image to /home/nmathias/GlycanImageExtract2/WebApplication/static/files/85a55f8ba1d79944e5e3584a60e91056ab7c979f3819247f44b0edd7e87c90ec/extracted_figures/figures/44.pngTree is disjointed. Unvisited nodes: 0
+Cycle detected at node '15' (visited from node '8').
+Cycle found. Dropping least confident link: {'mono_ids': [6, 9], 'confidence': 0.9987828135490417, 'classlabel': 'link'}
+Cycle detected at node '5' (visited from node '1').
+Cycle found. Dropping least confident link: {'mono_ids': [0, 4], 'confidence': 0.9173128008842468, 'classlabel': 'link'}
+Cycle found. Dropping least confident link: {'mono_ids': [10, 11], 'confidence': 0.9996989369392395, 'classlabel': 'link'}
+Cycle found. Dropping least confident link: {'mono_ids': [1, 2], 'confidence': 0.9773645401000977, 'classlabel': 'link'}
+Cycle found. Dropping least confident link: {'mono_ids': [1, 2], 'confidence': 0.8808446526527405, 'classlabel': 'link'}
+Cycle found. Dropping least confident link: {'mono_ids': [1, 2], 'confidence': 0.9203848838806152, 'classlabel': 'link'}
+Unable to determine the root of the glycan structure.
+Tree is disjointed. Unvisited nodes: 0
+Cycle found. Dropping least confident link: {'mono_ids': [1, 9], 'confidence': 0.8051819205284119, 'classlabel': 'link'}
+Cycle found. Dropping least confident link: {'mono_ids': [3, 5], 'confidence': 0.9985330104827881, 'classlabel': 'link'}

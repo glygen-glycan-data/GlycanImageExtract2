@@ -111,7 +111,7 @@ class KnownGlycanBoxes(GlycanFinder):
         super().__init__()
 
     def find_boxes(self, obj):
-        yoloannot = obj.image_path().rsplit('.',1)[0] + ".txt"
+        yoloannot = obj.image_path().rsplit('.',1)[0] + "_map.txt"
         image = obj.image()
         boxes = []
         for l in open(yoloannot):

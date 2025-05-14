@@ -442,14 +442,14 @@ class KnownLink(GlycanConnector):
         GlycanConnector.__init__(self)
 
     def find_boxes(self,obj):
-        image = obj.image_path()
+        image_path = obj.image_path()
         box_id = 0
 
         box_coords = {}
         links = collections.defaultdict(list)
         boxes = []
-        image_path = image.rsplit('.',1)[0] + "_map.txt"
-        with open(image_path, 'r') as file:
+        image_data = image_path.rsplit('.',1)[0] + "_map.txt"
+        with open(image_data, 'r') as file:
             for line in file:
                 data_points = line.split()
                 if line.startswith('l'):
@@ -479,7 +479,7 @@ class KnownLink(GlycanConnector):
                 width = x_max - x_min 
                 height = y_max - y_min
 
-                box = BoundingBox(x1=x_min, y1=y_min, x2=x_max, y2=y_max, id=box_id, classid=0, classlabel=self.get_label(0)) 
+                box = BoundingBox(x1=x_min, y1=y_min, x2=x_max, y2=y_max, id=box_id, classid=0, classlabel=self.get_label(0),image=obj.image()) 
                 box.pad(self.params['boxpadding']) # known data is absolute
                 boxes.append(box)
                 
@@ -489,7 +489,7 @@ class KnownLink(GlycanConnector):
             DebugMode.log_data(
                 identifier = DebugMode.curr_image,
                 data = {'links_known':len(boxes)},
-                image_path = DebugMode.image_path
+                image_data = DebugMode.image_data
             )
 
         return boxes

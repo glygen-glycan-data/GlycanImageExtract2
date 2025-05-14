@@ -80,6 +80,7 @@ class CompareBase(object):
             self._update_metrics(results,confidence,TP,FP,FN)
 
     def compare(self,pred_objs,known_objs,**kwargs):
+        print("OG",pred_objs)
         if self.classrestriction is not None:
             pred_objs = [ obj for obj in pred_objs if obj.get('classlabel') in self.classrestriction ]
             known_objs = [ obj for obj in known_objs if obj.get('classlabel') in self.classrestriction ]
@@ -92,8 +93,10 @@ class CompareBase(object):
         edges = []
         confidence_scores = set()
 
-
+        print("-----",pred_objs)
+        print("kno",known_objs)
         for p_id, pred_obj in enumerate(pred_objs):
+            print("pred_obj",pred_obj)
             scaled_trunc_conf = self.scaled_trunc_conf(pred_obj.get('confidence'))
             
             for k_id, known_obj in enumerate(known_objs):
@@ -307,12 +310,14 @@ class Evaluator:
             prpl,knpl = self.pipelines[prname]
             pred_items, pred_semantics = prpl.run_evaluation(image,self.isboxeval())
             known_items, known_semantics = knpl.run_evaluation(image,self.isboxeval())
-            for k,cmpname in enumerate(cmpnames):
-                cmp = self.compares[cmpname]
-                i += 1
-                results[(i,prname,j+1,cmpname,k+1)] = cmp.compare(pred_items, known_items, 
-                                                                 pred_semantics=pred_semantics, 
-                                                                 known_semantics=known_semantics)
+            # sometimes no root is detected - so pred_items could be None
+            if pred_items[0] is not None:
+                for k,cmpname in enumerate(cmpnames):
+                    cmp = self.compares[cmpname]
+                    i += 1
+                    results[(i,prname,j+1,cmpname,k+1)] = cmp.compare(pred_items, known_items, 
+                                                                    pred_semantics=pred_semantics, 
+                                                                    known_semantics=known_semantics)
         return image,results
 
     def runall(self, images):

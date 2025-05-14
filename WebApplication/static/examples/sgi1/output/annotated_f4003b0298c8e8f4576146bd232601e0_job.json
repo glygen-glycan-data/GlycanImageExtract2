@@ -1,0 +1,281 @@
+[
+  {
+    "annotated_image_path": "extracted_figures/annotated_figures/f4003b0298c8e8f4576146bd232601e0.png",
+    "file_name": "f4003b0298c8e8f4576146bd232601e0.png",
+    "glycans": [
+      {
+        "IUPAC": "Man?1-?(GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?(Gal?1-?Fuc?1-?)GlcNAc",
+        "accession": "G18718DW",
+        "bbox": [
+          0,
+          0,
+          342,
+          212
+        ],
+        "composition_str": "GlcNAc(3)Fuc(1)Man(3)Gal(1)",
+        "errors": [],
+        "extracted_image_path": "extracted_figures/extracted_images/f4003b0298c8e8f4576146bd232601e0-1.png",
+        "glyImage": "https://glymage.glyomics.org//image/hash/f679c785be732adaa7e2507d85a8902e.svg",
+        "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G18718DW",
+        "height": 211,
+        "id": 1,
+        "image_name": "f4003b0298c8e8f4576146bd232601e0-1.png",
+        "image_path": "extracted_figures/images/f4003b0298c8e8f4576146bd232601e0-1.png",
+        "linkexpl": "Extracted successfully using accession",
+        "links_count": 7,
+        "monos": [
+          {
+            "bbox": [
+              209,
+              0,
+              21,
+              21
+            ],
+            "center": [
+              219,
+              10
+            ],
+            "classlabel": "Gal",
+            "confidence": 0.9999957084655762,
+            "id": 0,
+            "symbol": "Gal"
+          },
+          {
+            "bbox": [
+              208,
+              52,
+              21,
+              21
+            ],
+            "center": [
+              218,
+              62
+            ],
+            "classlabel": "Fuc",
+            "confidence": 0.9999608993530273,
+            "id": 1,
+            "links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.9065567255020142,
+                "fromid": 1,
+                "toid": 0
+              }
+            ],
+            "symbol": "Fuc"
+          },
+          {
+            "bbox": [
+              53,
+              130,
+              20,
+              21
+            ],
+            "center": [
+              63,
+              140
+            ],
+            "classlabel": "Man",
+            "confidence": 0.9999982118606567,
+            "id": 2,
+            "links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.9065567255020142,
+                "fromid": 2,
+                "toid": 7
+              }
+            ],
+            "symbol": "Man"
+          },
+          {
+            "bbox": [
+              52,
+              78,
+              21,
+              22
+            ],
+            "center": [
+              62,
+              89
+            ],
+            "classlabel": "Man",
+            "confidence": 0.9999966621398926,
+            "id": 3,
+            "symbol": "Man"
+          },
+          {
+            "bbox": [
+              104,
+              104,
+              21,
+              22
+            ],
+            "center": [
+              114,
+              115
+            ],
+            "classlabel": "Man",
+            "confidence": 0.9999943971633911,
+            "id": 4,
+            "links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.9065567255020142,
+                "fromid": 4,
+                "toid": 3
+              },
+              {
+                "classlabel": "link",
+                "confidence": 0.9065567255020142,
+                "fromid": 4,
+                "toid": 2
+              }
+            ],
+            "symbol": "Man"
+          },
+          {
+            "bbox": [
+              208,
+              104,
+              22,
+              22
+            ],
+            "center": [
+              219,
+              115
+            ],
+            "classlabel": "GlcNAc",
+            "confidence": 0.9999904632568359,
+            "id": 5,
+            "links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.9065567255020142,
+                "fromid": 5,
+                "toid": 1
+              },
+              {
+                "classlabel": "link",
+                "confidence": 0.9065567255020142,
+                "fromid": 5,
+                "toid": 6
+              }
+            ],
+            "symbol": "GlcNAc"
+          },
+          {
+            "bbox": [
+              156,
+              104,
+              22,
+              22
+            ],
+            "center": [
+              167,
+              115
+            ],
+            "classlabel": "GlcNAc",
+            "confidence": 0.9999804496765137,
+            "id": 6,
+            "links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.9065567255020142,
+                "fromid": 6,
+                "toid": 4
+              }
+            ],
+            "symbol": "GlcNAc"
+          },
+          {
+            "bbox": [
+              0,
+              130,
+              22,
+              22
+            ],
+            "center": [
+              11,
+              141
+            ],
+            "classlabel": "GlcNAc",
+            "confidence": 0.9999725818634033,
+            "id": 7,
+            "symbol": "GlcNAc"
+          }
+        ],
+        "monos_count": 8,
+        "orientation": "RL",
+        "root": {
+          "classlabel": "redend",
+          "confidence": 0.9993385672569275,
+          "mono_id": 5
+        },
+        "structure_errors": [],
+        "undirected_links": [
+          {
+            "classlabel": "link",
+            "confidence": 0.9065567255020142,
+            "mono_ids": [
+              2,
+              7
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.9065567255020142,
+            "mono_ids": [
+              1,
+              5
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.9065567255020142,
+            "mono_ids": [
+              5,
+              6
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.9065567255020142,
+            "mono_ids": [
+              4,
+              6
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.9065567255020142,
+            "mono_ids": [
+              3,
+              4
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.9065567255020142,
+            "mono_ids": [
+              0,
+              1
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.9065567255020142,
+            "mono_ids": [
+              2,
+              4
+            ]
+          }
+        ],
+        "width": 341
+      }
+    ],
+    "height": 212,
+    "image_path": "input/f4003b0298c8e8f4576146bd232601e0.png",
+    "width": 342
+  }
+]

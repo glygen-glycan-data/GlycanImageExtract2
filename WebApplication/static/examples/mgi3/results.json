@@ -1,0 +1,809 @@
+{
+  "id": "52c97ab5d6ba8356d9a2938aecb5120e670b839293133fc23a40b41f1b89c943",
+  "result": {
+    "id": "52c97ab5d6ba8356d9a2938aecb5120e670b839293133fc23a40b41f1b89c943",
+    "start time": 1747149125.396051,
+    "end time": 1747149184.9093854,
+    "runtime": 59.51333451271057,
+    "error": [],
+    "figure_result": [
+      {
+        "annotated_image_path": "extracted_figures/annotated_figures/multi_glycans.png",
+        "file_name": "multi_glycans.png",
+        "glycans": [
+          {
+            "IUPAC": "Man?1-?(Man?1-?)Man?1-?(Man?1-?)Man?1-?GlcNAc?1-?GlcNAc",
+            "accession": "G73636FD",
+            "bbox": [
+              46,
+              168,
+              240,
+              99
+            ],
+            "classid": 0,
+            "classlabel": "glycan",
+            "composition_str": "GlcNAc(2)Man(5)",
+            "errors": [],
+            "extracted_image_path": "extracted_figures/extracted_images/multi_glycans-1.png",
+            "glyImage": "https://glymage.glyomics.org//image/hash/1756a3a7d3097e8c5a9cc12f5f5a5dde.svg",
+            "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G73636FD",
+            "height": 98,
+            "id": 1,
+            "image_name": "multi_glycans-1.png",
+            "image_path": "extracted_figures/images/multi_glycans-1.png",
+            "linkexpl": "Extracted successfully using accession",
+            "links_count": 6,
+            "monos": [
+              {
+                "bbox": [
+                  35,
+                  52,
+                  15,
+                  14
+                ],
+                "center": [
+                  42,
+                  59
+                ],
+                "classlabel": "Man",
+                "confidence": 0.9999905824661255,
+                "id": 0,
+                "symbol": "Man"
+              },
+              {
+                "bbox": [
+                  35,
+                  17,
+                  14,
+                  14
+                ],
+                "center": [
+                  42,
+                  24
+                ],
+                "classlabel": "Man",
+                "confidence": 0.9999871253967285,
+                "id": 1,
+                "links": [
+                  {
+                    "classlabel": "link",
+                    "confidence": 0.999694287776947,
+                    "fromid": 1,
+                    "toid": 2
+                  },
+                  {
+                    "classlabel": "link",
+                    "confidence": 0.999694287776947,
+                    "fromid": 1,
+                    "toid": 3
+                  }
+                ],
+                "symbol": "Man"
+              },
+              {
+                "bbox": [
+                  0,
+                  0,
+                  14,
+                  15
+                ],
+                "center": [
+                  7,
+                  7
+                ],
+                "classlabel": "Man",
+                "confidence": 0.9999804496765137,
+                "id": 2,
+                "symbol": "Man"
+              },
+              {
+                "bbox": [
+                  1,
+                  34,
+                  14,
+                  15
+                ],
+                "center": [
+                  8,
+                  41
+                ],
+                "classlabel": "Man",
+                "confidence": 0.9999798536300659,
+                "id": 3,
+                "symbol": "Man"
+              },
+              {
+                "bbox": [
+                  70,
+                  34,
+                  14,
+                  14
+                ],
+                "center": [
+                  77,
+                  41
+                ],
+                "classlabel": "Man",
+                "confidence": 0.9999765157699585,
+                "id": 4,
+                "links": [
+                  {
+                    "classlabel": "link",
+                    "confidence": 0.999694287776947,
+                    "fromid": 4,
+                    "toid": 1
+                  },
+                  {
+                    "classlabel": "link",
+                    "confidence": 0.999694287776947,
+                    "fromid": 4,
+                    "toid": 0
+                  }
+                ],
+                "symbol": "Man"
+              },
+              {
+                "bbox": [
+                  104,
+                  35,
+                  14,
+                  14
+                ],
+                "center": [
+                  111,
+                  42
+                ],
+                "classlabel": "GlcNAc",
+                "confidence": 0.9999971389770508,
+                "id": 5,
+                "links": [
+                  {
+                    "classlabel": "link",
+                    "confidence": 0.999694287776947,
+                    "fromid": 5,
+                    "toid": 4
+                  }
+                ],
+                "symbol": "GlcNAc"
+              },
+              {
+                "bbox": [
+                  139,
+                  35,
+                  14,
+                  14
+                ],
+                "center": [
+                  146,
+                  42
+                ],
+                "classlabel": "GlcNAc",
+                "confidence": 0.9999911785125732,
+                "id": 6,
+                "links": [
+                  {
+                    "classlabel": "link",
+                    "confidence": 0.999694287776947,
+                    "fromid": 6,
+                    "toid": 5
+                  }
+                ],
+                "symbol": "GlcNAc"
+              }
+            ],
+            "monos_count": 7,
+            "orientation": "RL",
+            "root": {
+              "classlabel": "redend",
+              "confidence": 0.9995763897895813,
+              "mono_id": 6
+            },
+            "structure_errors": [],
+            "undirected_links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.999694287776947,
+                "mono_ids": [
+                  1,
+                  4
+                ]
+              },
+              {
+                "classlabel": "link",
+                "confidence": 0.999694287776947,
+                "mono_ids": [
+                  0,
+                  4
+                ]
+              },
+              {
+                "classlabel": "link",
+                "confidence": 0.999694287776947,
+                "mono_ids": [
+                  1,
+                  2
+                ]
+              },
+              {
+                "classlabel": "link",
+                "confidence": 0.999694287776947,
+                "mono_ids": [
+                  1,
+                  3
+                ]
+              },
+              {
+                "classlabel": "link",
+                "confidence": 0.999694287776947,
+                "mono_ids": [
+                  5,
+                  6
+                ]
+              },
+              {
+                "classlabel": "link",
+                "confidence": 0.999694287776947,
+                "mono_ids": [
+                  4,
+                  5
+                ]
+              }
+            ],
+            "width": 239
+          },
+          {
+            "IUPAC": "Man?1-?(Man?1-?)Man?1-?GlcNAc?1-?(Fuc?1-?)GlcNAc",
+            "accession": "G27815BZ",
+            "bbox": [
+              19,
+              13,
+              225,
+              110
+            ],
+            "classid": 0,
+            "classlabel": "glycan",
+            "composition_str": "GlcNAc(2)Fuc(1)Man(3)",
+            "errors": [],
+            "extracted_image_path": "extracted_figures/extracted_images/multi_glycans-2.png",
+            "glyImage": "https://glymage.glyomics.org//image/hash/d4a4b1f6b350173e1904c2e5a6bacb21.svg",
+            "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G27815BZ",
+            "height": 109,
+            "id": 2,
+            "image_name": "multi_glycans-2.png",
+            "image_path": "extracted_figures/images/multi_glycans-2.png",
+            "linkexpl": "Extracted successfully using accession",
+            "links_count": 5,
+            "monos": [
+              {
+                "bbox": [
+                  167,
+                  0,
+                  18,
+                  18
+                ],
+                "center": [
+                  176,
+                  9
+                ],
+                "classlabel": "Man",
+                "confidence": 0.9999017715454102,
+                "id": 0,
+                "symbol": "Man"
+              },
+              {
+                "bbox": [
+                  167,
+                  44,
+                  17,
+                  18
+                ],
+                "center": [
+                  175,
+                  53
+                ],
+                "classlabel": "Man",
+                "confidence": 0.9998990297317505,
+                "id": 1,
+                "symbol": "Man"
+              },
+              {
+                "bbox": [
+                  124,
+                  22,
+                  18,
+                  18
+                ],
+                "center": [
+                  133,
+                  31
+                ],
+                "classlabel": "Man",
+                "confidence": 0.9998801946640015,
+                "id": 2,
+                "links": [
+                  {
+                    "classlabel": "link",
+                    "confidence": 0.9990456700325012,
+                    "fromid": 2,
+                    "toid": 0
+                  },
+                  {
+                    "classlabel": "link",
+                    "confidence": 0.9990456700325012,
+                    "fromid": 2,
+                    "toid": 1
+                  }
+                ],
+                "symbol": "Man"
+              },
+              {
+                "bbox": [
+                  80,
+                  22,
+                  18,
+                  18
+                ],
+                "center": [
+                  89,
+                  31
+                ],
+                "classlabel": "GlcNAc",
+                "confidence": 0.9999868869781494,
+                "id": 3,
+                "links": [
+                  {
+                    "classlabel": "link",
+                    "confidence": 0.9990456700325012,
+                    "fromid": 3,
+                    "toid": 2
+                  }
+                ],
+                "symbol": "GlcNAc"
+              },
+              {
+                "bbox": [
+                  37,
+                  22,
+                  18,
+                  18
+                ],
+                "center": [
+                  46,
+                  31
+                ],
+                "classlabel": "GlcNAc",
+                "confidence": 0.9999790191650391,
+                "id": 4,
+                "links": [
+                  {
+                    "classlabel": "link",
+                    "confidence": 0.9990456700325012,
+                    "fromid": 4,
+                    "toid": 5
+                  },
+                  {
+                    "classlabel": "link",
+                    "confidence": 0.9990456700325012,
+                    "fromid": 4,
+                    "toid": 3
+                  }
+                ],
+                "symbol": "GlcNAc"
+              },
+              {
+                "bbox": [
+                  37,
+                  66,
+                  18,
+                  17
+                ],
+                "center": [
+                  46,
+                  74
+                ],
+                "classlabel": "Fuc",
+                "confidence": 0.9998164772987366,
+                "id": 5,
+                "symbol": "Fuc"
+              }
+            ],
+            "monos_count": 6,
+            "orientation": "LR",
+            "root": {
+              "classlabel": "redend",
+              "confidence": 0.9995925426483154,
+              "mono_id": 4
+            },
+            "structure_errors": [],
+            "undirected_links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.9990456700325012,
+                "mono_ids": [
+                  0,
+                  2
+                ]
+              },
+              {
+                "classlabel": "link",
+                "confidence": 0.9990456700325012,
+                "mono_ids": [
+                  1,
+                  2
+                ]
+              },
+              {
+                "classlabel": "link",
+                "confidence": 0.9990456700325012,
+                "mono_ids": [
+                  2,
+                  3
+                ]
+              },
+              {
+                "classlabel": "link",
+                "confidence": 0.9990456700325012,
+                "mono_ids": [
+                  4,
+                  5
+                ]
+              },
+              {
+                "classlabel": "link",
+                "confidence": 0.9990456700325012,
+                "mono_ids": [
+                  3,
+                  4
+                ]
+              }
+            ],
+            "width": 224
+          },
+          {
+            "IUPAC": "Man?1-?Man?1-?(Man?1-?Man?1-?)Man?1-?(Man?1-?(Man?1-?)Man?1-?)Man?1-?GlcNAc",
+            "accession": "G85612WL",
+            "bbox": [
+              291,
+              51,
+              246,
+              181
+            ],
+            "classid": 0,
+            "classlabel": "glycan",
+            "composition_str": "GlcNAc(1)Man(9)",
+            "errors": [],
+            "extracted_image_path": "extracted_figures/extracted_images/multi_glycans-3.png",
+            "glyImage": "https://glymage.glyomics.org//image/hash/538ab08b5010c74e4d837aeb555dd602.svg",
+            "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G85612WL",
+            "height": 180,
+            "id": 3,
+            "image_name": "multi_glycans-3.png",
+            "image_path": "extracted_figures/images/multi_glycans-3.png",
+            "linkexpl": "Extracted successfully using accession",
+            "links_count": 9,
+            "monos": [
+              {
+                "bbox": [
+                  37,
+                  0,
+                  15,
+                  16
+                ],
+                "center": [
+                  44,
+                  8
+                ],
+                "classlabel": "Man",
+                "confidence": 0.9999978542327881,
+                "id": 0,
+                "symbol": "Man"
+              },
+              {
+                "bbox": [
+                  1,
+                  74,
+                  15,
+                  15
+                ],
+                "center": [
+                  8,
+                  81
+                ],
+                "classlabel": "Man",
+                "confidence": 0.9999964237213135,
+                "id": 1,
+                "symbol": "Man"
+              },
+              {
+                "bbox": [
+                  37,
+                  112,
+                  15,
+                  16
+                ],
+                "center": [
+                  44,
+                  120
+                ],
+                "classlabel": "Man",
+                "confidence": 0.9999961853027344,
+                "id": 2,
+                "links": [
+                  {
+                    "classlabel": "link",
+                    "confidence": 0.999688446521759,
+                    "fromid": 2,
+                    "toid": 6
+                  }
+                ],
+                "symbol": "Man"
+              },
+              {
+                "bbox": [
+                  75,
+                  93,
+                  15,
+                  15
+                ],
+                "center": [
+                  82,
+                  100
+                ],
+                "classlabel": "Man",
+                "confidence": 0.9999948740005493,
+                "id": 3,
+                "links": [
+                  {
+                    "classlabel": "link",
+                    "confidence": 0.999688446521759,
+                    "fromid": 3,
+                    "toid": 5
+                  },
+                  {
+                    "classlabel": "link",
+                    "confidence": 0.999688446521759,
+                    "fromid": 3,
+                    "toid": 2
+                  }
+                ],
+                "symbol": "Man"
+              },
+              {
+                "bbox": [
+                  37,
+                  38,
+                  15,
+                  15
+                ],
+                "center": [
+                  44,
+                  45
+                ],
+                "classlabel": "Man",
+                "confidence": 0.9999946355819702,
+                "id": 4,
+                "symbol": "Man"
+              },
+              {
+                "bbox": [
+                  38,
+                  75,
+                  15,
+                  16
+                ],
+                "center": [
+                  45,
+                  83
+                ],
+                "classlabel": "Man",
+                "confidence": 0.9999936819076538,
+                "id": 5,
+                "links": [
+                  {
+                    "classlabel": "link",
+                    "confidence": 0.999688446521759,
+                    "fromid": 5,
+                    "toid": 1
+                  }
+                ],
+                "symbol": "Man"
+              },
+              {
+                "bbox": [
+                  0,
+                  111,
+                  15,
+                  16
+                ],
+                "center": [
+                  7,
+                  119
+                ],
+                "classlabel": "Man",
+                "confidence": 0.9999936819076538,
+                "id": 6,
+                "symbol": "Man"
+              },
+              {
+                "bbox": [
+                  74,
+                  19,
+                  15,
+                  15
+                ],
+                "center": [
+                  81,
+                  26
+                ],
+                "classlabel": "Man",
+                "confidence": 0.9999914169311523,
+                "id": 7,
+                "links": [
+                  {
+                    "classlabel": "link",
+                    "confidence": 0.999688446521759,
+                    "fromid": 7,
+                    "toid": 4
+                  },
+                  {
+                    "classlabel": "link",
+                    "confidence": 0.999688446521759,
+                    "fromid": 7,
+                    "toid": 0
+                  }
+                ],
+                "symbol": "Man"
+              },
+              {
+                "bbox": [
+                  111,
+                  56,
+                  15,
+                  15
+                ],
+                "center": [
+                  118,
+                  63
+                ],
+                "classlabel": "Man",
+                "confidence": 0.9999786615371704,
+                "id": 8,
+                "links": [
+                  {
+                    "classlabel": "link",
+                    "confidence": 0.999688446521759,
+                    "fromid": 8,
+                    "toid": 7
+                  },
+                  {
+                    "classlabel": "link",
+                    "confidence": 0.999688446521759,
+                    "fromid": 8,
+                    "toid": 3
+                  }
+                ],
+                "symbol": "Man"
+              },
+              {
+                "bbox": [
+                  148,
+                  56,
+                  15,
+                  15
+                ],
+                "center": [
+                  155,
+                  63
+                ],
+                "classlabel": "GlcNAc",
+                "confidence": 0.9999961853027344,
+                "id": 9,
+                "links": [
+                  {
+                    "classlabel": "link",
+                    "confidence": 0.999688446521759,
+                    "fromid": 9,
+                    "toid": 8
+                  }
+                ],
+                "symbol": "GlcNAc"
+              }
+            ],
+            "monos_count": 10,
+            "orientation": "RL",
+            "root": {
+              "classlabel": "redend",
+              "confidence": 0.9883190393447876,
+              "mono_id": 9
+            },
+            "structure_errors": [],
+            "undirected_links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.999688446521759,
+                "mono_ids": [
+                  7,
+                  8
+                ]
+              },
+              {
+                "classlabel": "link",
+                "confidence": 0.999688446521759,
+                "mono_ids": [
+                  3,
+                  8
+                ]
+              },
+              {
+                "classlabel": "link",
+                "confidence": 0.999688446521759,
+                "mono_ids": [
+                  1,
+                  5
+                ]
+              },
+              {
+                "classlabel": "link",
+                "confidence": 0.999688446521759,
+                "mono_ids": [
+                  8,
+                  9
+                ]
+              },
+              {
+                "classlabel": "link",
+                "confidence": 0.999688446521759,
+                "mono_ids": [
+                  2,
+                  6
+                ]
+              },
+              {
+                "classlabel": "link",
+                "confidence": 0.999688446521759,
+                "mono_ids": [
+                  3,
+                  5
+                ]
+              },
+              {
+                "classlabel": "link",
+                "confidence": 0.999688446521759,
+                "mono_ids": [
+                  2,
+                  3
+                ]
+              },
+              {
+                "classlabel": "link",
+                "confidence": 0.999688446521759,
+                "mono_ids": [
+                  4,
+                  7
+                ]
+              },
+              {
+                "classlabel": "link",
+                "confidence": 0.999688446521759,
+                "mono_ids": [
+                  0,
+                  7
+                ]
+              }
+            ],
+            "width": 245
+          }
+        ],
+        "height": 320,
+        "image_path": "input/multi_glycans.png",
+        "width": 580
+      }
+    ]
+  },
+  "finished": true,
+  "submission_detail": {
+    "id": "52c97ab5d6ba8356d9a2938aecb5120e670b839293133fc23a40b41f1b89c943",
+    "original_file_name": "multi_glycans.png",
+    "file_type": "multi_figure_img"
+  }
+}

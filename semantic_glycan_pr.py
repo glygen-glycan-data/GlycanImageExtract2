@@ -85,8 +85,8 @@ distproc = dp.parse_args(parser)
 
 cm = Config_Manager()
 images = Image_Manager(args.images)
+images.exclude("*._annotated_biased.*")
 images.exclude("*._annotated.*")
-images.exclude("*.annotated.*")
 
 evaluators = []
 compare_count = 0
@@ -147,7 +147,7 @@ elif len(args.compare) > 1 and compare_count == 1:
 Evaluator.plotprecisionrecall(
     evaluators,
     dir="presentation",
-    filename="biased",
+    filename="random",
     figsize=(10, 8),
     xlim=(0, 1),
     ylim=(0, 1),

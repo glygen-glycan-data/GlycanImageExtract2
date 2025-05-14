@@ -1,15 +1,21 @@
 {% include 'header.html' %}
 
+<!-- <style> section could be  added to header.html (but since it is a common header for many apps, dont do it)
+    Or you could create a .css file and add all your styles to it - TO DO -->
+<style>
+    
+</style>
+
 <div id="alert_data">
 </div>
 
-<div id="result">
+<div style="width:90%;margin:0 auto;" id="result">
   <h3>Your file has been successfully uploaded for analysis.</h3>
 
   <h3 id="info">Please wait</h3>
 </div>
 <div id="extracted" style="display: none"></div>
-<div style="display: flex; flex-wrap: wrap;" id="list_id" data-list_id="{{list_id}}"></div>
+<div style="display: flex; flex-wrap: wrap; width:90%;margin:0 auto;" id="list_id" data-list_id="{{list_id}}"></div>
 <script>
     "use strict";
     let list_id = document.getElementById("list_id").getAttribute("data-list_id");
@@ -53,6 +59,43 @@
         })
     }
 
+    function toggleIUPAC(id, textId) {
+        const el = document.getElementById(id);
+        const textEl = document.getElementById(textId);
+
+        if (el.style.display === "none") {
+            el.style.display = "block";
+
+            // Automatically copy content
+            const text = textEl.innerText;
+            const textarea = document.createElement("textarea");
+            textarea.value = text;
+            textarea.style.position = "fixed"; // prevent scroll jump
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand("copy");
+            document.body.removeChild(textarea);
+
+            // Show confirmation message
+            const confirmation = document.createElement("div");
+            confirmation.innerText = "✓ Copied to clipboard!";
+            confirmation.style.color = "green";
+            confirmation.style.fontSize = "12px";
+            confirmation.style.marginTop = "5px";
+            confirmation.style.textAlign = "center";
+            el.appendChild(confirmation);
+
+            // Remove message after 2 seconds
+            setTimeout(() => {
+                if (confirmation && confirmation.parentNode) {
+                    confirmation.parentNode.removeChild(confirmation);
+                }
+            }, 2000);
+        } else {
+            el.style.display = "none";
+        }
+    }
+
     function addDownloadButton(result){
         let alert_data = document.getElementById("alert_data");
         let reselt = document.getElementById("result");
@@ -66,20 +109,6 @@
         var alert_str = ""
         var resstr = ""
 
-        
-        // TO DO - Show alert if there are errors
-        // if (result['result']['errors'] && result['result']['error'].length > 0) {
-        //     console.log("WORKER DONE", result['result']['error']); // Debugging log
-
-        //     alert_str += `<div class="alert alert-danger" role="alert">
-        //             ${result['result']['errors'].join("<br>")}
-        //             </div>`
-        // }
-        // else if (glycans.length < 1) {
-        //     alert_str += `<div class="alert alert-danger" role="alert">
-        //         Error: No glycans were detected/present; Try using another file!
-        //     </div>`
-        // }
 
         alert_data.innerHTML = alert_str
 
@@ -102,7 +131,7 @@
         document.getElementById("extracted").style="display: block;";
     
 
-        var innerdiv = "<table style='width: 100%; border-collapse: collapse; text-align: center; background-color: #FFFFFF;'>";
+        var innerdiv = "<table style='border-collapse: collapse; text-align: center; background-color: #FFFFFF;'>";
         innerdiv += "<tbody>"
 
         figures.forEach(function(figure, fig_id) {
@@ -121,8 +150,8 @@
 
             if (glycans.length > 0) {
                 innerdiv += "<tr style='background-color: #7c7d7d;'>";
-                innerdiv += "<th style='color: #ffffff;text-align: center;'>Extracted Structure</th>";
-                innerdiv += "<th style='color: #ffffff; text-align: center;'>Generated Structure</th>";
+                innerdiv += "<th style='color: #ffffff;text-align: center;'>Original Structure</th>";
+                innerdiv += "<th style='color: #ffffff; text-align: center;'>Extracted Structure</th>";
                 innerdiv += "</tr>";
 
 
@@ -147,40 +176,67 @@
                                 }
                             
                             <figcaption style='font-size: 14px; color: #555; margin-top: 5px;'>
-                                Accession: ${glycan.accession || 'Not found'}
+                                GlyTouCan: ${glycan.accession || 'Not found'}
 
                                 <div style="position: relative; display: inline-block;">
-                                ${glycan.errors.length > 0 ?
-                                    `<span style="margin-left: 10px; background: red; color: white; border-radius: 50%; padding: 2px 6px; font-size: 12px; cursor: pointer; position: relative; 
-                                        transition: box-shadow 0.3s ease; box-shadow: 0 0 10px rgba(255, 0, 0, 0.8);"
-                                        onmouseover="errorMessage(this)" 
-                                        onmouseout="errorMessage(this)">
-                                        ⚠️
-                                        <span class="tooltip" style="visibility: hidden; width: 180px; background-color: #373b3b;; color: white; text-align: left; border-radius: 5px; padding: 8px;
-                                                                    position: absolute; z-index: 1; bottom: 125%; left: 50%; transform: translateX(-50%);
-                                                                    opacity: 0; transition: opacity 0.3s;">
-                                            ${glycan.errors.map(e => `<div>• ${e} </div>`).join('')}
-                                        </span>
-                                    </span>`
+                                    ${glycan.errors.length > 0 ?
+                                        `<span style="margin-left: 10px; background: red; color: white; border-radius: 50%; padding: 2px 6px; font-size: 12px; cursor: pointer; position: relative; 
+                                            transition: box-shadow 0.3s ease; box-shadow: 0 0 10px rgba(255, 0, 0, 0.8);"
+                                            onmouseover="errorMessage(this)" 
+                                            onmouseout="errorMessage(this)">
+                                            ⚠️
+                                            <span class="tooltip" style="visibility: hidden; width: 180px; background-color: #373b3b;; color: white; text-align: left; border-radius: 5px; padding: 8px;
+                                                                        position: absolute; z-index: 1; bottom: 125%; left: 50%; transform: translateX(-50%);
+                                                                        opacity: 0; transition: opacity 0.3s;">
+                                                ${glycan.errors.map(e => `<div>• ${e} </div>`).join('')}
+                                            </span>
+                                        </span>`
 
-                                    : ''
-                                }  
-                            </div>
+                                        : ''
+                                        }  
+                                </div>
                             
-                            </figcaption>
+                                </figcaption>
                             </figure>
+                            ${glycan.IUPAC && glycan.IUPAC.length > 0 ? `
+                                <div style="margin-top: 10px; text-align: center;">
+                                    <button onclick="toggleIUPAC('iupac-${fig_id}-${gly_idx}', 'iupac-text-${fig_id}-${gly_idx}')" 
+                                            style="background-color:#7c7d7d; color:white; border:none; border-radius:5px; cursor:pointer;">
+                                        View IUPAC
+                                    </button>
 
-                            <br>
-                            ${glycan.gnomeurl ? `<br><a href="${glycan.gnomeurl}" target="_blank">Explore glycan structure options...</a>` : ''}
+                                    <div id="iupac-${fig_id}-${gly_idx}" style="display: none; max-width: 300px; overflow-x: auto; margin: 10px auto 0; padding: 10px; border: 1px solid #ccc; background: #f8f8f8; font-family: monospace; white-space: nowrap;">
+                                        <div id="iupac-text-${fig_id}-${gly_idx}">
+                                            ${glycan.IUPAC}
+                                        </div>
+                                    </div>
+                                </div>
+                            ` : ''}
+
+                            ${glycan.composition_str && glycan.composition_str.length > 0 ? `
+                                <div style="margin-top: 10px; text-align: center;">
+                                    <button onclick="toggleIUPAC('composition-${fig_id}-${gly_idx}', 'composition-text-${fig_id}-${gly_idx}')" 
+                                            style="background-color:#7c7d7d; color:white; border:none; border-radius:5px; cursor:pointer;">
+                                        View Composition
+                                    </button>
+
+                                    <div id="composition-${fig_id}-${gly_idx}" style="display: none; max-width: 300px; overflow-x: auto; margin: 10px auto 0; padding: 10px; border: 1px solid #ccc; background: #f8f8f8; font-family: monospace; white-space: nowrap;">
+                                        <div id="composition-text-${fig_id}-${gly_idx}">
+                                            ${glycan.composition_str}
+                                        </div>
+                                    </div>
+                                </div>
+                            ` : ''}
+
+                            ${glycan.gnomeurl ? `<br><a style='background-color:#e8e3e3; border-radius:20px; padding:5px 7px 5px 7px;' href="${glycan.gnomeurl}" target="_blank">Explore glycan structure options...</a>` : ''}
+
 
                         </td>`;
+
+                    
                     innerdiv += "</tr>";
 
-                });
-
-            }
-         
-                  
+                })};      
         });
 
         innerdiv += "</tbody>"

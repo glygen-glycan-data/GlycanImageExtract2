@@ -1,0 +1,455 @@
+{
+  "id": "dd8082da2955be8ddb3572e168514220afc7f81683ea1c5af89bce9b43e28457",
+  "result": {
+    "id": "dd8082da2955be8ddb3572e168514220afc7f81683ea1c5af89bce9b43e28457",
+    "start time": 1747148952.1216342,
+    "end time": 1747148976.7031212,
+    "runtime": 24.58148694038391,
+    "error": [],
+    "figure_result": [
+      {
+        "annotated_image_path": "extracted_figures/annotated_figures/wrong.png",
+        "file_name": "wrong.png",
+        "glycans": [
+          {
+            "IUPAC": "NeuAc?2-?Gal?1-?GlcNAc?1-?Gal?1-?GlcNAc?1-?Man?1-?(Man?1-?(Man?1-?)Man?1-?)Man?1-?GlcNAc?1-?(Fuc?1-?)GlcNAc",
+            "accession": "G38382KG",
+            "bbox": [
+              0,
+              0,
+              968,
+              262
+            ],
+            "composition_str": "GlcNAc(4)NeuAc(1)Fuc(1)Man(5)Gal(2)",
+            "errors": [],
+            "extracted_image_path": "extracted_figures/extracted_images/wrong-1.png",
+            "glyImage": "https://glymage.glyomics.org//image/hash/d62c14991e7c1256304ca33f906f8887.svg",
+            "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G38382KG",
+            "height": 261,
+            "id": 1,
+            "image_name": "wrong-1.png",
+            "image_path": "extracted_figures/images/wrong-1.png",
+            "linkexpl": "Extracted successfully using accession",
+            "links_count": 12,
+            "monos": [
+              {
+                "bbox": [
+                  256,
+                  1,
+                  28,
+                  29
+                ],
+                "center": [
+                  270,
+                  15
+                ],
+                "classlabel": "Man",
+                "confidence": 0.9999834299087524,
+                "id": 0,
+                "symbol": "Man"
+              },
+              {
+                "bbox": [
+                  319,
+                  130,
+                  29,
+                  28
+                ],
+                "center": [
+                  333,
+                  144
+                ],
+                "classlabel": "Man",
+                "confidence": 0.9999716281890869,
+                "id": 1,
+                "links": [
+                  {
+                    "classlabel": "link",
+                    "confidence": 0.9790830016136169,
+                    "fromid": 1,
+                    "toid": 8
+                  }
+                ],
+                "symbol": "Man"
+              },
+              {
+                "bbox": [
+                  383,
+                  82,
+                  28,
+                  28
+                ],
+                "center": [
+                  397,
+                  96
+                ],
+                "classlabel": "Man",
+                "confidence": 0.9999693632125854,
+                "id": 2,
+                "links": [
+                  {
+                    "classlabel": "link",
+                    "confidence": 0.9790830016136169,
+                    "fromid": 2,
+                    "toid": 1
+                  },
+                  {
+                    "classlabel": "link",
+                    "confidence": 0.9790830016136169,
+                    "fromid": 2,
+                    "toid": 3
+                  }
+                ],
+                "symbol": "Man"
+              },
+              {
+                "bbox": [
+                  319,
+                  33,
+                  30,
+                  29
+                ],
+                "center": [
+                  334,
+                  47
+                ],
+                "classlabel": "Man",
+                "confidence": 0.999963641166687,
+                "id": 3,
+                "links": [
+                  {
+                    "classlabel": "link",
+                    "confidence": 0.9790830016136169,
+                    "fromid": 3,
+                    "toid": 4
+                  },
+                  {
+                    "classlabel": "link",
+                    "confidence": 0.9790830016136169,
+                    "fromid": 3,
+                    "toid": 0
+                  }
+                ],
+                "symbol": "Man"
+              },
+              {
+                "bbox": [
+                  255,
+                  66,
+                  28,
+                  28
+                ],
+                "center": [
+                  269,
+                  80
+                ],
+                "classlabel": "Man",
+                "confidence": 0.9999333620071411,
+                "id": 4,
+                "symbol": "Man"
+              },
+              {
+                "bbox": [
+                  507,
+                  20,
+                  32,
+                  24
+                ],
+                "center": [
+                  523,
+                  32
+                ],
+                "classlabel": "Fuc",
+                "confidence": 0.9996147751808167,
+                "id": 5,
+                "symbol": "Fuc"
+              },
+              {
+                "bbox": [
+                  446,
+                  82,
+                  28,
+                  27
+                ],
+                "center": [
+                  460,
+                  95
+                ],
+                "classlabel": "GlcNAc",
+                "confidence": 0.9999980926513672,
+                "id": 6,
+                "links": [
+                  {
+                    "classlabel": "link",
+                    "confidence": 0.9790830016136169,
+                    "fromid": 6,
+                    "toid": 2
+                  }
+                ],
+                "symbol": "GlcNAc"
+              },
+              {
+                "bbox": [
+                  129,
+                  129,
+                  27,
+                  29
+                ],
+                "center": [
+                  142,
+                  143
+                ],
+                "classlabel": "GlcNAc",
+                "confidence": 0.999997615814209,
+                "id": 7,
+                "links": [
+                  {
+                    "classlabel": "link",
+                    "confidence": 0.9790830016136169,
+                    "fromid": 7,
+                    "toid": 12
+                  }
+                ],
+                "symbol": "GlcNAc"
+              },
+              {
+                "bbox": [
+                  256,
+                  129,
+                  27,
+                  29
+                ],
+                "center": [
+                  269,
+                  143
+                ],
+                "classlabel": "GlcNAc",
+                "confidence": 0.9999843835830688,
+                "id": 8,
+                "links": [
+                  {
+                    "classlabel": "link",
+                    "confidence": 0.9790830016136169,
+                    "fromid": 8,
+                    "toid": 11
+                  }
+                ],
+                "symbol": "GlcNAc"
+              },
+              {
+                "bbox": [
+                  510,
+                  83,
+                  28,
+                  26
+                ],
+                "center": [
+                  524,
+                  96
+                ],
+                "classlabel": "GlcNAc",
+                "confidence": 0.9999783039093018,
+                "id": 9,
+                "links": [
+                  {
+                    "classlabel": "link",
+                    "confidence": 0.9790830016136169,
+                    "fromid": 9,
+                    "toid": 6
+                  },
+                  {
+                    "classlabel": "link",
+                    "confidence": 0.9790830016136169,
+                    "fromid": 9,
+                    "toid": 5
+                  }
+                ],
+                "symbol": "GlcNAc"
+              },
+              {
+                "bbox": [
+                  2,
+                  129,
+                  30,
+                  30
+                ],
+                "center": [
+                  17,
+                  144
+                ],
+                "classlabel": "NeuAc",
+                "confidence": 0.9999076128005981,
+                "id": 10,
+                "symbol": "NeuAc"
+              },
+              {
+                "bbox": [
+                  193,
+                  129,
+                  28,
+                  29
+                ],
+                "center": [
+                  207,
+                  143
+                ],
+                "classlabel": "Gal",
+                "confidence": 0.9994614720344543,
+                "id": 11,
+                "links": [
+                  {
+                    "classlabel": "link",
+                    "confidence": 0.9790830016136169,
+                    "fromid": 11,
+                    "toid": 7
+                  }
+                ],
+                "symbol": "Gal"
+              },
+              {
+                "bbox": [
+                  66,
+                  128,
+                  28,
+                  31
+                ],
+                "center": [
+                  80,
+                  143
+                ],
+                "classlabel": "Gal",
+                "confidence": 0.9988324046134949,
+                "id": 12,
+                "links": [
+                  {
+                    "classlabel": "link",
+                    "confidence": 0.9790830016136169,
+                    "fromid": 12,
+                    "toid": 10
+                  }
+                ],
+                "symbol": "Gal"
+              }
+            ],
+            "monos_count": 13,
+            "orientation": "RL",
+            "root": {
+              "classlabel": "redend",
+              "confidence": 0.9898163080215454,
+              "mono_id": 9
+            },
+            "structure_errors": [],
+            "undirected_links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.9790830016136169,
+                "mono_ids": [
+                  2,
+                  6
+                ]
+              },
+              {
+                "classlabel": "link",
+                "confidence": 0.9790830016136169,
+                "mono_ids": [
+                  1,
+                  2
+                ]
+              },
+              {
+                "classlabel": "link",
+                "confidence": 0.9790830016136169,
+                "mono_ids": [
+                  2,
+                  3
+                ]
+              },
+              {
+                "classlabel": "link",
+                "confidence": 0.9790830016136169,
+                "mono_ids": [
+                  8,
+                  11
+                ]
+              },
+              {
+                "classlabel": "link",
+                "confidence": 0.9790830016136169,
+                "mono_ids": [
+                  7,
+                  12
+                ]
+              },
+              {
+                "classlabel": "link",
+                "confidence": 0.9790830016136169,
+                "mono_ids": [
+                  1,
+                  8
+                ]
+              },
+              {
+                "classlabel": "link",
+                "confidence": 0.9790830016136169,
+                "mono_ids": [
+                  7,
+                  11
+                ]
+              },
+              {
+                "classlabel": "link",
+                "confidence": 0.9790830016136169,
+                "mono_ids": [
+                  10,
+                  12
+                ]
+              },
+              {
+                "classlabel": "link",
+                "confidence": 0.9790830016136169,
+                "mono_ids": [
+                  3,
+                  4
+                ]
+              },
+              {
+                "classlabel": "link",
+                "confidence": 0.9790830016136169,
+                "mono_ids": [
+                  0,
+                  3
+                ]
+              },
+              {
+                "classlabel": "link",
+                "confidence": 0.9790830016136169,
+                "mono_ids": [
+                  6,
+                  9
+                ]
+              },
+              {
+                "classlabel": "link",
+                "confidence": 0.9790830016136169,
+                "mono_ids": [
+                  5,
+                  9
+                ]
+              }
+            ],
+            "width": 967
+          }
+        ],
+        "height": 262,
+        "image_path": "input/wrong.png",
+        "width": 968
+      }
+    ]
+  },
+  "finished": true,
+  "submission_detail": {
+    "id": "dd8082da2955be8ddb3572e168514220afc7f81683ea1c5af89bce9b43e28457",
+    "original_file_name": "wrong.png",
+    "file_type": "single_figure_img"
+  }
+}

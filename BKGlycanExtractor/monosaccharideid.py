@@ -335,6 +335,8 @@ class YOLOMonos(YOLOModel,MonoID):
 class KnownMono(MonoID):
 
     # Need to be able to support any monosaccharide symbol in generated code
+    # maybe allow users to add their own known monos labels?
+    # maybe create a function in finder which accepts labels text file?
     labels = ["GlcNAc","NeuAc","Fuc","Man","GalNAc","Gal","Glc","NeuGc","Xyl"]
     defaults = {
         'boxpadding': 0,
@@ -360,8 +362,8 @@ class KnownMono(MonoID):
         image_path = obj.image_path()
         assert image_path, "KnownMono can only run on SingleGlycanImage glycan finder semantics objects"
         boxes = []
-        image_path = image_path.rsplit('.',1)[0] + "_map.txt"
-        with open(image_path, 'r') as file:
+        image_data = image_path.rsplit('.',1)[0] + "_map.txt"
+        with open(image_data, 'r') as file:
             for line in file:
                 if line.startswith('m'):
                     data_points = line.split()
@@ -381,7 +383,7 @@ class KnownMono(MonoID):
                     x_max = max(x_coords)
                     y_max = max(y_coords)
 
-                    box = BoundingBox(x1=x_min,y1=y_min,x2=x_max,y2=y_max,symbol=name,classid=self.get_label_index(name),classlabel=name,id=int(mono_id))
+                    box = BoundingBox(x1=x_min,y1=y_min,x2=x_max,y2=y_max,symbol=name,classid=self.get_label_index(name),classlabel=name,id=int(mono_id),image=obj.image())
                     box.pad(self.params['boxpadding']) # known data is absolute
                     boxes.append(box)
 
@@ -389,7 +391,7 @@ class KnownMono(MonoID):
             DebugMode.log_data(
                 identifier= DebugMode.curr_image,
                 data={'monos_known':len(boxes)},
-                image_path = DebugMode.image_path,
+                image_data = DebugMode.image_data,
             )
 
         return boxes

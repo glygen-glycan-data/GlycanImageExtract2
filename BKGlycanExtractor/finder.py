@@ -34,5 +34,7 @@ class Finder(object):
             raise LookupError("Label %s not found."%(label,))
         return self._labels.index(label)
 
+    def get_labels(self):
+        return self._labels
 
  

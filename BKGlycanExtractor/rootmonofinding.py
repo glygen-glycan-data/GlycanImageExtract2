@@ -237,6 +237,11 @@ class YOLORootFinder(YOLOModel, RootFinder):
             
             inter = intersection_list[max_int_idx]
             
+            # if monos/roots training model was trained on different sized boxes - 
+            # then this variation in box sizes between monos and root could cause issues like
+            # detection is not sufficient or they might not overlap enough to pass the true case
+            # A better solution: compare the detection based on the proximty of the centers - which might solve
+            # the issue of having to differnt boxpadding based on the training models setup
             if ((inter == t_area and comparison_alg.training_contained(box, root_mono))
             or (inter == d_area and comparison_alg.detection_sufficient(box, root_mono))
             or comparison_alg.is_overlapping(box, root_mono)):
@@ -266,8 +271,8 @@ class KnownRoot(RootFinder):
         image_path = obj.image_path()
         box_dict = {}
 
-        image_path = image_path.rsplit('.',1)[0] + "_map.txt"
-        with open(image_path, 'r') as file:
+        image_data = image_path.rsplit('.',1)[0] + "_map.txt"
+        with open(image_data, 'r') as file:
             root_id = float('inf')
 
             # root_id = None
@@ -297,11 +302,12 @@ class KnownRoot(RootFinder):
                 
                     # Note: YOLO predicts 0 or 1 as the classid for roots, 
                     # known_items will also have classid = 0 for root and 1 for rest of the monos
-                    box = BoundingBox(x1=x_min, y1=y_min, x2=x_max, y2=y_max, symbol=name,classid=1,classlabel=self.get_label(1),id=int(mono_id))
+                    box = BoundingBox(x1=x_min, y1=y_min, x2=x_max, y2=y_max, symbol=name,classid=1,classlabel=self.get_label(1),id=int(mono_id),image=obj.image())
                     box.pad(self.params['boxpadding']) # known data is absolute
                     # boxes.append(box)
                     box_dict[int(mono_id)] = box
-
+                    
+            # setting the class_id for root as 0
             box_dict[int(root_id)].set('classid',0)            
             box_dict[int(root_id)].set('classlabel',self.get_label(0)) 
 
@@ -309,7 +315,7 @@ class KnownRoot(RootFinder):
             DebugMode.log_data(
                 identifier = DebugMode.curr_image,
                 data = {'root_known':len(box_dict.values())},
-                image_path = DebugMode.image_path,
+                image_data = DebugMode.image_data,
             )
 
         return list(box_dict.values())

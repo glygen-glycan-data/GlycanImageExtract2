@@ -3,8 +3,10 @@ This
 '''
 import fitz, sys, os, cv2,shutil, pdfplumber, time, ntpath, json, base64
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from submit import searchGlyLookup, searchGlyImage
+from submit import searchGlyLookup, searchGlyImage, sendToGNOme
 from PIL import Image
+from hashlib import md5
+
 
 
 
@@ -226,43 +228,54 @@ class JobInstance:
             self.log_file.write(error_message + '\n')
             structure_errors.append(error_message)
 
+        iupac_found = False
         if not error_found:
             IUPAC_data["IUPAC"] = gly_semantics.IUPAC()
             # can get orienation only after the IUPAC is generated - because we access to directed links
             IUPAC_data["orientation"] = gly_semantics.glycan_orientation()
-            lookup_key = IUPAC_data["IUPAC"]
-        else:
-            lookup_key = IUPAC_data["composition_str"]
+            # lookup_key = IUPAC_data["IUPAC"]
+            # iupac_found = True
+        # else:
+            # lookup_key = IUPAC_data["composition_str"]
+
+        lookup_key = IUPAC_data["IUPAC"] if IUPAC_data["IUPAC"] != "" else IUPAC_data["composition_str"]
+        iupac_found = True if IUPAC_data["IUPAC"] != "" else False
+
+        # gly_image = searchGlyImage(lookup_key, orientation=IUPAC_data["orientation"])
+
+        # GNOME URL
+        uri_base = "https://gnome.glyomics.org/StructureBrowser.html?"
 
         accession = searchGlyLookup(lookup_key)
 
-        # Build GNOME URL - work on this
-        uri_base = "https://gnome.glyomics.org/StructureBrowser.html?"
-        if not IUPAC_data["IUPAC"]:
-            # glycan_uri = uri_base + "&".join(
-            #     [f"{k}={v}" for k, v in gly_semantics.composition().items()]
-            # )
+        
 
-            gly_image = searchGlyImage(lookup_key, orientation=IUPAC_data["orientation"])
-            IUPAC_data.update({
-                "linkexpl": "Couldn't generate structure because no accession was found.",
-                "glyImage": gly_image
-                # "gnomeurl": glycan_uri,
-            })
-        elif accession: 
+        
+        if accession:
+            # GNOME URL
+            uri_base = "https://gnome.glyomics.org/StructureBrowser.html?"
+
             glycan_uri = (
                     uri_base + f"focus={accession}"
                     if accession.startswith('G') else uri_base + f"ondemandtaskid={accession}"
             )
 
-            gly_image = searchGlyImage(lookup_key, orientation=IUPAC_data["orientation"])
-
             IUPAC_data.update({
-                "linkexpl": "Extracted successfully using the accession",
+                "linkexpl": "Extracted successfully using accession",
                 "gnomeurl": glycan_uri,
                 "accession": accession, 
-                "glyImage": gly_image
+                "glyImage": searchGlyImage(accession, orientation=IUPAC_data["orientation"],accession=True)
             })
+        else:
+
+            IUPAC_data.update({
+                "linkexpl": "Extracted structure using IUPAC/Composition.",
+                "glyImage": searchGlyImage(lookup_key, orientation=IUPAC_data["orientation"]),
+                "gnomeurl": sendToGNOme(lookup_key, iupac_found=iupac_found)
+            })
+
+            if not iupac_found:
+                print("We will use composition",lookup_key, IUPAC_data["gnomeurl"])
             
         return IUPAC_data
 

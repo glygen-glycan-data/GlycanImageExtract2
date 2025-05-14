@@ -28,6 +28,12 @@
           transition: opacity 0.3s;
           pointer-events: none;
       }
+
+      .badge-custom {
+        background-color: #e6f0ff;  /* your custom background */
+        color: #358dec;             /* your custom text color */
+        border: 1px solid #b3d1ff;
+      }
   </style>
 
 
@@ -43,13 +49,13 @@
       <form action="file_upload" method="post" enctype="multipart/form-data" onsubmit="return validateForm()">
         <div id="fileType" class="btn-group btn-group-toggle btn-group-lg" data-toggle="buttons">
           <label class="btn btn-secondary active">
-            <input type="radio" name="fileType" id="manuscript" value="multi_figure_pdf" autocomplete="off" checked onchange="labelUpdate()"> Manuscript
+            <input type="radio" name="fileType" id="manuscript" value="multi_figure_pdf" autocomplete="off" checked onchange="displayExamples(this)"> Manuscript
           </label>
           <label class="btn btn-secondary">
-            <input type="radio" name="fileType" id="multi_figure" value="multi_figure_img" autocomplete="off" onchange="labelUpdate()"> Multi-Glycan Image
+            <input type="radio" name="fileType" id="multi_figure" value="multi_figure_img" autocomplete="off" onchange="displayExamples(this)"> Multi-Glycan Image
           </label>
           <label class="btn btn-secondary">
-            <input type="radio" name="fileType" id="single_figure" value="single_figure_img" autocomplete="off" onchange="labelUpdate()"> Single-Glycan Image
+            <input type="radio" name="fileType" id="single_figure" value="single_figure_img" autocomplete="off" onchange="displayExamples(this)"> Single-Glycan Image
           </label>
         </div>
         
@@ -101,9 +107,14 @@
             </div>
             
             <input style="background-color:#4e555b; color:white; margin:15px" type="submit" value="Submit" class="btn" style="margin-top: 20px;">
-            <div>
-              <span id="example1">Example: <A href="result?id=sgi1">G57001BK</A></span>
-            </div>
+
+            <br>
+
+            <!-- Placeholder where examples will be displayed -->
+            <div id="exampleOutput"></div>
+              <!-- <span id="example1">Example: <A href="result?id=sgi1">G57001BK</A></span> -->
+               <!-- <span id></span> -->
+            <!-- </div> -->
           </div>
 
           
@@ -120,40 +131,42 @@
 
 
       document.addEventListener("DOMContentLoaded", function() {
-        labelUpdate();
+        // labelUpdate();
+        const defaultSelected = document.querySelector('input[name="fileType"]:checked');
+        if (defaultSelected) {
+          displayExamples(defaultSelected);
+        }
         toggleInputFields();
         
       });
 
+      function displayExamples(input) {
+        // console.log(input);
+        
+        // list of examples for different file types
+        // <span id="example1">Example: <A href="result?id=example1">G57001BK</A></span>
+        const examples = {
+          single_figure_img: ['sgi1','sgi2','sgi3'],
+          multi_figure_img: ['mgi1','mgi2','mgi3'],
+          multi_figure_pdf: ['mgp1', 'mgp2', 'mgp3']
+        }
+        
 
-      function labelUpdate() {
-          // Get the selected radio button value
-          let selectedValue = document.querySelector('input[name="fileType"]:checked').value;
+        let selected_file_type = examples[input.value]
+        
+        let display_examples = `
+            ${selected_file_type.map((example,id) => `<a href="result?id=${example}" class="badge badge-custom"> Example ${id + 1}</a>`).join('  ')}
+            
+        `;
 
-          // Get the label element where the text will be updated
-          let uploadLabel = document.getElementById('uploadLabel');
+        console.log(display_examples);
+        const content = document.getElementById("exampleOutput");
+        content.innerHTML = display_examples;
 
-          var uploadOption = document.querySelector('input[name="uploadOption"]:checked').value;
-          // let content = document.getElementById('tooltip-content')
-
-          if (uploadOption === 'file') {
-            if (selectedValue === 'manuscript') {
-              uploadLabel.textContent = 'Upload a Manuscript:';
-              console.log("Manuscript selected");
-              
-              // content.textContent = ".pdf"
-            } else if (selectedValue === 'multi_figure' || selectedValue === 'single_figure') {
-                uploadLabel.textContent = 'Upload an Image:';
-                console.log("Image selected:");
-
-                // content.textContent = ".png, .jpg"
-            }
-
-            // displayInput();
-
-          } 
-  
       }
+
+
+ 
 
 
 
@@ -217,7 +230,7 @@
           if (uploadOption === 'file') {
             document.getElementById('fileUploadField').style.display = 'flex';
             document.getElementById('urlInputField').style.display = 'none';
-            labelUpdate();
+            // labelUpdate();
 
           } else {
             document.getElementById('fileUploadField').style.display = 'none';

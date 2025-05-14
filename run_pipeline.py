@@ -48,8 +48,7 @@ except LookupError:
     sys.exit(1)
 
 images = Image_Manager(args.images)
-images.exclude("*.annotated.*")
-images.exclude("*.cleaned.*")
+images.exclude("*._annotated.*")
 
 # changes specific for glycan finding make here...
 kgb = config.get_finder("KnownGlycanBoxes")

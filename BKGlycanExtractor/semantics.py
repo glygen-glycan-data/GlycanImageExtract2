@@ -194,23 +194,26 @@ class Figure_Semantics(Image_Semantics):
     def write_image(self,**kwargs):
         cv2.imwrite(self.make_filename(**kwargs), self.image())
 
-    # delete later
-    def training_data(self,pipeline,folder_name):
+    def training_data(self,folder_name):
+        # need labels - monos need labels file
+        # root - need labels file
+        # links - need labels file
+
         # print("\nself.params",pipeline.get_steps("glycan")[0].labels)
         # classid_mappings = {"GlcNAc": 0, "NeuAc":1,"Fuc":2,"Man":3,"GalNAc":4,"Gal":5,"Glc":6,"NeuGc":7, "Xyl": 8}
-        labels = pipeline.get_steps("glycan")[0].labels
-        classid_mappings = {label:idx for idx,label in enumerate(labels)}
+        # labels = pipeline.get_steps("glycan")[0].labels
+        # classid_mappings = {label:idx for idx,label in enumerate(labels)}
 
         image_path = self.image_path()
         image_filename = os.path.basename(image_path)
         base_filename = os.path.splitext(image_filename)[0]
 
-        os.makedirs(folder_name, exist_ok=True)
-        metadata_dir = os.path.join(folder_name, "metadata")
-        os.makedirs(metadata_dir, exist_ok=True)
-        metadata_file = os.path.join(metadata_dir, "metadata.txt")
+        # os.makedirs(folder_name, exist_ok=True)
+        # metadata_dir = os.path.join(folder_name, "metadata")
+        # os.makedirs(metadata_dir, exist_ok=True)
+        # metadata_file = os.path.join(metadata_dir, "metadata.txt")
 
-        print("file",metadata_file)
+        # print("file",metadata_file)
 
         # with open(metadata_file,'w') as f:
         #     f.write('labels: ' + ', '.join(labels) + '\n')
@@ -564,7 +567,7 @@ class Glycan_Semantics(Image_Semantics):
 
         self.generate_iupac(iupac, adj, visited, -1, root_id)
 
-        print("ii",iupac)
+        print("iupac",iupac)
        
         iupac = iupac[::-1] # IUPAC sequences are read in reverse order
         return ''.join(iupac)

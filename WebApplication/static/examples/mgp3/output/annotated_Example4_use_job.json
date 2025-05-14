@@ -1,0 +1,8041 @@
+[
+  {
+    "annotated_image_path": "extracted_figures/annotated_figures/33.png",
+    "file_name": "33.png",
+    "glycans": [
+      {
+        "IUPAC": "Gal?1-?GlcNAc?1-?Man?1-?(Gal?1-?GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?(Fuc?1-?)GlcNAc",
+        "accession": "G27658AJ",
+        "bbox": [
+          874,
+          0,
+          71,
+          254
+        ],
+        "classid": 0,
+        "classlabel": "glycan",
+        "composition_str": "GlcNAc(4)Fuc(1)Man(3)Gal(2)",
+        "errors": [],
+        "extracted_image_path": "extracted_figures/extracted_images/33-1.png",
+        "glyImage": "https://glymage.glyomics.org//image/hash/b97f792e449933b5afa30d13451dad72.svg",
+        "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G27658AJ",
+        "height": 253,
+        "id": 1,
+        "image_name": "33-1.png",
+        "image_path": "extracted_figures/images/33-1.png",
+        "linkexpl": "Extracted successfully using accession",
+        "links_count": 9,
+        "monos": [
+          {
+            "bbox": [
+              0,
+              0,
+              10,
+              10
+            ],
+            "center": [
+              5,
+              5
+            ],
+            "classlabel": "Gal",
+            "confidence": 0.9999886751174927,
+            "id": 0,
+            "symbol": "Gal"
+          },
+          {
+            "bbox": [
+              25,
+              0,
+              10,
+              10
+            ],
+            "center": [
+              30,
+              5
+            ],
+            "classlabel": "Gal",
+            "confidence": 0.9988911747932434,
+            "id": 1,
+            "symbol": "Gal"
+          },
+          {
+            "bbox": [
+              13,
+              99,
+              10,
+              10
+            ],
+            "center": [
+              18,
+              104
+            ],
+            "classlabel": "GlcNAc",
+            "confidence": 0.9999994039535522,
+            "id": 2,
+            "links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.998989999294281,
+                "fromid": 2,
+                "toid": 8
+              }
+            ],
+            "symbol": "GlcNAc"
+          },
+          {
+            "bbox": [
+              0,
+              25,
+              10,
+              10
+            ],
+            "center": [
+              5,
+              30
+            ],
+            "classlabel": "GlcNAc",
+            "confidence": 0.999998927116394,
+            "id": 3,
+            "links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.998989999294281,
+                "fromid": 3,
+                "toid": 0
+              }
+            ],
+            "symbol": "GlcNAc"
+          },
+          {
+            "bbox": [
+              25,
+              25,
+              10,
+              10
+            ],
+            "center": [
+              30,
+              30
+            ],
+            "classlabel": "GlcNAc",
+            "confidence": 0.9999988079071045,
+            "id": 4,
+            "links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.998989999294281,
+                "fromid": 4,
+                "toid": 1
+              }
+            ],
+            "symbol": "GlcNAc"
+          },
+          {
+            "bbox": [
+              13,
+              124,
+              10,
+              10
+            ],
+            "center": [
+              18,
+              129
+            ],
+            "classlabel": "GlcNAc",
+            "confidence": 0.9999908208847046,
+            "id": 5,
+            "links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.998989999294281,
+                "fromid": 5,
+                "toid": 9
+              },
+              {
+                "classlabel": "link",
+                "confidence": 0.998989999294281,
+                "fromid": 5,
+                "toid": 2
+              }
+            ],
+            "symbol": "GlcNAc"
+          },
+          {
+            "bbox": [
+              25,
+              50,
+              10,
+              10
+            ],
+            "center": [
+              30,
+              55
+            ],
+            "classlabel": "Man",
+            "confidence": 0.9999954700469971,
+            "id": 6,
+            "links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.998989999294281,
+                "fromid": 6,
+                "toid": 4
+              }
+            ],
+            "symbol": "Man"
+          },
+          {
+            "bbox": [
+              0,
+              50,
+              10,
+              10
+            ],
+            "center": [
+              5,
+              55
+            ],
+            "classlabel": "Man",
+            "confidence": 0.9999946355819702,
+            "id": 7,
+            "links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.998989999294281,
+                "fromid": 7,
+                "toid": 3
+              }
+            ],
+            "symbol": "Man"
+          },
+          {
+            "bbox": [
+              13,
+              74,
+              10,
+              10
+            ],
+            "center": [
+              18,
+              79
+            ],
+            "classlabel": "Man",
+            "confidence": 0.999988317489624,
+            "id": 8,
+            "links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.998989999294281,
+                "fromid": 8,
+                "toid": 6
+              },
+              {
+                "classlabel": "link",
+                "confidence": 0.998989999294281,
+                "fromid": 8,
+                "toid": 7
+              }
+            ],
+            "symbol": "Man"
+          },
+          {
+            "bbox": [
+              37,
+              123,
+              10,
+              12
+            ],
+            "center": [
+              42,
+              129
+            ],
+            "classlabel": "Fuc",
+            "confidence": 0.9999579191207886,
+            "id": 9,
+            "symbol": "Fuc"
+          }
+        ],
+        "monos_count": 10,
+        "orientation": "BT",
+        "root": {
+          "classlabel": "redend",
+          "confidence": 0.9996001124382019,
+          "mono_id": 5
+        },
+        "structure_errors": [],
+        "undirected_links": [
+          {
+            "classlabel": "link",
+            "confidence": 0.998989999294281,
+            "mono_ids": [
+              3,
+              7
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.998989999294281,
+            "mono_ids": [
+              0,
+              3
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.998989999294281,
+            "mono_ids": [
+              4,
+              6
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.998989999294281,
+            "mono_ids": [
+              6,
+              8
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.998989999294281,
+            "mono_ids": [
+              1,
+              4
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.998989999294281,
+            "mono_ids": [
+              2,
+              8
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.998989999294281,
+            "mono_ids": [
+              7,
+              8
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.998989999294281,
+            "mono_ids": [
+              5,
+              9
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.998989999294281,
+            "mono_ids": [
+              2,
+              5
+            ]
+          }
+        ],
+        "width": 70
+      },
+      {
+        "IUPAC": "NeuAc?2-?Gal?1-?GlcNAc?1-?Man?1-?(NeuAc?2-?Gal?1-?GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?(Fuc?1-?)GlcNAc",
+        "accession": "G69616RY",
+        "bbox": [
+          1012,
+          240,
+          69,
+          242
+        ],
+        "classid": 0,
+        "classlabel": "glycan",
+        "composition_str": "GlcNAc(4)NeuAc(2)Fuc(1)Man(3)Gal(2)",
+        "errors": [],
+        "extracted_image_path": "extracted_figures/extracted_images/33-2.png",
+        "glyImage": "https://glymage.glyomics.org//image/hash/c7cc6a2afccd3d8e8ef8087d9284433a.svg",
+        "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G69616RY",
+        "height": 241,
+        "id": 2,
+        "image_name": "33-2.png",
+        "image_path": "extracted_figures/images/33-2.png",
+        "linkexpl": "Extracted successfully using accession",
+        "links_count": 12,
+        "monos": [
+          {
+            "bbox": [
+              1,
+              0,
+              10,
+              10
+            ],
+            "center": [
+              6,
+              5
+            ],
+            "classlabel": "NeuAc",
+            "confidence": 0.9998646974563599,
+            "id": 0,
+            "symbol": "NeuAc"
+          },
+          {
+            "bbox": [
+              26,
+              0,
+              9,
+              10
+            ],
+            "center": [
+              30,
+              5
+            ],
+            "classlabel": "NeuAc",
+            "confidence": 0.9996984601020813,
+            "id": 1,
+            "symbol": "NeuAc"
+          },
+          {
+            "bbox": [
+              26,
+              25,
+              10,
+              10
+            ],
+            "center": [
+              31,
+              30
+            ],
+            "classlabel": "Gal",
+            "confidence": 0.9997867941856384,
+            "id": 2,
+            "links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.9623140692710876,
+                "fromid": 2,
+                "toid": 1
+              }
+            ],
+            "symbol": "Gal"
+          },
+          {
+            "bbox": [
+              1,
+              25,
+              10,
+              10
+            ],
+            "center": [
+              6,
+              30
+            ],
+            "classlabel": "Gal",
+            "confidence": 0.9991781115531921,
+            "id": 3,
+            "links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.9623140692710876,
+                "fromid": 3,
+                "toid": 0
+              }
+            ],
+            "symbol": "Gal"
+          },
+          {
+            "bbox": [
+              1,
+              50,
+              10,
+              9
+            ],
+            "center": [
+              6,
+              54
+            ],
+            "classlabel": "GlcNAc",
+            "confidence": 0.9999986886978149,
+            "id": 4,
+            "links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.9623140692710876,
+                "fromid": 4,
+                "toid": 3
+              }
+            ],
+            "symbol": "GlcNAc"
+          },
+          {
+            "bbox": [
+              26,
+              50,
+              10,
+              9
+            ],
+            "center": [
+              31,
+              54
+            ],
+            "classlabel": "GlcNAc",
+            "confidence": 0.9999983310699463,
+            "id": 5,
+            "links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.9623140692710876,
+                "fromid": 5,
+                "toid": 2
+              }
+            ],
+            "symbol": "GlcNAc"
+          },
+          {
+            "bbox": [
+              13,
+              123,
+              10,
+              10
+            ],
+            "center": [
+              18,
+              128
+            ],
+            "classlabel": "GlcNAc",
+            "confidence": 0.9999977350234985,
+            "id": 6,
+            "links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.9623140692710876,
+                "fromid": 6,
+                "toid": 8
+              }
+            ],
+            "symbol": "GlcNAc"
+          },
+          {
+            "bbox": [
+              13,
+              149,
+              10,
+              9
+            ],
+            "center": [
+              18,
+              153
+            ],
+            "classlabel": "GlcNAc",
+            "confidence": 0.9999921321868896,
+            "id": 7,
+            "links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.9623140692710876,
+                "fromid": 7,
+                "toid": 6
+              },
+              {
+                "classlabel": "link",
+                "confidence": 0.9623140692710876,
+                "fromid": 7,
+                "toid": 11
+              }
+            ],
+            "symbol": "GlcNAc"
+          },
+          {
+            "bbox": [
+              13,
+              99,
+              10,
+              10
+            ],
+            "center": [
+              18,
+              104
+            ],
+            "classlabel": "Man",
+            "confidence": 0.9999948740005493,
+            "id": 8,
+            "links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.9623140692710876,
+                "fromid": 8,
+                "toid": 10
+              },
+              {
+                "classlabel": "link",
+                "confidence": 0.9623140692710876,
+                "fromid": 8,
+                "toid": 9
+              }
+            ],
+            "symbol": "Man"
+          },
+          {
+            "bbox": [
+              26,
+              74,
+              10,
+              10
+            ],
+            "center": [
+              31,
+              79
+            ],
+            "classlabel": "Man",
+            "confidence": 0.9999936819076538,
+            "id": 9,
+            "links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.9623140692710876,
+                "fromid": 9,
+                "toid": 5
+              }
+            ],
+            "symbol": "Man"
+          },
+          {
+            "bbox": [
+              1,
+              74,
+              10,
+              10
+            ],
+            "center": [
+              6,
+              79
+            ],
+            "classlabel": "Man",
+            "confidence": 0.9999877214431763,
+            "id": 10,
+            "links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.9623140692710876,
+                "fromid": 10,
+                "toid": 4
+              }
+            ],
+            "symbol": "Man"
+          },
+          {
+            "bbox": [
+              38,
+              147,
+              10,
+              14
+            ],
+            "center": [
+              43,
+              154
+            ],
+            "classlabel": "Fuc",
+            "confidence": 0.999796450138092,
+            "id": 11,
+            "symbol": "Fuc"
+          }
+        ],
+        "monos_count": 12,
+        "orientation": "BT",
+        "root": {
+          "classlabel": "redend",
+          "confidence": 0.9994907975196838,
+          "mono_id": 7
+        },
+        "structure_errors": [
+          "Cycle found. Dropping least confident link: {'mono_ids': [2, 3], 'confidence': 0.9623140692710876, 'classlabel': 'link'}"
+        ],
+        "undirected_links": [
+          {
+            "classlabel": "link",
+            "confidence": 0.9623140692710876,
+            "mono_ids": [
+              4,
+              10
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.9623140692710876,
+            "mono_ids": [
+              3,
+              4
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.9623140692710876,
+            "mono_ids": [
+              2,
+              5
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.9623140692710876,
+            "mono_ids": [
+              5,
+              9
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.9623140692710876,
+            "mono_ids": [
+              1,
+              2
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.9623140692710876,
+            "mono_ids": [
+              0,
+              3
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.9623140692710876,
+            "mono_ids": [
+              6,
+              7
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.9623140692710876,
+            "mono_ids": [
+              8,
+              10
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.9623140692710876,
+            "mono_ids": [
+              6,
+              8
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.9623140692710876,
+            "mono_ids": [
+              8,
+              9
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.9623140692710876,
+            "mono_ids": [
+              7,
+              11
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.9623140692710876,
+            "mono_ids": [
+              2,
+              3
+            ]
+          }
+        ],
+        "width": 68
+      },
+      {
+        "IUPAC": "Gal?1-?GlcNAc?1-?Man?1-?(Gal?1-?GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?GlcNAc",
+        "accession": "G23934NS",
+        "bbox": [
+          705,
+          0,
+          59,
+          275
+        ],
+        "classid": 0,
+        "classlabel": "glycan",
+        "composition_str": "GlcNAc(4)Man(3)Gal(2)",
+        "errors": [],
+        "extracted_image_path": "extracted_figures/extracted_images/33-3.png",
+        "glyImage": "https://glymage.glyomics.org//image/hash/10a69e9f56ab9abcc614f0843a8636e8.svg",
+        "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G23934NS",
+        "height": 274,
+        "id": 3,
+        "image_name": "33-3.png",
+        "image_path": "extracted_figures/images/33-3.png",
+        "linkexpl": "Extracted successfully using accession",
+        "links_count": 8,
+        "monos": [
+          {
+            "bbox": [
+              25,
+              1,
+              11,
+              10
+            ],
+            "center": [
+              30,
+              6
+            ],
+            "classlabel": "Gal",
+            "confidence": 0.9999312162399292,
+            "id": 0,
+            "symbol": "Gal"
+          },
+          {
+            "bbox": [
+              1,
+              1,
+              11,
+              10
+            ],
+            "center": [
+              6,
+              6
+            ],
+            "classlabel": "Gal",
+            "confidence": 0.9911449551582336,
+            "id": 1,
+            "symbol": "Gal"
+          },
+          {
+            "bbox": [
+              25,
+              25,
+              10,
+              10
+            ],
+            "center": [
+              30,
+              30
+            ],
+            "classlabel": "GlcNAc",
+            "confidence": 0.9999994039535522,
+            "id": 2,
+            "links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.9996309280395508,
+                "fromid": 2,
+                "toid": 0
+              }
+            ],
+            "symbol": "GlcNAc"
+          },
+          {
+            "bbox": [
+              1,
+              25,
+              10,
+              10
+            ],
+            "center": [
+              6,
+              30
+            ],
+            "classlabel": "GlcNAc",
+            "confidence": 0.9999992847442627,
+            "id": 3,
+            "links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.9996309280395508,
+                "fromid": 3,
+                "toid": 1
+              }
+            ],
+            "symbol": "GlcNAc"
+          },
+          {
+            "bbox": [
+              13,
+              99,
+              10,
+              10
+            ],
+            "center": [
+              18,
+              104
+            ],
+            "classlabel": "GlcNAc",
+            "confidence": 0.9999992847442627,
+            "id": 4,
+            "links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.9996309280395508,
+                "fromid": 4,
+                "toid": 8
+              }
+            ],
+            "symbol": "GlcNAc"
+          },
+          {
+            "bbox": [
+              13,
+              124,
+              9,
+              10
+            ],
+            "center": [
+              17,
+              129
+            ],
+            "classlabel": "GlcNAc",
+            "confidence": 0.9999991655349731,
+            "id": 5,
+            "links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.9996309280395508,
+                "fromid": 5,
+                "toid": 4
+              }
+            ],
+            "symbol": "GlcNAc"
+          },
+          {
+            "bbox": [
+              25,
+              50,
+              10,
+              10
+            ],
+            "center": [
+              30,
+              55
+            ],
+            "classlabel": "Man",
+            "confidence": 0.9999936819076538,
+            "id": 6,
+            "links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.9996309280395508,
+                "fromid": 6,
+                "toid": 2
+              }
+            ],
+            "symbol": "Man"
+          },
+          {
+            "bbox": [
+              1,
+              50,
+              10,
+              10
+            ],
+            "center": [
+              6,
+              55
+            ],
+            "classlabel": "Man",
+            "confidence": 0.9999935626983643,
+            "id": 7,
+            "links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.9996309280395508,
+                "fromid": 7,
+                "toid": 3
+              }
+            ],
+            "symbol": "Man"
+          },
+          {
+            "bbox": [
+              14,
+              74,
+              9,
+              10
+            ],
+            "center": [
+              18,
+              79
+            ],
+            "classlabel": "Man",
+            "confidence": 0.9999933242797852,
+            "id": 8,
+            "links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.9996309280395508,
+                "fromid": 8,
+                "toid": 7
+              },
+              {
+                "classlabel": "link",
+                "confidence": 0.9996309280395508,
+                "fromid": 8,
+                "toid": 6
+              }
+            ],
+            "symbol": "Man"
+          }
+        ],
+        "monos_count": 9,
+        "orientation": "BT",
+        "root": {
+          "classlabel": "redend",
+          "confidence": 0.9999703168869019,
+          "mono_id": 5
+        },
+        "structure_errors": [],
+        "undirected_links": [
+          {
+            "classlabel": "link",
+            "confidence": 0.9996309280395508,
+            "mono_ids": [
+              7,
+              8
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.9996309280395508,
+            "mono_ids": [
+              0,
+              2
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.9996309280395508,
+            "mono_ids": [
+              6,
+              8
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.9996309280395508,
+            "mono_ids": [
+              2,
+              6
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.9996309280395508,
+            "mono_ids": [
+              3,
+              7
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.9996309280395508,
+            "mono_ids": [
+              1,
+              3
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.9996309280395508,
+            "mono_ids": [
+              4,
+              8
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.9996309280395508,
+            "mono_ids": [
+              4,
+              5
+            ]
+          }
+        ],
+        "width": 58
+      },
+      {
+        "IUPAC": "Gal?1-?GlcNAc?1-?Man?1-?(Gal?1-?GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?(Fuc?1-?)GlcNAc",
+        "accession": "G27658AJ",
+        "bbox": [
+          1292,
+          432,
+          68,
+          298
+        ],
+        "classid": 0,
+        "classlabel": "glycan",
+        "composition_str": "GlcNAc(4)Fuc(1)Man(3)Gal(2)",
+        "errors": [],
+        "extracted_image_path": "extracted_figures/extracted_images/33-4.png",
+        "glyImage": "https://glymage.glyomics.org//image/hash/b97f792e449933b5afa30d13451dad72.svg",
+        "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G27658AJ",
+        "height": 297,
+        "id": 4,
+        "image_name": "33-4.png",
+        "image_path": "extracted_figures/images/33-4.png",
+        "linkexpl": "Extracted successfully using accession",
+        "links_count": 9,
+        "monos": [
+          {
+            "bbox": [
+              25,
+              0,
+              10,
+              10
+            ],
+            "center": [
+              30,
+              5
+            ],
+            "classlabel": "Gal",
+            "confidence": 0.999884843826294,
+            "id": 0,
+            "symbol": "Gal"
+          },
+          {
+            "bbox": [
+              0,
+              0,
+              10,
+              10
+            ],
+            "center": [
+              5,
+              5
+            ],
+            "classlabel": "Gal",
+            "confidence": 0.9997982382774353,
+            "id": 1,
+            "symbol": "Gal"
+          },
+          {
+            "bbox": [
+              1,
+              26,
+              10,
+              9
+            ],
+            "center": [
+              6,
+              30
+            ],
+            "classlabel": "GlcNAc",
+            "confidence": 0.9999991655349731,
+            "id": 2,
+            "links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.9434018135070801,
+                "fromid": 2,
+                "toid": 1
+              }
+            ],
+            "symbol": "GlcNAc"
+          },
+          {
+            "bbox": [
+              25,
+              26,
+              10,
+              10
+            ],
+            "center": [
+              30,
+              31
+            ],
+            "classlabel": "GlcNAc",
+            "confidence": 0.9999988079071045,
+            "id": 3,
+            "links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.9434018135070801,
+                "fromid": 3,
+                "toid": 0
+              }
+            ],
+            "symbol": "GlcNAc"
+          },
+          {
+            "bbox": [
+              13,
+              99,
+              10,
+              10
+            ],
+            "center": [
+              18,
+              104
+            ],
+            "classlabel": "GlcNAc",
+            "confidence": 0.9999983310699463,
+            "id": 4,
+            "links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.9434018135070801,
+                "fromid": 4,
+                "toid": 8
+              }
+            ],
+            "symbol": "GlcNAc"
+          },
+          {
+            "bbox": [
+              12,
+              125,
+              11,
+              9
+            ],
+            "center": [
+              17,
+              129
+            ],
+            "classlabel": "GlcNAc",
+            "confidence": 0.9999951124191284,
+            "id": 5,
+            "links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.9434018135070801,
+                "fromid": 5,
+                "toid": 4
+              },
+              {
+                "classlabel": "link",
+                "confidence": 0.9434018135070801,
+                "fromid": 5,
+                "toid": 9
+              }
+            ],
+            "symbol": "GlcNAc"
+          },
+          {
+            "bbox": [
+              0,
+              50,
+              10,
+              10
+            ],
+            "center": [
+              5,
+              55
+            ],
+            "classlabel": "Man",
+            "confidence": 0.9999923706054688,
+            "id": 6,
+            "links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.9434018135070801,
+                "fromid": 6,
+                "toid": 2
+              }
+            ],
+            "symbol": "Man"
+          },
+          {
+            "bbox": [
+              25,
+              50,
+              10,
+              10
+            ],
+            "center": [
+              30,
+              55
+            ],
+            "classlabel": "Man",
+            "confidence": 0.9999918937683105,
+            "id": 7,
+            "links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.9434018135070801,
+                "fromid": 7,
+                "toid": 3
+              }
+            ],
+            "symbol": "Man"
+          },
+          {
+            "bbox": [
+              13,
+              75,
+              10,
+              10
+            ],
+            "center": [
+              18,
+              80
+            ],
+            "classlabel": "Man",
+            "confidence": 0.9999895095825195,
+            "id": 8,
+            "links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.9434018135070801,
+                "fromid": 8,
+                "toid": 7
+              },
+              {
+                "classlabel": "link",
+                "confidence": 0.9434018135070801,
+                "fromid": 8,
+                "toid": 6
+              }
+            ],
+            "symbol": "Man"
+          },
+          {
+            "bbox": [
+              38,
+              123,
+              10,
+              13
+            ],
+            "center": [
+              43,
+              129
+            ],
+            "classlabel": "Fuc",
+            "confidence": 0.9999116659164429,
+            "id": 9,
+            "symbol": "Fuc"
+          }
+        ],
+        "monos_count": 10,
+        "orientation": "BT",
+        "root": {
+          "classlabel": "redend",
+          "confidence": 0.999958872795105,
+          "mono_id": 5
+        },
+        "structure_errors": [],
+        "undirected_links": [
+          {
+            "classlabel": "link",
+            "confidence": 0.9434018135070801,
+            "mono_ids": [
+              2,
+              6
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.9434018135070801,
+            "mono_ids": [
+              3,
+              7
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.9434018135070801,
+            "mono_ids": [
+              7,
+              8
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.9434018135070801,
+            "mono_ids": [
+              4,
+              8
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.9434018135070801,
+            "mono_ids": [
+              0,
+              3
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.9434018135070801,
+            "mono_ids": [
+              1,
+              2
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.9434018135070801,
+            "mono_ids": [
+              6,
+              8
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.9434018135070801,
+            "mono_ids": [
+              4,
+              5
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.9434018135070801,
+            "mono_ids": [
+              5,
+              9
+            ]
+          }
+        ],
+        "width": 67
+      },
+      {
+        "IUPAC": "",
+        "accession": "G45552IY",
+        "bbox": [
+          801,
+          777,
+          93,
+          204
+        ],
+        "classid": 0,
+        "classlabel": "glycan",
+        "composition_str": "GlcNAc(2)Man(7)",
+        "errors": [
+          "Unable to identify all linkages in the glycan structure."
+        ],
+        "extracted_image_path": "extracted_figures/extracted_images/33-5.png",
+        "glyImage": "https://glymage.glyomics.org//image/hash/ff3db021b052abc2df07e86c27497255.svg",
+        "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G45552IY",
+        "height": 203,
+        "id": 5,
+        "image_name": "33-5.png",
+        "image_path": "extracted_figures/images/33-5.png",
+        "linkexpl": "Extracted successfully using accession",
+        "links_count": 10,
+        "monos": [
+          {
+            "bbox": [
+              37,
+              49,
+              10,
+              10
+            ],
+            "center": [
+              42,
+              54
+            ],
+            "classlabel": "Man",
+            "confidence": 0.999988317489624,
+            "id": 0,
+            "symbol": "Man"
+          },
+          {
+            "bbox": [
+              25,
+              24,
+              10,
+              11
+            ],
+            "center": [
+              30,
+              29
+            ],
+            "classlabel": "Man",
+            "confidence": 0.9999853372573853,
+            "id": 1,
+            "symbol": "Man"
+          },
+          {
+            "bbox": [
+              0,
+              24,
+              10,
+              11
+            ],
+            "center": [
+              5,
+              29
+            ],
+            "classlabel": "Man",
+            "confidence": 0.999983549118042,
+            "id": 2,
+            "symbol": "Man"
+          },
+          {
+            "bbox": [
+              49,
+              25,
+              10,
+              10
+            ],
+            "center": [
+              54,
+              30
+            ],
+            "classlabel": "Man",
+            "confidence": 0.9999744892120361,
+            "id": 3,
+            "symbol": "Man"
+          },
+          {
+            "bbox": [
+              0,
+              49,
+              9,
+              11
+            ],
+            "center": [
+              4,
+              54
+            ],
+            "classlabel": "Man",
+            "confidence": 0.9999716281890869,
+            "id": 4,
+            "symbol": "Man"
+          },
+          {
+            "bbox": [
+              19,
+              74,
+              10,
+              10
+            ],
+            "center": [
+              24,
+              79
+            ],
+            "classlabel": "Man",
+            "confidence": 0.999963641166687,
+            "id": 5,
+            "symbol": "Man"
+          },
+          {
+            "bbox": [
+              49,
+              0,
+              10,
+              10
+            ],
+            "center": [
+              54,
+              5
+            ],
+            "classlabel": "Man",
+            "confidence": 0.9999401569366455,
+            "id": 6,
+            "symbol": "Man"
+          },
+          {
+            "bbox": [
+              19,
+              99,
+              10,
+              10
+            ],
+            "center": [
+              24,
+              104
+            ],
+            "classlabel": "GlcNAc",
+            "confidence": 0.9999985694885254,
+            "id": 7,
+            "symbol": "GlcNAc"
+          },
+          {
+            "bbox": [
+              19,
+              123,
+              10,
+              10
+            ],
+            "center": [
+              24,
+              128
+            ],
+            "classlabel": "GlcNAc",
+            "confidence": 0.9999963045120239,
+            "id": 8,
+            "symbol": "GlcNAc"
+          }
+        ],
+        "monos_count": 9,
+        "orientation": "RL",
+        "root": {
+          "classlabel": "redend",
+          "confidence": 0.9999066591262817,
+          "mono_id": 8
+        },
+        "structure_errors": [
+          "Cycle detected at node '0' (visited from node '1')."
+        ],
+        "undirected_links": [
+          {
+            "classlabel": "link",
+            "confidence": 0.8939780592918396,
+            "mono_ids": [
+              0,
+              5
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.8939780592918396,
+            "mono_ids": [
+              2,
+              4
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.8939780592918396,
+            "mono_ids": [
+              3,
+              6
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.8939780592918396,
+            "mono_ids": [
+              4,
+              5
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.8939780592918396,
+            "mono_ids": [
+              0,
+              3
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.8939780592918396,
+            "mono_ids": [
+              0,
+              1
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.8939780592918396,
+            "mono_ids": [
+              5,
+              7
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.8939780592918396,
+            "mono_ids": [
+              7,
+              8
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.8939780592918396,
+            "mono_ids": [
+              1,
+              4
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.8939780592918396,
+            "mono_ids": [
+              1,
+              2
+            ]
+          }
+        ],
+        "width": 92
+      },
+      {
+        "IUPAC": "GlcNAc?1-?Man?1-?(GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?(Fuc?1-?)GlcNAc",
+        "accession": "G72398VP",
+        "bbox": [
+          278,
+          178,
+          75,
+          175
+        ],
+        "classid": 0,
+        "classlabel": "glycan",
+        "composition_str": "GlcNAc(4)Fuc(1)Man(3)",
+        "errors": [],
+        "extracted_image_path": "extracted_figures/extracted_images/33-6.png",
+        "glyImage": "https://glymage.glyomics.org//image/hash/16912ef2edd768530c2d77f97f544b03.svg",
+        "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G72398VP",
+        "height": 174,
+        "id": 6,
+        "image_name": "33-6.png",
+        "image_path": "extracted_figures/images/33-6.png",
+        "linkexpl": "Extracted successfully using accession",
+        "links_count": 7,
+        "monos": [
+          {
+            "bbox": [
+              12,
+              74,
+              10,
+              10
+            ],
+            "center": [
+              17,
+              79
+            ],
+            "classlabel": "GlcNAc",
+            "confidence": 0.9999994039535522,
+            "id": 0,
+            "links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.9993922114372253,
+                "fromid": 0,
+                "toid": 6
+              }
+            ],
+            "symbol": "GlcNAc"
+          },
+          {
+            "bbox": [
+              12,
+              99,
+              10,
+              10
+            ],
+            "center": [
+              17,
+              104
+            ],
+            "classlabel": "GlcNAc",
+            "confidence": 0.999998927116394,
+            "id": 1,
+            "links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.9993922114372253,
+                "fromid": 1,
+                "toid": 7
+              },
+              {
+                "classlabel": "link",
+                "confidence": 0.9993922114372253,
+                "fromid": 1,
+                "toid": 0
+              }
+            ],
+            "symbol": "GlcNAc"
+          },
+          {
+            "bbox": [
+              0,
+              0,
+              10,
+              10
+            ],
+            "center": [
+              5,
+              5
+            ],
+            "classlabel": "GlcNAc",
+            "confidence": 0.9999988079071045,
+            "id": 2,
+            "symbol": "GlcNAc"
+          },
+          {
+            "bbox": [
+              25,
+              1,
+              10,
+              9
+            ],
+            "center": [
+              30,
+              5
+            ],
+            "classlabel": "GlcNAc",
+            "confidence": 0.9999988079071045,
+            "id": 3,
+            "symbol": "GlcNAc"
+          },
+          {
+            "bbox": [
+              25,
+              25,
+              10,
+              10
+            ],
+            "center": [
+              30,
+              30
+            ],
+            "classlabel": "Man",
+            "confidence": 0.9999939203262329,
+            "id": 4,
+            "links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.9993922114372253,
+                "fromid": 4,
+                "toid": 3
+              }
+            ],
+            "symbol": "Man"
+          },
+          {
+            "bbox": [
+              0,
+              25,
+              10,
+              11
+            ],
+            "center": [
+              5,
+              30
+            ],
+            "classlabel": "Man",
+            "confidence": 0.9999912977218628,
+            "id": 5,
+            "links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.9993922114372253,
+                "fromid": 5,
+                "toid": 2
+              }
+            ],
+            "symbol": "Man"
+          },
+          {
+            "bbox": [
+              12,
+              49,
+              10,
+              10
+            ],
+            "center": [
+              17,
+              54
+            ],
+            "classlabel": "Man",
+            "confidence": 0.9999912977218628,
+            "id": 6,
+            "links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.9993922114372253,
+                "fromid": 6,
+                "toid": 4
+              },
+              {
+                "classlabel": "link",
+                "confidence": 0.9993922114372253,
+                "fromid": 6,
+                "toid": 5
+              }
+            ],
+            "symbol": "Man"
+          },
+          {
+            "bbox": [
+              38,
+              98,
+              10,
+              12
+            ],
+            "center": [
+              43,
+              104
+            ],
+            "classlabel": "Fuc",
+            "confidence": 0.9998430013656616,
+            "id": 7,
+            "symbol": "Fuc"
+          }
+        ],
+        "monos_count": 8,
+        "orientation": "BT",
+        "root": {
+          "classlabel": "redend",
+          "confidence": 0.9998586177825928,
+          "mono_id": 1
+        },
+        "structure_errors": [],
+        "undirected_links": [
+          {
+            "classlabel": "link",
+            "confidence": 0.9993922114372253,
+            "mono_ids": [
+              4,
+              6
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.9993922114372253,
+            "mono_ids": [
+              5,
+              6
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.9993922114372253,
+            "mono_ids": [
+              2,
+              5
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.9993922114372253,
+            "mono_ids": [
+              0,
+              6
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.9993922114372253,
+            "mono_ids": [
+              1,
+              7
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.9993922114372253,
+            "mono_ids": [
+              3,
+              4
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.9993922114372253,
+            "mono_ids": [
+              0,
+              1
+            ]
+          }
+        ],
+        "width": 74
+      },
+      {
+        "IUPAC": "Gal?1-?GlcNAc?1-?Man?1-?(Gal?1-?GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?(Fuc?1-?)GlcNAc",
+        "accession": "G27658AJ",
+        "bbox": [
+          1120,
+          458,
+          73,
+          267
+        ],
+        "classid": 0,
+        "classlabel": "glycan",
+        "composition_str": "GlcNAc(4)Fuc(1)Man(3)Gal(2)",
+        "errors": [],
+        "extracted_image_path": "extracted_figures/extracted_images/33-7.png",
+        "glyImage": "https://glymage.glyomics.org//image/hash/b97f792e449933b5afa30d13451dad72.svg",
+        "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G27658AJ",
+        "height": 266,
+        "id": 7,
+        "image_name": "33-7.png",
+        "image_path": "extracted_figures/images/33-7.png",
+        "linkexpl": "Extracted successfully using accession",
+        "links_count": 9,
+        "monos": [
+          {
+            "bbox": [
+              0,
+              1,
+              10,
+              10
+            ],
+            "center": [
+              5,
+              6
+            ],
+            "classlabel": "Gal",
+            "confidence": 0.9999464750289917,
+            "id": 0,
+            "symbol": "Gal"
+          },
+          {
+            "bbox": [
+              25,
+              0,
+              10,
+              10
+            ],
+            "center": [
+              30,
+              5
+            ],
+            "classlabel": "Gal",
+            "confidence": 0.9998925924301147,
+            "id": 1,
+            "symbol": "Gal"
+          },
+          {
+            "bbox": [
+              0,
+              26,
+              10,
+              9
+            ],
+            "center": [
+              5,
+              30
+            ],
+            "classlabel": "GlcNAc",
+            "confidence": 0.9999990463256836,
+            "id": 2,
+            "links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.9399938583374023,
+                "fromid": 2,
+                "toid": 0
+              }
+            ],
+            "symbol": "GlcNAc"
+          },
+          {
+            "bbox": [
+              25,
+              26,
+              10,
+              10
+            ],
+            "center": [
+              30,
+              31
+            ],
+            "classlabel": "GlcNAc",
+            "confidence": 0.9999988079071045,
+            "id": 3,
+            "links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.9399938583374023,
+                "fromid": 3,
+                "toid": 1
+              }
+            ],
+            "symbol": "GlcNAc"
+          },
+          {
+            "bbox": [
+              13,
+              99,
+              10,
+              10
+            ],
+            "center": [
+              18,
+              104
+            ],
+            "classlabel": "GlcNAc",
+            "confidence": 0.9999978542327881,
+            "id": 4,
+            "links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.9399938583374023,
+                "fromid": 4,
+                "toid": 8
+              }
+            ],
+            "symbol": "GlcNAc"
+          },
+          {
+            "bbox": [
+              12,
+              125,
+              11,
+              9
+            ],
+            "center": [
+              17,
+              129
+            ],
+            "classlabel": "GlcNAc",
+            "confidence": 0.9999936819076538,
+            "id": 5,
+            "links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.9399938583374023,
+                "fromid": 5,
+                "toid": 4
+              },
+              {
+                "classlabel": "link",
+                "confidence": 0.9399938583374023,
+                "fromid": 5,
+                "toid": 9
+              }
+            ],
+            "symbol": "GlcNAc"
+          },
+          {
+            "bbox": [
+              0,
+              50,
+              10,
+              10
+            ],
+            "center": [
+              5,
+              55
+            ],
+            "classlabel": "Man",
+            "confidence": 0.9999922513961792,
+            "id": 6,
+            "links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.9399938583374023,
+                "fromid": 6,
+                "toid": 2
+              }
+            ],
+            "symbol": "Man"
+          },
+          {
+            "bbox": [
+              25,
+              50,
+              10,
+              10
+            ],
+            "center": [
+              30,
+              55
+            ],
+            "classlabel": "Man",
+            "confidence": 0.9999916553497314,
+            "id": 7,
+            "links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.9399938583374023,
+                "fromid": 7,
+                "toid": 3
+              }
+            ],
+            "symbol": "Man"
+          },
+          {
+            "bbox": [
+              13,
+              75,
+              10,
+              10
+            ],
+            "center": [
+              18,
+              80
+            ],
+            "classlabel": "Man",
+            "confidence": 0.9999909400939941,
+            "id": 8,
+            "links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.9399938583374023,
+                "fromid": 8,
+                "toid": 7
+              },
+              {
+                "classlabel": "link",
+                "confidence": 0.9399938583374023,
+                "fromid": 8,
+                "toid": 6
+              }
+            ],
+            "symbol": "Man"
+          },
+          {
+            "bbox": [
+              37,
+              123,
+              10,
+              12
+            ],
+            "center": [
+              42,
+              129
+            ],
+            "classlabel": "Fuc",
+            "confidence": 0.9997346997261047,
+            "id": 9,
+            "symbol": "Fuc"
+          }
+        ],
+        "monos_count": 10,
+        "orientation": "BT",
+        "root": {
+          "classlabel": "redend",
+          "confidence": 0.9999654293060303,
+          "mono_id": 5
+        },
+        "structure_errors": [],
+        "undirected_links": [
+          {
+            "classlabel": "link",
+            "confidence": 0.9399938583374023,
+            "mono_ids": [
+              2,
+              6
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.9399938583374023,
+            "mono_ids": [
+              3,
+              7
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.9399938583374023,
+            "mono_ids": [
+              7,
+              8
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.9399938583374023,
+            "mono_ids": [
+              4,
+              8
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.9399938583374023,
+            "mono_ids": [
+              1,
+              3
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.9399938583374023,
+            "mono_ids": [
+              6,
+              8
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.9399938583374023,
+            "mono_ids": [
+              0,
+              2
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.9399938583374023,
+            "mono_ids": [
+              4,
+              5
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.9399938583374023,
+            "mono_ids": [
+              5,
+              9
+            ]
+          }
+        ],
+        "width": 72
+      },
+      {
+        "IUPAC": "GlcNAc?1-?Man?1-?(GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?(Fuc?1-?)GlcNAc",
+        "accession": "G72398VP",
+        "bbox": [
+          674,
+          332,
+          65,
+          249
+        ],
+        "classid": 0,
+        "classlabel": "glycan",
+        "composition_str": "GlcNAc(4)Fuc(1)Man(3)",
+        "errors": [],
+        "extracted_image_path": "extracted_figures/extracted_images/33-8.png",
+        "glyImage": "https://glymage.glyomics.org//image/hash/16912ef2edd768530c2d77f97f544b03.svg",
+        "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G72398VP",
+        "height": 248,
+        "id": 8,
+        "image_name": "33-8.png",
+        "image_path": "extracted_figures/images/33-8.png",
+        "linkexpl": "Extracted successfully using accession",
+        "links_count": 7,
+        "monos": [
+          {
+            "bbox": [
+              0,
+              0,
+              10,
+              10
+            ],
+            "center": [
+              5,
+              5
+            ],
+            "classlabel": "GlcNAc",
+            "confidence": 0.9999991655349731,
+            "id": 0,
+            "symbol": "GlcNAc"
+          },
+          {
+            "bbox": [
+              25,
+              0,
+              10,
+              10
+            ],
+            "center": [
+              30,
+              5
+            ],
+            "classlabel": "GlcNAc",
+            "confidence": 0.9999990463256836,
+            "id": 1,
+            "symbol": "GlcNAc"
+          },
+          {
+            "bbox": [
+              13,
+              74,
+              10,
+              10
+            ],
+            "center": [
+              18,
+              79
+            ],
+            "classlabel": "GlcNAc",
+            "confidence": 0.999998927116394,
+            "id": 2,
+            "links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.7560410499572754,
+                "fromid": 2,
+                "toid": 5
+              }
+            ],
+            "symbol": "GlcNAc"
+          },
+          {
+            "bbox": [
+              13,
+              99,
+              10,
+              10
+            ],
+            "center": [
+              18,
+              104
+            ],
+            "classlabel": "GlcNAc",
+            "confidence": 0.9999988079071045,
+            "id": 3,
+            "links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.7560410499572754,
+                "fromid": 3,
+                "toid": 7
+              },
+              {
+                "classlabel": "link",
+                "confidence": 0.7560410499572754,
+                "fromid": 3,
+                "toid": 2
+              }
+            ],
+            "symbol": "GlcNAc"
+          },
+          {
+            "bbox": [
+              1,
+              24,
+              9,
+              10
+            ],
+            "center": [
+              5,
+              29
+            ],
+            "classlabel": "Man",
+            "confidence": 0.9999947547912598,
+            "id": 4,
+            "links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.7560410499572754,
+                "fromid": 4,
+                "toid": 0
+              }
+            ],
+            "symbol": "Man"
+          },
+          {
+            "bbox": [
+              13,
+              49,
+              10,
+              10
+            ],
+            "center": [
+              18,
+              54
+            ],
+            "classlabel": "Man",
+            "confidence": 0.9999912977218628,
+            "id": 5,
+            "links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.7560410499572754,
+                "fromid": 5,
+                "toid": 6
+              },
+              {
+                "classlabel": "link",
+                "confidence": 0.7560410499572754,
+                "fromid": 5,
+                "toid": 4
+              }
+            ],
+            "symbol": "Man"
+          },
+          {
+            "bbox": [
+              25,
+              24,
+              10,
+              10
+            ],
+            "center": [
+              30,
+              29
+            ],
+            "classlabel": "Man",
+            "confidence": 0.9999911785125732,
+            "id": 6,
+            "links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.7560410499572754,
+                "fromid": 6,
+                "toid": 1
+              }
+            ],
+            "symbol": "Man"
+          },
+          {
+            "bbox": [
+              37,
+              98,
+              10,
+              11
+            ],
+            "center": [
+              42,
+              103
+            ],
+            "classlabel": "Fuc",
+            "confidence": 0.9999246597290039,
+            "id": 7,
+            "symbol": "Fuc"
+          }
+        ],
+        "monos_count": 8,
+        "orientation": "BT",
+        "root": {
+          "classlabel": "redend",
+          "confidence": 0.9999690055847168,
+          "mono_id": 3
+        },
+        "structure_errors": [],
+        "undirected_links": [
+          {
+            "classlabel": "link",
+            "confidence": 0.7560410499572754,
+            "mono_ids": [
+              5,
+              6
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.7560410499572754,
+            "mono_ids": [
+              2,
+              5
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.7560410499572754,
+            "mono_ids": [
+              4,
+              5
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.7560410499572754,
+            "mono_ids": [
+              0,
+              4
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.7560410499572754,
+            "mono_ids": [
+              3,
+              7
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.7560410499572754,
+            "mono_ids": [
+              1,
+              6
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.7560410499572754,
+            "mono_ids": [
+              2,
+              3
+            ]
+          }
+        ],
+        "width": 64
+      },
+      {
+        "IUPAC": "NeuAc?2-?Gal?1-?GlcNAc?1-?Man?1-?(NeuAc?2-?Gal?1-?GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?GlcNAc",
+        "accession": "G97599MN",
+        "bbox": [
+          924,
+          327,
+          59,
+          254
+        ],
+        "classid": 0,
+        "classlabel": "glycan",
+        "composition_str": "GlcNAc(4)NeuAc(2)Man(3)Gal(2)",
+        "errors": [],
+        "extracted_image_path": "extracted_figures/extracted_images/33-9.png",
+        "glyImage": "https://glymage.glyomics.org//image/hash/a97a683b6ecb62fb212b4f8363aa2dc5.svg",
+        "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G97599MN",
+        "height": 253,
+        "id": 9,
+        "image_name": "33-9.png",
+        "image_path": "extracted_figures/images/33-9.png",
+        "linkexpl": "Extracted successfully using accession",
+        "links_count": 10,
+        "monos": [
+          {
+            "bbox": [
+              25,
+              0,
+              10,
+              10
+            ],
+            "center": [
+              30,
+              5
+            ],
+            "classlabel": "NeuAc",
+            "confidence": 0.9995009899139404,
+            "id": 0,
+            "symbol": "NeuAc"
+          },
+          {
+            "bbox": [
+              1,
+              0,
+              9,
+              9
+            ],
+            "center": [
+              5,
+              4
+            ],
+            "classlabel": "NeuAc",
+            "confidence": 0.999495267868042,
+            "id": 1,
+            "symbol": "NeuAc"
+          },
+          {
+            "bbox": [
+              25,
+              25,
+              10,
+              10
+            ],
+            "center": [
+              30,
+              30
+            ],
+            "classlabel": "Gal",
+            "confidence": 0.9999864101409912,
+            "id": 2,
+            "links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.8799723982810974,
+                "fromid": 2,
+                "toid": 0
+              }
+            ],
+            "symbol": "Gal"
+          },
+          {
+            "bbox": [
+              1,
+              25,
+              10,
+              10
+            ],
+            "center": [
+              6,
+              30
+            ],
+            "classlabel": "Gal",
+            "confidence": 0.9999678134918213,
+            "id": 3,
+            "links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.8799723982810974,
+                "fromid": 3,
+                "toid": 1
+              }
+            ],
+            "symbol": "Gal"
+          },
+          {
+            "bbox": [
+              25,
+              49,
+              10,
+              10
+            ],
+            "center": [
+              30,
+              54
+            ],
+            "classlabel": "GlcNAc",
+            "confidence": 0.9999994039535522,
+            "id": 4,
+            "links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.8799723982810974,
+                "fromid": 4,
+                "toid": 2
+              }
+            ],
+            "symbol": "GlcNAc"
+          },
+          {
+            "bbox": [
+              1,
+              50,
+              10,
+              9
+            ],
+            "center": [
+              6,
+              54
+            ],
+            "classlabel": "GlcNAc",
+            "confidence": 0.9999992847442627,
+            "id": 5,
+            "links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.8799723982810974,
+                "fromid": 5,
+                "toid": 3
+              }
+            ],
+            "symbol": "GlcNAc"
+          },
+          {
+            "bbox": [
+              12,
+              148,
+              10,
+              10
+            ],
+            "center": [
+              17,
+              153
+            ],
+            "classlabel": "GlcNAc",
+            "confidence": 0.9999971389770508,
+            "id": 6,
+            "links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.8799723982810974,
+                "fromid": 6,
+                "toid": 7
+              }
+            ],
+            "symbol": "GlcNAc"
+          },
+          {
+            "bbox": [
+              13,
+              123,
+              10,
+              10
+            ],
+            "center": [
+              18,
+              128
+            ],
+            "classlabel": "GlcNAc",
+            "confidence": 0.9999961853027344,
+            "id": 7,
+            "links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.8799723982810974,
+                "fromid": 7,
+                "toid": 8
+              }
+            ],
+            "symbol": "GlcNAc"
+          },
+          {
+            "bbox": [
+              13,
+              99,
+              9,
+              10
+            ],
+            "center": [
+              17,
+              104
+            ],
+            "classlabel": "Man",
+            "confidence": 0.9999948740005493,
+            "id": 8,
+            "links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.8799723982810974,
+                "fromid": 8,
+                "toid": 10
+              },
+              {
+                "classlabel": "link",
+                "confidence": 0.8799723982810974,
+                "fromid": 8,
+                "toid": 9
+              }
+            ],
+            "symbol": "Man"
+          },
+          {
+            "bbox": [
+              25,
+              74,
+              10,
+              9
+            ],
+            "center": [
+              30,
+              78
+            ],
+            "classlabel": "Man",
+            "confidence": 0.9999935626983643,
+            "id": 9,
+            "links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.8799723982810974,
+                "fromid": 9,
+                "toid": 4
+              }
+            ],
+            "symbol": "Man"
+          },
+          {
+            "bbox": [
+              0,
+              74,
+              10,
+              10
+            ],
+            "center": [
+              5,
+              79
+            ],
+            "classlabel": "Man",
+            "confidence": 0.9999916553497314,
+            "id": 10,
+            "links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.8799723982810974,
+                "fromid": 10,
+                "toid": 5
+              }
+            ],
+            "symbol": "Man"
+          }
+        ],
+        "monos_count": 11,
+        "orientation": "BT",
+        "root": {
+          "classlabel": "redend",
+          "confidence": 0.9996281266212463,
+          "mono_id": 6
+        },
+        "structure_errors": [],
+        "undirected_links": [
+          {
+            "classlabel": "link",
+            "confidence": 0.8799723982810974,
+            "mono_ids": [
+              2,
+              4
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.8799723982810974,
+            "mono_ids": [
+              3,
+              5
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.8799723982810974,
+            "mono_ids": [
+              7,
+              8
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.8799723982810974,
+            "mono_ids": [
+              5,
+              10
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.8799723982810974,
+            "mono_ids": [
+              4,
+              9
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.8799723982810974,
+            "mono_ids": [
+              1,
+              3
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.8799723982810974,
+            "mono_ids": [
+              0,
+              2
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.8799723982810974,
+            "mono_ids": [
+              6,
+              7
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.8799723982810974,
+            "mono_ids": [
+              8,
+              10
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.8799723982810974,
+            "mono_ids": [
+              8,
+              9
+            ]
+          }
+        ],
+        "width": 58
+      },
+      {
+        "IUPAC": "Man?1-?Man?1-?(Man?1-?(Man?1-?)Man?1-?)Man?1-?GlcNAc?1-?GlcNAc",
+        "accession": "G64780OA",
+        "bbox": [
+          484,
+          791,
+          89,
+          181
+        ],
+        "classid": 0,
+        "classlabel": "glycan",
+        "composition_str": "GlcNAc(2)Man(6)",
+        "errors": [],
+        "extracted_image_path": "extracted_figures/extracted_images/33-10.png",
+        "glyImage": "https://glymage.glyomics.org//image/hash/f57be20142aac1b4bba4cca7eeccc3a8.svg",
+        "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G64780OA",
+        "height": 180,
+        "id": 10,
+        "image_name": "33-10.png",
+        "image_path": "extracted_figures/images/33-10.png",
+        "linkexpl": "Extracted successfully using accession",
+        "links_count": 8,
+        "monos": [
+          {
+            "bbox": [
+              37,
+              25,
+              10,
+              10
+            ],
+            "center": [
+              42,
+              30
+            ],
+            "classlabel": "Man",
+            "confidence": 0.9999823570251465,
+            "id": 0,
+            "links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.8092706799507141,
+                "fromid": 0,
+                "toid": 3
+              },
+              {
+                "classlabel": "link",
+                "confidence": 0.8092706799507141,
+                "fromid": 0,
+                "toid": 2
+              }
+            ],
+            "symbol": "Man"
+          },
+          {
+            "bbox": [
+              0,
+              25,
+              10,
+              10
+            ],
+            "center": [
+              5,
+              30
+            ],
+            "classlabel": "Man",
+            "confidence": 0.9999724626541138,
+            "id": 1,
+            "links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.8092706799507141,
+                "fromid": 1,
+                "toid": 4
+              }
+            ],
+            "symbol": "Man"
+          },
+          {
+            "bbox": [
+              25,
+              0,
+              10,
+              11
+            ],
+            "center": [
+              30,
+              5
+            ],
+            "classlabel": "Man",
+            "confidence": 0.9999701976776123,
+            "id": 2,
+            "symbol": "Man"
+          },
+          {
+            "bbox": [
+              50,
+              0,
+              10,
+              10
+            ],
+            "center": [
+              55,
+              5
+            ],
+            "classlabel": "Man",
+            "confidence": 0.9999691247940063,
+            "id": 3,
+            "symbol": "Man"
+          },
+          {
+            "bbox": [
+              1,
+              0,
+              9,
+              10
+            ],
+            "center": [
+              5,
+              5
+            ],
+            "classlabel": "Man",
+            "confidence": 0.9999618530273438,
+            "id": 4,
+            "symbol": "Man"
+          },
+          {
+            "bbox": [
+              19,
+              50,
+              10,
+              10
+            ],
+            "center": [
+              24,
+              55
+            ],
+            "classlabel": "Man",
+            "confidence": 0.9999586343765259,
+            "id": 5,
+            "links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.8092706799507141,
+                "fromid": 5,
+                "toid": 0
+              },
+              {
+                "classlabel": "link",
+                "confidence": 0.8092706799507141,
+                "fromid": 5,
+                "toid": 1
+              }
+            ],
+            "symbol": "Man"
+          },
+          {
+            "bbox": [
+              19,
+              75,
+              10,
+              10
+            ],
+            "center": [
+              24,
+              80
+            ],
+            "classlabel": "GlcNAc",
+            "confidence": 0.9999984502792358,
+            "id": 6,
+            "links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.8092706799507141,
+                "fromid": 6,
+                "toid": 5
+              }
+            ],
+            "symbol": "GlcNAc"
+          },
+          {
+            "bbox": [
+              19,
+              99,
+              10,
+              10
+            ],
+            "center": [
+              24,
+              104
+            ],
+            "classlabel": "GlcNAc",
+            "confidence": 0.999994158744812,
+            "id": 7,
+            "links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.8092706799507141,
+                "fromid": 7,
+                "toid": 6
+              }
+            ],
+            "symbol": "GlcNAc"
+          }
+        ],
+        "monos_count": 8,
+        "orientation": "BT",
+        "root": {
+          "classlabel": "redend",
+          "confidence": 0.9999659061431885,
+          "mono_id": 7
+        },
+        "structure_errors": [
+          "Cycle found. Dropping least confident link: {'mono_ids': [1, 2], 'confidence': 0.8092706799507141, 'classlabel': 'link'}"
+        ],
+        "undirected_links": [
+          {
+            "classlabel": "link",
+            "confidence": 0.8092706799507141,
+            "mono_ids": [
+              0,
+              5
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.8092706799507141,
+            "mono_ids": [
+              0,
+              3
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.8092706799507141,
+            "mono_ids": [
+              1,
+              5
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.8092706799507141,
+            "mono_ids": [
+              0,
+              2
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.8092706799507141,
+            "mono_ids": [
+              5,
+              6
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.8092706799507141,
+            "mono_ids": [
+              1,
+              4
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.8092706799507141,
+            "mono_ids": [
+              6,
+              7
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.8092706799507141,
+            "mono_ids": [
+              1,
+              2
+            ]
+          }
+        ],
+        "width": 88
+      },
+      {
+        "IUPAC": "",
+        "accession": "G55719HL",
+        "bbox": [
+          594,
+          795,
+          78,
+          186
+        ],
+        "classid": 0,
+        "classlabel": "glycan",
+        "composition_str": "GlcNAc(3)Man(5)Gal(1)",
+        "errors": [
+          "Unable to identify all linkages in the glycan structure."
+        ],
+        "extracted_image_path": "extracted_figures/extracted_images/33-11.png",
+        "glyImage": "https://glymage.glyomics.org//image/hash/d4899b142ea4b335166a8c5f70f4b2d7.svg",
+        "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G55719HL",
+        "height": 185,
+        "id": 11,
+        "image_name": "33-11.png",
+        "image_path": "extracted_figures/images/33-11.png",
+        "linkexpl": "Extracted successfully using accession",
+        "links_count": 10,
+        "monos": [
+          {
+            "bbox": [
+              0,
+              0,
+              11,
+              10
+            ],
+            "center": [
+              5,
+              5
+            ],
+            "classlabel": "Gal",
+            "confidence": 0.9999489784240723,
+            "id": 0,
+            "symbol": "Gal"
+          },
+          {
+            "bbox": [
+              0,
+              26,
+              10,
+              10
+            ],
+            "center": [
+              5,
+              31
+            ],
+            "classlabel": "GlcNAc",
+            "confidence": 0.9999980926513672,
+            "id": 1,
+            "symbol": "GlcNAc"
+          },
+          {
+            "bbox": [
+              19,
+              124,
+              10,
+              10
+            ],
+            "center": [
+              24,
+              129
+            ],
+            "classlabel": "GlcNAc",
+            "confidence": 0.9999969005584717,
+            "id": 2,
+            "symbol": "GlcNAc"
+          },
+          {
+            "bbox": [
+              19,
+              100,
+              10,
+              10
+            ],
+            "center": [
+              24,
+              105
+            ],
+            "classlabel": "GlcNAc",
+            "confidence": 0.999996542930603,
+            "id": 3,
+            "symbol": "GlcNAc"
+          },
+          {
+            "bbox": [
+              50,
+              25,
+              10,
+              11
+            ],
+            "center": [
+              55,
+              30
+            ],
+            "classlabel": "Man",
+            "confidence": 0.9999920129776001,
+            "id": 4,
+            "symbol": "Man"
+          },
+          {
+            "bbox": [
+              0,
+              50,
+              10,
+              10
+            ],
+            "center": [
+              5,
+              55
+            ],
+            "classlabel": "Man",
+            "confidence": 0.9999902248382568,
+            "id": 5,
+            "symbol": "Man"
+          },
+          {
+            "bbox": [
+              37,
+              50,
+              10,
+              10
+            ],
+            "center": [
+              42,
+              55
+            ],
+            "classlabel": "Man",
+            "confidence": 0.9999892711639404,
+            "id": 6,
+            "symbol": "Man"
+          },
+          {
+            "bbox": [
+              25,
+              25,
+              10,
+              11
+            ],
+            "center": [
+              30,
+              30
+            ],
+            "classlabel": "Man",
+            "confidence": 0.9999860525131226,
+            "id": 7,
+            "symbol": "Man"
+          },
+          {
+            "bbox": [
+              19,
+              75,
+              10,
+              10
+            ],
+            "center": [
+              24,
+              80
+            ],
+            "classlabel": "Man",
+            "confidence": 0.9999794960021973,
+            "id": 8,
+            "symbol": "Man"
+          }
+        ],
+        "monos_count": 9,
+        "orientation": "RL",
+        "root": {
+          "classlabel": "redend",
+          "confidence": 0.9999573230743408,
+          "mono_id": 2
+        },
+        "structure_errors": [
+          "Cycle detected at node '6' (visited from node '7')."
+        ],
+        "undirected_links": [
+          {
+            "classlabel": "link",
+            "confidence": 0.8289649486541748,
+            "mono_ids": [
+              1,
+              5
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.8289649486541748,
+            "mono_ids": [
+              6,
+              8
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.8289649486541748,
+            "mono_ids": [
+              0,
+              1
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.8289649486541748,
+            "mono_ids": [
+              5,
+              8
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.8289649486541748,
+            "mono_ids": [
+              4,
+              6
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.8289649486541748,
+            "mono_ids": [
+              3,
+              8
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.8289649486541748,
+            "mono_ids": [
+              6,
+              7
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.8289649486541748,
+            "mono_ids": [
+              0,
+              7
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.8289649486541748,
+            "mono_ids": [
+              2,
+              3
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.8289649486541748,
+            "mono_ids": [
+              5,
+              7
+            ]
+          }
+        ],
+        "width": 77
+      },
+      {
+        "IUPAC": "Man?1-?(Man?1-?)Man?1-?(GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?GlcNAc",
+        "accession": "G43463XA",
+        "bbox": [
+          374,
+          820,
+          89,
+          161
+        ],
+        "classid": 0,
+        "classlabel": "glycan",
+        "composition_str": "GlcNAc(3)Man(5)",
+        "errors": [],
+        "extracted_image_path": "extracted_figures/extracted_images/33-12.png",
+        "glyImage": "https://glymage.glyomics.org//image/hash/b35f5eb760dc8a2fa6ec340bde6e2d20.svg",
+        "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G43463XA",
+        "height": 160,
+        "id": 12,
+        "image_name": "33-12.png",
+        "image_path": "extracted_figures/images/33-12.png",
+        "linkexpl": "Extracted successfully using accession",
+        "links_count": 8,
+        "monos": [
+          {
+            "bbox": [
+              0,
+              0,
+              10,
+              10
+            ],
+            "center": [
+              5,
+              5
+            ],
+            "classlabel": "GlcNAc",
+            "confidence": 0.9999974966049194,
+            "id": 0,
+            "symbol": "GlcNAc"
+          },
+          {
+            "bbox": [
+              19,
+              99,
+              10,
+              10
+            ],
+            "center": [
+              24,
+              104
+            ],
+            "classlabel": "GlcNAc",
+            "confidence": 0.9999958276748657,
+            "id": 1,
+            "links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.8411768674850464,
+                "fromid": 1,
+                "toid": 2
+              }
+            ],
+            "symbol": "GlcNAc"
+          },
+          {
+            "bbox": [
+              19,
+              74,
+              10,
+              10
+            ],
+            "center": [
+              24,
+              79
+            ],
+            "classlabel": "GlcNAc",
+            "confidence": 0.999995231628418,
+            "id": 2,
+            "links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.8411768674850464,
+                "fromid": 2,
+                "toid": 6
+              }
+            ],
+            "symbol": "GlcNAc"
+          },
+          {
+            "bbox": [
+              37,
+              24,
+              10,
+              10
+            ],
+            "center": [
+              42,
+              29
+            ],
+            "classlabel": "Man",
+            "confidence": 0.9999922513961792,
+            "id": 3,
+            "links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.8411768674850464,
+                "fromid": 3,
+                "toid": 7
+              },
+              {
+                "classlabel": "link",
+                "confidence": 0.8411768674850464,
+                "fromid": 3,
+                "toid": 5
+              }
+            ],
+            "symbol": "Man"
+          },
+          {
+            "bbox": [
+              1,
+              24,
+              10,
+              10
+            ],
+            "center": [
+              6,
+              29
+            ],
+            "classlabel": "Man",
+            "confidence": 0.9999908208847046,
+            "id": 4,
+            "links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.8411768674850464,
+                "fromid": 4,
+                "toid": 0
+              }
+            ],
+            "symbol": "Man"
+          },
+          {
+            "bbox": [
+              25,
+              0,
+              10,
+              10
+            ],
+            "center": [
+              30,
+              5
+            ],
+            "classlabel": "Man",
+            "confidence": 0.9999879598617554,
+            "id": 5,
+            "symbol": "Man"
+          },
+          {
+            "bbox": [
+              19,
+              49,
+              10,
+              10
+            ],
+            "center": [
+              24,
+              54
+            ],
+            "classlabel": "Man",
+            "confidence": 0.9999698400497437,
+            "id": 6,
+            "links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.8411768674850464,
+                "fromid": 6,
+                "toid": 3
+              },
+              {
+                "classlabel": "link",
+                "confidence": 0.8411768674850464,
+                "fromid": 6,
+                "toid": 4
+              }
+            ],
+            "symbol": "Man"
+          },
+          {
+            "bbox": [
+              50,
+              0,
+              10,
+              10
+            ],
+            "center": [
+              55,
+              5
+            ],
+            "classlabel": "Man",
+            "confidence": 0.999969482421875,
+            "id": 7,
+            "symbol": "Man"
+          }
+        ],
+        "monos_count": 8,
+        "orientation": "BT",
+        "root": {
+          "classlabel": "redend",
+          "confidence": 0.999983549118042,
+          "mono_id": 1
+        },
+        "structure_errors": [
+          "Cycle found. Dropping least confident link: {'mono_ids': [4, 5], 'confidence': 0.8411768674850464, 'classlabel': 'link'}"
+        ],
+        "undirected_links": [
+          {
+            "classlabel": "link",
+            "confidence": 0.8411768674850464,
+            "mono_ids": [
+              3,
+              6
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.8411768674850464,
+            "mono_ids": [
+              4,
+              6
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.8411768674850464,
+            "mono_ids": [
+              2,
+              6
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.8411768674850464,
+            "mono_ids": [
+              0,
+              4
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.8411768674850464,
+            "mono_ids": [
+              3,
+              7
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.8411768674850464,
+            "mono_ids": [
+              3,
+              5
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.8411768674850464,
+            "mono_ids": [
+              1,
+              2
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.8411768674850464,
+            "mono_ids": [
+              4,
+              5
+            ]
+          }
+        ],
+        "width": 88
+      },
+      {
+        "IUPAC": "Man?1-?(Man?1-?)Man?1-?(Man?1-?)Man?1-?GlcNAc?1-?GlcNAc",
+        "accession": "G73636FD",
+        "bbox": [
+          319,
+          391,
+          70,
+          187
+        ],
+        "classid": 0,
+        "classlabel": "glycan",
+        "composition_str": "GlcNAc(2)Man(5)",
+        "errors": [],
+        "extracted_image_path": "extracted_figures/extracted_images/33-13.png",
+        "glyImage": "https://glymage.glyomics.org//image/hash/d701619b89c61c6984b8717060bbad05.svg",
+        "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G73636FD",
+        "height": 186,
+        "id": 13,
+        "image_name": "33-13.png",
+        "image_path": "extracted_figures/images/33-13.png",
+        "linkexpl": "Extracted successfully using accession",
+        "links_count": 7,
+        "monos": [
+          {
+            "bbox": [
+              25,
+              24,
+              10,
+              10
+            ],
+            "center": [
+              30,
+              29
+            ],
+            "classlabel": "Man",
+            "confidence": 0.9999916553497314,
+            "id": 0,
+            "links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.9895040392875671,
+                "fromid": 0,
+                "toid": 3
+              },
+              {
+                "classlabel": "link",
+                "confidence": 0.9895040392875671,
+                "fromid": 0,
+                "toid": 2
+              }
+            ],
+            "symbol": "Man"
+          },
+          {
+            "bbox": [
+              0,
+              24,
+              10,
+              10
+            ],
+            "center": [
+              5,
+              29
+            ],
+            "classlabel": "Man",
+            "confidence": 0.9999872446060181,
+            "id": 1,
+            "symbol": "Man"
+          },
+          {
+            "bbox": [
+              12,
+              0,
+              10,
+              10
+            ],
+            "center": [
+              17,
+              5
+            ],
+            "classlabel": "Man",
+            "confidence": 0.9999843835830688,
+            "id": 2,
+            "symbol": "Man"
+          },
+          {
+            "bbox": [
+              37,
+              0,
+              10,
+              10
+            ],
+            "center": [
+              42,
+              5
+            ],
+            "classlabel": "Man",
+            "confidence": 0.9999830722808838,
+            "id": 3,
+            "symbol": "Man"
+          },
+          {
+            "bbox": [
+              12,
+              49,
+              10,
+              10
+            ],
+            "center": [
+              17,
+              54
+            ],
+            "classlabel": "Man",
+            "confidence": 0.9999805688858032,
+            "id": 4,
+            "links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.9895040392875671,
+                "fromid": 4,
+                "toid": 0
+              },
+              {
+                "classlabel": "link",
+                "confidence": 0.9895040392875671,
+                "fromid": 4,
+                "toid": 1
+              }
+            ],
+            "symbol": "Man"
+          },
+          {
+            "bbox": [
+              12,
+              74,
+              10,
+              10
+            ],
+            "center": [
+              17,
+              79
+            ],
+            "classlabel": "GlcNAc",
+            "confidence": 0.9999995231628418,
+            "id": 5,
+            "links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.9895040392875671,
+                "fromid": 5,
+                "toid": 4
+              }
+            ],
+            "symbol": "GlcNAc"
+          },
+          {
+            "bbox": [
+              12,
+              99,
+              10,
+              10
+            ],
+            "center": [
+              17,
+              104
+            ],
+            "classlabel": "GlcNAc",
+            "confidence": 0.999995231628418,
+            "id": 6,
+            "links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.9895040392875671,
+                "fromid": 6,
+                "toid": 5
+              }
+            ],
+            "symbol": "GlcNAc"
+          }
+        ],
+        "monos_count": 7,
+        "orientation": "BT",
+        "root": {
+          "classlabel": "redend",
+          "confidence": 0.9999464750289917,
+          "mono_id": 6
+        },
+        "structure_errors": [
+          "Cycle found. Dropping least confident link: {'mono_ids': [1, 2], 'confidence': 0.9895040392875671, 'classlabel': 'link'}"
+        ],
+        "undirected_links": [
+          {
+            "classlabel": "link",
+            "confidence": 0.9895040392875671,
+            "mono_ids": [
+              0,
+              3
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.9895040392875671,
+            "mono_ids": [
+              0,
+              4
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.9895040392875671,
+            "mono_ids": [
+              1,
+              4
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.9895040392875671,
+            "mono_ids": [
+              0,
+              2
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.9895040392875671,
+            "mono_ids": [
+              4,
+              5
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.9895040392875671,
+            "mono_ids": [
+              5,
+              6
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.9895040392875671,
+            "mono_ids": [
+              1,
+              2
+            ]
+          }
+        ],
+        "width": 69
+      },
+      {
+        "IUPAC": "GlcNAc?1-?Man?1-?(GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?(Fuc?1-?)GlcNAc",
+        "accession": "G72398VP",
+        "bbox": [
+          428,
+          358,
+          66,
+          208
+        ],
+        "classid": 0,
+        "classlabel": "glycan",
+        "composition_str": "GlcNAc(4)Fuc(1)Man(3)",
+        "errors": [],
+        "extracted_image_path": "extracted_figures/extracted_images/33-14.png",
+        "glyImage": "https://glymage.glyomics.org//image/hash/16912ef2edd768530c2d77f97f544b03.svg",
+        "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G72398VP",
+        "height": 207,
+        "id": 14,
+        "image_name": "33-14.png",
+        "image_path": "extracted_figures/images/33-14.png",
+        "linkexpl": "Extracted successfully using accession",
+        "links_count": 7,
+        "monos": [
+          {
+            "bbox": [
+              0,
+              0,
+              10,
+              10
+            ],
+            "center": [
+              5,
+              5
+            ],
+            "classlabel": "GlcNAc",
+            "confidence": 0.9999990463256836,
+            "id": 0,
+            "symbol": "GlcNAc"
+          },
+          {
+            "bbox": [
+              25,
+              0,
+              10,
+              10
+            ],
+            "center": [
+              30,
+              5
+            ],
+            "classlabel": "GlcNAc",
+            "confidence": 0.9999990463256836,
+            "id": 1,
+            "symbol": "GlcNAc"
+          },
+          {
+            "bbox": [
+              13,
+              74,
+              10,
+              10
+            ],
+            "center": [
+              18,
+              79
+            ],
+            "classlabel": "GlcNAc",
+            "confidence": 0.9999990463256836,
+            "id": 2,
+            "links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.7559053897857666,
+                "fromid": 2,
+                "toid": 5
+              }
+            ],
+            "symbol": "GlcNAc"
+          },
+          {
+            "bbox": [
+              13,
+              99,
+              10,
+              10
+            ],
+            "center": [
+              18,
+              104
+            ],
+            "classlabel": "GlcNAc",
+            "confidence": 0.9999970197677612,
+            "id": 3,
+            "links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.7559053897857666,
+                "fromid": 3,
+                "toid": 7
+              },
+              {
+                "classlabel": "link",
+                "confidence": 0.7559053897857666,
+                "fromid": 3,
+                "toid": 2
+              }
+            ],
+            "symbol": "GlcNAc"
+          },
+          {
+            "bbox": [
+              25,
+              25,
+              10,
+              10
+            ],
+            "center": [
+              30,
+              30
+            ],
+            "classlabel": "Man",
+            "confidence": 0.9999916553497314,
+            "id": 4,
+            "links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.7559053897857666,
+                "fromid": 4,
+                "toid": 1
+              }
+            ],
+            "symbol": "Man"
+          },
+          {
+            "bbox": [
+              13,
+              49,
+              10,
+              10
+            ],
+            "center": [
+              18,
+              54
+            ],
+            "classlabel": "Man",
+            "confidence": 0.9999915361404419,
+            "id": 5,
+            "links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.7559053897857666,
+                "fromid": 5,
+                "toid": 4
+              },
+              {
+                "classlabel": "link",
+                "confidence": 0.7559053897857666,
+                "fromid": 5,
+                "toid": 6
+              }
+            ],
+            "symbol": "Man"
+          },
+          {
+            "bbox": [
+              1,
+              24,
+              10,
+              10
+            ],
+            "center": [
+              6,
+              29
+            ],
+            "classlabel": "Man",
+            "confidence": 0.9999911785125732,
+            "id": 6,
+            "links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.7559053897857666,
+                "fromid": 6,
+                "toid": 0
+              }
+            ],
+            "symbol": "Man"
+          },
+          {
+            "bbox": [
+              37,
+              99,
+              10,
+              10
+            ],
+            "center": [
+              42,
+              104
+            ],
+            "classlabel": "Fuc",
+            "confidence": 0.9999438524246216,
+            "id": 7,
+            "symbol": "Fuc"
+          }
+        ],
+        "monos_count": 8,
+        "orientation": "BT",
+        "root": {
+          "classlabel": "redend",
+          "confidence": 0.9998770952224731,
+          "mono_id": 3
+        },
+        "structure_errors": [],
+        "undirected_links": [
+          {
+            "classlabel": "link",
+            "confidence": 0.7559053897857666,
+            "mono_ids": [
+              4,
+              5
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.7559053897857666,
+            "mono_ids": [
+              5,
+              6
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.7559053897857666,
+            "mono_ids": [
+              2,
+              5
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.7559053897857666,
+            "mono_ids": [
+              1,
+              4
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.7559053897857666,
+            "mono_ids": [
+              3,
+              7
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.7559053897857666,
+            "mono_ids": [
+              2,
+              3
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.7559053897857666,
+            "mono_ids": [
+              0,
+              6
+            ]
+          }
+        ],
+        "width": 65
+      },
+      {
+        "IUPAC": "Man?1-?(Man?1-?)Man?1-?GlcNAc?1-?GlcNAc",
+        "accession": "G03833LE",
+        "bbox": [
+          98,
+          608,
+          67,
+          173
+        ],
+        "classid": 0,
+        "classlabel": "glycan",
+        "composition_str": "GlcNAc(2)Man(3)",
+        "errors": [],
+        "extracted_image_path": "extracted_figures/extracted_images/33-15.png",
+        "glyImage": "https://glymage.glyomics.org//image/hash/0de285880ae2b2fd08c71d64abcebf4f.svg",
+        "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G03833LE",
+        "height": 172,
+        "id": 15,
+        "image_name": "33-15.png",
+        "image_path": "extracted_figures/images/33-15.png",
+        "linkexpl": "Extracted successfully using accession",
+        "links_count": 4,
+        "monos": [
+          {
+            "bbox": [
+              0,
+              0,
+              9,
+              10
+            ],
+            "center": [
+              4,
+              5
+            ],
+            "classlabel": "Man",
+            "confidence": 0.9999443292617798,
+            "id": 0,
+            "symbol": "Man"
+          },
+          {
+            "bbox": [
+              24,
+              0,
+              10,
+              10
+            ],
+            "center": [
+              29,
+              5
+            ],
+            "classlabel": "Man",
+            "confidence": 0.9998973608016968,
+            "id": 1,
+            "symbol": "Man"
+          },
+          {
+            "bbox": [
+              12,
+              25,
+              9,
+              10
+            ],
+            "center": [
+              16,
+              30
+            ],
+            "classlabel": "Man",
+            "confidence": 0.99988853931427,
+            "id": 2,
+            "links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.9395902156829834,
+                "fromid": 2,
+                "toid": 1
+              },
+              {
+                "classlabel": "link",
+                "confidence": 0.9395902156829834,
+                "fromid": 2,
+                "toid": 0
+              }
+            ],
+            "symbol": "Man"
+          },
+          {
+            "bbox": [
+              12,
+              50,
+              10,
+              10
+            ],
+            "center": [
+              17,
+              55
+            ],
+            "classlabel": "GlcNAc",
+            "confidence": 0.9999991655349731,
+            "id": 3,
+            "links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.9395902156829834,
+                "fromid": 3,
+                "toid": 2
+              }
+            ],
+            "symbol": "GlcNAc"
+          },
+          {
+            "bbox": [
+              12,
+              75,
+              10,
+              10
+            ],
+            "center": [
+              17,
+              80
+            ],
+            "classlabel": "GlcNAc",
+            "confidence": 0.9999991655349731,
+            "id": 4,
+            "links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.9395902156829834,
+                "fromid": 4,
+                "toid": 3
+              }
+            ],
+            "symbol": "GlcNAc"
+          }
+        ],
+        "monos_count": 5,
+        "orientation": "BT",
+        "root": {
+          "classlabel": "redend",
+          "confidence": 0.9950948357582092,
+          "mono_id": 4
+        },
+        "structure_errors": [],
+        "undirected_links": [
+          {
+            "classlabel": "link",
+            "confidence": 0.9395902156829834,
+            "mono_ids": [
+              2,
+              3
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.9395902156829834,
+            "mono_ids": [
+              1,
+              2
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.9395902156829834,
+            "mono_ids": [
+              3,
+              4
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.9395902156829834,
+            "mono_ids": [
+              0,
+              2
+            ]
+          }
+        ],
+        "width": 66
+      },
+      {
+        "IUPAC": "Man?1-?Man?1-?(GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?(Fuc?1-?)GlcNAc",
+        "accession": "G78214BJ",
+        "bbox": [
+          297,
+          824,
+          73,
+          157
+        ],
+        "classid": 0,
+        "classlabel": "glycan",
+        "composition_str": "GlcNAc(3)Fuc(1)Man(4)",
+        "errors": [],
+        "extracted_image_path": "extracted_figures/extracted_images/33-16.png",
+        "glyImage": "https://glymage.glyomics.org//image/hash/ae989d0c6f45e8d90790446e9bcae470.svg",
+        "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G78214BJ",
+        "height": 156,
+        "id": 16,
+        "image_name": "33-16.png",
+        "image_path": "extracted_figures/images/33-16.png",
+        "linkexpl": "Extracted successfully using accession",
+        "links_count": 7,
+        "monos": [
+          {
+            "bbox": [
+              0,
+              0,
+              10,
+              10
+            ],
+            "center": [
+              5,
+              5
+            ],
+            "classlabel": "GlcNAc",
+            "confidence": 0.999998927116394,
+            "id": 0,
+            "symbol": "GlcNAc"
+          },
+          {
+            "bbox": [
+              13,
+              74,
+              10,
+              10
+            ],
+            "center": [
+              18,
+              79
+            ],
+            "classlabel": "GlcNAc",
+            "confidence": 0.999998927116394,
+            "id": 1,
+            "links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.753613293170929,
+                "fromid": 1,
+                "toid": 5
+              }
+            ],
+            "symbol": "GlcNAc"
+          },
+          {
+            "bbox": [
+              13,
+              99,
+              10,
+              10
+            ],
+            "center": [
+              18,
+              104
+            ],
+            "classlabel": "GlcNAc",
+            "confidence": 0.9999951124191284,
+            "id": 2,
+            "links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.753613293170929,
+                "fromid": 2,
+                "toid": 7
+              },
+              {
+                "classlabel": "link",
+                "confidence": 0.753613293170929,
+                "fromid": 2,
+                "toid": 1
+              }
+            ],
+            "symbol": "GlcNAc"
+          },
+          {
+            "bbox": [
+              25,
+              24,
+              10,
+              10
+            ],
+            "center": [
+              30,
+              29
+            ],
+            "classlabel": "Man",
+            "confidence": 0.999994158744812,
+            "id": 3,
+            "links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.753613293170929,
+                "fromid": 3,
+                "toid": 6
+              }
+            ],
+            "symbol": "Man"
+          },
+          {
+            "bbox": [
+              1,
+              24,
+              10,
+              10
+            ],
+            "center": [
+              6,
+              29
+            ],
+            "classlabel": "Man",
+            "confidence": 0.9999935626983643,
+            "id": 4,
+            "links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.753613293170929,
+                "fromid": 4,
+                "toid": 0
+              }
+            ],
+            "symbol": "Man"
+          },
+          {
+            "bbox": [
+              13,
+              49,
+              10,
+              10
+            ],
+            "center": [
+              18,
+              54
+            ],
+            "classlabel": "Man",
+            "confidence": 0.9999912977218628,
+            "id": 5,
+            "links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.753613293170929,
+                "fromid": 5,
+                "toid": 3
+              },
+              {
+                "classlabel": "link",
+                "confidence": 0.753613293170929,
+                "fromid": 5,
+                "toid": 4
+              }
+            ],
+            "symbol": "Man"
+          },
+          {
+            "bbox": [
+              25,
+              0,
+              10,
+              10
+            ],
+            "center": [
+              30,
+              5
+            ],
+            "classlabel": "Man",
+            "confidence": 0.9999852180480957,
+            "id": 6,
+            "symbol": "Man"
+          },
+          {
+            "bbox": [
+              37,
+              98,
+              10,
+              11
+            ],
+            "center": [
+              42,
+              103
+            ],
+            "classlabel": "Fuc",
+            "confidence": 0.9999676942825317,
+            "id": 7,
+            "symbol": "Fuc"
+          }
+        ],
+        "monos_count": 8,
+        "orientation": "BT",
+        "root": {
+          "classlabel": "redend",
+          "confidence": 0.9998750686645508,
+          "mono_id": 2
+        },
+        "structure_errors": [],
+        "undirected_links": [
+          {
+            "classlabel": "link",
+            "confidence": 0.753613293170929,
+            "mono_ids": [
+              3,
+              5
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.753613293170929,
+            "mono_ids": [
+              4,
+              5
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.753613293170929,
+            "mono_ids": [
+              1,
+              5
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.753613293170929,
+            "mono_ids": [
+              3,
+              6
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.753613293170929,
+            "mono_ids": [
+              0,
+              4
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.753613293170929,
+            "mono_ids": [
+              2,
+              7
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.753613293170929,
+            "mono_ids": [
+              1,
+              2
+            ]
+          }
+        ],
+        "width": 72
+      },
+      {
+        "IUPAC": "GlcNAc?1-?Man?1-?(GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?GlcNAc",
+        "accession": "G78607HP",
+        "bbox": [
+          221,
+          486,
+          56,
+          175
+        ],
+        "classid": 0,
+        "classlabel": "glycan",
+        "composition_str": "GlcNAc(4)Man(3)",
+        "errors": [],
+        "extracted_image_path": "extracted_figures/extracted_images/33-17.png",
+        "glyImage": "https://glymage.glyomics.org//image/hash/79704e782d88d393ee7a655002e3c89b.svg",
+        "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G78607HP",
+        "height": 174,
+        "id": 17,
+        "image_name": "33-17.png",
+        "image_path": "extracted_figures/images/33-17.png",
+        "linkexpl": "Extracted successfully using accession",
+        "links_count": 6,
+        "monos": [
+          {
+            "bbox": [
+              13,
+              74,
+              10,
+              10
+            ],
+            "center": [
+              18,
+              79
+            ],
+            "classlabel": "GlcNAc",
+            "confidence": 0.9999974966049194,
+            "id": 0,
+            "links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.9993273615837097,
+                "fromid": 0,
+                "toid": 4
+              }
+            ],
+            "symbol": "GlcNAc"
+          },
+          {
+            "bbox": [
+              0,
+              0,
+              10,
+              10
+            ],
+            "center": [
+              5,
+              5
+            ],
+            "classlabel": "GlcNAc",
+            "confidence": 0.9999949932098389,
+            "id": 1,
+            "symbol": "GlcNAc"
+          },
+          {
+            "bbox": [
+              13,
+              99,
+              10,
+              10
+            ],
+            "center": [
+              18,
+              104
+            ],
+            "classlabel": "GlcNAc",
+            "confidence": 0.9999936819076538,
+            "id": 2,
+            "links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.9993273615837097,
+                "fromid": 2,
+                "toid": 0
+              }
+            ],
+            "symbol": "GlcNAc"
+          },
+          {
+            "bbox": [
+              25,
+              1,
+              10,
+              10
+            ],
+            "center": [
+              30,
+              6
+            ],
+            "classlabel": "GlcNAc",
+            "confidence": 0.999993085861206,
+            "id": 3,
+            "symbol": "GlcNAc"
+          },
+          {
+            "bbox": [
+              12,
+              50,
+              9,
+              10
+            ],
+            "center": [
+              16,
+              55
+            ],
+            "classlabel": "Man",
+            "confidence": 0.9999939203262329,
+            "id": 4,
+            "links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.9993273615837097,
+                "fromid": 4,
+                "toid": 6
+              },
+              {
+                "classlabel": "link",
+                "confidence": 0.9993273615837097,
+                "fromid": 4,
+                "toid": 5
+              }
+            ],
+            "symbol": "Man"
+          },
+          {
+            "bbox": [
+              25,
+              25,
+              9,
+              10
+            ],
+            "center": [
+              29,
+              30
+            ],
+            "classlabel": "Man",
+            "confidence": 0.9999923706054688,
+            "id": 5,
+            "links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.9993273615837097,
+                "fromid": 5,
+                "toid": 3
+              }
+            ],
+            "symbol": "Man"
+          },
+          {
+            "bbox": [
+              0,
+              25,
+              10,
+              10
+            ],
+            "center": [
+              5,
+              30
+            ],
+            "classlabel": "Man",
+            "confidence": 0.9999916553497314,
+            "id": 6,
+            "links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.9993273615837097,
+                "fromid": 6,
+                "toid": 1
+              }
+            ],
+            "symbol": "Man"
+          }
+        ],
+        "monos_count": 7,
+        "orientation": "BT",
+        "root": {
+          "classlabel": "redend",
+          "confidence": 0.9999455213546753,
+          "mono_id": 2
+        },
+        "structure_errors": [],
+        "undirected_links": [
+          {
+            "classlabel": "link",
+            "confidence": 0.9993273615837097,
+            "mono_ids": [
+              4,
+              6
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.9993273615837097,
+            "mono_ids": [
+              0,
+              2
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.9993273615837097,
+            "mono_ids": [
+              4,
+              5
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.9993273615837097,
+            "mono_ids": [
+              1,
+              6
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.9993273615837097,
+            "mono_ids": [
+              0,
+              4
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.9993273615837097,
+            "mono_ids": [
+              3,
+              5
+            ]
+          }
+        ],
+        "width": 55
+      },
+      {
+        "IUPAC": "Gal?1-?GlcNAc?1-?Man?1-?(Gal?1-?GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?GlcNAc",
+        "accession": "G23934NS",
+        "bbox": [
+          517,
+          375,
+          59,
+          193
+        ],
+        "classid": 0,
+        "classlabel": "glycan",
+        "composition_str": "GlcNAc(4)Man(3)Gal(2)",
+        "errors": [],
+        "extracted_image_path": "extracted_figures/extracted_images/33-18.png",
+        "glyImage": "https://glymage.glyomics.org//image/hash/10a69e9f56ab9abcc614f0843a8636e8.svg",
+        "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G23934NS",
+        "height": 192,
+        "id": 18,
+        "image_name": "33-18.png",
+        "image_path": "extracted_figures/images/33-18.png",
+        "linkexpl": "Extracted successfully using accession",
+        "links_count": 9,
+        "monos": [
+          {
+            "bbox": [
+              26,
+              0,
+              10,
+              10
+            ],
+            "center": [
+              31,
+              5
+            ],
+            "classlabel": "Gal",
+            "confidence": 0.9989197850227356,
+            "id": 0,
+            "symbol": "Gal"
+          },
+          {
+            "bbox": [
+              1,
+              0,
+              10,
+              9
+            ],
+            "center": [
+              6,
+              4
+            ],
+            "classlabel": "Gal",
+            "confidence": 0.9973633885383606,
+            "id": 1,
+            "symbol": "Gal"
+          },
+          {
+            "bbox": [
+              1,
+              24,
+              10,
+              10
+            ],
+            "center": [
+              6,
+              29
+            ],
+            "classlabel": "GlcNAc",
+            "confidence": 0.9999997615814209,
+            "id": 2,
+            "links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.8548603653907776,
+                "fromid": 2,
+                "toid": 1
+              }
+            ],
+            "symbol": "GlcNAc"
+          },
+          {
+            "bbox": [
+              26,
+              24,
+              10,
+              10
+            ],
+            "center": [
+              31,
+              29
+            ],
+            "classlabel": "GlcNAc",
+            "confidence": 0.9999996423721313,
+            "id": 3,
+            "links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.8548603653907776,
+                "fromid": 3,
+                "toid": 0
+              }
+            ],
+            "symbol": "GlcNAc"
+          },
+          {
+            "bbox": [
+              14,
+              98,
+              9,
+              10
+            ],
+            "center": [
+              18,
+              103
+            ],
+            "classlabel": "GlcNAc",
+            "confidence": 0.9999972581863403,
+            "id": 4,
+            "links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.8548603653907776,
+                "fromid": 4,
+                "toid": 8
+              }
+            ],
+            "symbol": "GlcNAc"
+          },
+          {
+            "alternative": [
+              {
+                "bbox": [
+                  19,
+                  129,
+                  1,
+                  40
+                ],
+                "center": [
+                  19,
+                  149
+                ],
+                "classlabel": "GlcNAc",
+                "confidence": 0.8000216484069824,
+                "id": 6,
+                "iou": 0.020100502512562814,
+                "symbol": "GlcNAc"
+              }
+            ],
+            "bbox": [
+              13,
+              123,
+              10,
+              10
+            ],
+            "center": [
+              18,
+              128
+            ],
+            "classlabel": "GlcNAc",
+            "confidence": 0.9999959468841553,
+            "id": 5,
+            "links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.8548603653907776,
+                "fromid": 5,
+                "toid": 4
+              }
+            ],
+            "symbol": "GlcNAc"
+          },
+          {
+            "bbox": [
+              1,
+              49,
+              10,
+              10
+            ],
+            "center": [
+              6,
+              54
+            ],
+            "classlabel": "Man",
+            "confidence": 0.9999914169311523,
+            "id": 7,
+            "links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.8548603653907776,
+                "fromid": 7,
+                "toid": 2
+              }
+            ],
+            "symbol": "Man"
+          },
+          {
+            "bbox": [
+              14,
+              74,
+              10,
+              10
+            ],
+            "center": [
+              19,
+              79
+            ],
+            "classlabel": "Man",
+            "confidence": 0.9999911785125732,
+            "id": 8,
+            "links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.8548603653907776,
+                "fromid": 8,
+                "toid": 7
+              },
+              {
+                "classlabel": "link",
+                "confidence": 0.8548603653907776,
+                "fromid": 8,
+                "toid": 9
+              }
+            ],
+            "symbol": "Man"
+          },
+          {
+            "bbox": [
+              26,
+              49,
+              10,
+              10
+            ],
+            "center": [
+              31,
+              54
+            ],
+            "classlabel": "Man",
+            "confidence": 0.9999899864196777,
+            "id": 9,
+            "links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.8548603653907776,
+                "fromid": 9,
+                "toid": 3
+              }
+            ],
+            "symbol": "Man"
+          }
+        ],
+        "monos_count": 9,
+        "orientation": "BT",
+        "root": {
+          "classlabel": "redend",
+          "confidence": 0.9999533891677856,
+          "mono_id": 5
+        },
+        "structure_errors": [
+          "Cycle found. Dropping least confident link: {'mono_ids': [0, 1], 'confidence': 0.8548603653907776, 'classlabel': 'link'}"
+        ],
+        "undirected_links": [
+          {
+            "classlabel": "link",
+            "confidence": 0.8548603653907776,
+            "mono_ids": [
+              3,
+              9
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.8548603653907776,
+            "mono_ids": [
+              2,
+              7
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.8548603653907776,
+            "mono_ids": [
+              0,
+              3
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.8548603653907776,
+            "mono_ids": [
+              1,
+              2
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.8548603653907776,
+            "mono_ids": [
+              4,
+              8
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.8548603653907776,
+            "mono_ids": [
+              7,
+              8
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.8548603653907776,
+            "mono_ids": [
+              8,
+              9
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.8548603653907776,
+            "mono_ids": [
+              4,
+              5
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.8548603653907776,
+            "mono_ids": [
+              0,
+              1
+            ]
+          }
+        ],
+        "width": 58
+      },
+      {
+        "IUPAC": "GlcNAc?1-?Man?1-?(GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?GlcNAc",
+        "accession": "G78607HP",
+        "bbox": [
+          208,
+          767,
+          78,
+          210
+        ],
+        "classid": 0,
+        "classlabel": "glycan",
+        "composition_str": "GlcNAc(4)Man(3)",
+        "errors": [],
+        "extracted_image_path": "extracted_figures/extracted_images/33-19.png",
+        "glyImage": "https://glymage.glyomics.org//image/hash/79704e782d88d393ee7a655002e3c89b.svg",
+        "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G78607HP",
+        "height": 209,
+        "id": 19,
+        "image_name": "33-19.png",
+        "image_path": "extracted_figures/images/33-19.png",
+        "linkexpl": "Extracted successfully using accession",
+        "links_count": 6,
+        "monos": [
+          {
+            "bbox": [
+              12,
+              74,
+              10,
+              10
+            ],
+            "center": [
+              17,
+              79
+            ],
+            "classlabel": "GlcNAc",
+            "confidence": 0.9999992847442627,
+            "id": 0,
+            "links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.9993687868118286,
+                "fromid": 0,
+                "toid": 6
+              }
+            ],
+            "symbol": "GlcNAc"
+          },
+          {
+            "bbox": [
+              24,
+              1,
+              10,
+              10
+            ],
+            "center": [
+              29,
+              6
+            ],
+            "classlabel": "GlcNAc",
+            "confidence": 0.9999991655349731,
+            "id": 1,
+            "symbol": "GlcNAc"
+          },
+          {
+            "bbox": [
+              12,
+              99,
+              9,
+              10
+            ],
+            "center": [
+              16,
+              104
+            ],
+            "classlabel": "GlcNAc",
+            "confidence": 0.9999991655349731,
+            "id": 2,
+            "links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.9993687868118286,
+                "fromid": 2,
+                "toid": 0
+              }
+            ],
+            "symbol": "GlcNAc"
+          },
+          {
+            "bbox": [
+              0,
+              0,
+              10,
+              10
+            ],
+            "center": [
+              5,
+              5
+            ],
+            "classlabel": "GlcNAc",
+            "confidence": 0.9999934434890747,
+            "id": 3,
+            "symbol": "GlcNAc"
+          },
+          {
+            "bbox": [
+              24,
+              25,
+              10,
+              10
+            ],
+            "center": [
+              29,
+              30
+            ],
+            "classlabel": "Man",
+            "confidence": 0.9999959468841553,
+            "id": 4,
+            "links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.9993687868118286,
+                "fromid": 4,
+                "toid": 1
+              }
+            ],
+            "symbol": "Man"
+          },
+          {
+            "bbox": [
+              0,
+              25,
+              10,
+              10
+            ],
+            "center": [
+              5,
+              30
+            ],
+            "classlabel": "Man",
+            "confidence": 0.9999915361404419,
+            "id": 5,
+            "links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.9993687868118286,
+                "fromid": 5,
+                "toid": 3
+              }
+            ],
+            "symbol": "Man"
+          },
+          {
+            "bbox": [
+              12,
+              50,
+              10,
+              10
+            ],
+            "center": [
+              17,
+              55
+            ],
+            "classlabel": "Man",
+            "confidence": 0.9999814033508301,
+            "id": 6,
+            "links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.9993687868118286,
+                "fromid": 6,
+                "toid": 5
+              },
+              {
+                "classlabel": "link",
+                "confidence": 0.9993687868118286,
+                "fromid": 6,
+                "toid": 4
+              }
+            ],
+            "symbol": "Man"
+          }
+        ],
+        "monos_count": 7,
+        "orientation": "BT",
+        "root": {
+          "classlabel": "redend",
+          "confidence": 0.9999258518218994,
+          "mono_id": 2
+        },
+        "structure_errors": [],
+        "undirected_links": [
+          {
+            "classlabel": "link",
+            "confidence": 0.9993687868118286,
+            "mono_ids": [
+              5,
+              6
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.9993687868118286,
+            "mono_ids": [
+              4,
+              6
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.9993687868118286,
+            "mono_ids": [
+              3,
+              5
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.9993687868118286,
+            "mono_ids": [
+              0,
+              2
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.9993687868118286,
+            "mono_ids": [
+              0,
+              6
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.9993687868118286,
+            "mono_ids": [
+              1,
+              4
+            ]
+          }
+        ],
+        "width": 77
+      },
+      {
+        "IUPAC": "Man?1-?(Man?1-?)Man?1-?GlcNAc?1-?(Fuc?1-?)GlcNAc",
+        "accession": "G27815BZ",
+        "bbox": [
+          167,
+          537,
+          74,
+          208
+        ],
+        "classid": 0,
+        "classlabel": "glycan",
+        "composition_str": "GlcNAc(2)Fuc(1)Man(3)",
+        "errors": [],
+        "extracted_image_path": "extracted_figures/extracted_images/33-20.png",
+        "glyImage": "https://glymage.glyomics.org//image/hash/95ba7b7514eb962ddfe5f0d9a3e00473.svg",
+        "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G27815BZ",
+        "height": 207,
+        "id": 20,
+        "image_name": "33-20.png",
+        "image_path": "extracted_figures/images/33-20.png",
+        "linkexpl": "Extracted successfully using accession",
+        "links_count": 5,
+        "monos": [
+          {
+            "bbox": [
+              25,
+              0,
+              10,
+              10
+            ],
+            "center": [
+              30,
+              5
+            ],
+            "classlabel": "Man",
+            "confidence": 0.9999678134918213,
+            "id": 0,
+            "symbol": "Man"
+          },
+          {
+            "bbox": [
+              1,
+              0,
+              10,
+              10
+            ],
+            "center": [
+              6,
+              5
+            ],
+            "classlabel": "Man",
+            "confidence": 0.9999470710754395,
+            "id": 1,
+            "symbol": "Man"
+          },
+          {
+            "bbox": [
+              13,
+              24,
+              10,
+              10
+            ],
+            "center": [
+              18,
+              29
+            ],
+            "classlabel": "Man",
+            "confidence": 0.9999451637268066,
+            "id": 2,
+            "links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.9806336760520935,
+                "fromid": 2,
+                "toid": 0
+              },
+              {
+                "classlabel": "link",
+                "confidence": 0.9806336760520935,
+                "fromid": 2,
+                "toid": 1
+              }
+            ],
+            "symbol": "Man"
+          },
+          {
+            "bbox": [
+              13,
+              49,
+              10,
+              10
+            ],
+            "center": [
+              18,
+              54
+            ],
+            "classlabel": "GlcNAc",
+            "confidence": 0.9999986886978149,
+            "id": 3,
+            "links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.9806336760520935,
+                "fromid": 3,
+                "toid": 2
+              }
+            ],
+            "symbol": "GlcNAc"
+          },
+          {
+            "bbox": [
+              13,
+              74,
+              10,
+              10
+            ],
+            "center": [
+              18,
+              79
+            ],
+            "classlabel": "GlcNAc",
+            "confidence": 0.9999977350234985,
+            "id": 4,
+            "links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.9806336760520935,
+                "fromid": 4,
+                "toid": 3
+              },
+              {
+                "classlabel": "link",
+                "confidence": 0.9806336760520935,
+                "fromid": 4,
+                "toid": 5
+              }
+            ],
+            "symbol": "GlcNAc"
+          },
+          {
+            "bbox": [
+              37,
+              74,
+              10,
+              11
+            ],
+            "center": [
+              42,
+              79
+            ],
+            "classlabel": "Fuc",
+            "confidence": 0.9994118213653564,
+            "id": 5,
+            "symbol": "Fuc"
+          }
+        ],
+        "monos_count": 6,
+        "orientation": "BT",
+        "root": {
+          "classlabel": "redend",
+          "confidence": 0.9924654364585876,
+          "mono_id": 4
+        },
+        "structure_errors": [],
+        "undirected_links": [
+          {
+            "classlabel": "link",
+            "confidence": 0.9806336760520935,
+            "mono_ids": [
+              0,
+              2
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.9806336760520935,
+            "mono_ids": [
+              1,
+              2
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.9806336760520935,
+            "mono_ids": [
+              2,
+              3
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.9806336760520935,
+            "mono_ids": [
+              3,
+              4
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.9806336760520935,
+            "mono_ids": [
+              4,
+              5
+            ]
+          }
+        ],
+        "width": 73
+      },
+      {
+        "IUPAC": "NeuAc?2-?Gal?1-?GlcNAc?1-?Man?1-?(Man?1-?Man?1-?)Man?1-?GlcNAc?1-?GlcNAc",
+        "accession": "G45319NP",
+        "bbox": [
+          677,
+          767,
+          76,
+          214
+        ],
+        "classid": 0,
+        "classlabel": "glycan",
+        "composition_str": "GlcNAc(3)NeuAc(1)Man(4)Gal(1)",
+        "errors": [],
+        "extracted_image_path": "extracted_figures/extracted_images/33-21.png",
+        "glyImage": "https://glymage.glyomics.org//image/hash/9f88c49b5ae3e596504c5446d0f04c33.svg",
+        "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G45319NP",
+        "height": 213,
+        "id": 21,
+        "image_name": "33-21.png",
+        "image_path": "extracted_figures/images/33-21.png",
+        "linkexpl": "Extracted successfully using accession",
+        "links_count": 8,
+        "monos": [
+          {
+            "bbox": [
+              1,
+              0,
+              9,
+              9
+            ],
+            "center": [
+              5,
+              4
+            ],
+            "classlabel": "NeuAc",
+            "confidence": 0.9996118545532227,
+            "id": 0,
+            "symbol": "NeuAc"
+          },
+          {
+            "bbox": [
+              1,
+              24,
+              10,
+              10
+            ],
+            "center": [
+              6,
+              29
+            ],
+            "classlabel": "Gal",
+            "confidence": 0.9999066591262817,
+            "id": 1,
+            "links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.9996234178543091,
+                "fromid": 1,
+                "toid": 0
+              }
+            ],
+            "symbol": "Gal"
+          },
+          {
+            "bbox": [
+              0,
+              49,
+              10,
+              10
+            ],
+            "center": [
+              5,
+              54
+            ],
+            "classlabel": "GlcNAc",
+            "confidence": 0.9999992847442627,
+            "id": 2,
+            "links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.9996234178543091,
+                "fromid": 2,
+                "toid": 1
+              }
+            ],
+            "symbol": "GlcNAc"
+          },
+          {
+            "bbox": [
+              13,
+              123,
+              10,
+              10
+            ],
+            "center": [
+              18,
+              128
+            ],
+            "classlabel": "GlcNAc",
+            "confidence": 0.9999991655349731,
+            "id": 3,
+            "links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.9996234178543091,
+                "fromid": 3,
+                "toid": 8
+              }
+            ],
+            "symbol": "GlcNAc"
+          },
+          {
+            "bbox": [
+              12,
+              148,
+              10,
+              10
+            ],
+            "center": [
+              17,
+              153
+            ],
+            "classlabel": "GlcNAc",
+            "confidence": 0.999997615814209,
+            "id": 4,
+            "links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.9996234178543091,
+                "fromid": 4,
+                "toid": 3
+              }
+            ],
+            "symbol": "GlcNAc"
+          },
+          {
+            "bbox": [
+              25,
+              73,
+              10,
+              10
+            ],
+            "center": [
+              30,
+              78
+            ],
+            "classlabel": "Man",
+            "confidence": 0.9999967813491821,
+            "id": 5,
+            "links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.9996234178543091,
+                "fromid": 5,
+                "toid": 6
+              }
+            ],
+            "symbol": "Man"
+          },
+          {
+            "bbox": [
+              25,
+              49,
+              10,
+              10
+            ],
+            "center": [
+              30,
+              54
+            ],
+            "classlabel": "Man",
+            "confidence": 0.9999948740005493,
+            "id": 6,
+            "symbol": "Man"
+          },
+          {
+            "bbox": [
+              0,
+              73,
+              10,
+              10
+            ],
+            "center": [
+              5,
+              78
+            ],
+            "classlabel": "Man",
+            "confidence": 0.9999867677688599,
+            "id": 7,
+            "links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.9996234178543091,
+                "fromid": 7,
+                "toid": 2
+              }
+            ],
+            "symbol": "Man"
+          },
+          {
+            "bbox": [
+              13,
+              98,
+              10,
+              10
+            ],
+            "center": [
+              18,
+              103
+            ],
+            "classlabel": "Man",
+            "confidence": 0.9999847412109375,
+            "id": 8,
+            "links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.9996234178543091,
+                "fromid": 8,
+                "toid": 5
+              },
+              {
+                "classlabel": "link",
+                "confidence": 0.9996234178543091,
+                "fromid": 8,
+                "toid": 7
+              }
+            ],
+            "symbol": "Man"
+          }
+        ],
+        "monos_count": 9,
+        "orientation": "BT",
+        "root": {
+          "classlabel": "redend",
+          "confidence": 0.9992310404777527,
+          "mono_id": 4
+        },
+        "structure_errors": [],
+        "undirected_links": [
+          {
+            "classlabel": "link",
+            "confidence": 0.9996234178543091,
+            "mono_ids": [
+              1,
+              2
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.9996234178543091,
+            "mono_ids": [
+              2,
+              7
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.9996234178543091,
+            "mono_ids": [
+              3,
+              8
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.9996234178543091,
+            "mono_ids": [
+              5,
+              6
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.9996234178543091,
+            "mono_ids": [
+              0,
+              1
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.9996234178543091,
+            "mono_ids": [
+              3,
+              4
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.9996234178543091,
+            "mono_ids": [
+              5,
+              8
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.9996234178543091,
+            "mono_ids": [
+              7,
+              8
+            ]
+          }
+        ],
+        "width": 75
+      },
+      {
+        "IUPAC": "",
+        "accession": "G01924ZE",
+        "bbox": [
+          612,
+          453,
+          69,
+          200
+        ],
+        "classid": 0,
+        "classlabel": "glycan",
+        "composition_str": "GlcNAc(4)Fuc(1)Man(3)Gal(2)",
+        "errors": [
+          "Unable to determine the root of the glycan structure."
+        ],
+        "extracted_image_path": "extracted_figures/extracted_images/33-22.png",
+        "glyImage": "https://glymage.glyomics.org//image/hash/41c8bb24598ba1df96a51102f75189be.svg",
+        "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G01924ZE",
+        "height": 199,
+        "id": 22,
+        "image_name": "33-22.png",
+        "image_path": "extracted_figures/images/33-22.png",
+        "linkexpl": "Extracted successfully using accession",
+        "links_count": 9,
+        "log": [
+          "[rootmonofinding.py:213 YOLORootFinder.find_objects] No root was detected"
+        ],
+        "monos": [
+          {
+            "bbox": [
+              24,
+              0,
+              10,
+              10
+            ],
+            "center": [
+              29,
+              5
+            ],
+            "classlabel": "Gal",
+            "confidence": 0.9991113543510437,
+            "id": 0,
+            "symbol": "Gal"
+          },
+          {
+            "bbox": [
+              0,
+              0,
+              9,
+              11
+            ],
+            "center": [
+              4,
+              5
+            ],
+            "classlabel": "Gal",
+            "confidence": 0.9905923008918762,
+            "id": 1,
+            "symbol": "Gal"
+          },
+          {
+            "bbox": [
+              24,
+              25,
+              10,
+              10
+            ],
+            "center": [
+              29,
+              30
+            ],
+            "classlabel": "GlcNAc",
+            "confidence": 0.9999997615814209,
+            "id": 2,
+            "symbol": "GlcNAc"
+          },
+          {
+            "bbox": [
+              12,
+              99,
+              10,
+              10
+            ],
+            "center": [
+              17,
+              104
+            ],
+            "classlabel": "GlcNAc",
+            "confidence": 0.9999990463256836,
+            "id": 3,
+            "symbol": "GlcNAc"
+          },
+          {
+            "bbox": [
+              0,
+              25,
+              10,
+              10
+            ],
+            "center": [
+              5,
+              30
+            ],
+            "classlabel": "GlcNAc",
+            "confidence": 0.9999983310699463,
+            "id": 4,
+            "symbol": "GlcNAc"
+          },
+          {
+            "bbox": [
+              11,
+              123,
+              11,
+              10
+            ],
+            "center": [
+              16,
+              128
+            ],
+            "classlabel": "GlcNAc",
+            "confidence": 0.9999955892562866,
+            "id": 5,
+            "symbol": "GlcNAc"
+          },
+          {
+            "bbox": [
+              24,
+              49,
+              9,
+              10
+            ],
+            "center": [
+              28,
+              54
+            ],
+            "classlabel": "Man",
+            "confidence": 0.9999966621398926,
+            "id": 6,
+            "symbol": "Man"
+          },
+          {
+            "bbox": [
+              12,
+              74,
+              10,
+              10
+            ],
+            "center": [
+              17,
+              79
+            ],
+            "classlabel": "Man",
+            "confidence": 0.9999933242797852,
+            "id": 7,
+            "symbol": "Man"
+          },
+          {
+            "bbox": [
+              0,
+              49,
+              10,
+              10
+            ],
+            "center": [
+              5,
+              54
+            ],
+            "classlabel": "Man",
+            "confidence": 0.9999730587005615,
+            "id": 8,
+            "symbol": "Man"
+          },
+          {
+            "bbox": [
+              37,
+              122,
+              10,
+              12
+            ],
+            "center": [
+              42,
+              128
+            ],
+            "classlabel": "Fuc",
+            "confidence": 0.9999086856842041,
+            "id": 9,
+            "symbol": "Fuc"
+          }
+        ],
+        "monos_count": 10,
+        "orientation": "RL",
+        "structure_errors": [
+          "Unable to determine the root of the glycan structure."
+        ],
+        "undirected_links": [
+          {
+            "classlabel": "link",
+            "confidence": 0.7987545132637024,
+            "mono_ids": [
+              4,
+              8
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.7987545132637024,
+            "mono_ids": [
+              1,
+              4
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.7987545132637024,
+            "mono_ids": [
+              2,
+              6
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.7987545132637024,
+            "mono_ids": [
+              0,
+              2
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.7987545132637024,
+            "mono_ids": [
+              3,
+              7
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.7987545132637024,
+            "mono_ids": [
+              5,
+              9
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.7987545132637024,
+            "mono_ids": [
+              6,
+              7
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.7987545132637024,
+            "mono_ids": [
+              3,
+              5
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.7987545132637024,
+            "mono_ids": [
+              7,
+              8
+            ]
+          }
+        ],
+        "width": 68
+      },
+      {
+        "IUPAC": "",
+        "accession": "G64922VJ",
+        "bbox": [
+          588,
+          424,
+          62,
+          221
+        ],
+        "classid": 0,
+        "classlabel": "glycan",
+        "composition_str": "GlcNAc(3)Man(2)Gal(1)",
+        "errors": [
+          "Unable to determine the root of the glycan structure."
+        ],
+        "extracted_image_path": "extracted_figures/extracted_images/33-23.png",
+        "glyImage": "https://glymage.glyomics.org//image/hash/62cd6b607c5b4bc23fec569d292a8727.svg",
+        "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G64922VJ",
+        "height": 220,
+        "id": 23,
+        "image_name": "33-23.png",
+        "image_path": "extracted_figures/images/33-23.png",
+        "linkexpl": "Extracted successfully using accession",
+        "links_count": 5,
+        "log": [
+          "[rootmonofinding.py:213 YOLORootFinder.find_objects] No root was detected"
+        ],
+        "monos": [
+          {
+            "bbox": [
+              0,
+              0,
+              9,
+              9
+            ],
+            "center": [
+              4,
+              4
+            ],
+            "classlabel": "Gal",
+            "confidence": 0.9631481170654297,
+            "id": 0,
+            "symbol": "Gal"
+          },
+          {
+            "bbox": [
+              12,
+              98,
+              10,
+              10
+            ],
+            "center": [
+              17,
+              103
+            ],
+            "classlabel": "GlcNAc",
+            "confidence": 0.999995231628418,
+            "id": 1,
+            "symbol": "GlcNAc"
+          },
+          {
+            "bbox": [
+              0,
+              25,
+              10,
+              9
+            ],
+            "center": [
+              5,
+              29
+            ],
+            "classlabel": "GlcNAc",
+            "confidence": 0.9999934434890747,
+            "id": 2,
+            "symbol": "GlcNAc"
+          },
+          {
+            "bbox": [
+              12,
+              123,
+              10,
+              11
+            ],
+            "center": [
+              17,
+              128
+            ],
+            "classlabel": "GlcNAc",
+            "confidence": 0.999990701675415,
+            "id": 3,
+            "symbol": "GlcNAc"
+          },
+          {
+            "bbox": [
+              12,
+              74,
+              10,
+              10
+            ],
+            "center": [
+              17,
+              79
+            ],
+            "classlabel": "Man",
+            "confidence": 0.9998897314071655,
+            "id": 4,
+            "symbol": "Man"
+          },
+          {
+            "bbox": [
+              0,
+              49,
+              9,
+              9
+            ],
+            "center": [
+              4,
+              53
+            ],
+            "classlabel": "Man",
+            "confidence": 0.9998847246170044,
+            "id": 5,
+            "symbol": "Man"
+          }
+        ],
+        "monos_count": 6,
+        "orientation": "RL",
+        "structure_errors": [
+          "Unable to determine the root of the glycan structure."
+        ],
+        "undirected_links": [
+          {
+            "classlabel": "link",
+            "confidence": 0.9889329671859741,
+            "mono_ids": [
+              2,
+              5
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.9889329671859741,
+            "mono_ids": [
+              0,
+              2
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.9889329671859741,
+            "mono_ids": [
+              1,
+              4
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.9889329671859741,
+            "mono_ids": [
+              1,
+              3
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.9889329671859741,
+            "mono_ids": [
+              4,
+              5
+            ]
+          }
+        ],
+        "width": 61
+      }
+    ],
+    "height": 981,
+    "image_path": "extracted_figures/figures/33.png",
+    "width": 1424
+  },
+  {
+    "annotated_image_path": "extracted_figures/annotated_figures/34.png",
+    "file_name": "34.png",
+    "glycans": [
+      {
+        "IUPAC": "",
+        "accession": "G78219YA",
+        "bbox": [
+          250,
+          621,
+          95,
+          59
+        ],
+        "classid": 0,
+        "classlabel": "glycan",
+        "composition_str": "GlcNAc(4)Fuc(1)Man(2)",
+        "errors": [
+          "Unable to identify all linkages in the glycan structure."
+        ],
+        "extracted_image_path": "extracted_figures/extracted_images/34-1.png",
+        "glyImage": "https://glymage.glyomics.org//image/hash/528abb4a6a9456eb80083c83f3b2f0b5.svg",
+        "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G78219YA",
+        "height": 58,
+        "id": 1,
+        "image_name": "34-1.png",
+        "image_path": "extracted_figures/images/34-1.png",
+        "linkexpl": "Extracted successfully using accession",
+        "links_count": 5,
+        "monos": [
+          {
+            "alternative": [
+              {
+                "bbox": [
+                  32,
+                  7,
+                  8,
+                  9
+                ],
+                "center": [
+                  36,
+                  11
+                ],
+                "classlabel": "Man",
+                "confidence": 0.9998403787612915,
+                "id": 1,
+                "iou": 0.011235955056179775,
+                "symbol": "Man"
+              }
+            ],
+            "bbox": [
+              39,
+              0,
+              8,
+              9
+            ],
+            "center": [
+              43,
+              4
+            ],
+            "classlabel": "Man",
+            "confidence": 0.9998928308486938,
+            "id": 0,
+            "symbol": "Man"
+          },
+          {
+            "bbox": [
+              39,
+              15,
+              8,
+              8
+            ],
+            "center": [
+              43,
+              19
+            ],
+            "classlabel": "Man",
+            "confidence": 0.9998292922973633,
+            "id": 2,
+            "symbol": "Man"
+          },
+          {
+            "bbox": [
+              52,
+              15,
+              8,
+              8
+            ],
+            "center": [
+              56,
+              19
+            ],
+            "classlabel": "GlcNAc",
+            "confidence": 0.9999721050262451,
+            "id": 3,
+            "symbol": "GlcNAc"
+          },
+          {
+            "bbox": [
+              20,
+              7,
+              9,
+              9
+            ],
+            "center": [
+              24,
+              11
+            ],
+            "classlabel": "GlcNAc",
+            "confidence": 0.9999494552612305,
+            "id": 4,
+            "symbol": "GlcNAc"
+          },
+          {
+            "bbox": [
+              9,
+              8,
+              8,
+              9
+            ],
+            "center": [
+              13,
+              12
+            ],
+            "classlabel": "GlcNAc",
+            "confidence": 0.9999485015869141,
+            "id": 5,
+            "symbol": "GlcNAc"
+          },
+          {
+            "bbox": [
+              51,
+              0,
+              9,
+              9
+            ],
+            "center": [
+              55,
+              4
+            ],
+            "classlabel": "GlcNAc",
+            "confidence": 0.9999022483825684,
+            "id": 6,
+            "symbol": "GlcNAc"
+          },
+          {
+            "bbox": [
+              8,
+              18,
+              10,
+              7
+            ],
+            "center": [
+              13,
+              21
+            ],
+            "classlabel": "Fuc",
+            "confidence": 0.9913305044174194,
+            "id": 7,
+            "symbol": "Fuc"
+          }
+        ],
+        "monos_count": 7,
+        "orientation": "RL",
+        "root": {
+          "classlabel": "redend",
+          "confidence": 0.9976980090141296,
+          "mono_id": 5
+        },
+        "structure_errors": [
+          "Tree is disjointed. Unvisited nodes: 0, 2, 3, 6"
+        ],
+        "undirected_links": [
+          {
+            "classlabel": "link",
+            "confidence": 0.8604989647865295,
+            "mono_ids": [
+              2,
+              3
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.8604989647865295,
+            "mono_ids": [
+              4,
+              5
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.8604989647865295,
+            "mono_ids": [
+              0,
+              2
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.8604989647865295,
+            "mono_ids": [
+              0,
+              6
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.8604989647865295,
+            "mono_ids": [
+              5,
+              7
+            ]
+          }
+        ],
+        "width": 94
+      },
+      {
+        "IUPAC": "",
+        "accession": "G01924ZE",
+        "bbox": [
+          246,
+          397,
+          102,
+          53
+        ],
+        "classid": 0,
+        "classlabel": "glycan",
+        "composition_str": "GlcNAc(4)Fuc(1)Man(3)Gal(2)",
+        "errors": [
+          "Unable to determine the root of the glycan structure."
+        ],
+        "extracted_image_path": "extracted_figures/extracted_images/34-2.png",
+        "glyImage": "https://glymage.glyomics.org//image/hash/41c8bb24598ba1df96a51102f75189be.svg",
+        "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G01924ZE",
+        "height": 52,
+        "id": 2,
+        "image_name": "34-2.png",
+        "image_path": "extracted_figures/images/34-2.png",
+        "linkexpl": "Extracted successfully using accession",
+        "links_count": 10,
+        "log": [
+          "[rootmonofinding.py:213 YOLORootFinder.find_objects] No root was detected"
+        ],
+        "monos": [
+          {
+            "bbox": [
+              52,
+              5,
+              8,
+              10
+            ],
+            "center": [
+              56,
+              10
+            ],
+            "classlabel": "Man",
+            "confidence": 0.9997332692146301,
+            "id": 0,
+            "symbol": "Man"
+          },
+          {
+            "bbox": [
+              52,
+              20,
+              9,
+              10
+            ],
+            "center": [
+              56,
+              25
+            ],
+            "classlabel": "Man",
+            "confidence": 0.9995954036712646,
+            "id": 1,
+            "symbol": "Man"
+          },
+          {
+            "bbox": [
+              44,
+              14,
+              8,
+              8
+            ],
+            "center": [
+              48,
+              18
+            ],
+            "classlabel": "Man",
+            "confidence": 0.9992973208427429,
+            "id": 2,
+            "symbol": "Man"
+          },
+          {
+            "bbox": [
+              63,
+              6,
+              8,
+              10
+            ],
+            "center": [
+              67,
+              11
+            ],
+            "classlabel": "GlcNAc",
+            "confidence": 0.9999961853027344,
+            "id": 3,
+            "symbol": "GlcNAc"
+          },
+          {
+            "bbox": [
+              64,
+              20,
+              8,
+              9
+            ],
+            "center": [
+              68,
+              24
+            ],
+            "classlabel": "GlcNAc",
+            "confidence": 0.9999924898147583,
+            "id": 4,
+            "symbol": "GlcNAc"
+          },
+          {
+            "bbox": [
+              33,
+              13,
+              8,
+              9
+            ],
+            "center": [
+              37,
+              17
+            ],
+            "classlabel": "GlcNAc",
+            "confidence": 0.9999901056289673,
+            "id": 5,
+            "symbol": "GlcNAc"
+          },
+          {
+            "bbox": [
+              21,
+              13,
+              9,
+              9
+            ],
+            "center": [
+              25,
+              17
+            ],
+            "classlabel": "GlcNAc",
+            "confidence": 0.999629020690918,
+            "id": 6,
+            "symbol": "GlcNAc"
+          },
+          {
+            "bbox": [
+              76,
+              20,
+              9,
+              10
+            ],
+            "center": [
+              80,
+              25
+            ],
+            "classlabel": "Gal",
+            "confidence": 0.9976634383201599,
+            "id": 7,
+            "symbol": "Gal"
+          },
+          {
+            "bbox": [
+              75,
+              6,
+              9,
+              9
+            ],
+            "center": [
+              79,
+              10
+            ],
+            "classlabel": "Gal",
+            "confidence": 0.9849793314933777,
+            "id": 8,
+            "symbol": "Gal"
+          },
+          {
+            "bbox": [
+              21,
+              24,
+              8,
+              7
+            ],
+            "center": [
+              25,
+              27
+            ],
+            "classlabel": "Fuc",
+            "confidence": 0.9995934367179871,
+            "id": 9,
+            "symbol": "Fuc"
+          }
+        ],
+        "monos_count": 10,
+        "orientation": "RL",
+        "structure_errors": [
+          "Unable to determine the root of the glycan structure.",
+          "Cycle found. Dropping least confident link: {'mono_ids': [0, 4], 'confidence': 0.8349676132202148, 'classlabel': 'link'}"
+        ],
+        "undirected_links": [
+          {
+            "classlabel": "link",
+            "confidence": 0.8349676132202148,
+            "mono_ids": [
+              3,
+              8
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.8349676132202148,
+            "mono_ids": [
+              1,
+              4
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.8349676132202148,
+            "mono_ids": [
+              4,
+              7
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.8349676132202148,
+            "mono_ids": [
+              0,
+              2
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.8349676132202148,
+            "mono_ids": [
+              0,
+              3
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.8349676132202148,
+            "mono_ids": [
+              5,
+              6
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.8349676132202148,
+            "mono_ids": [
+              2,
+              5
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.8349676132202148,
+            "mono_ids": [
+              6,
+              9
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.8349676132202148,
+            "mono_ids": [
+              7,
+              8
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.8349676132202148,
+            "mono_ids": [
+              0,
+              4
+            ]
+          }
+        ],
+        "width": 101
+      },
+      {
+        "IUPAC": "",
+        "accession": "G01924ZE",
+        "bbox": [
+          246,
+          440,
+          105,
+          54
+        ],
+        "classid": 0,
+        "classlabel": "glycan",
+        "composition_str": "GlcNAc(4)Fuc(1)Man(3)Gal(2)",
+        "errors": [
+          "Unable to identify all linkages in the glycan structure."
+        ],
+        "extracted_image_path": "extracted_figures/extracted_images/34-3.png",
+        "glyImage": "https://glymage.glyomics.org//image/hash/41c8bb24598ba1df96a51102f75189be.svg",
+        "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G01924ZE",
+        "height": 53,
+        "id": 3,
+        "image_name": "34-3.png",
+        "image_path": "extracted_figures/images/34-3.png",
+        "linkexpl": "Extracted successfully using accession",
+        "links_count": 11,
+        "monos": [
+          {
+            "bbox": [
+              44,
+              23,
+              8,
+              8
+            ],
+            "center": [
+              48,
+              27
+            ],
+            "classlabel": "Man",
+            "confidence": 0.9999240636825562,
+            "id": 0,
+            "symbol": "Man"
+          },
+          {
+            "bbox": [
+              52,
+              15,
+              7,
+              8
+            ],
+            "center": [
+              55,
+              19
+            ],
+            "classlabel": "Man",
+            "confidence": 0.9995681047439575,
+            "id": 1,
+            "symbol": "Man"
+          },
+          {
+            "bbox": [
+              52,
+              30,
+              8,
+              9
+            ],
+            "center": [
+              56,
+              34
+            ],
+            "classlabel": "Man",
+            "confidence": 0.9985401034355164,
+            "id": 2,
+            "symbol": "Man"
+          },
+          {
+            "bbox": [
+              33,
+              22,
+              8,
+              9
+            ],
+            "center": [
+              37,
+              26
+            ],
+            "classlabel": "GlcNAc",
+            "confidence": 0.9999974966049194,
+            "id": 3,
+            "symbol": "GlcNAc"
+          },
+          {
+            "bbox": [
+              64,
+              15,
+              8,
+              9
+            ],
+            "center": [
+              68,
+              19
+            ],
+            "classlabel": "GlcNAc",
+            "confidence": 0.999982476234436,
+            "id": 4,
+            "symbol": "GlcNAc"
+          },
+          {
+            "bbox": [
+              22,
+              23,
+              8,
+              9
+            ],
+            "center": [
+              26,
+              27
+            ],
+            "classlabel": "GlcNAc",
+            "confidence": 0.9999631643295288,
+            "id": 5,
+            "symbol": "GlcNAc"
+          },
+          {
+            "bbox": [
+              64,
+              30,
+              8,
+              9
+            ],
+            "center": [
+              68,
+              34
+            ],
+            "classlabel": "GlcNAc",
+            "confidence": 0.9999215602874756,
+            "id": 6,
+            "symbol": "GlcNAc"
+          },
+          {
+            "bbox": [
+              75,
+              15,
+              8,
+              9
+            ],
+            "center": [
+              79,
+              19
+            ],
+            "classlabel": "Gal",
+            "confidence": 0.9973089098930359,
+            "id": 7,
+            "symbol": "Gal"
+          },
+          {
+            "bbox": [
+              76,
+              30,
+              8,
+              8
+            ],
+            "center": [
+              80,
+              34
+            ],
+            "classlabel": "Gal",
+            "confidence": 0.9944589138031006,
+            "id": 8,
+            "symbol": "Gal"
+          },
+          {
+            "bbox": [
+              21,
+              34,
+              8,
+              7
+            ],
+            "center": [
+              25,
+              37
+            ],
+            "classlabel": "Fuc",
+            "confidence": 0.9999071359634399,
+            "id": 9,
+            "symbol": "Fuc"
+          }
+        ],
+        "monos_count": 10,
+        "orientation": "RL",
+        "root": {
+          "classlabel": "redend",
+          "confidence": 0.7222804427146912,
+          "mono_id": 5
+        },
+        "structure_errors": [
+          "Cycle detected at node '4' (visited from node '7')."
+        ],
+        "undirected_links": [
+          {
+            "classlabel": "link",
+            "confidence": 0.9497913718223572,
+            "mono_ids": [
+              4,
+              7
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.9497913718223572,
+            "mono_ids": [
+              1,
+              4
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.9497913718223572,
+            "mono_ids": [
+              2,
+              6
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.9497913718223572,
+            "mono_ids": [
+              0,
+              3
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.9497913718223572,
+            "mono_ids": [
+              6,
+              8
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.9497913718223572,
+            "mono_ids": [
+              7,
+              8
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.9497913718223572,
+            "mono_ids": [
+              3,
+              5
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.9497913718223572,
+            "mono_ids": [
+              0,
+              1
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.9497913718223572,
+            "mono_ids": [
+              0,
+              2
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.9497913718223572,
+            "mono_ids": [
+              1,
+              6
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.9497913718223572,
+            "mono_ids": [
+              5,
+              9
+            ]
+          }
+        ],
+        "width": 104
+      },
+      {
+        "IUPAC": "",
+        "accession": "G68013XJ",
+        "bbox": [
+          26,
+          615,
+          90,
+          63
+        ],
+        "classid": 0,
+        "classlabel": "glycan",
+        "composition_str": "GlcNAc(4)Fuc(1)Man(3)Gal(1)",
+        "errors": [
+          "Unable to identify all linkages in the glycan structure."
+        ],
+        "extracted_image_path": "extracted_figures/extracted_images/34-4.png",
+        "glyImage": "https://glymage.glyomics.org//image/hash/62a9336bc7b4fd78f9841c13db22ad33.svg",
+        "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G68013XJ",
+        "height": 62,
+        "id": 4,
+        "image_name": "34-4.png",
+        "image_path": "extracted_figures/images/34-4.png",
+        "linkexpl": "Extracted successfully using accession",
+        "links_count": 7,
+        "monos": [
+          {
+            "bbox": [
+              55,
+              0,
+              9,
+              8
+            ],
+            "center": [
+              59,
+              4
+            ],
+            "classlabel": "Fuc",
+            "confidence": 0.9999678134918213,
+            "id": 0,
+            "symbol": "Fuc"
+          },
+          {
+            "bbox": [
+              0,
+              3,
+              9,
+              8
+            ],
+            "center": [
+              4,
+              7
+            ],
+            "classlabel": "Gal",
+            "confidence": 0.9897156953811646,
+            "id": 1,
+            "symbol": "Gal"
+          },
+          {
+            "bbox": [
+              13,
+              17,
+              8,
+              9
+            ],
+            "center": [
+              17,
+              21
+            ],
+            "classlabel": "GlcNAc",
+            "confidence": 0.9999963045120239,
+            "id": 2,
+            "symbol": "GlcNAc"
+          },
+          {
+            "bbox": [
+              55,
+              9,
+              8,
+              9
+            ],
+            "center": [
+              59,
+              13
+            ],
+            "classlabel": "GlcNAc",
+            "confidence": 0.9999926090240479,
+            "id": 3,
+            "symbol": "GlcNAc"
+          },
+          {
+            "bbox": [
+              12,
+              2,
+              9,
+              9
+            ],
+            "center": [
+              16,
+              6
+            ],
+            "classlabel": "GlcNAc",
+            "confidence": 0.9999774694442749,
+            "id": 4,
+            "symbol": "GlcNAc"
+          },
+          {
+            "bbox": [
+              44,
+              9,
+              8,
+              9
+            ],
+            "center": [
+              48,
+              13
+            ],
+            "classlabel": "GlcNAc",
+            "confidence": 0.9999724626541138,
+            "id": 5,
+            "symbol": "GlcNAc"
+          },
+          {
+            "bbox": [
+              33,
+              9,
+              8,
+              9
+            ],
+            "center": [
+              37,
+              13
+            ],
+            "classlabel": "Man",
+            "confidence": 0.9999116659164429,
+            "id": 6,
+            "symbol": "Man"
+          },
+          {
+            "bbox": [
+              25,
+              18,
+              8,
+              8
+            ],
+            "center": [
+              29,
+              22
+            ],
+            "classlabel": "Man",
+            "confidence": 0.9998794794082642,
+            "id": 7,
+            "symbol": "Man"
+          },
+          {
+            "bbox": [
+              25,
+              3,
+              8,
+              8
+            ],
+            "center": [
+              29,
+              7
+            ],
+            "classlabel": "Man",
+            "confidence": 0.9997721314430237,
+            "id": 8,
+            "symbol": "Man"
+          }
+        ],
+        "monos_count": 9,
+        "orientation": "RL",
+        "root": {
+          "classlabel": "redend",
+          "confidence": 0.9964454174041748,
+          "mono_id": 3
+        },
+        "structure_errors": [
+          "Tree is disjointed. Unvisited nodes: 2, 7"
+        ],
+        "undirected_links": [
+          {
+            "classlabel": "link",
+            "confidence": 0.7677692174911499,
+            "mono_ids": [
+              1,
+              4
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.7677692174911499,
+            "mono_ids": [
+              4,
+              8
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.7677692174911499,
+            "mono_ids": [
+              6,
+              8
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.7677692174911499,
+            "mono_ids": [
+              5,
+              6
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.7677692174911499,
+            "mono_ids": [
+              2,
+              7
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.7677692174911499,
+            "mono_ids": [
+              3,
+              5
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.7677692174911499,
+            "mono_ids": [
+              0,
+              3
+            ]
+          }
+        ],
+        "width": 89
+      },
+      {
+        "IUPAC": "",
+        "bbox": [
+          22,
+          400,
+          89,
+          48
+        ],
+        "classid": 0,
+        "classlabel": "glycan",
+        "composition_str": "GlcNAc(4)Fuc(1)Man(2)Gal(2)",
+        "errors": [
+          "Unable to identify all linkages in the glycan structure."
+        ],
+        "extracted_image_path": "extracted_figures/extracted_images/34-5.png",
+        "glyImage": "https://glymage.glyomics.org//image/hash/e6e3206e415609df68f36d6636989a4a.svg",
+        "gnomeurl": "https://gnome.glyomics.org/CompositionBrowser.html?ondemandtaskid=83b1ced01612df7a89fabb2286da01b2d1507b415ee86fcf8336",
+        "height": 47,
+        "id": 5,
+        "image_name": "34-5.png",
+        "image_path": "extracted_figures/images/34-5.png",
+        "linkexpl": "Extracted structure using IUPAC/Composition.",
+        "links_count": 8,
+        "monos": [
+          {
+            "bbox": [
+              54,
+              0,
+              9,
+              8
+            ],
+            "center": [
+              58,
+              4
+            ],
+            "classlabel": "Fuc",
+            "confidence": 0.9999104738235474,
+            "id": 0,
+            "symbol": "Fuc"
+          },
+          {
+            "bbox": [
+              1,
+              17,
+              8,
+              9
+            ],
+            "center": [
+              5,
+              21
+            ],
+            "classlabel": "Gal",
+            "confidence": 0.9962502717971802,
+            "id": 1,
+            "symbol": "Gal"
+          },
+          {
+            "bbox": [
+              0,
+              3,
+              9,
+              8
+            ],
+            "center": [
+              4,
+              7
+            ],
+            "classlabel": "Gal",
+            "confidence": 0.9936701059341431,
+            "id": 2,
+            "symbol": "Gal"
+          },
+          {
+            "bbox": [
+              12,
+              17,
+              8,
+              9
+            ],
+            "center": [
+              16,
+              21
+            ],
+            "classlabel": "GlcNAc",
+            "confidence": 0.9999946355819702,
+            "id": 3,
+            "symbol": "GlcNAc"
+          },
+          {
+            "bbox": [
+              43,
+              9,
+              9,
+              9
+            ],
+            "center": [
+              47,
+              13
+            ],
+            "classlabel": "GlcNAc",
+            "confidence": 0.9999914169311523,
+            "id": 4,
+            "symbol": "GlcNAc"
+          },
+          {
+            "bbox": [
+              11,
+              2,
+              9,
+              8
+            ],
+            "center": [
+              15,
+              6
+            ],
+            "classlabel": "GlcNAc",
+            "confidence": 0.9999904632568359,
+            "id": 5,
+            "symbol": "GlcNAc"
+          },
+          {
+            "bbox": [
+              54,
+              9,
+              8,
+              9
+            ],
+            "center": [
+              58,
+              13
+            ],
+            "classlabel": "GlcNAc",
+            "confidence": 0.9999825954437256,
+            "id": 6,
+            "symbol": "GlcNAc"
+          },
+          {
+            "alternative": [
+              {
+                "bbox": [
+                  32,
+                  9,
+                  8,
+                  9
+                ],
+                "center": [
+                  36,
+                  13
+                ],
+                "classlabel": "Man",
+                "confidence": 0.9999066591262817,
+                "id": 9,
+                "iou": 0.005291005291005291,
+                "symbol": "Man"
+              }
+            ],
+            "bbox": [
+              24,
+              17,
+              9,
+              9
+            ],
+            "center": [
+              28,
+              21
+            ],
+            "classlabel": "Man",
+            "confidence": 0.9999450445175171,
+            "id": 7,
+            "symbol": "Man"
+          },
+          {
+            "bbox": [
+              24,
+              2,
+              8,
+              9
+            ],
+            "center": [
+              28,
+              6
+            ],
+            "classlabel": "Man",
+            "confidence": 0.9999392032623291,
+            "id": 8,
+            "symbol": "Man"
+          }
+        ],
+        "monos_count": 9,
+        "orientation": "RL",
+        "root": {
+          "classlabel": "redend",
+          "confidence": 0.9479268193244934,
+          "mono_id": 6
+        },
+        "structure_errors": [
+          "Tree is disjointed. Unvisited nodes: 1, 2, 3, 5, 7, 8"
+        ],
+        "undirected_links": [
+          {
+            "classlabel": "link",
+            "confidence": 0.7957078814506531,
+            "mono_ids": [
+              7,
+              8
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.7957078814506531,
+            "mono_ids": [
+              1,
+              3
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.7957078814506531,
+            "mono_ids": [
+              2,
+              5
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.7957078814506531,
+            "mono_ids": [
+              5,
+              8
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.7957078814506531,
+            "mono_ids": [
+              3,
+              7
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.7957078814506531,
+            "mono_ids": [
+              4,
+              6
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.7957078814506531,
+            "mono_ids": [
+              0,
+              6
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.7957078814506531,
+            "mono_ids": [
+              1,
+              2
+            ]
+          }
+        ],
+        "width": 88
+      },
+      {
+        "IUPAC": "",
+        "bbox": [
+          22,
+          442,
+          93,
+          53
+        ],
+        "classid": 0,
+        "classlabel": "glycan",
+        "composition_str": "GlcNAc(4)Fuc(1)Man(2)Gal(2)",
+        "errors": [
+          "Unable to identify all linkages in the glycan structure."
+        ],
+        "extracted_image_path": "extracted_figures/extracted_images/34-6.png",
+        "glyImage": "https://glymage.glyomics.org//image/hash/e6e3206e415609df68f36d6636989a4a.svg",
+        "gnomeurl": "https://gnome.glyomics.org/CompositionBrowser.html?ondemandtaskid=83b1ced01612df7a89fabb2286da01b2d1507b415ee86fcf8336",
+        "height": 52,
+        "id": 6,
+        "image_name": "34-6.png",
+        "image_path": "extracted_figures/images/34-6.png",
+        "linkexpl": "Extracted structure using IUPAC/Composition.",
+        "links_count": 7,
+        "monos": [
+          {
+            "bbox": [
+              54,
+              13,
+              9,
+              8
+            ],
+            "center": [
+              58,
+              17
+            ],
+            "classlabel": "Fuc",
+            "confidence": 0.9999488592147827,
+            "id": 0,
+            "symbol": "Fuc"
+          },
+          {
+            "bbox": [
+              0,
+              30,
+              9,
+              9
+            ],
+            "center": [
+              4,
+              34
+            ],
+            "classlabel": "Gal",
+            "confidence": 0.9936167001724243,
+            "id": 1,
+            "symbol": "Gal"
+          },
+          {
+            "bbox": [
+              0,
+              14,
+              9,
+              10
+            ],
+            "center": [
+              4,
+              19
+            ],
+            "classlabel": "Gal",
+            "confidence": 0.9792093634605408,
+            "id": 2,
+            "symbol": "Gal"
+          },
+          {
+            "bbox": [
+              55,
+              22,
+              8,
+              9
+            ],
+            "center": [
+              59,
+              26
+            ],
+            "classlabel": "GlcNAc",
+            "confidence": 0.9999963045120239,
+            "id": 3,
+            "symbol": "GlcNAc"
+          },
+          {
+            "bbox": [
+              44,
+              22,
+              8,
+              9
+            ],
+            "center": [
+              48,
+              26
+            ],
+            "classlabel": "GlcNAc",
+            "confidence": 0.999995231628418,
+            "id": 4,
+            "symbol": "GlcNAc"
+          },
+          {
+            "bbox": [
+              12,
+              29,
+              9,
+              9
+            ],
+            "center": [
+              16,
+              33
+            ],
+            "classlabel": "GlcNAc",
+            "confidence": 0.999987006187439,
+            "id": 5,
+            "symbol": "GlcNAc"
+          },
+          {
+            "bbox": [
+              12,
+              14,
+              9,
+              9
+            ],
+            "center": [
+              16,
+              18
+            ],
+            "classlabel": "GlcNAc",
+            "confidence": 0.9999698400497437,
+            "id": 6,
+            "symbol": "GlcNAc"
+          },
+          {
+            "bbox": [
+              24,
+              15,
+              8,
+              9
+            ],
+            "center": [
+              28,
+              19
+            ],
+            "classlabel": "Man",
+            "confidence": 0.999906063079834,
+            "id": 7,
+            "symbol": "Man"
+          },
+          {
+            "alternative": [
+              {
+                "bbox": [
+                  25,
+                  30,
+                  8,
+                  9
+                ],
+                "center": [
+                  29,
+                  34
+                ],
+                "classlabel": "Man",
+                "confidence": 0.9998844861984253,
+                "id": 9,
+                "iou": 0.00558659217877095,
+                "symbol": "Man"
+              }
+            ],
+            "bbox": [
+              32,
+              22,
+              8,
+              9
+            ],
+            "center": [
+              36,
+              26
+            ],
+            "classlabel": "Man",
+            "confidence": 0.9999033212661743,
+            "id": 8,
+            "symbol": "Man"
+          }
+        ],
+        "monos_count": 9,
+        "orientation": "RL",
+        "root": {
+          "classlabel": "redend",
+          "confidence": 0.514564573764801,
+          "mono_id": 3
+        },
+        "structure_errors": [
+          "Tree is disjointed. Unvisited nodes: 1, 5"
+        ],
+        "undirected_links": [
+          {
+            "classlabel": "link",
+            "confidence": 0.9912341833114624,
+            "mono_ids": [
+              7,
+              8
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.9912341833114624,
+            "mono_ids": [
+              6,
+              7
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.9912341833114624,
+            "mono_ids": [
+              2,
+              6
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.9912341833114624,
+            "mono_ids": [
+              1,
+              5
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.9912341833114624,
+            "mono_ids": [
+              0,
+              3
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.9912341833114624,
+            "mono_ids": [
+              4,
+              8
+            ]
+          },
+          {
+            "classlabel": "link",
+            "confidence": 0.9912341833114624,
+            "mono_ids": [
+              3,
+              4
+            ]
+          }
+        ],
+        "width": 92
+      }
+    ],
+    "height": 909,
+    "image_path": "extracted_figures/figures/34.png",
+    "width": 605
+  }
+]

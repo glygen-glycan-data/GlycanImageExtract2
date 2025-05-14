@@ -1,0 +1,425 @@
+{
+  "id": "262b25fb7e44d16525b4f76e5875a68abeac49260b50b6f6eefcaa4b32988f3b",
+  "result": {
+    "id": "262b25fb7e44d16525b4f76e5875a68abeac49260b50b6f6eefcaa4b32988f3b",
+    "start time": 1747148823.5672562,
+    "end time": 1747148845.0899596,
+    "runtime": 21.522703409194946,
+    "error": [],
+    "figure_result": [
+      {
+        "annotated_image_path": "extracted_figures/annotated_figures/058a64f0cda3490dffac747dfb599cef.png",
+        "file_name": "058a64f0cda3490dffac747dfb599cef.png",
+        "glycans": [
+          {
+            "IUPAC": "NeuAc?2-?Gal?1-?GlcNAc?1-?Man?1-?(NeuAc?2-?Gal?1-?GlcNAc?1-?(GlcNAc?1-?)Man?1-?)Man?1-?GlcNAc?1-?GlcNAc",
+            "accession": "G35465JY",
+            "bbox": [
+              0,
+              0,
+              446,
+              186
+            ],
+            "composition_str": "GlcNAc(5)NeuAc(2)Man(3)Gal(2)",
+            "errors": [],
+            "extracted_image_path": "extracted_figures/extracted_images/058a64f0cda3490dffac747dfb599cef-1.png",
+            "glyImage": "https://glymage.glyomics.org//image/hash/bea87fc0e51f4c5cb8df015c2b1642a7.svg",
+            "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G35465JY",
+            "height": 185,
+            "id": 1,
+            "image_name": "058a64f0cda3490dffac747dfb599cef-1.png",
+            "image_path": "extracted_figures/images/058a64f0cda3490dffac747dfb599cef-1.png",
+            "linkexpl": "Extracted successfully using accession",
+            "links_count": 11,
+            "monos": [
+              {
+                "bbox": [
+                  1,
+                  0,
+                  21,
+                  22
+                ],
+                "center": [
+                  11,
+                  11
+                ],
+                "classlabel": "NeuAc",
+                "confidence": 0.9999551773071289,
+                "id": 0,
+                "symbol": "NeuAc"
+              },
+              {
+                "bbox": [
+                  1,
+                  52,
+                  21,
+                  22
+                ],
+                "center": [
+                  11,
+                  63
+                ],
+                "classlabel": "NeuAc",
+                "confidence": 0.9999383687973022,
+                "id": 1,
+                "symbol": "NeuAc"
+              },
+              {
+                "bbox": [
+                  52,
+                  0,
+                  21,
+                  22
+                ],
+                "center": [
+                  62,
+                  11
+                ],
+                "classlabel": "Gal",
+                "confidence": 0.999995231628418,
+                "id": 2,
+                "links": [
+                  {
+                    "classlabel": "link",
+                    "confidence": 0.9997991323471069,
+                    "fromid": 2,
+                    "toid": 0
+                  }
+                ],
+                "symbol": "Gal"
+              },
+              {
+                "bbox": [
+                  52,
+                  52,
+                  21,
+                  22
+                ],
+                "center": [
+                  62,
+                  63
+                ],
+                "classlabel": "Gal",
+                "confidence": 0.9999898672103882,
+                "id": 3,
+                "links": [
+                  {
+                    "classlabel": "link",
+                    "confidence": 0.9997991323471069,
+                    "fromid": 3,
+                    "toid": 1
+                  }
+                ],
+                "symbol": "Gal"
+              },
+              {
+                "bbox": [
+                  312,
+                  39,
+                  21,
+                  22
+                ],
+                "center": [
+                  322,
+                  50
+                ],
+                "classlabel": "GlcNAc",
+                "confidence": 0.9999959468841553,
+                "id": 4,
+                "links": [
+                  {
+                    "classlabel": "link",
+                    "confidence": 0.9997991323471069,
+                    "fromid": 4,
+                    "toid": 7
+                  }
+                ],
+                "symbol": "GlcNAc"
+              },
+              {
+                "bbox": [
+                  104,
+                  104,
+                  22,
+                  22
+                ],
+                "center": [
+                  115,
+                  115
+                ],
+                "classlabel": "GlcNAc",
+                "confidence": 0.9999902248382568,
+                "id": 5,
+                "symbol": "GlcNAc"
+              },
+              {
+                "bbox": [
+                  104,
+                  52,
+                  21,
+                  21
+                ],
+                "center": [
+                  114,
+                  62
+                ],
+                "classlabel": "GlcNAc",
+                "confidence": 0.9999659061431885,
+                "id": 6,
+                "links": [
+                  {
+                    "classlabel": "link",
+                    "confidence": 0.9997991323471069,
+                    "fromid": 6,
+                    "toid": 3
+                  }
+                ],
+                "symbol": "GlcNAc"
+              },
+              {
+                "bbox": [
+                  260,
+                  39,
+                  21,
+                  22
+                ],
+                "center": [
+                  270,
+                  50
+                ],
+                "classlabel": "GlcNAc",
+                "confidence": 0.9999599456787109,
+                "id": 7,
+                "links": [
+                  {
+                    "classlabel": "link",
+                    "confidence": 0.9997991323471069,
+                    "fromid": 7,
+                    "toid": 10
+                  }
+                ],
+                "symbol": "GlcNAc"
+              },
+              {
+                "bbox": [
+                  104,
+                  0,
+                  21,
+                  22
+                ],
+                "center": [
+                  114,
+                  11
+                ],
+                "classlabel": "GlcNAc",
+                "confidence": 0.9999408721923828,
+                "id": 8,
+                "links": [
+                  {
+                    "classlabel": "link",
+                    "confidence": 0.9997991323471069,
+                    "fromid": 8,
+                    "toid": 2
+                  }
+                ],
+                "symbol": "GlcNAc"
+              },
+              {
+                "bbox": [
+                  156,
+                  0,
+                  21,
+                  22
+                ],
+                "center": [
+                  166,
+                  11
+                ],
+                "classlabel": "Man",
+                "confidence": 0.999997615814209,
+                "id": 9,
+                "links": [
+                  {
+                    "classlabel": "link",
+                    "confidence": 0.9997991323471069,
+                    "fromid": 9,
+                    "toid": 8
+                  }
+                ],
+                "symbol": "Man"
+              },
+              {
+                "bbox": [
+                  208,
+                  39,
+                  21,
+                  22
+                ],
+                "center": [
+                  218,
+                  50
+                ],
+                "classlabel": "Man",
+                "confidence": 0.9999971389770508,
+                "id": 10,
+                "links": [
+                  {
+                    "classlabel": "link",
+                    "confidence": 0.9997991323471069,
+                    "fromid": 10,
+                    "toid": 11
+                  },
+                  {
+                    "classlabel": "link",
+                    "confidence": 0.9997991323471069,
+                    "fromid": 10,
+                    "toid": 9
+                  }
+                ],
+                "symbol": "Man"
+              },
+              {
+                "bbox": [
+                  156,
+                  78,
+                  22,
+                  22
+                ],
+                "center": [
+                  167,
+                  89
+                ],
+                "classlabel": "Man",
+                "confidence": 0.999996542930603,
+                "id": 11,
+                "links": [
+                  {
+                    "classlabel": "link",
+                    "confidence": 0.9997991323471069,
+                    "fromid": 11,
+                    "toid": 6
+                  },
+                  {
+                    "classlabel": "link",
+                    "confidence": 0.9997991323471069,
+                    "fromid": 11,
+                    "toid": 5
+                  }
+                ],
+                "symbol": "Man"
+              }
+            ],
+            "monos_count": 12,
+            "orientation": "RL",
+            "root": {
+              "classlabel": "redend",
+              "confidence": 0.9991292357444763,
+              "mono_id": 4
+            },
+            "structure_errors": [],
+            "undirected_links": [
+              {
+                "classlabel": "link",
+                "confidence": 0.9997991323471069,
+                "mono_ids": [
+                  3,
+                  6
+                ]
+              },
+              {
+                "classlabel": "link",
+                "confidence": 0.9997991323471069,
+                "mono_ids": [
+                  2,
+                  8
+                ]
+              },
+              {
+                "classlabel": "link",
+                "confidence": 0.9997991323471069,
+                "mono_ids": [
+                  10,
+                  11
+                ]
+              },
+              {
+                "classlabel": "link",
+                "confidence": 0.9997991323471069,
+                "mono_ids": [
+                  9,
+                  10
+                ]
+              },
+              {
+                "classlabel": "link",
+                "confidence": 0.9997991323471069,
+                "mono_ids": [
+                  1,
+                  3
+                ]
+              },
+              {
+                "classlabel": "link",
+                "confidence": 0.9997991323471069,
+                "mono_ids": [
+                  0,
+                  2
+                ]
+              },
+              {
+                "classlabel": "link",
+                "confidence": 0.9997991323471069,
+                "mono_ids": [
+                  8,
+                  9
+                ]
+              },
+              {
+                "classlabel": "link",
+                "confidence": 0.9997991323471069,
+                "mono_ids": [
+                  6,
+                  11
+                ]
+              },
+              {
+                "classlabel": "link",
+                "confidence": 0.9997991323471069,
+                "mono_ids": [
+                  7,
+                  10
+                ]
+              },
+              {
+                "classlabel": "link",
+                "confidence": 0.9997991323471069,
+                "mono_ids": [
+                  4,
+                  7
+                ]
+              },
+              {
+                "classlabel": "link",
+                "confidence": 0.9997991323471069,
+                "mono_ids": [
+                  5,
+                  11
+                ]
+              }
+            ],
+            "width": 445
+          }
+        ],
+        "height": 186,
+        "image_path": "input/058a64f0cda3490dffac747dfb599cef.png",
+        "width": 446
+      }
+    ]
+  },
+  "finished": true,
+  "submission_detail": {
+    "id": "262b25fb7e44d16525b4f76e5875a68abeac49260b50b6f6eefcaa4b32988f3b",
+    "original_file_name": "058a64f0cda3490dffac747dfb599cef.png",
+    "file_type": "single_figure_img"
+  }
+}
