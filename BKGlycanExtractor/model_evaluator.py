@@ -80,7 +80,6 @@ class CompareBase(object):
             self._update_metrics(results,confidence,TP,FP,FN)
 
     def compare(self,pred_objs,known_objs,**kwargs):
-        print("OG",pred_objs)
         if self.classrestriction is not None:
             pred_objs = [ obj for obj in pred_objs if obj.get('classlabel') in self.classrestriction ]
             known_objs = [ obj for obj in known_objs if obj.get('classlabel') in self.classrestriction ]

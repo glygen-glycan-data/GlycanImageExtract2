@@ -73,7 +73,8 @@ class YOLOGlycanFinder(YOLOModel,GlycanFinder):
     
     
 class SingleGlycanImage(GlycanFinder):
-
+    
+    labels = ["glycan"]
     defaults = {
         'crop': False,
         'padding': 0
@@ -87,14 +88,14 @@ class SingleGlycanImage(GlycanFinder):
     def find_objects(self, obj):
         obj.clear_glycans()
         boxes = self.find_boxes(obj)
-        obj.add_glycan(box=boxes[0],image_path=obj.image_path())
+        obj.add_glycan(box=boxes[0],image_path=obj.image_path(),classlabel=boxes[0].get('classlabel'))
         return obj.glycans()
 
     def find_boxes(self, obj):
         #implement crop and padding?
         image = obj.image()
         height, width, _ = image.shape
-        return [ BoundingBox(image=image, x=0, y=0, width=width, height=height) ]
+        return [ BoundingBox(image=image, x=0, y=0, width=width, height=height,classlabel=self.labels[0],classid=0) ]
 
 class KnownGlycanBoxes(GlycanFinder):
 
@@ -111,7 +112,7 @@ class KnownGlycanBoxes(GlycanFinder):
         super().__init__()
 
     def find_boxes(self, obj):
-        yoloannot = obj.image_path().rsplit('.',1)[0] + "_map.txt"
+        yoloannot = obj.image_path().rsplit('.',1)[0] + ".txt"
         image = obj.image()
         boxes = []
         for l in open(yoloannot):
