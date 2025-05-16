@@ -41,6 +41,32 @@
 
     <script src="static/js/bootstrap.bundle.min.js"></script>
     <script src="static/js/bootstrap.min.js"></script>
+
+    <script>
+      function adjustMainPadding() {
+        const header = document.querySelector('header');
+        const main = document.querySelector('main');
+    
+        if (header && main) {
+          let headerHeight = header.offsetHeight;
+    
+          // Optional tweak: reduce padding on large screens
+          if (window.innerWidth > 1200) {
+            headerHeight = headerHeight - 70; // Reduce by 70px on large screens
+          } else if (window.innerWidth > 768) {
+            headerHeight = headerHeight - 20; // Slightly reduce on medium screens
+          }
+    
+          main.style.paddingTop = headerHeight + 'px';
+        }
+      }
+    
+      window.addEventListener('load', adjustMainPadding);
+      window.addEventListener('resize', adjustMainPadding);
+    </script>
+    
+
+
   </body>
   
 </html>
