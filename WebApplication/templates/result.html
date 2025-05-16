@@ -113,19 +113,19 @@
         alert_data.innerHTML = alert_str
 
         // resstr += "<h3>Analysis complete. ("+calculation_time+" sec)<h3>\n<ul>";
-            resstr += "<h3 style='font-size:1.3rem;'>Results: ";
+            resstr += "<h3 style='font-size:1.3rem;margin-top:0rem;'>Results: ";
         // if (result.result.inputtype == "pdf") {
         //     resstr += "<A target=\"_blank\" href=\"file_download?list_id="+list_id+"\">Annotated PDF</A>, "
         //     }
-        resstr += "<span> <a style='background-color:#e8e3e3; border-radius:20px; padding:1px 5px 1px 5px;' href=\"/static/"+location+"/"+list_id+"/results.json"+"\" target=\"_blank\">JSON data</a> | </span> ";
+        resstr += "<span> <a style='background-color:#e8e3e3; font-weight:400; border-radius:20px; padding:1px 5px 1px 5px;' href=\"/static/"+location+"/"+list_id+"/results.json"+"\" target=\"_blank\">JSON data</a> | </span> ";
         if (file_extension == "pdf") {
             // console.log("PDF",result.submission_detail)
-            resstr += "<span><a style='background-color:#e8e3e3; border-radius:20px;padding:1px 5px 1px 5px;' target=\"_blank\" href=\"/static/"+location+"/"+list_id+"/input/"+encodeURIComponent(result.submission_detail.original_file_name)+"\">Original PDF</a> | </span>"
+            resstr += "<span><a style='background-color:#e8e3e3; font-weight:400; border-radius:20px;padding:1px 5px 1px 5px;' target=\"_blank\" href=\"/static/"+location+"/"+list_id+"/input/"+encodeURIComponent(result.submission_detail.original_file_name)+"\">Original PDF</a> | </span>"
         } else {
             // console.log("result",result)
-            resstr += "<span><a style='background-color:#e8e3e3;border-radius:20px;padding:1px 5px 1px 5px;' target=\"_blank\" href=\"/static/"+location+"/"+list_id+"/input/"+encodeURIComponent(result.submission_detail.original_file_name)+"\">Original Image</a> | </span>"
+            resstr += "<span><a style='background-color:#e8e3e3; font-weight:400; border-radius:20px;padding:1px 5px 1px 5px;' target=\"_blank\" href=\"/static/"+location+"/"+list_id+"/input/"+encodeURIComponent(result.submission_detail.original_file_name)+"\">Original Image</a> | </span>"
         }
-            resstr += "<a style='background-color:#e8e3e3;border-radius:20px;padding:1px 5px 1px 5px;' href=\""+"result?id="+list_id+"\">Bookmark</a></h3>";
+            resstr += "<a style='background-color:#e8e3e3; font-weight:400; border-radius:20px;padding:1px 5px 1px 5px;' href=\""+"result?id="+list_id+"\">Bookmark</a></h3>";
         reselt.innerHTML = resstr;
         
         document.getElementById("extracted").style="display: block;";
@@ -180,7 +180,7 @@
 
                                 <div style="position: relative; display: inline-block;">
                                     ${glycan.errors.length > 0 ?
-                                        `<span style="margin-left: 10px; background: red; color: white; border-radius: 50%; padding: 2px 6px; font-size: 12px; cursor: pointer; position: relative; 
+                                        `<span style="margin-left: 10px; background: #eb7676; color: white; border-radius: 50%; padding: 2px 6px; font-size: 12px; cursor: pointer; position: relative; 
                                             transition: box-shadow 0.3s ease; box-shadow: 0 0 10px rgba(255, 0, 0, 0.8);"
                                             onmouseover="errorMessage(this)" 
                                             onmouseout="errorMessage(this)">
@@ -228,7 +228,7 @@
                                 </div>
                             ` : ''}
 
-                            ${glycan.gnomeurl ? `<br><a style='background-color:#e8e3e3; border-radius:20px; padding:5px 7px 5px 7px;' href="${glycan.gnomeurl}" target="_blank">Explore glycan structure options...</a>` : ''}
+                            ${glycan.gnomeurl ? `<br><a style='background-color:#e8e3e3; font-weight:400; border-radius:20px; padding:5px 7px 5px 7px;' href="${glycan.gnomeurl}" target="_blank">Explore glycan structure options...</a>` : ''}
 
 
                         </td>`;
