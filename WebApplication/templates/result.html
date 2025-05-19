@@ -2,22 +2,29 @@
 {% block head %}
 <script>
     "use strict";
+    let list_id = null;
 
-    function query(){
+    let start_time_stamp = null;
+    let wait_cycle = ["Please wait", "Please wait.", "Please wait..", "Please wait..."];
+    let wait_cycle_index = 0;
+    let calculation_time = 0.0;
+    let delay = 5;
+
+    function query() {
         let request_URL = "retrieve?list_ids=" + JSON.stringify([list_id]);
-        jQuery.getJSON(request_URL, function (d){
-	     let tmp = d[0];
+        jQuery.getJSON(request_URL, function (d) {
+            let tmp = d[0];
 
             // in ms
             let time_lapsed = new Date().getTime() - start_time_stamp;
 
-            if (tmp.finished){
+            if (tmp.finished) {
                 calculation_time = Math.floor(tmp.result["runtime"]);
                 console.log("runtime")
                 console.log(tmp.result["runtime"])
                 addDownloadButton(tmp);
             }
-            else{
+            else {
                 wait_cycle_index += 1;
                 wait_cycle_index = wait_cycle_index % 4;
 
@@ -30,7 +37,7 @@
                 let info = document.getElementById("info");
                 info.innerText = additional_message + wait_cycle[wait_cycle_index];
 
-                setTimeout(query, delay*1000)
+                setTimeout(query, delay * 1000)
             }
         })
     }
@@ -72,7 +79,7 @@
         }
     }
 
-    function addDownloadButton(result){
+    function addDownloadButton(result) {
         let alert_data = document.getElementById("alert_data");
         let reselt = document.getElementById("result");
         let div = document.getElementById("list_id");
@@ -80,8 +87,8 @@
 
         let location = result['location'] || "files";
         var figures = result['result']['figure_result'];
-        var file_extension = result['submission_detail']['original_file_name'].split('.').pop();  
-        
+        var file_extension = result['submission_detail']['original_file_name'].split('.').pop();
+
         var alert_str = ""
         var resstr = ""
 
@@ -89,32 +96,32 @@
         alert_data.innerHTML = alert_str
 
         // resstr += "<h3>Analysis complete. ("+calculation_time+" sec)<h3>\n<ul>";
-            resstr += "<h3 style='font-size:1.3rem;margin-top:0rem;'>Results: ";
+        resstr += "<h3 style='font-size:1.3rem;margin-top:0rem;'>Results: ";
         // if (result.result.inputtype == "pdf") {
         //     resstr += "<A target=\"_blank\" href=\"file_download?list_id="+list_id+"\">Annotated PDF</A>, "
         //     }
-        resstr += "<span> <a style='background-color:#e8e3e3; font-weight:400; border-radius:20px; padding:1px 5px 1px 5px;' href=\"static/"+location+"/"+list_id+"/results.json"+"\" target=\"_blank\">JSON data</a> | </span> ";
+        resstr += "<span> <a style='background-color:#e8e3e3; font-weight:400; border-radius:20px; padding:1px 5px 1px 5px;' href=\"static/" + location + "/" + list_id + "/results.json" + "\" target=\"_blank\">JSON data</a> | </span> ";
         if (file_extension == "pdf") {
             // console.log("PDF",result.submission_detail)
-            resstr += "<span><a style='background-color:#e8e3e3; font-weight:400; border-radius:20px;padding:1px 5px 1px 5px;' target=\"_blank\" href=\"static/"+location+"/"+list_id+"/input/"+encodeURIComponent(result.submission_detail.original_file_name)+"\">Original PDF</a> | </span>"
+            resstr += "<span><a style='background-color:#e8e3e3; font-weight:400; border-radius:20px;padding:1px 5px 1px 5px;' target=\"_blank\" href=\"static/" + location + "/" + list_id + "/input/" + encodeURIComponent(result.submission_detail.original_file_name) + "\">Original PDF</a> | </span>"
         } else {
             // console.log("result",result)
-            resstr += "<span><a style='background-color:#e8e3e3; font-weight:400; border-radius:20px;padding:1px 5px 1px 5px;' target=\"_blank\" href=\"static/"+location+"/"+list_id+"/input/"+encodeURIComponent(result.submission_detail.original_file_name)+"\">Original Image</a> | </span>"
+            resstr += "<span><a style='background-color:#e8e3e3; font-weight:400; border-radius:20px;padding:1px 5px 1px 5px;' target=\"_blank\" href=\"static/" + location + "/" + list_id + "/input/" + encodeURIComponent(result.submission_detail.original_file_name) + "\">Original Image</a> | </span>"
         }
-            resstr += "<a style='background-color:#e8e3e3; font-weight:400; border-radius:20px;padding:1px 5px 1px 5px;' href=\""+"result?id="+list_id+"\">Bookmark</a></h3>";
+        resstr += "<a style='background-color:#e8e3e3; font-weight:400; border-radius:20px;padding:1px 5px 1px 5px;' href=\"" + "result?id=" + list_id + "\">Bookmark</a></h3>";
         reselt.innerHTML = resstr;
-        
-        document.getElementById("extracted").style="display: block;";
-    
+
+        document.getElementById("extracted").style = "display: block;";
+
 
         var innerdiv = "<table style='border-collapse: collapse; text-align: center; background-color: #FFFFFF;'>";
         innerdiv += "<tbody>"
 
-        figures.forEach(function(figure, fig_id) {
+        figures.forEach(function (figure, fig_id) {
             console.log("Figure", figure, "at index", fig_id);
 
             // code to add the page_num, annotated figure
-            innerdiv += "<tr style='background-color:#7c7d7d;'>"; 
+            innerdiv += "<tr style='background-color:#7c7d7d;'>";
             innerdiv += `<th colspan='2' style='color:#ffffff'; text-align: center;'> </th>`;
             innerdiv += "</tr>";
 
@@ -131,7 +138,7 @@
                 innerdiv += "</tr>";
 
 
-                glycans.forEach(function(glycan, gly_idx) {
+                glycans.forEach(function (glycan, gly_idx) {
                     innerdiv += "<tr>";
                     innerdiv += `
                         <td style="vertical-align:middle;">
@@ -149,14 +156,14 @@
                                     src="${glycan.glyImage}"
                                     alt='Glycan Image' />
                                     ` : `<div style="font-size: 16px; color: #555; text-align: center; margin-top: 10px;">No Glycan found</div>`
-                                }
+                        }
                             
                             <figcaption style='font-size: 14px; color: #555; margin-top: 5px;'>
                                 GlyTouCan: ${glycan.accession || 'Not found'}
 
                                 <div style="position: relative; display: inline-block;">
                                     ${glycan.errors.length > 0 ?
-                                        `<span style="margin-left: 10px; background: #eb7676; color: white; border-radius: 50%; padding: 2px 6px; font-size: 12px; cursor: pointer; position: relative; 
+                            `<span style="margin-left: 10px; background: #eb7676; color: white; border-radius: 50%; padding: 2px 6px; font-size: 12px; cursor: pointer; position: relative; 
                                             transition: box-shadow 0.3s ease; box-shadow: 0 0 10px rgba(255, 0, 0, 0.8);"
                                             onmouseover="errorMessage(this)" 
                                             onmouseout="errorMessage(this)">
@@ -168,8 +175,8 @@
                                             </span>
                                         </span>`
 
-                                        : ''
-                                        }  
+                            : ''
+                        }  
                                 </div>
                             
                                 </figcaption>
@@ -209,10 +216,11 @@
 
                         </td>`;
 
-                    
+
                     innerdiv += "</tr>";
 
-                })};      
+                })
+            };
         });
 
         innerdiv += "</tbody>"
@@ -237,30 +245,25 @@
 </script>
 {% endblock %}
 
+{% block onload %}
+<script>
+    function onload() {
+        list_id = document.getElementById("list_id").getAttribute("data-list_id");
+        start_time_stamp = new Date().getTime();
+        query();
+    }
+</script>
+{% endblock %}
+
 {% block content %}
 <div id="alert_data">
 </div>
 
 <div style="width:90%;margin:0 auto;" id="result">
-  <h3>Your file has been successfully uploaded for analysis.</h3>
+    <h3>Your file has been successfully uploaded for analysis.</h3>
 
-  <h3 id="info">Please wait</h3>
+    <h3 id="info">Please wait</h3>
 </div>
 <div id="extracted" style="display: none"></div>
 <div style="display: flex; flex-wrap: wrap; width:90%;margin:0 auto;" id="list_id" data-list_id="{{list_id}}"></div>
-{% endblock %}
-
-{% block footer %}
-<script>
-    let list_id = document.getElementById("list_id").getAttribute("data-list_id");
-
-    let start_time_stamp = new Date().getTime();
-
-    let wait_cycle = ["Please wait", "Please wait.", "Please wait..", "Please wait..."];
-    let wait_cycle_index = 0;
-    let calculation_time = 0.0;
-    let delay = 5;
-
-    query();
-</script>
 {% endblock %}

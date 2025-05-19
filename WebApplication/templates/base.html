@@ -2,11 +2,11 @@
 <html lang="en">
     <head>
         {% include 'head.html' %}
+        {% block onload %}<script>function onload() {;}</script>{% endblock %}
         {% block head %}<!-- page specific header material -->{% endblock %}
     </head>
-    <body class="home page-template-default page page-id-2 wp-embed-responsive">
+    <body onload="onload();" class="home page-template-default page page-id-2 wp-embed-responsive">
         <div id="site-wrapper">
-            <div class="site-overlay"></div>
             <div id="site-canvas">
                 {% include 'banner.html' %}
                 <div id="main-content" style="margin-top: 60px;">
@@ -19,7 +19,5 @@
                 {% include 'foot.html' %}
             </div>
         </div>
-        {% block footer %}
-        {% endblock %}
     </body>
 </html>

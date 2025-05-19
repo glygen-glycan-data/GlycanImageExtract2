@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+
 {% block head %}
 <style>
     .tooltip {
@@ -26,22 +27,22 @@
     }
 </style>
 <script>
-function displayExamples(input) {
+  function displayExamples(input) {
     // console.log(input);
-    
+
     // list of examples for different file types
     // <span id="example1">Example: <A href="result?id=example1">G57001BK</A></span>
     const examples = {
-      single_figure_img: ['sgi1','sgi2','sgi3'],
-      multi_figure_img: ['mgi1','mgi2','mgi3'],
+      single_figure_img: ['sgi1', 'sgi2', 'sgi3'],
+      multi_figure_img: ['mgi1', 'mgi2', 'mgi3'],
       multi_figure_pdf: ['mgp1', 'mgp2', 'mgp3']
     }
-    
+
 
     let selected_file_type = examples[input.value]
-    
+
     let display_examples = `
-        ${selected_file_type.map((example,id) => `<a href="result?id=${example}" class="badge badge-custom"> Example ${id + 1}</a>`).join('  ')}
+        ${selected_file_type.map((example, id) => `<a href="result?id=${example}" class="badge badge-custom"> Example ${id + 1}</a>`).join('  ')}
         
     `;
 
@@ -54,39 +55,39 @@ function displayExamples(input) {
 
   // Form Validation
   function validateForm() {
-      // const selectedRadio = document.querySelector('input[name="fileType"]:checked')
-      const fileType = document.querySelector('input[name="fileType"]:checked').id;
-      console.log("fileType",fileType)
-      const uploadOption = document.querySelector('input[name="uploadOption"]:checked').value;
+    // const selectedRadio = document.querySelector('input[name="fileType"]:checked')
+    const fileType = document.querySelector('input[name="fileType"]:checked').id;
+    console.log("fileType", fileType)
+    const uploadOption = document.querySelector('input[name="uploadOption"]:checked').value;
 
-      // Allowed formats based on the selected file type
-      const allowedFormats = {
-          manuscript: ['pdf'],
-          multi_figure: ['png', 'jpg', 'jpeg'],
-          single_figure: ['png', 'jpg', 'jpeg']
-      };
+    // Allowed formats based on the selected file type
+    const allowedFormats = {
+      manuscript: ['pdf'],
+      multi_figure: ['png', 'jpg', 'jpeg'],
+      single_figure: ['png', 'jpg', 'jpeg']
+    };
 
     if (uploadOption === 'file') {
       const fileInput = document.getElementById('file');
       if (fileInput.files.length === 0) {
-          alert('Please upload a file.');
-          return false;
+        alert('Please upload a file.');
+        return false;
       }
 
       const fileName = fileInput.files[0].name;
       const fileExtension = fileName.split('.').pop().toLowerCase();
 
       if (!allowedFormats[fileType].includes(fileExtension)) {
-          alert(`Invalid file format. Allowed format for ${fileType.replace('_', ' ')} is: ${allowedFormats[fileType].join(', ')}`);
-          return false;
+        alert(`Invalid file format. Allowed format for ${fileType.replace('_', ' ')} is: ${allowedFormats[fileType].join(', ')}`);
+        return false;
       }
-    } 
+    }
     else if (uploadOption === 'url') {
       const urlInput = document.getElementById('fileURL').value.trim();  // Get the URL input value
       console.log("URL input:", urlInput);
       if (urlInput === '') {
-          alert('Please enter a URL.');
-          return false;
+        alert('Please enter a URL.');
+        return false;
       }
 
       // Extract the file extension before the query parameters
@@ -104,69 +105,83 @@ function displayExamples(input) {
     }
   }
 
-    // Function to toggle the visibility of file input fields based on the selected radio button
-    function toggleInputFields() {
+  // Function to toggle the visibility of file input fields based on the selected radio button
+  function toggleInputFields() {
 
-      let uploadOption = document.querySelector('input[name="uploadOption"]:checked').value;
+    let uploadOption = document.querySelector('input[name="uploadOption"]:checked').value;
 
-      if (uploadOption === 'file') {
-        document.getElementById('fileUploadField').style.display = 'flex';
-        document.getElementById('urlInputField').style.display = 'none';
-        // labelUpdate();
+    if (uploadOption === 'file') {
+      document.getElementById('fileUploadField').style.display = 'flex';
+      document.getElementById('urlInputField').style.display = 'none';
+      // labelUpdate();
 
-      } else {
-        document.getElementById('fileUploadField').style.display = 'none';
-        document.getElementById('urlInputField').style.display = 'flex';
+    } else {
+      document.getElementById('fileUploadField').style.display = 'none';
+      document.getElementById('urlInputField').style.display = 'flex';
 
-        let uploadLabel = document.getElementById('uploadLabel');
-        uploadLabel.textContent = 'Enter URL:'
-      }
+      let uploadLabel = document.getElementById('uploadLabel');
+      uploadLabel.textContent = 'Enter URL:'
     }
+  }
 
-    function fileToolTip(event, element) {
-      const tooltip = element.querySelector('.tooltip');
+  function fileToolTip(event, element) {
+    const tooltip = element.querySelector('.tooltip');
 
-      if (event.type === 'mouseover') {
-          tooltip.style.visibility = 'visible';
-          tooltip.style.opacity = '1';
-          tooltipContent();
-      } else if (event.type === 'mouseout') {
-          tooltip.style.visibility = 'hidden';
-          tooltip.style.opacity = '0';
-        }
+    if (event.type === 'mouseover') {
+      tooltip.style.visibility = 'visible';
+      tooltip.style.opacity = '1';
+      tooltipContent();
+    } else if (event.type === 'mouseout') {
+      tooltip.style.visibility = 'hidden';
+      tooltip.style.opacity = '0';
     }
+  }
 
-    function tooltipContent(){
+  function tooltipContent() {
 
 
-      const allowedFormats = {
-          manuscript: ['.pdf'],
-          multi_figure: ['.png', '.jpg', '.jpeg'],
-          single_figure: ['.png', '.jpg', '.jpeg']
-      };
+    const allowedFormats = {
+      manuscript: ['.pdf'],
+      multi_figure: ['.png', '.jpg', '.jpeg'],
+      single_figure: ['.png', '.jpg', '.jpeg']
+    };
 
-      let uploadOption = document.querySelector('input[name="uploadOption"]:checked').value;  // either file or url
-      let selectedValue = document.querySelector('input[name="fileType"]:checked').id;
-      let content = document.getElementById('tooltip-content')
+    let uploadOption = document.querySelector('input[name="uploadOption"]:checked').value;  // either file or url
+    let selectedValue = document.querySelector('input[name="fileType"]:checked').id;
+    let content = document.getElementById('tooltip-content')
 
-      console.log("selectedValue",selectedValue)
-      console.log("uploadOption",uploadOption)
+    console.log("selectedValue", selectedValue)
+    console.log("uploadOption", uploadOption)
 
-      // if (uploadOption === 'file') {
-      let acceptedFiles = allowedFormats[selectedValue];
-      let text = `Allowed formats:
+    // if (uploadOption === 'file') {
+    let acceptedFiles = allowedFormats[selectedValue];
+    let text = `Allowed formats:
         <ul style="margin: 5px 0; padding-left: 15px; list-style-type: disc;">
           ${acceptedFiles.map(format => `<li style="margin: 2px 0; padding: 0;">${format}</li>`).join('')} 
         </ul>
       `;
 
-      content.innerHTML = text
-      // }
+    content.innerHTML = text
+    // }
 
 
+  }
+</script>
+{% endblock %}
+
+{% block onload %}
+<script>
+    function onload() {
+      // labelUpdate();
+      const defaultSelected = document.querySelector('input[name="fileType"]:checked');
+      if (defaultSelected) {
+        displayExamples(defaultSelected);
+      }
+      toggleInputFields();
     }
 </script>
 {% endblock %}
+
 {% block content %}
 <div class="container d-flex justify-content-center">
     <form action="file_upload" method="post" enctype="multipart/form-data" onsubmit="return validateForm()">
@@ -250,15 +265,4 @@ function displayExamples(input) {
     </p>        
 </div>
 {% endblock %}
-{% block footer %}
-<script>
-    document.addEventListener("DOMContentLoaded", function() {
-      // labelUpdate();
-      const defaultSelected = document.querySelector('input[name="fileType"]:checked');
-      if (defaultSelected) {
-        displayExamples(defaultSelected);
-      }
-      toggleInputFields();
-    });
-</script>
-{% endblock %}
+
