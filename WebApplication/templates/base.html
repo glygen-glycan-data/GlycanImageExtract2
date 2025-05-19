@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        {% include 'head.html' %}
+        {% block head %}<!-- page specific header material -->{% endblock %}
+    </head>
+    <body class="home page-template-default page page-id-2 wp-embed-responsive">
+        <div id="site-wrapper">
+            <div class="site-overlay"></div>
+            <div id="site-canvas">
+                {% include 'banner.html' %}
+                <div id="main-content" style="margin-top: 60px;">
+                    <main>
+                      <section class="container" aria-label="Primary content">
+                        {% block content %}{% endblock %}
+                      </section>
+                    </main>
+                </div>
+                {% include 'foot.html' %}
+            </div>
+        </div>
+        {% block footer %}
+        {% endblock %}
+    </body>
+</html>

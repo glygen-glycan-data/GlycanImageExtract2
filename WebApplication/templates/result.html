@@ -1,31 +1,7 @@
-{% include 'header.html' %}
-
-<!-- <style> section could be  added to header.html (but since it is a common header for many apps, dont do it)
-    Or you could create a .css file and add all your styles to it - TO DO -->
-<style>
-    
-</style>
-
-<div id="alert_data">
-</div>
-
-<div style="width:90%;margin:0 auto;" id="result">
-  <h3>Your file has been successfully uploaded for analysis.</h3>
-
-  <h3 id="info">Please wait</h3>
-</div>
-<div id="extracted" style="display: none"></div>
-<div style="display: flex; flex-wrap: wrap; width:90%;margin:0 auto;" id="list_id" data-list_id="{{list_id}}"></div>
+{% extends "base.html" %}
+{% block head %}
 <script>
     "use strict";
-    let list_id = document.getElementById("list_id").getAttribute("data-list_id");
-
-    let start_time_stamp = new Date().getTime();
-
-    let wait_cycle = ["Please wait", "Please wait.", "Please wait..", "Please wait..."];
-    let wait_cycle_index = 0;
-    let calculation_time = 0.0;
-    let delay = 5;
 
     function query(){
         let request_URL = "retrieve?list_ids=" + JSON.stringify([list_id]);
@@ -117,13 +93,13 @@
         // if (result.result.inputtype == "pdf") {
         //     resstr += "<A target=\"_blank\" href=\"file_download?list_id="+list_id+"\">Annotated PDF</A>, "
         //     }
-        resstr += "<span> <a style='background-color:#e8e3e3; font-weight:400; border-radius:20px; padding:1px 5px 1px 5px;' href=\"/static/"+location+"/"+list_id+"/results.json"+"\" target=\"_blank\">JSON data</a> | </span> ";
+        resstr += "<span> <a style='background-color:#e8e3e3; font-weight:400; border-radius:20px; padding:1px 5px 1px 5px;' href=\"static/"+location+"/"+list_id+"/results.json"+"\" target=\"_blank\">JSON data</a> | </span> ";
         if (file_extension == "pdf") {
             // console.log("PDF",result.submission_detail)
-            resstr += "<span><a style='background-color:#e8e3e3; font-weight:400; border-radius:20px;padding:1px 5px 1px 5px;' target=\"_blank\" href=\"/static/"+location+"/"+list_id+"/input/"+encodeURIComponent(result.submission_detail.original_file_name)+"\">Original PDF</a> | </span>"
+            resstr += "<span><a style='background-color:#e8e3e3; font-weight:400; border-radius:20px;padding:1px 5px 1px 5px;' target=\"_blank\" href=\"static/"+location+"/"+list_id+"/input/"+encodeURIComponent(result.submission_detail.original_file_name)+"\">Original PDF</a> | </span>"
         } else {
             // console.log("result",result)
-            resstr += "<span><a style='background-color:#e8e3e3; font-weight:400; border-radius:20px;padding:1px 5px 1px 5px;' target=\"_blank\" href=\"/static/"+location+"/"+list_id+"/input/"+encodeURIComponent(result.submission_detail.original_file_name)+"\">Original Image</a> | </span>"
+            resstr += "<span><a style='background-color:#e8e3e3; font-weight:400; border-radius:20px;padding:1px 5px 1px 5px;' target=\"_blank\" href=\"static/"+location+"/"+list_id+"/input/"+encodeURIComponent(result.submission_detail.original_file_name)+"\">Original Image</a> | </span>"
         }
             resstr += "<a style='background-color:#e8e3e3; font-weight:400; border-radius:20px;padding:1px 5px 1px 5px;' href=\""+"result?id="+list_id+"\">Bookmark</a></h3>";
         reselt.innerHTML = resstr;
@@ -143,7 +119,7 @@
             innerdiv += "</tr>";
 
             innerdiv += "<tr>";
-            innerdiv += "<td colspan='2' style='padding: 20px; text-align: center;'><img style='max-width: 550px; width: auto; height: auto; display: block; margin: auto;' src='/static/" + location + "/" + list_id + "/" + figure.annotated_image_path + "'/></td>";
+            innerdiv += "<td colspan='2' style='padding: 20px; text-align: center;'><img style='max-width: 550px; width: auto; height: auto; display: block; margin: auto;' src='static/" + location + "/" + list_id + "/" + figure.annotated_image_path + "'/></td>";
             innerdiv += "</tr>";
 
             var glycans = figure['glycans'] || []
@@ -160,7 +136,7 @@
                     innerdiv += `
                         <td style="vertical-align:middle;">
                             <img style="max-width: 300px; min-height: 90px; max-height:300px; min-width: 90px; display: block; margin: auto;" 
-                                src="/static/${location}/${list_id}/${glycan.extracted_image_path}" 
+                                src="static/${location}/${list_id}/${glycan.extracted_image_path}" 
                                 alt="Glycan Image" />
                         </td>`;
 
@@ -245,9 +221,6 @@
 
     }
 
-    query();
-
-
     // Function to toggle the visibility of file input fields based on the selected radio button
     function errorMessage(element) {
         const tooltip = element.querySelector('.tooltip');
@@ -262,3 +235,32 @@
     }
 
 </script>
+{% endblock %}
+
+{% block content %}
+<div id="alert_data">
+</div>
+
+<div style="width:90%;margin:0 auto;" id="result">
+  <h3>Your file has been successfully uploaded for analysis.</h3>
+
+  <h3 id="info">Please wait</h3>
+</div>
+<div id="extracted" style="display: none"></div>
+<div style="display: flex; flex-wrap: wrap; width:90%;margin:0 auto;" id="list_id" data-list_id="{{list_id}}"></div>
+{% endblock %}
+
+{% block footer %}
+<script>
+    let list_id = document.getElementById("list_id").getAttribute("data-list_id");
+
+    let start_time_stamp = new Date().getTime();
+
+    let wait_cycle = ["Please wait", "Please wait.", "Please wait..", "Please wait..."];
+    let wait_cycle_index = 0;
+    let calculation_time = 0.0;
+    let delay = 5;
+
+    query();
+</script>
+{% endblock %}

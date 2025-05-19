@@ -1,280 +1,264 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <!-- Required meta tags -->
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+{% extends "base.html" %}
+{% block head %}
+<style>
+    .tooltip {
+        visibility: hidden;
+        width: 180px;
+        background-color: #373b3b;
+        color: white;
+        text-align: left;
+        border-radius: 5px;
+        padding: 8px;
+        position: absolute;
+        z-index: 1;
+        bottom: 125%;
+        left: 50%;
+        transform: translateX(-50%);
+        opacity: 0;
+        transition: opacity 0.3s;
+        pointer-events: none;
+    }
 
-    <style>
-      .tooltip {
-          visibility: hidden;
-          width: 180px;
-          background-color: #373b3b;
-          color: white;
-          text-align: left;
-          border-radius: 5px;
-          padding: 8px;
-          position: absolute;
-          z-index: 1;
-          bottom: 125%;
-          left: 50%;
-          transform: translateX(-50%);
-          opacity: 0;
-          transition: opacity 0.3s;
-          pointer-events: none;
+    .badge-custom {
+      background-color: #e6f0ff;  /* your custom background */
+      color: #358dec;             /* your custom text color */
+      border: 1px solid #b3d1ff;
+    }
+</style>
+<script>
+function displayExamples(input) {
+    // console.log(input);
+    
+    // list of examples for different file types
+    // <span id="example1">Example: <A href="result?id=example1">G57001BK</A></span>
+    const examples = {
+      single_figure_img: ['sgi1','sgi2','sgi3'],
+      multi_figure_img: ['mgi1','mgi2','mgi3'],
+      multi_figure_pdf: ['mgp1', 'mgp2', 'mgp3']
+    }
+    
+
+    let selected_file_type = examples[input.value]
+    
+    let display_examples = `
+        ${selected_file_type.map((example,id) => `<a href="result?id=${example}" class="badge badge-custom"> Example ${id + 1}</a>`).join('  ')}
+        
+    `;
+
+    console.log(display_examples);
+    const content = document.getElementById("exampleOutput");
+    content.innerHTML = display_examples;
+
+  }
+
+
+  // Form Validation
+  function validateForm() {
+      // const selectedRadio = document.querySelector('input[name="fileType"]:checked')
+      const fileType = document.querySelector('input[name="fileType"]:checked').id;
+      console.log("fileType",fileType)
+      const uploadOption = document.querySelector('input[name="uploadOption"]:checked').value;
+
+      // Allowed formats based on the selected file type
+      const allowedFormats = {
+          manuscript: ['pdf'],
+          multi_figure: ['png', 'jpg', 'jpeg'],
+          single_figure: ['png', 'jpg', 'jpeg']
+      };
+
+    if (uploadOption === 'file') {
+      const fileInput = document.getElementById('file');
+      if (fileInput.files.length === 0) {
+          alert('Please upload a file.');
+          return false;
       }
 
-      .badge-custom {
-        background-color: #e6f0ff;  /* your custom background */
-        color: #358dec;             /* your custom text color */
-        border: 1px solid #b3d1ff;
+      const fileName = fileInput.files[0].name;
+      const fileExtension = fileName.split('.').pop().toLowerCase();
+
+      if (!allowedFormats[fileType].includes(fileExtension)) {
+          alert(`Invalid file format. Allowed format for ${fileType.replace('_', ' ')} is: ${allowedFormats[fileType].join(', ')}`);
+          return false;
       }
-  </style>
+    } 
+    else if (uploadOption === 'url') {
+      const urlInput = document.getElementById('fileURL').value.trim();  // Get the URL input value
+      console.log("URL input:", urlInput);
+      if (urlInput === '') {
+          alert('Please enter a URL.');
+          return false;
+      }
 
+      // Extract the file extension before the query parameters
+      const cleanURL = urlInput.split('?')[0];  // Remove query params
+      const urlExtension = cleanURL.split('.').pop().toLowerCase();  // Get extension
 
-  </head>
-  <body>
-    {% include 'header.html' %}
+      console.log("fileType", fileType, allowedFormats[fileType], urlExtension);
 
-    <div class="container d-flex justify-content-center">
-      <form action="file_upload" method="post" enctype="multipart/form-data" onsubmit="return validateForm()">
-        <div id="fileType" class="btn-group btn-group-toggle btn-group-lg" data-toggle="buttons">
-          <label class="btn btn-secondary active">
-            <input type="radio" name="fileType" id="manuscript" value="multi_figure_pdf" autocomplete="off" checked onchange="displayExamples(this)"> Manuscript
-          </label>
-          <label class="btn btn-secondary">
-            <input type="radio" name="fileType" id="multi_figure" value="multi_figure_img" autocomplete="off" onchange="displayExamples(this)"> Multi-Glycan Image
-          </label>
-          <label class="btn btn-secondary">
-            <input type="radio" name="fileType" id="single_figure" value="single_figure_img" autocomplete="off" onchange="displayExamples(this)"> Single-Glycan Image
-          </label>
-        </div>
-        
-        <div style="border: 1px solid #ccc; border-radius: 4px;">
-          
-          <div style="display: flex; flex-direction: column; align-items: center; margin: 25px 0;">
-          <!-- <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;"> -->
+      if (!allowedFormats[fileType].includes(urlExtension)) {
+        alert(`Invalid URL format, only DIRECT LINKS ending with: ${allowedFormats[fileType].join(', ')} are allowed`);
+        return false;
+      }
 
-            <label class="form-check-label mb-2"></label>
-            <div style="display: flex; gap: 25px">
-              <label>
-                <input type="radio" name="uploadOption" value="file" checked onclick="toggleInputFields()"> Upload File
-              </label>
-              <label>
-                <input type="radio" name="uploadOption" value="url" onclick="toggleInputFields()"> Provide Link
-              </label>
-            </div>
-            
-            <div style="display: flex; flex-direction: column; align-items: center; width: 70%; margin: auto; gap: 10px;">
+      return true; // Allow form submission
+    }
+  }
 
-              <div style="display: flex; align-items: center; gap: 8px; margin-top:2rem;">
-                <label style="margin-bottom:0rem" id='uploadLabel'>Choose a file or enter a URL:</label>
-        
-                <span style="background: rgb(78, 78, 79); color: white; border-radius: 50%; padding: 2px 8px; font-size: 12px; cursor: pointer; position: relative; font-weight:bold; 
-                    transition: box-shadow 0.3s ease;"
-                    onmouseover="fileToolTip(event, this)" 
-                    onmouseout="fileToolTip(event, this)"
-                    aria-label="Tooltip for allowed formats">
-                    ?
-                    <span class="tooltip">
-                        <div id="tooltip-content"></div>
-                    </span>
-                </span>
-              </div>
+    // Function to toggle the visibility of file input fields based on the selected radio button
+    function toggleInputFields() {
 
-              <!-- File Upload Field -->
-              <div style="display: flex; flex-direction: column; gap: 10px; max-width: 400px; width: 70%;">
-                <div style="flex: 1; padding: 6px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;" id="fileUploadField">
-                  <input type="file" name="file" id="file"/>
-                </div>
-            
-                <!-- URL Input Field -->
-                <div id="urlInputField" style="display: none; align-items: center; gap: 10px; margin:5px;">
-                  <input type="text" name="fileURL" id="fileURL" placeholder="https://example.com" 
-                    style="height: 39px; flex: 1; padding: 6px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;" />
-                </div>
-              </div>
+      let uploadOption = document.querySelector('input[name="uploadOption"]:checked').value;
 
-            </div>
-            
-            <input style="background-color:#4e555b; color:white; margin:15px" type="submit" value="Submit" class="btn" style="margin-top: 20px;">
-
-            <br>
-
-            <!-- Placeholder where examples will be displayed -->
-            <div id="exampleOutput"></div>
-              <!-- <span id="example1">Example: <A href="result?id=sgi1">G57001BK</A></span> -->
-               <!-- <span id></span> -->
-            <!-- </div> -->
-          </div>
-
-          
-        </div>     
-      </form>
-        
-        <p id="demo">
-          <div id="circle" class="loader" style ="display:none">
-          </div>
-        </p>        
-    </div>
-   
-    <script>
-
-
-      document.addEventListener("DOMContentLoaded", function() {
+      if (uploadOption === 'file') {
+        document.getElementById('fileUploadField').style.display = 'flex';
+        document.getElementById('urlInputField').style.display = 'none';
         // labelUpdate();
-        const defaultSelected = document.querySelector('input[name="fileType"]:checked');
-        if (defaultSelected) {
-          displayExamples(defaultSelected);
-        }
-        toggleInputFields();
-        
-      });
 
-      function displayExamples(input) {
-        // console.log(input);
-        
-        // list of examples for different file types
-        // <span id="example1">Example: <A href="result?id=example1">G57001BK</A></span>
-        const examples = {
-          single_figure_img: ['sgi1','sgi2','sgi3'],
-          multi_figure_img: ['mgi1','mgi2','mgi3'],
-          multi_figure_pdf: ['mgp1', 'mgp2', 'mgp3']
-        }
-        
+      } else {
+        document.getElementById('fileUploadField').style.display = 'none';
+        document.getElementById('urlInputField').style.display = 'flex';
 
-        let selected_file_type = examples[input.value]
-        
-        let display_examples = `
-            ${selected_file_type.map((example,id) => `<a href="result?id=${example}" class="badge badge-custom"> Example ${id + 1}</a>`).join('  ')}
-            
-        `;
-
-        console.log(display_examples);
-        const content = document.getElementById("exampleOutput");
-        content.innerHTML = display_examples;
-
+        let uploadLabel = document.getElementById('uploadLabel');
+        uploadLabel.textContent = 'Enter URL:'
       }
+    }
 
+    function fileToolTip(event, element) {
+      const tooltip = element.querySelector('.tooltip');
 
-      // Form Validation
-      function validateForm() {
-          // const selectedRadio = document.querySelector('input[name="fileType"]:checked')
-          const fileType = document.querySelector('input[name="fileType"]:checked').id;
-          console.log("fileType",fileType)
-          const uploadOption = document.querySelector('input[name="uploadOption"]:checked').value;
-
-          // Allowed formats based on the selected file type
-          const allowedFormats = {
-              manuscript: ['pdf'],
-              multi_figure: ['png', 'jpg', 'jpeg'],
-              single_figure: ['png', 'jpg', 'jpeg']
-          };
-
-        if (uploadOption === 'file') {
-          const fileInput = document.getElementById('file');
-          if (fileInput.files.length === 0) {
-              alert('Please upload a file.');
-              return false;
-          }
-
-          const fileName = fileInput.files[0].name;
-          const fileExtension = fileName.split('.').pop().toLowerCase();
-
-          if (!allowedFormats[fileType].includes(fileExtension)) {
-              alert(`Invalid file format. Allowed format for ${fileType.replace('_', ' ')} is: ${allowedFormats[fileType].join(', ')}`);
-              return false;
-          }
-        } 
-        else if (uploadOption === 'url') {
-          const urlInput = document.getElementById('fileURL').value.trim();  // Get the URL input value
-          console.log("URL input:", urlInput);
-          if (urlInput === '') {
-              alert('Please enter a URL.');
-              return false;
-          }
-
-          // Extract the file extension before the query parameters
-          const cleanURL = urlInput.split('?')[0];  // Remove query params
-          const urlExtension = cleanURL.split('.').pop().toLowerCase();  // Get extension
-
-          console.log("fileType", fileType, allowedFormats[fileType], urlExtension);
-
-          if (!allowedFormats[fileType].includes(urlExtension)) {
-            alert(`Invalid URL format, only DIRECT LINKS ending with: ${allowedFormats[fileType].join(', ')} are allowed`);
-            return false;
-          }
-
-          return true; // Allow form submission
+      if (event.type === 'mouseover') {
+          tooltip.style.visibility = 'visible';
+          tooltip.style.opacity = '1';
+          tooltipContent();
+      } else if (event.type === 'mouseout') {
+          tooltip.style.visibility = 'hidden';
+          tooltip.style.opacity = '0';
         }
+    }
+
+    function tooltipContent(){
+
+
+      const allowedFormats = {
+          manuscript: ['.pdf'],
+          multi_figure: ['.png', '.jpg', '.jpeg'],
+          single_figure: ['.png', '.jpg', '.jpeg']
+      };
+
+      let uploadOption = document.querySelector('input[name="uploadOption"]:checked').value;  // either file or url
+      let selectedValue = document.querySelector('input[name="fileType"]:checked').id;
+      let content = document.getElementById('tooltip-content')
+
+      console.log("selectedValue",selectedValue)
+      console.log("uploadOption",uploadOption)
+
+      // if (uploadOption === 'file') {
+      let acceptedFiles = allowedFormats[selectedValue];
+      let text = `Allowed formats:
+        <ul style="margin: 5px 0; padding-left: 15px; list-style-type: disc;">
+          ${acceptedFiles.map(format => `<li style="margin: 2px 0; padding: 0;">${format}</li>`).join('')} 
+        </ul>
+      `;
+
+      content.innerHTML = text
+      // }
+
+
+    }
+</script>
+{% endblock %}
+{% block content %}
+<div class="container d-flex justify-content-center">
+    <form action="file_upload" method="post" enctype="multipart/form-data" onsubmit="return validateForm()">
+      <div id="fileType" class="btn-group btn-group-toggle btn-group-lg" data-toggle="buttons">
+        <label class="btn btn-secondary active">
+          <input type="radio" name="fileType" id="manuscript" value="multi_figure_pdf" autocomplete="off" checked onchange="displayExamples(this)"> Manuscript
+        </label>
+        <label class="btn btn-secondary">
+          <input type="radio" name="fileType" id="multi_figure" value="multi_figure_img" autocomplete="off" onchange="displayExamples(this)"> Multi-Glycan Image
+        </label>
+        <label class="btn btn-secondary">
+          <input type="radio" name="fileType" id="single_figure" value="single_figure_img" autocomplete="off" onchange="displayExamples(this)"> Single-Glycan Image
+        </label>
+      </div>
+      
+      <div style="border: 1px solid #ccc; border-radius: 4px;">
+        
+        <div style="display: flex; flex-direction: column; align-items: center; margin: 25px 0;">
+        <!-- <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;"> -->
+
+          <label class="form-check-label mb-2"></label>
+          <div style="display: flex; gap: 25px">
+            <label>
+              <input type="radio" name="uploadOption" value="file" checked onclick="toggleInputFields()"> Upload File
+            </label>
+            <label>
+              <input type="radio" name="uploadOption" value="url" onclick="toggleInputFields()"> Provide Link
+            </label>
+          </div>
+          
+          <div style="display: flex; flex-direction: column; align-items: center; width: 70%; margin: auto; gap: 10px;">
+
+            <div style="display: flex; align-items: center; gap: 8px; margin-top:2rem;">
+              <label style="margin-bottom:0rem" id='uploadLabel'>Choose a file or enter a URL:</label>
+      
+              <span style="background: rgb(78, 78, 79); color: white; border-radius: 50%; padding: 2px 8px; font-size: 12px; cursor: pointer; position: relative; font-weight:bold; 
+                  transition: box-shadow 0.3s ease;"
+                  onmouseover="fileToolTip(event, this)" 
+                  onmouseout="fileToolTip(event, this)"
+                  aria-label="Tooltip for allowed formats">
+                  ?
+                  <span class="tooltip">
+                      <div id="tooltip-content"></div>
+                  </span>
+              </span>
+            </div>
+
+            <!-- File Upload Field -->
+            <div style="display: flex; flex-direction: column; gap: 10px; max-width: 400px; width: 70%;">
+              <div style="flex: 1; padding: 6px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;" id="fileUploadField">
+                <input type="file" name="file" id="file"/>
+              </div>
+          
+              <!-- URL Input Field -->
+              <div id="urlInputField" style="display: none; align-items: center; gap: 10px; margin:5px;">
+                <input type="text" name="fileURL" id="fileURL" placeholder="https://example.com" 
+                  style="height: 39px; flex: 1; padding: 6px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;" />
+              </div>
+            </div>
+
+          </div>
+          
+          <input style="background-color:#4e555b; color:white; margin:15px" type="submit" value="Submit" class="btn" style="margin-top: 20px;">
+
+          <br>
+
+          <!-- Placeholder where examples will be displayed -->
+          <div id="exampleOutput"></div>
+            <!-- <span id="example1">Example: <A href="result?id=sgi1">G57001BK</A></span> -->
+             <!-- <span id></span> -->
+          <!-- </div> -->
+        </div>
+
+        
+      </div>     
+    </form>
+      
+    <p id="demo">
+      <div id="circle" class="loader" style ="display:none">
+      </div>
+    </p>        
+</div>
+{% endblock %}
+{% block footer %}
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+      // labelUpdate();
+      const defaultSelected = document.querySelector('input[name="fileType"]:checked');
+      if (defaultSelected) {
+        displayExamples(defaultSelected);
       }
-
-        // Function to toggle the visibility of file input fields based on the selected radio button
-        function toggleInputFields() {
-
-          let uploadOption = document.querySelector('input[name="uploadOption"]:checked').value;
-
-          if (uploadOption === 'file') {
-            document.getElementById('fileUploadField').style.display = 'flex';
-            document.getElementById('urlInputField').style.display = 'none';
-            // labelUpdate();
-
-          } else {
-            document.getElementById('fileUploadField').style.display = 'none';
-            document.getElementById('urlInputField').style.display = 'flex';
-
-            let uploadLabel = document.getElementById('uploadLabel');
-            uploadLabel.textContent = 'Enter URL:'
-          }
-        }
-
-        function fileToolTip(event, element) {
-          const tooltip = element.querySelector('.tooltip');
-
-          if (event.type === 'mouseover') {
-              tooltip.style.visibility = 'visible';
-              tooltip.style.opacity = '1';
-              tooltipContent();
-          } else if (event.type === 'mouseout') {
-              tooltip.style.visibility = 'hidden';
-              tooltip.style.opacity = '0';
-            }
-        }
-
-        function tooltipContent(){
-
-
-          const allowedFormats = {
-              manuscript: ['.pdf'],
-              multi_figure: ['.png', '.jpg', '.jpeg'],
-              single_figure: ['.png', '.jpg', '.jpeg']
-          };
-
-          let uploadOption = document.querySelector('input[name="uploadOption"]:checked').value;  // either file or url
-          let selectedValue = document.querySelector('input[name="fileType"]:checked').id;
-          let content = document.getElementById('tooltip-content')
-
-          console.log("selectedValue",selectedValue)
-          console.log("uploadOption",uploadOption)
-
-          // if (uploadOption === 'file') {
-          let acceptedFiles = allowedFormats[selectedValue];
-          let text = `Allowed formats:
-            <ul style="margin: 5px 0; padding-left: 15px; list-style-type: disc;">
-              ${acceptedFiles.map(format => `<li style="margin: 2px 0; padding: 0;">${format}</li>`).join('')} 
-            </ul>
-          `;
-
-          content.innerHTML = text
-          // }
-
-
-        }
-
-    </script>
-
-    {% include 'footer.html' %}
-
-  </body>
-  
-</html>
+      toggleInputFields();
+    });
+</script>
+{% endblock %}
