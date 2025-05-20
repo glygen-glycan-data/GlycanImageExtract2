@@ -48,10 +48,10 @@ except LookupError:
     sys.exit(1)
 
 images = Image_Manager(args.images)
-images.exclude("*._annotated.*")
+images.exclude("*.annotated.*")
 
 # changes specific for glycan finding make here...
-kgb = config.get_finder("KnownGlycanBoxes")
+# kgb = config.get_finder("KnownGlycanBoxes")
 if args.verbose:
     results = pipeline.runall(images,workers=workers,verbose=True)
 else:
@@ -60,7 +60,9 @@ else:
 for result in results:
     # print("\nMono semnatics",sem.semantics['glycans'][0].semantics)
     result.write_json()
-    # sem.annotate_glycans(color=(0,0,255))
+    result.annotate_monos()
+    # result.annotate_links()
     # kgb.find_objects(sem)
     # sem.annotate_glycans(color=(0,255,0))
-    # sem.write_image(extension="annotated.png")
+    result.write_image(extension="annotated.png")
+    # print(result.glycans()[0].IUPAC())

@@ -141,7 +141,7 @@ class CleanGlycanImage(GlycanFinder):
         super().__init__()
 
     def find_boxes(self, obj):
-        print("\nCLEAN IMAGE")
+        # print("\nCLEAN IMAGE")
         boxes = []
         for gly in obj.glycans():
             img = gly.image()

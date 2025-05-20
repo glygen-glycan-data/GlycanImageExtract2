@@ -379,6 +379,7 @@ class ConnectYOLO(YOLOModel,GlycanConnector):
         id_added = defaultdict(set)  # Track already added IDs for each key
 
         for dbox in detected_boxes:
+            # print(dbox)
             linked_monos = []
             x1, y1, x2, y2 = dbox.corners()
 
@@ -389,7 +390,7 @@ class ConnectYOLO(YOLOModel,GlycanConnector):
                     linked_monos.append(mono)
 
             if len(linked_monos) == 2:
-                links.append([linked_monos, float(dbox.get('confidence'))])
+                links.append([linked_monos, dbox])
 
             elif len(linked_monos) > 2 and len(linked_monos) <= 4:
 
@@ -407,15 +408,16 @@ class ConnectYOLO(YOLOModel,GlycanConnector):
                                 farthest_pair = [linked_monos[i], linked_monos[j]]
 
                 if farthest_pair != (None, None):
-                    links.append([farthest_pair,float(dbox.get('confidence'))])
+                    links.append([farthest_pair, dbox])
 
 
         id_added = defaultdict(set)  # Track already added IDs for each key
-        for (mono1, mono2), conf in links:
+        for (mono1, mono2), dbox in links:
+            # print(mono1.get('id'),mono1.get('symbol'),mono2.get('id'),mono2.get('symbol'),dbox)
             id1, id2 = mono1.get('id'), mono2.get('id')
 
             if id2 not in id_added[id1]:  
-                obj.add_undirected_link(id1, id2, confidence=float(dbox.get('confidence')), classlabel=dbox.get('classlabel'))
+                obj.add_undirected_link(id1, id2, confidence=float(dbox.get('confidence')), classid=dbox.get('classid'), classlabel=dbox.get('classlabel'))
                 
                 id_added[id1].add(id2)
                 id_added[id2].add(id1)

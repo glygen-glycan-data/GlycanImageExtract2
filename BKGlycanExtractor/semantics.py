@@ -157,39 +157,42 @@ class Figure_Semantics(Image_Semantics):
             x1,y1,x2,y2 = glycan.glycan_box().corners()
             self.annotate(x1,y1,x2,y2,color=color) # green for glycan
 
-    def annotate_monos(self,color=(128, 0, 128)):
+    def annotate_monos(self,color=(128, 0, 128),root_color=(0, 100, 0),alternative_color=(0, 165, 255)):
         for glycan in self.semantics['glycans']:
             # monosaccharides and root labelling
             root_id = None
             if glycan.root():
                 root_id = glycan.root()['mono_id']
-            print("root_id",root_id)
+            # print("root_id",root_id)
             for mono in glycan.monosaccharides():
                 x1,y1,x2,y2 = mono['box'].corners()
                 text = mono.get('classlabel','') + ":" + str(mono.get('id'))
-                # color = (128, 0, 128) # purple for monos
+                color1 = color
                 if mono['id'] == root_id:
-                    color = (0, 100, 0) # dark green for root
-                # if mono.get('alternative') is not None:
-                #     color = (0, 165, 255) # orange for alternatives
-                    self.annotate(x1,y1,x2,y2,text=text,xtoff=2,ytoff=-2,color=color,thickness=1)   
+                    color1 = root_color if root_color else color # dark green for root
+                if mono.get('alternative') is not None:
+                    color1 = alternative_color if alternative_color else color # orange for alternatives
+                self.annotate(x1,y1,x2,y2,text=text,xtoff=2,ytoff=-2,color=color1,thickness=1)   
 
-    def annotate_links(self):
+    def annotate_links(self,color=(255, 255, 0)):
         for glycan in self.semantics['glycans']:
             # monosaccharides and root labelling
-            for mono in glycan.monosaccharides():
-                for link in mono['links']:
-                    toid = link['to']
-                    linked_mono = glycan.monosaccharide(toid)
-                    _x1,_y1,_x2,_y2 = linked_mono['box'].corners()
+            for link in glycan.undirected_links():
 
-                    x_coords = [x1,x2,_x1,_x2]
-                    y_coords = [y1,y2,_y1,_y2]
+                fromid, toid = link['mono_ids']
+                from_mono = glycan.monosaccharide(fromid)
+                x1,y1,x2,y2 = from_mono['box'].corners()
 
-                    x_min, x_max = min(x_coords), max(x_coords)
-                    y_min, y_max = min(y_coords), max(y_coords) 
+                to_mono = glycan.monosaccharide(toid)
+                _x1,_y1,_x2,_y2 = to_mono['box'].corners()
 
-                    self.annotate(x_min,y_min,x_max,y_max,color=(255, 255, 0),thickness=1)
+                x_coords = [x1,x2,_x1,_x2]
+                y_coords = [y1,y2,_y1,_y2]
+
+                x_min, x_max = min(x_coords), max(x_coords)
+                y_min, y_max = min(y_coords), max(y_coords) 
+
+                self.annotate(x_min,y_min,x_max,y_max,color=color,thickness=1)
 
     def write_image(self,**kwargs):
         cv2.imwrite(self.make_filename(**kwargs), self.image())
@@ -553,7 +556,7 @@ class Glycan_Semantics(Image_Semantics):
         
     def IUPAC(self):
         root = self.root()
-        print("IUPAC called",root)
+        # print("IUPAC called",root)
         if not root:
             return None
 
@@ -567,7 +570,7 @@ class Glycan_Semantics(Image_Semantics):
 
         self.generate_iupac(iupac, adj, visited, -1, root_id)
 
-        print("iupac",iupac)
+        # print("iupac",iupac)
        
         iupac = iupac[::-1] # IUPAC sequences are read in reverse order
         return ''.join(iupac)
@@ -646,17 +649,17 @@ class Glycan_Semantics(Image_Semantics):
 
             if abs(dx) > abs(dy):  # If movement in X is more dominant
                 if dx > 0:
-                    print("orientation","LR")
+                    # print("orientation","LR")
                     return "LR"  # Moving right
                 else:
-                    print("orientation","RL")
+                    # print("orientation","RL")
                     return "RL"  # Moving left
             else:  # If movement in Y is more dominant
                 if dy > 0:
-                    print("orientation","TB")
+                    # print("orientation","TB")
                     return "TB"  # Moving downward
                 else:
-                    print("orientation","BT")
+                    # print("orientation","BT")
                     return "BT"  # Moving upward
 
 

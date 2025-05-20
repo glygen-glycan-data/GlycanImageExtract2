@@ -289,6 +289,7 @@ class YOLOMonos(YOLOModel,MonoID):
         obj.clear_monos()
 
         for id, box in enumerate(mono_boxes):
+            # print(box)
             classid = box.get('classid')
             conf = float(box.get('confidence'))
             classlabel = box.get('classlabel')
