@@ -45,7 +45,6 @@ class APIErrorBase(RuntimeError):
 class APIParameterError(APIErrorBase):
     pass
 
-
 class APIFramework:
 
     def __init__(self):
@@ -61,6 +60,7 @@ class APIFramework:
 
         self._app_name = "testing"
         self._flask_app = flask.Flask(self._app_name)
+        self._prefix = ""
 
         self._input_file_folder  = self.abspath("input")
         # self._output_file_folder = self.abspath("output")
@@ -120,6 +120,9 @@ class APIFramework:
             self._flask_app = flask.Flask(self._app_name)
         else:
             self._flask_app = flask.Flask(self._app_name, template_folder=self.abspath(self._template_folder))
+
+    def set_prefix(self, prefix):
+        self._prefix = prefix
 
     def input_file_folder(self):
         return self._input_file_folder
@@ -221,6 +224,9 @@ class APIFramework:
                 if res["basic"]["app_name"] in res:
                     self._worker_para = res[res["basic"]["app_name"]]
 
+            if "prefix" in res["basic"]:
+               self.set_prefix(res["basic"]["prefix"])
+
 
     # Worker function
     @staticmethod
@@ -236,14 +242,14 @@ class APIFramework:
         if self._home_html is None:
             return flask.jsonify("Hello from %s:%s" % (self.host(), self.port()))
         else:
-            return flask.render_template(self._home_html, **kwargs)
+            return flask.render_template(self._home_html, urlprefix=self._prefix, **kwargs)
 
     def file_upload_finished_page(self, **kwargs):
 
         if self._file_upload_finished_html is None:
             return flask.jsonify("Not Implemented")
         else:
-            return flask.render_template(self._file_upload_finished_html, **kwargs)
+            return flask.render_template(self._file_upload_finished_html, urlprefix=self._prefix, **kwargs)
 
     def get_unfinished_job_count(self):
         self.update_results(getall=True)
@@ -484,6 +490,7 @@ class APIFramework:
         self._flask_app.add_url_rule("/abstract", "abstract", self.abstract, methods=["GET", "POST"])
         # self._flask_app.add_url_rule("/examples", "examples", self.examples, methods=["GET", "POST"])
         self._flask_app.add_url_rule("/result", "result", self.result, methods=["GET", "POST"])
+        self._flask_app.add_url_rule("/result/<id>", "result", self.result, methods=["GET", "POST"])
 
         if self._file_based_job:
             print("Got the functions")

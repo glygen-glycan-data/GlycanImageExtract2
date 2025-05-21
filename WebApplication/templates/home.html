@@ -42,11 +42,11 @@
     let selected_file_type = examples[input.value]
 
     let display_examples = `
-        ${selected_file_type.map((example, id) => `<a href="result?id=${example}" class="badge badge-custom"> Example ${id + 1}</a>`).join('  ')}
+        ${selected_file_type.map((example, id) => `<a href="{{urlprefix}}/result/${example}" class="badge badge-custom"> Example ${id + 1}</a>`).join('  ')}
         
     `;
 
-    console.log(display_examples);
+    // console.log(display_examples);
     const content = document.getElementById("exampleOutput");
     content.innerHTML = display_examples;
 
@@ -57,7 +57,7 @@
   function validateForm() {
     // const selectedRadio = document.querySelector('input[name="fileType"]:checked')
     const fileType = document.querySelector('input[name="fileType"]:checked').id;
-    console.log("fileType", fileType)
+    // console.log("fileType", fileType)
     const uploadOption = document.querySelector('input[name="uploadOption"]:checked').value;
 
     // Allowed formats based on the selected file type
@@ -84,7 +84,7 @@
     }
     else if (uploadOption === 'url') {
       const urlInput = document.getElementById('fileURL').value.trim();  // Get the URL input value
-      console.log("URL input:", urlInput);
+      // console.log("URL input:", urlInput);
       if (urlInput === '') {
         alert('Please enter a URL.');
         return false;
@@ -94,7 +94,7 @@
       const cleanURL = urlInput.split('?')[0];  // Remove query params
       const urlExtension = cleanURL.split('.').pop().toLowerCase();  // Get extension
 
-      console.log("fileType", fileType, allowedFormats[fileType], urlExtension);
+      // console.log("fileType", fileType, allowedFormats[fileType], urlExtension);
 
       if (!allowedFormats[fileType].includes(urlExtension)) {
         alert(`Invalid URL format, only DIRECT LINKS ending with: ${allowedFormats[fileType].join(', ')} are allowed`);
@@ -150,8 +150,8 @@
     let selectedValue = document.querySelector('input[name="fileType"]:checked').id;
     let content = document.getElementById('tooltip-content')
 
-    console.log("selectedValue", selectedValue)
-    console.log("uploadOption", uploadOption)
+    // console.log("selectedValue", selectedValue)
+    // console.log("uploadOption", uploadOption)
 
     // if (uploadOption === 'file') {
     let acceptedFiles = allowedFormats[selectedValue];

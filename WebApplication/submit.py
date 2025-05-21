@@ -91,7 +91,7 @@ def searchGlyLookup(*seqs, delay=1, maxretry=10):
         param = dict(seq=seq.strip() if seq is not None else "")
         params.append(param)
 
-    print("PARAMS",params)
+    # print("PARAMS",params)
     data = request_api(baseurl, "submit",tasks=json.dumps(params),developer_email=devemail)
     jobids = []
     for job in data:
@@ -115,9 +115,14 @@ def searchGlyLookup(*seqs, delay=1, maxretry=10):
 
     retval = []
     for job in data:
-        result = None
+        result = None,None
         for res in job.get("result",[]):
-            result = res['accession']
+            wurcs = None
+            for seqrec in res.get("sequences",[]):
+                if seqrec['format'] == 'WURCS' and seqrec['source'].startswith('GlyTouCan:'):
+                    wurcs = seqrec['seq']
+                    break
+            result = res['accession'],wurcs
             break
         retval.append(result)
 

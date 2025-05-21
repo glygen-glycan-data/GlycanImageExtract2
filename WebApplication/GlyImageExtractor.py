@@ -106,7 +106,7 @@ class ReferenceAPIFileBased(APIFramework):
 
 
     def home(self):
-        return flask.render_template(self._home_html)
+        return flask.render_template(self._home_html, urlprefix=self._prefix)
 
     # def examples(self):
     #     return flask.render_template(self._examples_html, basedir="static/examples")
@@ -114,10 +114,10 @@ class ReferenceAPIFileBased(APIFramework):
     def abstract(self):
         return flask.render_template(self._abstract_html)
 
-    def result(self):
-        id = flask.request.args['id']
-        print(f"{id}\n",file=sys.stderr)
-        return flask.render_template(self._result_html, list_id=id)
+    def result(self,id=None):
+        if not id:
+            id = flask.request.args['id']
+        return flask.render_template(self._result_html, urlprefix=self._prefix, list_id=id)
 
 if __name__ == '__main__':
     multiprocessing.freeze_support()

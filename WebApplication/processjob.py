@@ -208,6 +208,7 @@ class JobInstance:
             "errors": errors,
             "structure_errors": structure_errors,
             "IUPAC": "",
+            "WURCS": "",
             "orientation": "RL",
         }
 
@@ -246,7 +247,7 @@ class JobInstance:
         # GNOME URL
         uri_base = "https://gnome.glyomics.org/StructureBrowser.html?"
 
-        accession = searchGlyLookup(lookup_key)
+        accession,wurcs = searchGlyLookup(lookup_key)
 
         
 
@@ -266,6 +267,8 @@ class JobInstance:
                 "accession": accession, 
                 "glyImage": searchGlyImage(accession, orientation=IUPAC_data["orientation"],accession=True)
             })
+            if wurcs is not None and iupac_found:
+                IUPAC_data['WURCS'] = wurcs
         else:
 
             IUPAC_data.update({

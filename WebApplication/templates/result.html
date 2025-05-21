@@ -11,7 +11,7 @@
     let delay = 5;
 
     function query() {
-        let request_URL = "retrieve?list_ids=" + JSON.stringify([list_id]);
+        let request_URL = "{{urlprefix}}/retrieve?list_ids=" + JSON.stringify([list_id]);
         jQuery.getJSON(request_URL, function (d) {
             let tmp = d[0];
 
@@ -20,11 +20,17 @@
 
             if (tmp.finished) {
                 calculation_time = Math.floor(tmp.result["runtime"]);
-                console.log("runtime")
-                console.log(tmp.result["runtime"])
-                addDownloadButton(tmp);
+                // console.log("runtime")
+                // console.log(tmp.result["runtime"])
+                if (window.document.location.toString().includes("file_upload")) {
+                    window.document.location = "{{urlprefix}}/result/"+list_id;
+                } else {
+                    addDownloadButton(tmp);
+                }
             }
             else {
+                result.innerHTML = "<h3>Your file has been successfully uploaded for analysis.</h3><h3 id=\"info\">Please wait</h3>"
+                
                 wait_cycle_index += 1;
                 wait_cycle_index = wait_cycle_index % 4;
 
@@ -100,15 +106,15 @@
         // if (result.result.inputtype == "pdf") {
         //     resstr += "<A target=\"_blank\" href=\"file_download?list_id="+list_id+"\">Annotated PDF</A>, "
         //     }
-        resstr += "<span> <a style='background-color:#e8e3e3; font-weight:400; border-radius:20px; padding:1px 5px 1px 5px;' href=\"static/" + location + "/" + list_id + "/results.json" + "\" target=\"_blank\">JSON data</a> | </span> ";
+        resstr += "<span> <a style='background-color:#e8e3e3; font-weight:400; border-radius:20px; padding:1px 5px 1px 5px;' href=\"{{urlprefix}}/static/" + location + "/" + list_id + "/results.json" + "\" target=\"_blank\">JSON data</a> | </span> ";
         if (file_extension == "pdf") {
             // console.log("PDF",result.submission_detail)
-            resstr += "<span><a style='background-color:#e8e3e3; font-weight:400; border-radius:20px;padding:1px 5px 1px 5px;' target=\"_blank\" href=\"static/" + location + "/" + list_id + "/input/" + encodeURIComponent(result.submission_detail.original_file_name) + "\">Original PDF</a> | </span>"
+            resstr += "<span><a style='background-color:#e8e3e3; font-weight:400; border-radius:20px;padding:1px 5px 1px 5px;' target=\"_blank\" href=\"{{urlprefix}}/static/" + location + "/" + list_id + "/input/" + encodeURIComponent(result.submission_detail.original_file_name) + "\">Original PDF</a>"
         } else {
             // console.log("result",result)
-            resstr += "<span><a style='background-color:#e8e3e3; font-weight:400; border-radius:20px;padding:1px 5px 1px 5px;' target=\"_blank\" href=\"static/" + location + "/" + list_id + "/input/" + encodeURIComponent(result.submission_detail.original_file_name) + "\">Original Image</a> | </span>"
+            resstr += "<span><a style='background-color:#e8e3e3; font-weight:400; border-radius:20px;padding:1px 5px 1px 5px;' target=\"_blank\" href=\"{{urlprefix}}/static/" + location + "/" + list_id + "/input/" + encodeURIComponent(result.submission_detail.original_file_name) + "\">Original Image</a></span>"
         }
-        resstr += "<a style='background-color:#e8e3e3; font-weight:400; border-radius:20px;padding:1px 5px 1px 5px;' href=\"" + "result?id=" + list_id + "\">Bookmark</a></h3>";
+        // resstr += "<a style='background-color:#e8e3e3; font-weight:400; border-radius:20px;padding:1px 5px 1px 5px;' href=\"" + "{{urlprefix}}/result/" + list_id + "\">Bookmark</a></h3>";
         reselt.innerHTML = resstr;
 
         document.getElementById("extracted").style = "display: block;";
@@ -118,7 +124,7 @@
         innerdiv += "<tbody>"
 
         figures.forEach(function (figure, fig_id) {
-            console.log("Figure", figure, "at index", fig_id);
+            // console.log("Figure", figure, "at index", fig_id);
 
             // code to add the page_num, annotated figure
             innerdiv += "<tr style='background-color:#7c7d7d;'>";
@@ -126,14 +132,14 @@
             innerdiv += "</tr>";
 
             innerdiv += "<tr>";
-            innerdiv += "<td colspan='2' style='padding: 20px; text-align: center;'><img style='max-width: 550px; width: auto; height: auto; display: block; margin: auto;' src='static/" + location + "/" + list_id + "/" + figure.annotated_image_path + "'/></td>";
+            innerdiv += "<td colspan='2' style='padding: 20px; text-align: center;'><img style='max-width: 550px; width: auto; height: auto; display: block; margin: auto;' src='{{urlprefix}}/static/" + location + "/" + list_id + "/" + figure.annotated_image_path + "'/></td>";
             innerdiv += "</tr>";
 
             var glycans = figure['glycans'] || []
 
             if (glycans.length > 0) {
                 innerdiv += "<tr style='background-color: #7c7d7d;'>";
-                innerdiv += "<th style='color: #ffffff;text-align: center;'>Original Structure</th>";
+                innerdiv += "<th style='color: #ffffff;text-align: center;'>Glyan Image</th>";
                 innerdiv += "<th style='color: #ffffff; text-align: center;'>Extracted Structure</th>";
                 innerdiv += "</tr>";
 
@@ -141,18 +147,18 @@
                 glycans.forEach(function (glycan, gly_idx) {
                     innerdiv += "<tr>";
                     innerdiv += `
-                        <td style="vertical-align:middle;">
-                            <img style="max-width: 300px; min-height: 90px; max-height:300px; min-width: 90px; display: block; margin: auto;" 
-                                src="static/${location}/${list_id}/${glycan.extracted_image_path}" 
+                        <td style="vertical-align:middle;" width="50%">
+                            <img style="max-width: 300px; min-width: 90px; display: block; margin: auto;" 
+                                src="{{urlprefix}}/static/${location}/${list_id}/${glycan.extracted_image_path}" 
                                 alt="Glycan Image" />
                         </td>`;
 
 
                     innerdiv += `
-                        <td style=''>
+                        <td style='' width="50%">
                             <figure style='margin: 0;'>
                                 ${glycan.glyImage ? `
-                                    <img style='max-width: 300px; min-height: 90px; min-width: 90px; width: auto; height: auto; display: block; margin: auto;' 
+                                    <img style='max-width: 300px; min-width: 90px; width: auto; height: auto; display: block; margin: auto;' 
                                     src="${glycan.glyImage}"
                                     alt='Glycan Image' />
                                     ` : `<div style="font-size: 16px; color: #555; text-align: center; margin-top: 10px;">No Glycan found</div>`
@@ -181,37 +187,66 @@
                             
                                 </figcaption>
                             </figure>
+                            <div style="text-align: center; margin-top: 20px;">
                             ${glycan.IUPAC && glycan.IUPAC.length > 0 ? `
-                                <div style="margin-top: 10px; text-align: center;">
+                                <div style="display: inline; margin: 10px;">
                                     <button onclick="toggleIUPAC('iupac-${fig_id}-${gly_idx}', 'iupac-text-${fig_id}-${gly_idx}')" 
                                             style="background-color:#7c7d7d; color:white; border:none; border-radius:5px; cursor:pointer;">
-                                        View IUPAC
+                                        IUPAC&nbsp;<b>&#128464;</b>
                                     </button>
 
+                                </div>
+                            ` : ''}
+
+                            ${glycan.WURCS && glycan.WURCS.length > 0 ? `
+                                <div style="display: inline; margin: 10px;">
+                                    <button onclick="toggleIUPAC('wurcs-${fig_id}-${gly_idx}', 'wurcs-text-${fig_id}-${gly_idx}')" 
+                                            style="background-color:#7c7d7d; color:white; border:none; border-radius:5px; cursor:pointer;">
+                                        WURCS&nbsp;<b>&#128464;</b>
+                                    </button>
+
+                                </div>
+                            ` : ''}
+
+                            ${glycan.composition_str && glycan.composition_str.length > 0 ? `
+                                <div style="center; display: inline; margin: 10px;">
+                                    <button onclick="toggleIUPAC('composition-${fig_id}-${gly_idx}', 'composition-text-${fig_id}-${gly_idx}')" 
+                                            style="background-color:#7c7d7d; color:white; border:none; border-radius:5px; cursor:pointer;">
+                                        Composition&nbsp;<b>&#128464;</b>
+                                    </button>
+                                </div>
+                            ` : ''}
+
+                            ${glycan.gnomeurl && glycan.gnomeurl.length > 0 ? `
+                                <div style="center; display: inline; margin: 10px;">
+                                    <A href="${glycan.gnomeurl}" target="_gnome_"
+                                            style="background-color:#7c7d7d; color:white; border:none; border-radius:5px; cursor:pointer; appearance: button; text-decoration: none; font-weight: 300; padding: 1px 4px 1px 4px;">
+                                        GNOme&nbsp;<b>&#10138;</b>
+                                    </A>
+                                </div>
+                            ` : ''}
+
+                            </div>
+
+                            <div>
                                     <div id="iupac-${fig_id}-${gly_idx}" style="display: none; max-width: 300px; overflow-x: auto; margin: 10px auto 0; padding: 10px; border: 1px solid #ccc; background: #f8f8f8; font-family: monospace; white-space: nowrap;">
                                         <div id="iupac-text-${fig_id}-${gly_idx}">
                                             ${glycan.IUPAC}
                                         </div>
                                     </div>
-                                </div>
-                            ` : ''}
-
-                            ${glycan.composition_str && glycan.composition_str.length > 0 ? `
-                                <div style="margin-top: 10px; text-align: center;">
-                                    <button onclick="toggleIUPAC('composition-${fig_id}-${gly_idx}', 'composition-text-${fig_id}-${gly_idx}')" 
-                                            style="background-color:#7c7d7d; color:white; border:none; border-radius:5px; cursor:pointer;">
-                                        View Composition
-                                    </button>
-
+                                    <div id="wurcs-${fig_id}-${gly_idx}" style="display: none; max-width: 300px; overflow-x: auto; margin: 10px auto 0; padding: 10px; border: 1px solid #ccc; background: #f8f8f8; font-family: monospace; white-space: nowrap;">
+                                        <div id="wurcs-text-${fig_id}-${gly_idx}">
+                                            ${glycan.WURCS}
+                                        </div>
+                                    </div>
                                     <div id="composition-${fig_id}-${gly_idx}" style="display: none; max-width: 300px; overflow-x: auto; margin: 10px auto 0; padding: 10px; border: 1px solid #ccc; background: #f8f8f8; font-family: monospace; white-space: nowrap;">
                                         <div id="composition-text-${fig_id}-${gly_idx}">
                                             ${glycan.composition_str}
                                         </div>
                                     </div>
-                                </div>
-                            ` : ''}
+                            </div>
 
-                            ${glycan.gnomeurl ? `<br><a style='background-color:#e8e3e3; font-weight:400; border-radius:20px; padding:5px 7px 5px 7px;' href="${glycan.gnomeurl}" target="_blank">Explore glycan structure options...</a>` : ''}
+                            <!-- ${glycan.gnomeurl ? `<br><a style='background-color:#e8e3e3; font-weight:400; border-radius:20px; padding:5px 7px 5px 7px;' href="${glycan.gnomeurl}" target="_blank">Explore glycan structure options...</a>` : ''} -->
 
 
                         </td>`;
@@ -260,9 +295,6 @@
 </div>
 
 <div style="width:90%;margin:0 auto;" id="result">
-    <h3>Your file has been successfully uploaded for analysis.</h3>
-
-    <h3 id="info">Please wait</h3>
 </div>
 <div id="extracted" style="display: none"></div>
 <div style="display: flex; flex-wrap: wrap; width:90%;margin:0 auto;" id="list_id" data-list_id="{{list_id}}"></div>
