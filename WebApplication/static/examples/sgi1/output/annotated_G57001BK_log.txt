@@ -1,2 +1,0 @@
-112dc19a3b85efd424852644cf34ecd1b822c5a7c43b2436019e4bdc0485e138
-/data2/projects/GlyGen/GlycanImageExtract2/WebApplication/static/files/112dc19a3b85efd424852644cf34ecd1b822c5a7c43b2436019e4bdc0485e138/output/annotated_G57001BK.png

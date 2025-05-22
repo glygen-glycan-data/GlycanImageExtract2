@@ -5,6 +5,7 @@
     "glycans": [
       {
         "IUPAC": "Man?1-?(Man?1-?)Man?1-?(Man?1-?)Man?1-?GlcNAc?1-?GlcNAc",
+        "WURCS": "WURCS=2.0/2,7,6/[a2122h-1x_1-5_2*NCC/3=O][a1122h-1x_1-5]/1-1-2-2-2-2-2/a?-b1_b?-c1_c?-d1_c?-g1_d?-e1_d?-f1",
         "accession": "G73636FD",
         "bbox": [
           46,
@@ -17,7 +18,7 @@
         "composition_str": "GlcNAc(2)Man(5)",
         "errors": [],
         "extracted_image_path": "extracted_figures/extracted_images/multi_glycans-1.png",
-        "glyImage": "https://glymage.glyomics.org//image/hash/1756a3a7d3097e8c5a9cc12f5f5a5dde.svg",
+        "glyImage": "https://glymage.glyomics.org//image/hash/7e2f1a0886bd5db7c8941d2510044590.svg",
         "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G73636FD",
         "height": 98,
         "id": 1,
@@ -58,14 +59,16 @@
             "id": 1,
             "links": [
               {
+                "classid": 0,
                 "classlabel": "link",
-                "confidence": 0.999694287776947,
+                "confidence": 0.9999722242355347,
                 "fromid": 1,
                 "toid": 2
               },
               {
+                "classid": 0,
                 "classlabel": "link",
-                "confidence": 0.999694287776947,
+                "confidence": 0.9999566078186035,
                 "fromid": 1,
                 "toid": 3
               }
@@ -120,14 +123,16 @@
             "id": 4,
             "links": [
               {
+                "classid": 0,
                 "classlabel": "link",
-                "confidence": 0.999694287776947,
+                "confidence": 0.9999942779541016,
                 "fromid": 4,
                 "toid": 1
               },
               {
+                "classid": 0,
                 "classlabel": "link",
-                "confidence": 0.999694287776947,
+                "confidence": 0.9999927282333374,
                 "fromid": 4,
                 "toid": 0
               }
@@ -150,6 +155,7 @@
             "id": 5,
             "links": [
               {
+                "classid": 0,
                 "classlabel": "link",
                 "confidence": 0.999694287776947,
                 "fromid": 5,
@@ -174,8 +180,9 @@
             "id": 6,
             "links": [
               {
+                "classid": 0,
                 "classlabel": "link",
-                "confidence": 0.999694287776947,
+                "confidence": 0.9997963905334473,
                 "fromid": 6,
                 "toid": 5
               }
@@ -193,46 +200,52 @@
         "structure_errors": [],
         "undirected_links": [
           {
+            "classid": 0,
             "classlabel": "link",
-            "confidence": 0.999694287776947,
+            "confidence": 0.9999942779541016,
             "mono_ids": [
               1,
               4
             ]
           },
           {
+            "classid": 0,
             "classlabel": "link",
-            "confidence": 0.999694287776947,
+            "confidence": 0.9999927282333374,
             "mono_ids": [
               0,
               4
             ]
           },
           {
+            "classid": 0,
             "classlabel": "link",
-            "confidence": 0.999694287776947,
+            "confidence": 0.9999722242355347,
             "mono_ids": [
               1,
               2
             ]
           },
           {
+            "classid": 0,
             "classlabel": "link",
-            "confidence": 0.999694287776947,
+            "confidence": 0.9999566078186035,
             "mono_ids": [
               1,
               3
             ]
           },
           {
+            "classid": 0,
             "classlabel": "link",
-            "confidence": 0.999694287776947,
+            "confidence": 0.9997963905334473,
             "mono_ids": [
               5,
               6
             ]
           },
           {
+            "classid": 0,
             "classlabel": "link",
             "confidence": 0.999694287776947,
             "mono_ids": [
@@ -245,6 +258,7 @@
       },
       {
         "IUPAC": "Man?1-?(Man?1-?)Man?1-?GlcNAc?1-?(Fuc?1-?)GlcNAc",
+        "WURCS": "WURCS=2.0/3,6,5/[a2122h-1x_1-5_2*NCC/3=O][a1122h-1x_1-5][a1221m-1x_1-5]/1-1-2-2-2-3/a?-b1_a?-f1_b?-c1_c?-d1_c?-e1",
         "accession": "G27815BZ",
         "bbox": [
           19,
@@ -257,7 +271,7 @@
         "composition_str": "GlcNAc(2)Fuc(1)Man(3)",
         "errors": [],
         "extracted_image_path": "extracted_figures/extracted_images/multi_glycans-2.png",
-        "glyImage": "https://glymage.glyomics.org//image/hash/d4a4b1f6b350173e1904c2e5a6bacb21.svg",
+        "glyImage": "https://glymage.glyomics.org//image/hash/c403039a9ad715babd25f68e66bb154b.svg",
         "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G27815BZ",
         "height": 109,
         "id": 2,
@@ -314,14 +328,16 @@
             "id": 2,
             "links": [
               {
+                "classid": 0,
                 "classlabel": "link",
-                "confidence": 0.9990456700325012,
+                "confidence": 0.9999982118606567,
                 "fromid": 2,
                 "toid": 0
               },
               {
+                "classid": 0,
                 "classlabel": "link",
-                "confidence": 0.9990456700325012,
+                "confidence": 0.9999933242797852,
                 "fromid": 2,
                 "toid": 1
               }
@@ -344,8 +360,9 @@
             "id": 3,
             "links": [
               {
+                "classid": 0,
                 "classlabel": "link",
-                "confidence": 0.9990456700325012,
+                "confidence": 0.9999270439147949,
                 "fromid": 3,
                 "toid": 2
               }
@@ -368,12 +385,14 @@
             "id": 4,
             "links": [
               {
+                "classid": 0,
                 "classlabel": "link",
-                "confidence": 0.9990456700325012,
+                "confidence": 0.9998552799224854,
                 "fromid": 4,
                 "toid": 5
               },
               {
+                "classid": 0,
                 "classlabel": "link",
                 "confidence": 0.9990456700325012,
                 "fromid": 4,
@@ -409,38 +428,43 @@
         "structure_errors": [],
         "undirected_links": [
           {
+            "classid": 0,
             "classlabel": "link",
-            "confidence": 0.9990456700325012,
+            "confidence": 0.9999982118606567,
             "mono_ids": [
               0,
               2
             ]
           },
           {
+            "classid": 0,
             "classlabel": "link",
-            "confidence": 0.9990456700325012,
+            "confidence": 0.9999933242797852,
             "mono_ids": [
               1,
               2
             ]
           },
           {
+            "classid": 0,
             "classlabel": "link",
-            "confidence": 0.9990456700325012,
+            "confidence": 0.9999270439147949,
             "mono_ids": [
               2,
               3
             ]
           },
           {
+            "classid": 0,
             "classlabel": "link",
-            "confidence": 0.9990456700325012,
+            "confidence": 0.9998552799224854,
             "mono_ids": [
               4,
               5
             ]
           },
           {
+            "classid": 0,
             "classlabel": "link",
             "confidence": 0.9990456700325012,
             "mono_ids": [
@@ -453,6 +477,7 @@
       },
       {
         "IUPAC": "Man?1-?Man?1-?(Man?1-?Man?1-?)Man?1-?(Man?1-?(Man?1-?)Man?1-?)Man?1-?GlcNAc",
+        "WURCS": "WURCS=2.0/2,10,9/[a2122h-1x_1-5_2*NCC/3=O][a1122h-1x_1-5]/1-2-2-2-2-2-2-2-2-2/a?-b1_b?-c1_b?-h1_c?-d1_c?-f1_d?-e1_f?-g1_h?-i1_h?-j1",
         "accession": "G85612WL",
         "bbox": [
           291,
@@ -465,7 +490,7 @@
         "composition_str": "GlcNAc(1)Man(9)",
         "errors": [],
         "extracted_image_path": "extracted_figures/extracted_images/multi_glycans-3.png",
-        "glyImage": "https://glymage.glyomics.org//image/hash/538ab08b5010c74e4d837aeb555dd602.svg",
+        "glyImage": "https://glymage.glyomics.org//image/hash/6fe61c793acf640579ed00dd62b8b611.svg",
         "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G85612WL",
         "height": 180,
         "id": 3,
@@ -522,8 +547,9 @@
             "id": 2,
             "links": [
               {
+                "classid": 0,
                 "classlabel": "link",
-                "confidence": 0.999688446521759,
+                "confidence": 0.9999752044677734,
                 "fromid": 2,
                 "toid": 6
               }
@@ -546,14 +572,16 @@
             "id": 3,
             "links": [
               {
+                "classid": 0,
                 "classlabel": "link",
-                "confidence": 0.999688446521759,
+                "confidence": 0.9999370574951172,
                 "fromid": 3,
                 "toid": 5
               },
               {
+                "classid": 0,
                 "classlabel": "link",
-                "confidence": 0.999688446521759,
+                "confidence": 0.9997773170471191,
                 "fromid": 3,
                 "toid": 2
               }
@@ -592,8 +620,9 @@
             "id": 5,
             "links": [
               {
+                "classid": 0,
                 "classlabel": "link",
-                "confidence": 0.999688446521759,
+                "confidence": 0.9999884366989136,
                 "fromid": 5,
                 "toid": 1
               }
@@ -632,12 +661,14 @@
             "id": 7,
             "links": [
               {
+                "classid": 0,
                 "classlabel": "link",
-                "confidence": 0.999688446521759,
+                "confidence": 0.9996963739395142,
                 "fromid": 7,
                 "toid": 4
               },
               {
+                "classid": 0,
                 "classlabel": "link",
                 "confidence": 0.999688446521759,
                 "fromid": 7,
@@ -662,14 +693,16 @@
             "id": 8,
             "links": [
               {
+                "classid": 0,
                 "classlabel": "link",
-                "confidence": 0.999688446521759,
+                "confidence": 0.999996542930603,
                 "fromid": 8,
                 "toid": 7
               },
               {
+                "classid": 0,
                 "classlabel": "link",
-                "confidence": 0.999688446521759,
+                "confidence": 0.9999912977218628,
                 "fromid": 8,
                 "toid": 3
               }
@@ -692,8 +725,9 @@
             "id": 9,
             "links": [
               {
+                "classid": 0,
                 "classlabel": "link",
-                "confidence": 0.999688446521759,
+                "confidence": 0.9999810457229614,
                 "fromid": 9,
                 "toid": 8
               }
@@ -711,70 +745,79 @@
         "structure_errors": [],
         "undirected_links": [
           {
+            "classid": 0,
             "classlabel": "link",
-            "confidence": 0.999688446521759,
+            "confidence": 0.999996542930603,
             "mono_ids": [
               7,
               8
             ]
           },
           {
+            "classid": 0,
             "classlabel": "link",
-            "confidence": 0.999688446521759,
+            "confidence": 0.9999912977218628,
             "mono_ids": [
               3,
               8
             ]
           },
           {
+            "classid": 0,
             "classlabel": "link",
-            "confidence": 0.999688446521759,
+            "confidence": 0.9999884366989136,
             "mono_ids": [
               1,
               5
             ]
           },
           {
+            "classid": 0,
             "classlabel": "link",
-            "confidence": 0.999688446521759,
+            "confidence": 0.9999810457229614,
             "mono_ids": [
               8,
               9
             ]
           },
           {
+            "classid": 0,
             "classlabel": "link",
-            "confidence": 0.999688446521759,
+            "confidence": 0.9999752044677734,
             "mono_ids": [
               2,
               6
             ]
           },
           {
+            "classid": 0,
             "classlabel": "link",
-            "confidence": 0.999688446521759,
+            "confidence": 0.9999370574951172,
             "mono_ids": [
               3,
               5
             ]
           },
           {
+            "classid": 0,
             "classlabel": "link",
-            "confidence": 0.999688446521759,
+            "confidence": 0.9997773170471191,
             "mono_ids": [
               2,
               3
             ]
           },
           {
+            "classid": 0,
             "classlabel": "link",
-            "confidence": 0.999688446521759,
+            "confidence": 0.9996963739395142,
             "mono_ids": [
               4,
               7
             ]
           },
           {
+            "classid": 0,
             "classlabel": "link",
             "confidence": 0.999688446521759,
             "mono_ids": [

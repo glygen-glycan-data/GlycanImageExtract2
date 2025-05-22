@@ -1,7 +1,7 @@
-4279cb0263b92ca04e5328797cfe04f0db3c6b256fa6b5760a8f58cfcdb88299
-/home/nmathias/GlycanImageExtract2/WebApplication/static/files/4279cb0263b92ca04e5328797cfe04f0db3c6b256fa6b5760a8f58cfcdb88299/output/annotated_Example0.pdf
+b7ed9426fefd906f2b35773183d3e4e257148ca84ab1d4f204c16bfae30ac2cd
+/data2/projects/GlyGen/GlycanImageExtract2/WebApplication/static/files/b7ed9426fefd906f2b35773183d3e4e257148ca84ab1d4f204c16bfae30ac2cd/output/annotated_Example0.pdf
 
 Found 1 figures in the PDF.
 Image ID: iid_0, Coordinates: (72.0, 72.0, 539.7, 407.8), Width: 467.70000000000005, Height: 335.8, Area: 157053.66000000003
 
-Saved image to /home/nmathias/GlycanImageExtract2/WebApplication/static/files/4279cb0263b92ca04e5328797cfe04f0db3c6b256fa6b5760a8f58cfcdb88299/extracted_figures/figures/9.png
+Saved image to /data2/projects/GlyGen/GlycanImageExtract2/WebApplication/static/files/b7ed9426fefd906f2b35773183d3e4e257148ca84ab1d4f204c16bfae30ac2cd/extracted_figures/figures/9.png
