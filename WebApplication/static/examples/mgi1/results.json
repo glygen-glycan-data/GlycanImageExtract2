@@ -1,10 +1,10 @@
 {
-  "id": "5f410917d52c8762ef4ec36bf499a431b0638585a5076e38b79827b2338687ee",
+  "id": "3bcebab8fff92b3b80ae5dd8f551194e45faf71fb4a11b12e3de8b49615da079",
   "result": {
-    "id": "5f410917d52c8762ef4ec36bf499a431b0638585a5076e38b79827b2338687ee",
-    "start time": 1747934325.7543607,
-    "end time": 1747934366.7965415,
-    "runtime": 41.04218077659607,
+    "id": "3bcebab8fff92b3b80ae5dd8f551194e45faf71fb4a11b12e3de8b49615da079",
+    "start time": 1747935848.6451278,
+    "end time": 1747935892.073834,
+    "runtime": 43.42870616912842,
     "error": [],
     "figure_result": [
       {
@@ -834,7 +834,7 @@
   },
   "finished": true,
   "submission_detail": {
-    "id": "5f410917d52c8762ef4ec36bf499a431b0638585a5076e38b79827b2338687ee",
+    "id": "3bcebab8fff92b3b80ae5dd8f551194e45faf71fb4a11b12e3de8b49615da079",
     "original_file_name": "2_glycans.png",
     "file_type": "multi_figure_img"
   }

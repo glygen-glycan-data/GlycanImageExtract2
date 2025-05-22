@@ -1,10 +1,10 @@
-ba8784c019d25ca925a67048891e8a1095b08907f0e792b565fd2306ba75b617
-/data2/projects/GlyGen/GlycanImageExtract2/WebApplication/static/files/ba8784c019d25ca925a67048891e8a1095b08907f0e792b565fd2306ba75b617/output/annotated_Example4_use.pdf
+109db9e0e408f250ff2755b6fee576f68599866b735508368a953d98f4bcb16c
+/data2/projects/GlyGen/GlycanImageExtract2/WebApplication/static/files/109db9e0e408f250ff2755b6fee576f68599866b735508368a953d98f4bcb16c/output/annotated_Example4_use.pdf
 
 Found 2 figures in the PDF.
 Image ID: iid_0, Coordinates: (45.59998, 177.59989999999993, 387.34908, 413.0372), Width: 341.7491, Height: 235.43730000000005, Area: 80460.48538143001
 
-Saved image to /data2/projects/GlyGen/GlycanImageExtract2/WebApplication/static/files/ba8784c019d25ca925a67048891e8a1095b08907f0e792b565fd2306ba75b617/extracted_figures/figures/33.pngCycle found. Dropping least confident link: {'mono_ids': [2, 3], 'confidence': 0.9963604807853699, 'classid': 0, 'classlabel': 'link'}
+Saved image to /data2/projects/GlyGen/GlycanImageExtract2/WebApplication/static/files/109db9e0e408f250ff2755b6fee576f68599866b735508368a953d98f4bcb16c/extracted_figures/figures/33.pngCycle found. Dropping least confident link: {'mono_ids': [2, 3], 'confidence': 0.9963604807853699, 'classid': 0, 'classlabel': 'link'}
 Cycle detected at node '0' (visited from node '1').
 Cycle found. Dropping least confident link: {'mono_ids': [1, 2], 'confidence': 0.8092657923698425, 'classid': 0, 'classlabel': 'link'}
 Cycle detected at node '6' (visited from node '7').
@@ -16,7 +16,7 @@ Unable to determine the root of the glycan structure.
 
 Image ID: iid_1, Coordinates: (425.4078, 165.30010000000004, 570.4604, 383.2848), Width: 145.05260000000004, Height: 217.98469999999998, Area: 31619.247495220006
 
-Saved image to /data2/projects/GlyGen/GlycanImageExtract2/WebApplication/static/files/ba8784c019d25ca925a67048891e8a1095b08907f0e792b565fd2306ba75b617/extracted_figures/figures/34.pngTree is disjointed. Unvisited nodes: 0, 2, 3, 6
+Saved image to /data2/projects/GlyGen/GlycanImageExtract2/WebApplication/static/files/109db9e0e408f250ff2755b6fee576f68599866b735508368a953d98f4bcb16c/extracted_figures/figures/34.pngTree is disjointed. Unvisited nodes: 0, 2, 3, 6
 Unable to determine the root of the glycan structure.
 Cycle found. Dropping least confident link: {'mono_ids': [0, 4], 'confidence': 0.9796139001846313, 'classid': 0, 'classlabel': 'link'}
 Cycle detected at node '1' (visited from node '4').

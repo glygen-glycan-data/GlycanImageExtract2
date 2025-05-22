@@ -1,10 +1,10 @@
 {
-  "id": "ba8784c019d25ca925a67048891e8a1095b08907f0e792b565fd2306ba75b617",
+  "id": "109db9e0e408f250ff2755b6fee576f68599866b735508368a953d98f4bcb16c",
   "result": {
-    "id": "ba8784c019d25ca925a67048891e8a1095b08907f0e792b565fd2306ba75b617",
-    "start time": 1747934326.8156033,
-    "end time": 1747934697.3997467,
-    "runtime": 370.58414340019226,
+    "id": "109db9e0e408f250ff2755b6fee576f68599866b735508368a953d98f4bcb16c",
+    "start time": 1747935849.6927912,
+    "end time": 1747936220.2449687,
+    "runtime": 370.5521774291992,
     "error": [],
     "figure_result": [
       {
@@ -8448,7 +8448,7 @@
   },
   "finished": true,
   "submission_detail": {
-    "id": "ba8784c019d25ca925a67048891e8a1095b08907f0e792b565fd2306ba75b617",
+    "id": "109db9e0e408f250ff2755b6fee576f68599866b735508368a953d98f4bcb16c",
     "original_file_name": "Example4_use.pdf",
     "file_type": "multi_figure_pdf"
   }

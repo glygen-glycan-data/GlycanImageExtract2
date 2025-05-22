@@ -1,10 +1,10 @@
 {
-  "id": "b7ed9426fefd906f2b35773183d3e4e257148ca84ab1d4f204c16bfae30ac2cd",
+  "id": "c643155f3f81c393d27d898fdbff0bba64f88c208db0719d5a28427925a03869",
   "result": {
-    "id": "b7ed9426fefd906f2b35773183d3e4e257148ca84ab1d4f204c16bfae30ac2cd",
-    "start time": 1747934388.331119,
-    "end time": 1747934473.971265,
-    "runtime": 85.64014601707458,
+    "id": "c643155f3f81c393d27d898fdbff0bba64f88c208db0719d5a28427925a03869",
+    "start time": 1747935915.2087202,
+    "end time": 1747935999.955599,
+    "runtime": 84.74687886238098,
     "error": [],
     "figure_result": [
       {
@@ -2555,7 +2555,7 @@
   },
   "finished": true,
   "submission_detail": {
-    "id": "b7ed9426fefd906f2b35773183d3e4e257148ca84ab1d4f204c16bfae30ac2cd",
+    "id": "c643155f3f81c393d27d898fdbff0bba64f88c208db0719d5a28427925a03869",
     "original_file_name": "Example0.pdf",
     "file_type": "multi_figure_pdf"
   }

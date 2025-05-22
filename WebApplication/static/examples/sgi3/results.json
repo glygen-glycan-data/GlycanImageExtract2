@@ -1,10 +1,10 @@
 {
-  "id": "b89d4ed20162a63db8c1d51c44fca0729fbf07dc4d49435697bda5abe9b2dba4",
+  "id": "ab4899ee640d708dc522c260bd52991d580c20abdd1cd4a6516322f51e494072",
   "result": {
-    "id": "b89d4ed20162a63db8c1d51c44fca0729fbf07dc4d49435697bda5abe9b2dba4",
-    "start time": 1747934748.2930741,
-    "end time": 1747934769.385585,
-    "runtime": 21.09251093864441,
+    "id": "ab4899ee640d708dc522c260bd52991d580c20abdd1cd4a6516322f51e494072",
+    "start time": 1747936242.696636,
+    "end time": 1747936264.9031074,
+    "runtime": 22.20647144317627,
     "error": [],
     "figure_result": [
       {
@@ -442,7 +442,7 @@
   },
   "finished": true,
   "submission_detail": {
-    "id": "b89d4ed20162a63db8c1d51c44fca0729fbf07dc4d49435697bda5abe9b2dba4",
+    "id": "ab4899ee640d708dc522c260bd52991d580c20abdd1cd4a6516322f51e494072",
     "original_file_name": "058a64f0cda3490dffac747dfb599cef.png",
     "file_type": "single_figure_img"
   }

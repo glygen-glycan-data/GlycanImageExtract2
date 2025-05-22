@@ -1,10 +1,10 @@
 {
-  "id": "e792f02e49073403fec8e31eb3287ae507deb97721c97aac3f3e23e3e1106a61",
+  "id": "3bc1409cf8b1f9ceec7f12ad4a508699a098e7b3106fe2c25b30a6d13144207e",
   "result": {
-    "id": "e792f02e49073403fec8e31eb3287ae507deb97721c97aac3f3e23e3e1106a61",
-    "start time": 1747934473.9786093,
-    "end time": 1747934524.5266662,
-    "runtime": 50.548056840896606,
+    "id": "3bc1409cf8b1f9ceec7f12ad4a508699a098e7b3106fe2c25b30a6d13144207e",
+    "start time": 1747935999.9636078,
+    "end time": 1747936052.1760046,
+    "runtime": 52.21239686012268,
     "error": [],
     "figure_result": [
       {
@@ -1394,7 +1394,7 @@
   },
   "finished": true,
   "submission_detail": {
-    "id": "e792f02e49073403fec8e31eb3287ae507deb97721c97aac3f3e23e3e1106a61",
+    "id": "3bc1409cf8b1f9ceec7f12ad4a508699a098e7b3106fe2c25b30a6d13144207e",
     "original_file_name": "pdf7_extra.png",
     "file_type": "multi_figure_img"
   }
