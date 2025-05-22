@@ -296,10 +296,14 @@ class APIFramework:
 
     def retrieve(self):
         if flask.request.method in ['GET', 'POST']:
-            p = self.api_para()
+            p = dict(self.api_para())
         else:
             return flask.jsonify("METHOD %s is not suppoted" % flask.request.method)
 
+        if "task_ids" in p:
+            p["list_ids"] = p["task_ids"]
+        elif "task_id" in p:
+            p["list_ids"] = json.dumps([ p["task_id"] ])
         if "list_ids" not in p:
             return flask.jsonify("Please provide with list_id(s)")
 
@@ -324,21 +328,26 @@ class APIFramework:
 
 
     def upload_file(self):
-        print("UPLOAD FILE")
+        # print("UPLOAD FILE")
         if flask.request.method == 'POST':
-            
+
             file = flask.request.files.get('file')  
-            file_url = flask.request.form.get("fileURL")
-            file_type = flask.request.form.get('fileType')
+            if 'task' in flask.request.form:
+                task = json.loads(flask.request.form.get('task'))
+                file_url = task.get('fileURL')
+                file_type = task.get('fileType')
+            else:
+                file_url = flask.request.form.get('fileURL')
+                file_type = flask.request.form.get('fileType')
             # pipeline_name = flask.request.form.get('fileType')
             
+            # print("FILE", file, file_type)
+            # print("file_type",file_type)
+            # print("file url", file_url)
 
             if not file and not file_url:
                 return flask.abort(400, "No file or url provided")
 
-            # print("FILE", file, file_type)
-            # print("file_type",file_type)
-            # print("file url", file_url)
             if file and file.filename:
                 filename = werkzeug.utils.secure_filename(file.filename)
 
@@ -402,7 +411,7 @@ class APIFramework:
                 self.result_cache[list_id] = status
             self.output(1, "Job received by API: %s" % (task_detail))
 
-        return self.file_upload_finished_page(list_id=list_id)
+        return flask.jsonify([status])
 
 
 
@@ -533,6 +542,7 @@ class APIFramework:
 
         self.cleanup()
 
+        # self._flask_app.run(self.host(), self.port())
         self._flask_app.run(self.host(), self.port(), debug=True)
 
     def cleanup(self):

@@ -101,8 +101,32 @@
         return false;
       }
 
-      return true; // Allow form submission
     }
+      
+    let theform = document.getElementById('inputform');
+
+    const formData = new FormData(theform);
+    console.log(formData);
+    jQuery.ajax({
+          type: 'POST',
+          url: '{{urlprefix}}file_upload',
+          data: formData,
+          processData: false,
+          contentType: false,
+          success: function(response) {
+              if (response) {
+                  console.log(response);
+                  window.document.location = '{{urlprefix}}/result/'+response[0]['id']
+              } else {
+                  console.error("Huh?");
+              }
+          },
+          error: function(xhr, status, error) {
+              console.error('AJAX error:', status, error);
+          }
+    });
+    return false; // no form submission
+
   }
 
   // Function to toggle the visibility of file input fields based on the selected radio button
@@ -184,7 +208,7 @@
 
 {% block content %}
 <div class="container d-flex justify-content-center">
-    <form action="file_upload" method="post" enctype="multipart/form-data" onsubmit="return validateForm()">
+    <form id="inputform" action="file_upload" method="post" enctype="multipart/form-data" onsubmit="validateForm(); return false;">
       <div id="fileType" class="btn-group btn-group-toggle btn-group-lg" data-toggle="buttons">
         <label class="btn btn-secondary active">
           <input type="radio" name="fileType" id="manuscript" value="multi_figure_pdf" autocomplete="off" checked onchange="displayExamples(this)"> Manuscript
