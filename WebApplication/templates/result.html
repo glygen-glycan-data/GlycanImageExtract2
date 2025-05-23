@@ -155,13 +155,13 @@
 
 
                     innerdiv += `
-                        <td style='' width="50%">
+                        <td style='text-align: center;' width="50%">
                             <figure style='margin: 0;'>
                                 ${glycan.glyImage ? `
                                     <img style='max-width: 300px; min-width: 90px; width: auto; height: auto; display: block; margin: auto;' 
                                     src="${glycan.glyImage}"
                                     alt='Glycan Image' />
-                                    ` : `<div style="font-size: 16px; color: #555; text-align: center; margin-top: 10px;">No Glycan found</div>`
+                                    ` : `<div style="font-size: 16px; color: #555; margin-top: 10px;">No Glycan found</div>`
                         }
                             
                             <figcaption style='font-size: 14px; color: #555; margin-top: 5px;'>
@@ -187,9 +187,9 @@
                             
                                 </figcaption>
                             </figure>
-                            <div style="text-align: center; margin-top: 20px;">
+                            <div style="margin-top: 20px; text-align: center;">
                             ${glycan.IUPAC && glycan.IUPAC.length > 0 ? `
-                                <div style="display: inline; margin: 10px;">
+                                <div style="display: inline-block; margin: 10px;">
                                     <button onclick="toggleIUPAC('iupac-${fig_id}-${gly_idx}', 'iupac-text-${fig_id}-${gly_idx}')" 
                                             style="background-color:#7c7d7d; color:white; border:none; border-radius:5px; cursor:pointer;">
                                         IUPAC&nbsp;<b>&#128464;</b>
@@ -199,7 +199,7 @@
                             ` : ''}
 
                             ${glycan.WURCS && glycan.WURCS.length > 0 ? `
-                                <div style="display: inline; margin: 10px;">
+                                <div style="display: inline-block; margin: 10px;">
                                     <button onclick="toggleIUPAC('wurcs-${fig_id}-${gly_idx}', 'wurcs-text-${fig_id}-${gly_idx}')" 
                                             style="background-color:#7c7d7d; color:white; border:none; border-radius:5px; cursor:pointer;">
                                         WURCS&nbsp;<b>&#128464;</b>
@@ -209,7 +209,7 @@
                             ` : ''}
 
                             ${glycan.composition_str && glycan.composition_str.length > 0 ? `
-                                <div style="center; display: inline; margin: 10px;">
+                                <div style="display: inline-block; margin: 10px;">
                                     <button onclick="toggleIUPAC('composition-${fig_id}-${gly_idx}', 'composition-text-${fig_id}-${gly_idx}')" 
                                             style="background-color:#7c7d7d; color:white; border:none; border-radius:5px; cursor:pointer;">
                                         Composition&nbsp;<b>&#128464;</b>
@@ -218,11 +218,9 @@
                             ` : ''}
 
                             ${glycan.gnomeurl && glycan.gnomeurl.length > 0 ? `
-                                <div style="center; display: inline; margin: 10px;">
+                                <div style="display: inline-block; margin: 10px;">
                                     <A href="${glycan.gnomeurl}" target="_gnome_"
-                                            style="background-color:#7c7d7d; color:white; border:none; border-radius:5px; cursor:pointer; appearance: button; text-decoration: none; font-weight: 300; padding: 1px 4px 1px 4px;">
-                                        GNOme&nbsp;<b>&#10138;</b>
-                                    </A>
+                                            style="background-color:#7c7d7d; color:white; border:none; border-radius:5px; cursor:pointer; appearance: button; text-decoration: none; font-weight: 300; padding: 1px 4px 1px 4px;">GNOme&nbsp;<b>&#10138;</b></A>
                                 </div>
                             ` : ''}
 
