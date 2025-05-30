@@ -167,6 +167,12 @@ class Figure_Semantics(Image_Semantics):
             for mono in glycan.monosaccharides():
                 x1,y1,x2,y2 = mono['box'].corners()
                 text = mono.get('classlabel','') + ":" + str(mono.get('id'))
+                # color = (128, 0, 128) # purple for monos
+                # if mono['id'] == root_id:
+                #     color = (0, 100, 0) # dark green for root
+                # if mono.get('alternative') is not None:
+                #     color = (0, 165, 255) # orange for alternatives
+                self.annotate(x1,y1,x2,y2,text=text,xtoff=2,ytoff=-2,color=color,thickness=1)   
                 color1 = color
                 if mono['id'] == root_id:
                     color1 = root_color if root_color else color # dark green for root
@@ -197,43 +203,43 @@ class Figure_Semantics(Image_Semantics):
     def write_image(self,**kwargs):
         cv2.imwrite(self.make_filename(**kwargs), self.image())
 
-    def training_data(self,folder_name):
-        # need labels - monos need labels file
-        # root - need labels file
-        # links - need labels file
+    # def training_data(self,folder_name):
+    #     # need labels - monos need labels file
+    #     # root - need labels file
+    #     # links - need labels file
 
-        # print("\nself.params",pipeline.get_steps("glycan")[0].labels)
-        # classid_mappings = {"GlcNAc": 0, "NeuAc":1,"Fuc":2,"Man":3,"GalNAc":4,"Gal":5,"Glc":6,"NeuGc":7, "Xyl": 8}
-        # labels = pipeline.get_steps("glycan")[0].labels
-        # classid_mappings = {label:idx for idx,label in enumerate(labels)}
+    #     # print("\nself.params",pipeline.get_steps("glycan")[0].labels)
+    #     # classid_mappings = {"GlcNAc": 0, "NeuAc":1,"Fuc":2,"Man":3,"GalNAc":4,"Gal":5,"Glc":6,"NeuGc":7, "Xyl": 8}
+    #     # labels = pipeline.get_steps("glycan")[0].labels
+    #     # classid_mappings = {label:idx for idx,label in enumerate(labels)}
 
-        image_path = self.image_path()
-        image_filename = os.path.basename(image_path)
-        base_filename = os.path.splitext(image_filename)[0]
+    #     image_path = self.image_path()
+    #     image_filename = os.path.basename(image_path)
+    #     base_filename = os.path.splitext(image_filename)[0]
 
-        # os.makedirs(folder_name, exist_ok=True)
-        # metadata_dir = os.path.join(folder_name, "metadata")
-        # os.makedirs(metadata_dir, exist_ok=True)
-        # metadata_file = os.path.join(metadata_dir, "metadata.txt")
+    #     # os.makedirs(folder_name, exist_ok=True)
+    #     # metadata_dir = os.path.join(folder_name, "metadata")
+    #     # os.makedirs(metadata_dir, exist_ok=True)
+    #     # metadata_file = os.path.join(metadata_dir, "metadata.txt")
 
-        # print("file",metadata_file)
+    #     # print("file",metadata_file)
 
-        # with open(metadata_file,'w') as f:
-        #     f.write('labels: ' + ', '.join(labels) + '\n')
+    #     # with open(metadata_file,'w') as f:
+    #     #     f.write('labels: ' + ', '.join(labels) + '\n')
 
-            # for k,v in pipeline.get_steps("glycan")[0].params.items():
-            #     f.write(f"{k}: {v}\n")
+    #         # for k,v in pipeline.get_steps("glycan")[0].params.items():
+    #         #     f.write(f"{k}: {v}\n")
 
         
-        training_file_path = os.path.join(folder_name, base_filename + ".txt")
-        with open(training_file_path, 'w') as f:  # Open the file to write annotations
-            for glycan in self.semantics['glycans']:
-                for mono in glycan.monosaccharides():
-                    x,y,w,h = mono['box'].center_relative()
-                    class_id = classid_mappings[mono.get('classlabel')]
-                    f.write(f"{class_id} {x} {y} {w} {h}\n") 
+    #     training_file_path = os.path.join(folder_name, base_filename + ".txt")
+    #     with open(training_file_path, 'w') as f:  # Open the file to write annotations
+    #         for glycan in self.semantics['glycans']:
+    #             for mono in glycan.monosaccharides():
+    #                 x,y,w,h = mono['box'].center_relative()
+    #                 class_id = classid_mappings[mono.get('classlabel')]
+    #                 f.write(f"{class_id} {x} {y} {w} {h}\n") 
 
-        shutil.copy(image_path, folder_name)
+    #     shutil.copy(image_path, folder_name)
 
 class Glycan_Semantics(Image_Semantics):
 

@@ -12,6 +12,9 @@ import os
 import sys
 import argparse
 import shutil
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
 from BKGlycanExtractor import Image_Manager, Config_Manager, GlycanExtractorPipeline
 
 parser = argparse.ArgumentParser(description="Start")
@@ -93,6 +96,6 @@ print("Training data is ready...")
 print(f"{folder_name}.zip")
 
 # delete the images directory
-# if os.path.exists(folder_name):
-#     shutil.rmtree(folder_name)
+if os.path.exists(folder_name):
+    shutil.rmtree(folder_name)
 
