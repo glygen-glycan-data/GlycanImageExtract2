@@ -17,21 +17,16 @@ def request_api(baseurl, target, **kwargs):
     return json.loads(response)
 
 
-def sendToGNOme(*seqs, iupac_found=False):
+def sendToGNOme(*seqs):
 
     # get id (task_id) from subsumption
     baseurl = "https://subsumption.glyomics.org/"
     tasks = [{"seq": seq.strip() if seq else ""} for seq in seqs]
     data = request_api(baseurl, "submit", tasks=json.dumps(tasks), developer_email=devemail)
 
-    # print("subsumption data",data)
     task_id = data[0]['id']
-    # if IUPAC string exists - use Gnome Structure Browser
-    if iupac_found:
-        return f"https://gnome.glyomics.org/StructureBrowser.html?ondemandtaskid={task_id}"
-
-    # if only composition exists - use Gnome composition browser
-    return f"https://gnome.glyomics.org/CompositionBrowser.html?ondemandtaskid={task_id}"
+    # use Gnome Structure Browser
+    return f"https://gnome.glyomics.org/StructureBrowser.html?ondemandtaskid={task_id}"
 
 
 def searchGlyImage(*seqs, orientation='RL',display='normal', image_format='svg', accession=False ,delay=1, maxretry=10):

@@ -124,52 +124,122 @@
         innerdiv += "<tbody>"
 
         figures.forEach(function (figure, fig_id) {
+            var figure_image = figure['annotated_image_path']
+            var figure_width = figure['width']
+            var figure_height = figure['height']
+            
+            // 550: because max-width is set to 550px for each figure below
+            var scale = 1;
+            if (figure_width > 550) {
+            scale = 550 / figure_width;
+            }
             // console.log("Figure", figure, "at index", fig_id);
 
             // code to add the page_num, annotated figure
             innerdiv += "<tr style='background-color:#7c7d7d;'>";
-            innerdiv += `<th colspan='2' style='color:#ffffff'; text-align: center;'> </th>`;
+            innerdiv += `<th colspan='3' style='color:#ffffff'; text-align: center;'> </th>`;
             innerdiv += "</tr>";
 
-            innerdiv += "<tr>";
-            innerdiv += "<td colspan='2' style='padding: 20px; text-align: center;'><img style='max-width: 550px; width: auto; height: auto; display: block; margin: auto;' src='{{urlprefix}}/static/" + location + "/" + list_id + "/" + figure.annotated_image_path + "'/></td>";
-            innerdiv += "</tr>";
-
+            innerdiv += `<tr>
+            <td colspan='3' style='padding: 20px; text-align: center;'>
+                <div id="figure-${fig_id}" style="position: relative; display: inline-block; max-width: 550px;">
+                    <img 
+                        style="max-width: 550px; width: auto; height: auto; display: block;" 
+                        src='{{urlprefix}}/static/${location}/${list_id}/${figure.annotated_image_path}' />
+            `;
+            
+            // using CSS based image overlay to display index values on the image
+            // instead of HTML image map, because CSS based overlays are easier to style and control and its easier to add custom styling like tooltips, hover, etc
             var glycans = figure['glycans'] || []
+            glycans.forEach(function (glycan, gly_idx) {
+                var [x, y, w, h] = glycan['bbox'];
 
-            if (glycans.length > 0) {
-                innerdiv += "<tr style='background-color: #7c7d7d;'>";
-                innerdiv += "<th style='color: #ffffff;text-align: center;'>Glyan Image</th>";
-                innerdiv += "<th style='color: #ffffff; text-align: center;'>Extracted Structure</th>";
-                innerdiv += "</tr>";
+                // Apply same scale as image
+                var sx = x * scale;
+                var sy = y * scale;
+                var sw = w * scale;
+                var sh = h * scale;
+
+                innerdiv += `
+                    <a href="#glycan-${fig_id}-${gly_idx+1}" 
+                    onclick="scrollAndHighlight('glycan-${fig_id}-${gly_idx + 1}', event)"
+                    style="position: absolute;
+                            left: ${sx}px;
+                            top: ${sy}px;
+                            width: ${sw}px;
+                            height: ${sh}px;
+                            pointer-events: auto;
+                            cursor: pointer;
+                            box-sizing: border-box;
+                            text-decoration: none;
+                    ">
+
+                        <div style="
+                            position: absolute;
+                            top: 0;
+                            left: 0;
+                            background: rgba(255, 0, 0, 0.8);
+                            color: white;
+                            font-size: 8px;
+                            padding: 1px 2px;
+                            border-bottom-right-radius: 4px;">
+                            ${gly_idx+1}
+                        </div>
+                    
+                    </a>`;
+                });
+
+                innerdiv += `</div></td></tr>`;
+
+                // var glycans = figure['glycans'] || []
+
+                if (glycans.length > 0) {
+                    innerdiv += "<tr style='background-color: #7c7d7d;'>";
+                    innerdiv += "<th style='color: #ffffff;text-align: center;'>#</th>";
+                    innerdiv += "<th style='color: #ffffff;text-align: center;'>Glyan Image</th>";
+                    innerdiv += "<th style='color: #ffffff; text-align: center;'>Extracted Structure</th>";
+                    innerdiv += "</tr>";
 
 
-                glycans.forEach(function (glycan, gly_idx) {
-                    innerdiv += "<tr>";
-                    innerdiv += `
-                        <td style="vertical-align:middle;" width="50%">
-                            <img style="max-width: 300px; min-width: 90px; display: block; margin: auto;" 
-                                src="{{urlprefix}}/static/${location}/${list_id}/${glycan.extracted_image_path}" 
-                                alt="Glycan Image" />
-                        </td>`;
+                    glycans.forEach(function (glycan, gly_idx) {
+                        
 
+                        innerdiv += `<tr id=glycan-${fig_id}-${gly_idx+1}>`;
+                        innerdiv += `
+                            <td>
+                                <div style="font-weight:bold; background: rgba(255, 0, 0, 0.8);
+                                color: white;padding: 1px 2px; border-bottom-right-radius: 4px;">
+                                ${gly_idx+1}
+                                </div>
+                            </td>
+                            <td style="vertical-align:middle;" width="50%">
+                                <div style="position: relative; display: inline-block; max-width: 550px;">
+                                    <img style="max-width: 300px; min-width: 90px; display: block; margin: auto;" 
+                                        src="{{urlprefix}}/static/${location}/${list_id}/${glycan.extracted_image_path}" 
+                                        alt="Glycan Image" />
+                            </td>`;
 
-                    innerdiv += `
-                        <td style='text-align: center;' width="50%">
-                            <figure style='margin: 0;'>
-                                ${glycan.glyImage ? `
+                        innerdiv += `<td style='text-align: center;' width="50%">`
+                            if (glycan.glyImage) {
+                                innerdiv += `
+                                    <figure style='margin: 0;'>
                                     <img style='max-width: 300px; min-width: 90px; width: auto; height: auto; display: block; margin: auto;' 
-                                    src="${glycan.glyImage}"
-                                    alt='Glycan Image' />
-                                    ` : `<div style="font-size: 16px; color: #555; margin-top: 10px;">No Glycan found</div>`
-                        }
-                            
-                            <figcaption style='font-size: 14px; color: #555; margin-top: 5px;'>
-                                GlyTouCan: ${glycan.accession || 'Not found'}
+                                        src="${glycan.glyImage}"
+                                        alt='Glycan Image' />
+                                    </figure>
+                                `
+                            } else {
+                                innerdiv += `<div style="font-size: 16px; color: #555; margin-top: 10px;">Couldn't extract structure</div>`
+                            }
 
-                                <div style="position: relative; display: inline-block;">
-                                    ${glycan.errors.length > 0 ?
-                            `<span style="margin-left: 10px; background: #eb7676; color: white; border-radius: 50%; padding: 2px 6px; font-size: 12px; cursor: pointer; position: relative; 
+                            innerdiv += `<figcaption style="font-size: 14px; color: #555; margin-top: 5px; display: flex; align-items: center; justify-content: center;">`
+                                if (glycan.accession) {
+                                    innerdiv += `GlyTouCan: ${glycan.accession}`
+                                } 
+
+                                if (glycan.errors.length > 0 ) {
+                                    innerdiv += `
+                                        <span style="margin-left: 10px; background: #eb7676; color: white; border-radius: 50%; padding: 2px 6px; font-size: 12px; cursor: pointer; position: relative; 
                                             transition: box-shadow 0.3s ease; box-shadow: 0 0 10px rgba(255, 0, 0, 0.8);"
                                             onmouseover="errorMessage(this)" 
                                             onmouseout="errorMessage(this)">
@@ -180,86 +250,100 @@
                                                 ${glycan.errors.map(e => `<div>• ${e} </div>`).join('')}
                                             </span>
                                         </span>`
+                                }
 
-                            : ''
-                        }  
-                                </div>
-                            
-                                </figcaption>
-                            </figure>
-                            <div style="margin-top: 20px; text-align: center;">
-                            ${glycan.IUPAC && glycan.IUPAC.length > 0 ? `
-                                <div style="display: inline-block; margin: 10px;">
-                                    <button onclick="toggleIUPAC('iupac-${fig_id}-${gly_idx}', 'iupac-text-${fig_id}-${gly_idx}')" 
-                                            style="background-color:#7c7d7d; color:white; border:none; border-radius:5px; cursor:pointer;">
-                                        IUPAC&nbsp;<b>&#128464;</b>
-                                    </button>
+                            innerdiv += `</figcaption>`
 
-                                </div>
-                            ` : ''}
+                            innerdiv += `<div style="margin-top: 20px; text-align: center;">`
+                                if (glycan.IUPAC && glycan.IUPAC.length > 0) {
+                                    innerdiv += `
+                                        <div style="display: inline-block; margin: 10px;">
+                                            <button onclick="toggleIUPAC('iupac-${fig_id}-${gly_idx}', 'iupac-text-${fig_id}-${gly_idx}')" 
+                                                    style="background-color:#7c7d7d; color:white; border:none; border-radius:5px; cursor:pointer;">
+                                                IUPAC&nbsp;<b>&#128464;</b>
+                                            </button>
 
-                            ${glycan.WURCS && glycan.WURCS.length > 0 ? `
-                                <div style="display: inline-block; margin: 10px;">
-                                    <button onclick="toggleIUPAC('wurcs-${fig_id}-${gly_idx}', 'wurcs-text-${fig_id}-${gly_idx}')" 
-                                            style="background-color:#7c7d7d; color:white; border:none; border-radius:5px; cursor:pointer;">
-                                        WURCS&nbsp;<b>&#128464;</b>
-                                    </button>
-
-                                </div>
-                            ` : ''}
-
-                            ${glycan.composition_str && glycan.composition_str.length > 0 ? `
-                                <div style="display: inline-block; margin: 10px;">
-                                    <button onclick="toggleIUPAC('composition-${fig_id}-${gly_idx}', 'composition-text-${fig_id}-${gly_idx}')" 
-                                            style="background-color:#7c7d7d; color:white; border:none; border-radius:5px; cursor:pointer;">
-                                        Composition&nbsp;<b>&#128464;</b>
-                                    </button>
-                                </div>
-                            ` : ''}
-
-                            ${glycan.gnomeurl && glycan.gnomeurl.length > 0 ? `
-                                <div style="display: inline-block; margin: 10px;">
-                                    <A href="${glycan.gnomeurl}" target="_gnome_"
-                                            style="background-color:#7c7d7d; color:white; border:none; border-radius:5px; cursor:pointer; appearance: button; text-decoration: none; font-weight: 300; padding: 1px 4px 1px 4px;">GNOme&nbsp;<b>&#10138;</b></A>
-                                </div>
-                            ` : ''}
-
-                            </div>
-
-                            <div>
-                                    <div id="iupac-${fig_id}-${gly_idx}" style="display: none; max-width: 300px; overflow-x: auto; margin: 10px auto 0; padding: 10px; border: 1px solid #ccc; background: #f8f8f8; font-family: monospace; white-space: nowrap;">
-                                        <div id="iupac-text-${fig_id}-${gly_idx}">
-                                            ${glycan.IUPAC}
                                         </div>
-                                    </div>
-                                    <div id="wurcs-${fig_id}-${gly_idx}" style="display: none; max-width: 300px; overflow-x: auto; margin: 10px auto 0; padding: 10px; border: 1px solid #ccc; background: #f8f8f8; font-family: monospace; white-space: nowrap;">
-                                        <div id="wurcs-text-${fig_id}-${gly_idx}">
-                                            ${glycan.WURCS}
+                                    `
+                                }
+
+                                if (glycan.WURCS && glycan.WURCS.length > 0) {
+                                    innerdiv += `
+                                        <div style="display: inline-block; margin: 10px;">
+                                            <button onclick="toggleIUPAC('wurcs-${fig_id}-${gly_idx}', 'wurcs-text-${fig_id}-${gly_idx}')" 
+                                                    style="background-color:#7c7d7d; color:white; border:none; border-radius:5px; cursor:pointer;">
+                                                WURCS&nbsp;<b>&#128464;</b>
+                                            </button>
                                         </div>
-                                    </div>
-                                    <div id="composition-${fig_id}-${gly_idx}" style="display: none; max-width: 300px; overflow-x: auto; margin: 10px auto 0; padding: 10px; border: 1px solid #ccc; background: #f8f8f8; font-family: monospace; white-space: nowrap;">
-                                        <div id="composition-text-${fig_id}-${gly_idx}">
-                                            ${glycan.composition_str}
+                                    `
+                                }
+
+                                if (glycan.composition_str && glycan.composition_str.length > 0) {
+                                    innerdiv += `
+                                        <div style="display: inline-block; margin: 10px;">
+                                            <button onclick="toggleIUPAC('composition-${fig_id}-${gly_idx}', 'composition-text-${fig_id}-${gly_idx}')" 
+                                                    style="background-color:#7c7d7d; color:white; border:none; border-radius:5px; cursor:pointer;">
+                                                Composition&nbsp;<b>&#128464;</b>
+                                            </button>
                                         </div>
-                                    </div>
-                            </div>
+                                    `
+                                }
 
-                            <!-- ${glycan.gnomeurl ? `<br><a style='background-color:#e8e3e3; font-weight:400; border-radius:20px; padding:5px 7px 5px 7px;' href="${glycan.gnomeurl}" target="_blank">Explore glycan structure options...</a>` : ''} -->
+                                if (glycan.gnomeurl && glycan.gnomeurl.length > 0) {
+                                    innerdiv += `
+                                        <div style="display: inline-block; margin: 10px;">
+                                            <A href="${glycan.gnomeurl}" target="_gnome_"
+                                                    style="background-color:#7c7d7d; color:white; border:none; border-radius:5px; cursor:pointer; appearance: button; text-decoration: none; font-weight: 300; padding: 1px 4px 1px 4px;">GNOme&nbsp;<b>&#10138;</b></A>
+                                        </div>
+                                    `
+                                }
+                            innerdiv += `</div>`
 
-
-                        </td>`;
-
-
-                    innerdiv += "</tr>";
-
-                })
-            };
+                            innerdiv += `
+                                <div>
+                                        <div id="iupac-${fig_id}-${gly_idx}" style="display: none; max-width: 300px; overflow-x: auto; margin: 10px auto 0; padding: 10px; border: 1px solid #ccc; background: #f8f8f8; font-family: monospace; white-space: nowrap;">
+                                            <div id="iupac-text-${fig_id}-${gly_idx}">
+                                                ${glycan.IUPAC}
+                                            </div>
+                                        </div>
+                                        <div id="wurcs-${fig_id}-${gly_idx}" style="display: none; max-width: 300px; overflow-x: auto; margin: 10px auto 0; padding: 10px; border: 1px solid #ccc; background: #f8f8f8; font-family: monospace; white-space: nowrap;">
+                                            <div id="wurcs-text-${fig_id}-${gly_idx}">
+                                                ${glycan.WURCS}
+                                            </div>
+                                        </div>
+                                        <div id="composition-${fig_id}-${gly_idx}" style="display: none; max-width: 300px; overflow-x: auto; margin: 10px auto 0; padding: 10px; border: 1px solid #ccc; background: #f8f8f8; font-family: monospace; white-space: nowrap;">
+                                            <div id="composition-text-${fig_id}-${gly_idx}">
+                                                ${glycan.composition_str}
+                                            </div>
+                                        </div>
+                                </div>
+                            `  
+                        innerdiv += `</td>`
+                        innerdiv += `</tr>`
+                    })
+                };
         });
 
         innerdiv += "</tbody>"
         innerdiv += "</table>";
         div.innerHTML = innerdiv;
 
+    }
+
+    function scrollAndHighlight(rowId, event) {
+        if (event) event.preventDefault();  // Prevent default jump
+
+        const el = document.getElementById(rowId);
+        if (el) {
+            el.scrollIntoView({ behavior: "smooth", block: "center" });
+            el.style.backgroundColor = "#f4f1e5";
+            setTimeout(() => {
+                el.style.backgroundColor = "";
+            }, 1500);
+
+            // Manually set the hash without jumping
+            history.pushState(null, null, `#${rowId}`);
+        }
     }
 
     // Function to toggle the visibility of file input fields based on the selected radio button

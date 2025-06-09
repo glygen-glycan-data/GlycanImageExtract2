@@ -1,7 +1,7 @@
 '''
 This 
 '''
-import fitz, sys, os, cv2,shutil, pdfplumber, time, ntpath, json, base64
+import fitz, sys, os, cv2,shutil, pdfplumber, time, ntpath, json, base64, re
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from submit import searchGlyLookup, searchGlyImage, sendToGNOme
 from PIL import Image
@@ -249,32 +249,31 @@ class JobInstance:
 
         accession,wurcs = searchGlyLookup(lookup_key)
 
-        
+        if iupac_found:
+            gnome_url = sendToGNOme(lookup_key)
+        else:
+            # converting composition format:
+            # eg: "GlcNAc(5)NeuAc(2)" to "GlcNAc=5&NeuAc=2"
+            matches = re.findall(r'([A-Za-z]+)\((\d+)\)', lookup_key)
+            converted_composition = '&'.join(f"{name}={count}" for name, count in matches)
+            # gnome_url = 'https://gnome.glyomics.org/StructureBrowser.html?' + converted_composition
+            gnome_url = 'https://gnome.glyomics.org/CompositionBrowser.html?' + converted_composition
 
         
         if accession:
-            # GNOME URL
-            uri_base = "https://gnome.glyomics.org/StructureBrowser.html?"
-
-            glycan_uri = (
-                    uri_base + f"focus={accession}"
-                    if accession.startswith('G') else uri_base + f"ondemandtaskid={accession}"
-            )
-
             IUPAC_data.update({
                 "linkexpl": "Extracted successfully using accession",
-                "gnomeurl": glycan_uri,
+                "gnomeurl": gnome_url,
                 "accession": accession, 
                 "glyImage": searchGlyImage(accession, orientation=IUPAC_data["orientation"],accession=True)
             })
             if wurcs is not None and iupac_found:
                 IUPAC_data['WURCS'] = wurcs
         else:
-
             IUPAC_data.update({
                 "linkexpl": "Extracted structure using IUPAC/Composition.",
+                "gnomeurl": gnome_url,
                 "glyImage": searchGlyImage(lookup_key, orientation=IUPAC_data["orientation"]),
-                "gnomeurl": sendToGNOme(lookup_key, iupac_found=iupac_found)
             })
 
             if not iupac_found:
