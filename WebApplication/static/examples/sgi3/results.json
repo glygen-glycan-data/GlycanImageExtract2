@@ -1,10 +1,10 @@
 {
-  "id": "ab4899ee640d708dc522c260bd52991d580c20abdd1cd4a6516322f51e494072",
+  "id": "ad0056ae50c4321e40db28868d62502cde2cb60b124b0034c1897d9cfd6c7a23",
   "result": {
-    "id": "ab4899ee640d708dc522c260bd52991d580c20abdd1cd4a6516322f51e494072",
-    "start time": 1747936242.696636,
-    "end time": 1747936264.9031074,
-    "runtime": 22.20647144317627,
+    "id": "ad0056ae50c4321e40db28868d62502cde2cb60b124b0034c1897d9cfd6c7a23",
+    "start time": 1749560591.3661299,
+    "end time": 1749560612.2710714,
+    "runtime": 20.90494155883789,
     "error": [],
     "figure_result": [
       {
@@ -26,7 +26,7 @@
             "errors": [],
             "extracted_image_path": "extracted_figures/extracted_images/058a64f0cda3490dffac747dfb599cef-1.png",
             "glyImage": "https://glymage.glyomics.org//image/hash/7f30de9fbc9c2bdeb38ed739682c839d.svg",
-            "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G35465JY",
+            "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?ondemandtaskid=7cb942b211d5d2b9dd73367447c885f3d1507b415ee86fcf8336",
             "height": 185,
             "id": 1,
             "image_name": "058a64f0cda3490dffac747dfb599cef-1.png",
@@ -442,7 +442,7 @@
   },
   "finished": true,
   "submission_detail": {
-    "id": "ab4899ee640d708dc522c260bd52991d580c20abdd1cd4a6516322f51e494072",
+    "id": "ad0056ae50c4321e40db28868d62502cde2cb60b124b0034c1897d9cfd6c7a23",
     "original_file_name": "058a64f0cda3490dffac747dfb599cef.png",
     "file_type": "single_figure_img"
   }

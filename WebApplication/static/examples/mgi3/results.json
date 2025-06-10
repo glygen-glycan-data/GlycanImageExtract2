@@ -1,10 +1,10 @@
 {
-  "id": "af3e283b75164a141c830e730a0ef2a90fc48332931c7c467ddc84308ad74d34",
+  "id": "b3d79e163d34ce55fcfbced5d2042adcbbc7e37740604ecbff2745a3e2a8a237",
   "result": {
-    "id": "af3e283b75164a141c830e730a0ef2a90fc48332931c7c467ddc84308ad74d34",
-    "start time": 1747936052.1802106,
-    "end time": 1747936103.5037768,
-    "runtime": 51.323566198349,
+    "id": "b3d79e163d34ce55fcfbced5d2042adcbbc7e37740604ecbff2745a3e2a8a237",
+    "start time": 1749560505.9680498,
+    "end time": 1749560567.2021978,
+    "runtime": 61.234148025512695,
     "error": [],
     "figure_result": [
       {
@@ -27,7 +27,7 @@
             "errors": [],
             "extracted_image_path": "extracted_figures/extracted_images/multi_glycans-1.png",
             "glyImage": "https://glymage.glyomics.org//image/hash/7e2f1a0886bd5db7c8941d2510044590.svg",
-            "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G73636FD",
+            "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?ondemandtaskid=b53d886898c0a9f6570486ac8ea10e91d1507b415ee86fcf8336",
             "height": 98,
             "id": 1,
             "image_name": "multi_glycans-1.png",
@@ -280,7 +280,7 @@
             "errors": [],
             "extracted_image_path": "extracted_figures/extracted_images/multi_glycans-2.png",
             "glyImage": "https://glymage.glyomics.org//image/hash/c403039a9ad715babd25f68e66bb154b.svg",
-            "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G27815BZ",
+            "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?ondemandtaskid=cde84b6b704f8bffaa28ce9b82c59a22d1507b415ee86fcf8336",
             "height": 109,
             "id": 2,
             "image_name": "multi_glycans-2.png",
@@ -499,7 +499,7 @@
             "errors": [],
             "extracted_image_path": "extracted_figures/extracted_images/multi_glycans-3.png",
             "glyImage": "https://glymage.glyomics.org//image/hash/6fe61c793acf640579ed00dd62b8b611.svg",
-            "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G85612WL",
+            "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?ondemandtaskid=e6cf4e4984997ef7cf074336c4816db7d1507b415ee86fcf8336",
             "height": 180,
             "id": 3,
             "image_name": "multi_glycans-3.png",
@@ -845,7 +845,7 @@
   },
   "finished": true,
   "submission_detail": {
-    "id": "af3e283b75164a141c830e730a0ef2a90fc48332931c7c467ddc84308ad74d34",
+    "id": "b3d79e163d34ce55fcfbced5d2042adcbbc7e37740604ecbff2745a3e2a8a237",
     "original_file_name": "multi_glycans.png",
     "file_type": "multi_figure_img"
   }
