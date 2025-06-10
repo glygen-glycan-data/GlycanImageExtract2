@@ -1,10 +1,10 @@
 {
-  "id": "5000ac05980c37eb28f741505a3e6d5e090ce3e220edbc7a6c80a08ec60a7045",
+  "id": "9a88f43b62ef294457ae6617ed17ecb02676cfc769e23e7397655188ae877216",
   "result": {
-    "id": "5000ac05980c37eb28f741505a3e6d5e090ce3e220edbc7a6c80a08ec60a7045",
-    "start time": 1749560025.1345906,
-    "end time": 1749560381.5501945,
-    "runtime": 356.4156038761139,
+    "id": "9a88f43b62ef294457ae6617ed17ecb02676cfc769e23e7397655188ae877216",
+    "start time": 1749566125.3976214,
+    "end time": 1749566487.5225,
+    "runtime": 362.12487864494324,
     "error": [],
     "figure_result": [
       {
@@ -27,7 +27,7 @@
             "errors": [],
             "extracted_image_path": "extracted_figures/extracted_images/33-1.png",
             "glyImage": "https://glymage.glyomics.org//image/hash/b97f792e449933b5afa30d13451dad72.svg",
-            "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?ondemandtaskid=0a3621d4d6b78e7890cf5345e3a2c85cd1507b415ee86fcf8336",
+            "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G27658AJ",
             "height": 253,
             "id": 1,
             "image_name": "33-1.png",
@@ -382,7 +382,7 @@
             "errors": [],
             "extracted_image_path": "extracted_figures/extracted_images/33-2.png",
             "glyImage": "https://glymage.glyomics.org//image/hash/c7cc6a2afccd3d8e8ef8087d9284433a.svg",
-            "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?ondemandtaskid=399a9211df42562c352293b49f664057d1507b415ee86fcf8336",
+            "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G69616RY",
             "height": 241,
             "id": 2,
             "image_name": "33-2.png",
@@ -816,7 +816,7 @@
             "errors": [],
             "extracted_image_path": "extracted_figures/extracted_images/33-3.png",
             "glyImage": "https://glymage.glyomics.org//image/hash/10a69e9f56ab9abcc614f0843a8636e8.svg",
-            "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?ondemandtaskid=dc4cab2d2f4500a38d4ce343fa8c8696d1507b415ee86fcf8336",
+            "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G23934NS",
             "height": 274,
             "id": 3,
             "image_name": "33-3.png",
@@ -1139,7 +1139,7 @@
             "errors": [],
             "extracted_image_path": "extracted_figures/extracted_images/33-4.png",
             "glyImage": "https://glymage.glyomics.org//image/hash/b97f792e449933b5afa30d13451dad72.svg",
-            "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?ondemandtaskid=0a3621d4d6b78e7890cf5345e3a2c85cd1507b415ee86fcf8336",
+            "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G27658AJ",
             "height": 297,
             "id": 4,
             "image_name": "33-4.png",
@@ -1479,9 +1479,6 @@
             "width": 67
           },
           {
-            "IUPAC": "",
-            "WURCS": "",
-            "accession": "G45552IY",
             "bbox": [
               801,
               777,
@@ -1495,13 +1492,13 @@
               "Unable to identify all linkages in the glycan structure."
             ],
             "extracted_image_path": "extracted_figures/extracted_images/33-5.png",
-            "glyImage": "https://glymage.glyomics.org//image/hash/ff3db021b052abc2df07e86c27497255.svg",
-            "gnomeurl": "https://gnome.glyomics.org/CompositionBrowser.html?GlcNAc=2&Man=7",
+            "glyImage": "https://glymage.glyomics.org//image/hash/f3bd594890a085316b2456ba634240f7.svg",
+            "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?GlcNAc=2&Man=7",
             "height": 203,
             "id": 5,
             "image_name": "33-5.png",
             "image_path": "extracted_figures/images/33-5.png",
-            "linkexpl": "Extracted successfully using accession",
+            "linkexpl": "Extracted structure using Composition.",
             "links_count": 10,
             "monos": [
               {
@@ -1769,7 +1766,7 @@
             "errors": [],
             "extracted_image_path": "extracted_figures/extracted_images/33-6.png",
             "glyImage": "https://glymage.glyomics.org//image/hash/16912ef2edd768530c2d77f97f544b03.svg",
-            "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?ondemandtaskid=56b8b8275522c87968a0398622e316c4d1507b415ee86fcf8336",
+            "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G72398VP",
             "height": 174,
             "id": 6,
             "image_name": "33-6.png",
@@ -2056,7 +2053,7 @@
             "errors": [],
             "extracted_image_path": "extracted_figures/extracted_images/33-7.png",
             "glyImage": "https://glymage.glyomics.org//image/hash/b97f792e449933b5afa30d13451dad72.svg",
-            "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?ondemandtaskid=0a3621d4d6b78e7890cf5345e3a2c85cd1507b415ee86fcf8336",
+            "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G27658AJ",
             "height": 266,
             "id": 7,
             "image_name": "33-7.png",
@@ -2411,7 +2408,7 @@
             "errors": [],
             "extracted_image_path": "extracted_figures/extracted_images/33-8.png",
             "glyImage": "https://glymage.glyomics.org//image/hash/16912ef2edd768530c2d77f97f544b03.svg",
-            "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?ondemandtaskid=56b8b8275522c87968a0398622e316c4d1507b415ee86fcf8336",
+            "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G72398VP",
             "height": 248,
             "id": 8,
             "image_name": "33-8.png",
@@ -2698,7 +2695,7 @@
             "errors": [],
             "extracted_image_path": "extracted_figures/extracted_images/33-9.png",
             "glyImage": "https://glymage.glyomics.org//image/hash/a97a683b6ecb62fb212b4f8363aa2dc5.svg",
-            "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?ondemandtaskid=12fce1829f77d4d65831985dd58c357ad1507b415ee86fcf8336",
+            "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G97599MN",
             "height": 253,
             "id": 9,
             "image_name": "33-9.png",
@@ -3089,7 +3086,7 @@
             "errors": [],
             "extracted_image_path": "extracted_figures/extracted_images/33-10.png",
             "glyImage": "https://glymage.glyomics.org//image/hash/f57be20142aac1b4bba4cca7eeccc3a8.svg",
-            "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?ondemandtaskid=9c3b9257a942948960f8c863fb4c57b6d1507b415ee86fcf8336",
+            "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G64780OA",
             "height": 180,
             "id": 10,
             "image_name": "33-10.png",
@@ -3372,9 +3369,6 @@
             "width": 88
           },
           {
-            "IUPAC": "",
-            "WURCS": "",
-            "accession": "G55719HL",
             "bbox": [
               594,
               795,
@@ -3388,13 +3382,13 @@
               "Unable to identify all linkages in the glycan structure."
             ],
             "extracted_image_path": "extracted_figures/extracted_images/33-11.png",
-            "glyImage": "https://glymage.glyomics.org//image/hash/d4899b142ea4b335166a8c5f70f4b2d7.svg",
-            "gnomeurl": "https://gnome.glyomics.org/CompositionBrowser.html?GlcNAc=3&Man=5&Gal=1",
+            "glyImage": "https://glymage.glyomics.org//image/hash/788dad03fba654409314188909f47e53.svg",
+            "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?GlcNAc=3&Man=5&Gal=1",
             "height": 185,
             "id": 11,
             "image_name": "33-11.png",
             "image_path": "extracted_figures/images/33-11.png",
-            "linkexpl": "Extracted successfully using accession",
+            "linkexpl": "Extracted structure using Composition.",
             "links_count": 10,
             "monos": [
               {
@@ -3662,7 +3656,7 @@
             "errors": [],
             "extracted_image_path": "extracted_figures/extracted_images/33-12.png",
             "glyImage": "https://glymage.glyomics.org//image/hash/b35f5eb760dc8a2fa6ec340bde6e2d20.svg",
-            "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?ondemandtaskid=c49bfdcf396a8456540ca8c2c5c24c3ed1507b415ee86fcf8336",
+            "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G43463XA",
             "height": 160,
             "id": 12,
             "image_name": "33-12.png",
@@ -3960,7 +3954,7 @@
             "errors": [],
             "extracted_image_path": "extracted_figures/extracted_images/33-13.png",
             "glyImage": "https://glymage.glyomics.org//image/hash/d701619b89c61c6984b8717060bbad05.svg",
-            "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?ondemandtaskid=b53d886898c0a9f6570486ac8ea10e91d1507b415ee86fcf8336",
+            "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G73636FD",
             "height": 186,
             "id": 13,
             "image_name": "33-13.png",
@@ -4224,7 +4218,7 @@
             "errors": [],
             "extracted_image_path": "extracted_figures/extracted_images/33-14.png",
             "glyImage": "https://glymage.glyomics.org//image/hash/16912ef2edd768530c2d77f97f544b03.svg",
-            "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?ondemandtaskid=56b8b8275522c87968a0398622e316c4d1507b415ee86fcf8336",
+            "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G72398VP",
             "height": 207,
             "id": 14,
             "image_name": "33-14.png",
@@ -4511,7 +4505,7 @@
             "errors": [],
             "extracted_image_path": "extracted_figures/extracted_images/33-15.png",
             "glyImage": "https://glymage.glyomics.org//image/hash/0de285880ae2b2fd08c71d64abcebf4f.svg",
-            "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?ondemandtaskid=c5ec12bff31768dba563bed96239f162d1507b415ee86fcf8336",
+            "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G03833LE",
             "height": 172,
             "id": 15,
             "image_name": "33-15.png",
@@ -4698,7 +4692,7 @@
             "errors": [],
             "extracted_image_path": "extracted_figures/extracted_images/33-16.png",
             "glyImage": "https://glymage.glyomics.org//image/hash/ae989d0c6f45e8d90790446e9bcae470.svg",
-            "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?ondemandtaskid=ba68ffdea6b1381c44c04742d0fc08bbd1507b415ee86fcf8336",
+            "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G78214BJ",
             "height": 156,
             "id": 16,
             "image_name": "33-16.png",
@@ -4985,7 +4979,7 @@
             "errors": [],
             "extracted_image_path": "extracted_figures/extracted_images/33-17.png",
             "glyImage": "https://glymage.glyomics.org//image/hash/79704e782d88d393ee7a655002e3c89b.svg",
-            "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?ondemandtaskid=074e6035b100570bfa2d71c31de3ec72d1507b415ee86fcf8336",
+            "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G78607HP",
             "height": 174,
             "id": 17,
             "image_name": "33-17.png",
@@ -5240,7 +5234,7 @@
             "errors": [],
             "extracted_image_path": "extracted_figures/extracted_images/33-18.png",
             "glyImage": "https://glymage.glyomics.org//image/hash/10a69e9f56ab9abcc614f0843a8636e8.svg",
-            "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?ondemandtaskid=dc4cab2d2f4500a38d4ce343fa8c8696d1507b415ee86fcf8336",
+            "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G23934NS",
             "height": 192,
             "id": 18,
             "image_name": "33-18.png",
@@ -5593,7 +5587,7 @@
             "errors": [],
             "extracted_image_path": "extracted_figures/extracted_images/33-19.png",
             "glyImage": "https://glymage.glyomics.org//image/hash/79704e782d88d393ee7a655002e3c89b.svg",
-            "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?ondemandtaskid=074e6035b100570bfa2d71c31de3ec72d1507b415ee86fcf8336",
+            "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G78607HP",
             "height": 209,
             "id": 19,
             "image_name": "33-19.png",
@@ -5848,7 +5842,7 @@
             "errors": [],
             "extracted_image_path": "extracted_figures/extracted_images/33-20.png",
             "glyImage": "https://glymage.glyomics.org//image/hash/95ba7b7514eb962ddfe5f0d9a3e00473.svg",
-            "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?ondemandtaskid=cde84b6b704f8bffaa28ce9b82c59a22d1507b415ee86fcf8336",
+            "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G27815BZ",
             "height": 207,
             "id": 20,
             "image_name": "33-20.png",
@@ -6067,7 +6061,7 @@
             "errors": [],
             "extracted_image_path": "extracted_figures/extracted_images/33-21.png",
             "glyImage": "https://glymage.glyomics.org//image/hash/9f88c49b5ae3e596504c5446d0f04c33.svg",
-            "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?ondemandtaskid=5af04c4cbdc66720a25173a873478f34d1507b415ee86fcf8336",
+            "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G45319NP",
             "height": 213,
             "id": 21,
             "image_name": "33-21.png",
@@ -6375,9 +6369,6 @@
             "width": 75
           },
           {
-            "IUPAC": "",
-            "WURCS": "",
-            "accession": "G01924ZE",
             "bbox": [
               612,
               453,
@@ -6391,13 +6382,13 @@
               "Unable to determine the root of the glycan structure."
             ],
             "extracted_image_path": "extracted_figures/extracted_images/33-22.png",
-            "glyImage": "https://glymage.glyomics.org//image/hash/41c8bb24598ba1df96a51102f75189be.svg",
-            "gnomeurl": "https://gnome.glyomics.org/CompositionBrowser.html?GlcNAc=4&Fuc=1&Man=3&Gal=2",
+            "glyImage": "https://glymage.glyomics.org//image/hash/1a5f0425835dd8890c6f08269728e76f.svg",
+            "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?GlcNAc=4&Fuc=1&Man=3&Gal=2",
             "height": 199,
             "id": 22,
             "image_name": "33-22.png",
             "image_path": "extracted_figures/images/33-22.png",
-            "linkexpl": "Extracted successfully using accession",
+            "linkexpl": "Extracted structure using Composition.",
             "links_count": 9,
             "log": [
               "[rootmonofinding.py:213 YOLORootFinder.find_objects] No root was detected"
@@ -6655,9 +6646,6 @@
             "width": 68
           },
           {
-            "IUPAC": "",
-            "WURCS": "",
-            "accession": "G64922VJ",
             "bbox": [
               588,
               424,
@@ -6671,13 +6659,13 @@
               "Unable to determine the root of the glycan structure."
             ],
             "extracted_image_path": "extracted_figures/extracted_images/33-23.png",
-            "glyImage": "https://glymage.glyomics.org//image/hash/62cd6b607c5b4bc23fec569d292a8727.svg",
-            "gnomeurl": "https://gnome.glyomics.org/CompositionBrowser.html?GlcNAc=3&Man=2&Gal=1",
+            "glyImage": "https://glymage.glyomics.org//image/hash/221e6d5fb256f84d488113f9d0098050.svg",
+            "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?GlcNAc=3&Man=2&Gal=1",
             "height": 220,
             "id": 23,
             "image_name": "33-23.png",
             "image_path": "extracted_figures/images/33-23.png",
-            "linkexpl": "Extracted successfully using accession",
+            "linkexpl": "Extracted structure using Composition.",
             "links_count": 5,
             "log": [
               "[rootmonofinding.py:213 YOLORootFinder.find_objects] No root was detected"
@@ -6844,9 +6832,6 @@
         "file_name": "34.png",
         "glycans": [
           {
-            "IUPAC": "",
-            "WURCS": "",
-            "accession": "G78219YA",
             "bbox": [
               250,
               621,
@@ -6860,13 +6845,13 @@
               "Unable to identify all linkages in the glycan structure."
             ],
             "extracted_image_path": "extracted_figures/extracted_images/34-1.png",
-            "glyImage": "https://glymage.glyomics.org//image/hash/528abb4a6a9456eb80083c83f3b2f0b5.svg",
-            "gnomeurl": "https://gnome.glyomics.org/CompositionBrowser.html?GlcNAc=4&Fuc=1&Man=2",
+            "glyImage": "https://glymage.glyomics.org//image/hash/a24107171abcc6e5bde8ed068170d94f.svg",
+            "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?GlcNAc=4&Fuc=1&Man=2",
             "height": 58,
             "id": 1,
             "image_name": "34-1.png",
             "image_path": "extracted_figures/images/34-1.png",
-            "linkexpl": "Extracted successfully using accession",
+            "linkexpl": "Extracted structure using Composition.",
             "links_count": 5,
             "monos": [
               {
@@ -7061,9 +7046,6 @@
             "width": 94
           },
           {
-            "IUPAC": "",
-            "WURCS": "",
-            "accession": "G01924ZE",
             "bbox": [
               246,
               397,
@@ -7077,13 +7059,13 @@
               "Unable to determine the root of the glycan structure."
             ],
             "extracted_image_path": "extracted_figures/extracted_images/34-2.png",
-            "glyImage": "https://glymage.glyomics.org//image/hash/41c8bb24598ba1df96a51102f75189be.svg",
-            "gnomeurl": "https://gnome.glyomics.org/CompositionBrowser.html?GlcNAc=4&Fuc=1&Man=3&Gal=2",
+            "glyImage": "https://glymage.glyomics.org//image/hash/1a5f0425835dd8890c6f08269728e76f.svg",
+            "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?GlcNAc=4&Fuc=1&Man=3&Gal=2",
             "height": 52,
             "id": 2,
             "image_name": "34-2.png",
             "image_path": "extracted_figures/images/34-2.png",
-            "linkexpl": "Extracted successfully using accession",
+            "linkexpl": "Extracted structure using Composition.",
             "links_count": 10,
             "log": [
               "[rootmonofinding.py:213 YOLORootFinder.find_objects] No root was detected"
@@ -7351,9 +7333,6 @@
             "width": 101
           },
           {
-            "IUPAC": "",
-            "WURCS": "",
-            "accession": "G01924ZE",
             "bbox": [
               246,
               440,
@@ -7367,13 +7346,13 @@
               "Unable to identify all linkages in the glycan structure."
             ],
             "extracted_image_path": "extracted_figures/extracted_images/34-3.png",
-            "glyImage": "https://glymage.glyomics.org//image/hash/41c8bb24598ba1df96a51102f75189be.svg",
-            "gnomeurl": "https://gnome.glyomics.org/CompositionBrowser.html?GlcNAc=4&Fuc=1&Man=3&Gal=2",
+            "glyImage": "https://glymage.glyomics.org//image/hash/1a5f0425835dd8890c6f08269728e76f.svg",
+            "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?GlcNAc=4&Fuc=1&Man=3&Gal=2",
             "height": 53,
             "id": 3,
             "image_name": "34-3.png",
             "image_path": "extracted_figures/images/34-3.png",
-            "linkexpl": "Extracted successfully using accession",
+            "linkexpl": "Extracted structure using Composition.",
             "links_count": 11,
             "monos": [
               {
@@ -7651,9 +7630,6 @@
             "width": 104
           },
           {
-            "IUPAC": "",
-            "WURCS": "",
-            "accession": "G68013XJ",
             "bbox": [
               26,
               615,
@@ -7667,13 +7643,13 @@
               "Unable to identify all linkages in the glycan structure."
             ],
             "extracted_image_path": "extracted_figures/extracted_images/34-4.png",
-            "glyImage": "https://glymage.glyomics.org//image/hash/62a9336bc7b4fd78f9841c13db22ad33.svg",
-            "gnomeurl": "https://gnome.glyomics.org/CompositionBrowser.html?GlcNAc=4&Fuc=1&Man=3&Gal=1",
+            "glyImage": "https://glymage.glyomics.org//image/hash/da621cd4f58e620885c19cd2fc8c8d7f.svg",
+            "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?GlcNAc=4&Fuc=1&Man=3&Gal=1",
             "height": 62,
             "id": 4,
             "image_name": "34-4.png",
             "image_path": "extracted_figures/images/34-4.png",
-            "linkexpl": "Extracted successfully using accession",
+            "linkexpl": "Extracted structure using Composition.",
             "links_count": 7,
             "monos": [
               {
@@ -7899,8 +7875,6 @@
             "width": 89
           },
           {
-            "IUPAC": "",
-            "WURCS": "",
             "bbox": [
               22,
               400,
@@ -7915,12 +7889,12 @@
             ],
             "extracted_image_path": "extracted_figures/extracted_images/34-5.png",
             "glyImage": "https://glymage.glyomics.org//image/hash/e6e3206e415609df68f36d6636989a4a.svg",
-            "gnomeurl": "https://gnome.glyomics.org/CompositionBrowser.html?GlcNAc=4&Fuc=1&Man=2&Gal=2",
+            "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?GlcNAc=4&Fuc=1&Man=2&Gal=2",
             "height": 47,
             "id": 5,
             "image_name": "34-5.png",
             "image_path": "extracted_figures/images/34-5.png",
-            "linkexpl": "Extracted structure using IUPAC/Composition.",
+            "linkexpl": "Extracted structure using Composition.",
             "links_count": 8,
             "monos": [
               {
@@ -8174,8 +8148,6 @@
             "width": 88
           },
           {
-            "IUPAC": "",
-            "WURCS": "",
             "bbox": [
               22,
               442,
@@ -8190,12 +8162,12 @@
             ],
             "extracted_image_path": "extracted_figures/extracted_images/34-6.png",
             "glyImage": "https://glymage.glyomics.org//image/hash/e6e3206e415609df68f36d6636989a4a.svg",
-            "gnomeurl": "https://gnome.glyomics.org/CompositionBrowser.html?GlcNAc=4&Fuc=1&Man=2&Gal=2",
+            "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?GlcNAc=4&Fuc=1&Man=2&Gal=2",
             "height": 52,
             "id": 6,
             "image_name": "34-6.png",
             "image_path": "extracted_figures/images/34-6.png",
-            "linkexpl": "Extracted structure using IUPAC/Composition.",
+            "linkexpl": "Extracted structure using Composition.",
             "links_count": 7,
             "monos": [
               {
@@ -8448,7 +8420,7 @@
   },
   "finished": true,
   "submission_detail": {
-    "id": "5000ac05980c37eb28f741505a3e6d5e090ce3e220edbc7a6c80a08ec60a7045",
+    "id": "9a88f43b62ef294457ae6617ed17ecb02676cfc769e23e7397655188ae877216",
     "original_file_name": "Example4_use.pdf",
     "file_type": "multi_figure_pdf"
   }

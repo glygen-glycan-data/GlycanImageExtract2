@@ -1,10 +1,10 @@
 {
-  "id": "e393527c184604c776ed7fb225f7a834b9285fa36b74e727a2743f75b6e7543d",
+  "id": "08aea5c98090e626950fc9d6fcb30ca0bc11159e0b192abba47cef5a8b6c33f7",
   "result": {
-    "id": "e393527c184604c776ed7fb225f7a834b9285fa36b74e727a2743f75b6e7543d",
-    "start time": 1749559985.5076208,
-    "end time": 1749560025.1320212,
-    "runtime": 39.62440037727356,
+    "id": "08aea5c98090e626950fc9d6fcb30ca0bc11159e0b192abba47cef5a8b6c33f7",
+    "start time": 1749566124.3375854,
+    "end time": 1749566165.9807284,
+    "runtime": 41.64314293861389,
     "error": [],
     "figure_result": [
       {
@@ -27,7 +27,7 @@
             "errors": [],
             "extracted_image_path": "extracted_figures/extracted_images/2_glycans-1.png",
             "glyImage": "https://glymage.glyomics.org//image/hash/7f30de9fbc9c2bdeb38ed739682c839d.svg",
-            "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?ondemandtaskid=7cb942b211d5d2b9dd73367447c885f3d1507b415ee86fcf8336",
+            "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G35465JY",
             "height": 383,
             "id": 1,
             "image_name": "2_glycans-1.png",
@@ -450,7 +450,7 @@
             "errors": [],
             "extracted_image_path": "extracted_figures/extracted_images/2_glycans-2.png",
             "glyImage": "https://glymage.glyomics.org//image/hash/95949d9a666579e18d4a9f40d32b9a63.svg",
-            "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?ondemandtaskid=5b791ad7cd40335fa5dc9f86489c2afcd1507b415ee86fcf8336",
+            "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G66457WL",
             "height": 246,
             "id": 2,
             "image_name": "2_glycans-2.png",
@@ -834,7 +834,7 @@
   },
   "finished": true,
   "submission_detail": {
-    "id": "e393527c184604c776ed7fb225f7a834b9285fa36b74e727a2743f75b6e7543d",
+    "id": "08aea5c98090e626950fc9d6fcb30ca0bc11159e0b192abba47cef5a8b6c33f7",
     "original_file_name": "2_glycans.png",
     "file_type": "multi_figure_img"
   }

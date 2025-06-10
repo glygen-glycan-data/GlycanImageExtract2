@@ -207,8 +207,6 @@ class JobInstance:
             "monos_count": len(gly_semantics.monosaccharides()),
             "errors": errors,
             "structure_errors": structure_errors,
-            "IUPAC": "",
-            "WURCS": "",
             "orientation": "RL",
         }
 
@@ -239,25 +237,30 @@ class JobInstance:
         # else:
             # lookup_key = IUPAC_data["composition_str"]
 
-        lookup_key = IUPAC_data["IUPAC"] if IUPAC_data["IUPAC"] != "" else IUPAC_data["composition_str"]
-        iupac_found = True if IUPAC_data["IUPAC"] != "" else False
+        iupac = IUPAC_data.get("IUPAC")
+        compstr = IUPAC_data.get("composition_str")
 
         # gly_image = searchGlyImage(lookup_key, orientation=IUPAC_data["orientation"])
 
         # GNOME URL
         uri_base = "https://gnome.glyomics.org/StructureBrowser.html?"
 
-        accession,wurcs = searchGlyLookup(lookup_key)
+        if iupac:
+            accession,wurcs = searchGlyLookup(iupac)
+        else:
+            accession = None
+            wurcs = None
 
-        if iupac_found:
-            gnome_url = sendToGNOme(lookup_key)
+        if accession:
+            gnome_url = uri_base + 'focus=' + accession
+        elif iupac:
+            gnome_url = sendToGNOme(iupac)
         else:
             # converting composition format:
             # eg: "GlcNAc(5)NeuAc(2)" to "GlcNAc=5&NeuAc=2"
-            matches = re.findall(r'([A-Za-z]+)\((\d+)\)', lookup_key)
+            matches = re.findall(r'([A-Za-z]+)\((\d+)\)', compstr)
             converted_composition = '&'.join(f"{name}={count}" for name, count in matches)
-            # gnome_url = 'https://gnome.glyomics.org/StructureBrowser.html?' + converted_composition
-            gnome_url = 'https://gnome.glyomics.org/CompositionBrowser.html?' + converted_composition
+            gnome_url = 'https://gnome.glyomics.org/StructureBrowser.html?' + converted_composition
 
         
         if accession:
@@ -267,18 +270,22 @@ class JobInstance:
                 "accession": accession, 
                 "glyImage": searchGlyImage(accession, orientation=IUPAC_data["orientation"],accession=True)
             })
-            if wurcs is not None and iupac_found:
+            if wurcs:
                 IUPAC_data['WURCS'] = wurcs
-        else:
+        elif iupac:
             IUPAC_data.update({
-                "linkexpl": "Extracted structure using IUPAC/Composition.",
+                "linkexpl": "Extracted structure using IUPAC.",
                 "gnomeurl": gnome_url,
-                "glyImage": searchGlyImage(lookup_key, orientation=IUPAC_data["orientation"]),
+                "glyImage": searchGlyImage(iupac, orientation=IUPAC_data["orientation"]),
+            })
+        else:
+            # composition only
+            IUPAC_data.update({
+                "linkexpl": "Extracted structure using Composition.",
+                "gnomeurl": gnome_url,
+                "glyImage": searchGlyImage(compstr, orientation=IUPAC_data["orientation"]),
             })
 
-            if not iupac_found:
-                print("We will use composition",lookup_key, IUPAC_data["gnomeurl"])
-            
         return IUPAC_data
 
 
