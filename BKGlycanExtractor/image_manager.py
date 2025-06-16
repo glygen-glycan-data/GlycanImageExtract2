@@ -211,7 +211,7 @@ class Image_Data:
                 
                 # Use the stored element to get attributes and add them to the SVG file
                 element = element_lookup[g] 
-                anomeric_config = anomeric_lookup[element.getAttribute("data.parentResidueIndex")] if element.hasAttribute("data.parentResidueIndex") else "" 
+                anomeric_config = anomeric_lookup[element.getAttribute("data.childResidueIndex")] if element.hasAttribute("data.childResidueIndex") else "" 
                 carbon_number = element.getAttribute("data.parentPositions") if element.hasAttribute("data.parentPositions") else "" 
                 linkage_data = ['l', t[0], t[1], carbon_number, anomeric_config] 
                 out.append(linkage_data) 
