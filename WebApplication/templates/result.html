@@ -85,6 +85,29 @@
         }
     }
 
+    function mark(figid,glyid,note) {
+       let markurl = "{{prefixurl}}/mark?resultid="+list_id+"&glycanid="+figid+"."+glyid+"&note="+note;
+       console.log(figid,glyid,note,markurl);
+       jQuery.getJSON(markurl, function (d) {
+         console.log(d);
+         if (d.status == "OK") {
+           let elt = document.getElementById("votes-"+figid+"-"+glyid);
+           let elt1 = document.getElementById("note-"+figid+"-"+glyid);
+           elt.innerHTML = d.upvotes + d.downvotes;
+           if (d.upvotes > 0) {
+               elt.style.color = "green";
+               elt1.innerHTML = "GOOD";
+           } else if (d.downvotes > 0) {
+               elt.style.color = "red";
+               elt1.innerHTML = "BAD";
+           } else {
+               elt.style.color = "black";
+               elt1.innerHTML = "";
+           }
+         }
+       });
+    }
+
     function addDownloadButton(result) {
         let alert_data = document.getElementById("alert_data");
         let reselt = document.getElementById("result");
@@ -203,14 +226,26 @@
 
                     glycans.forEach(function (glycan, gly_idx) {
                         
-
+                        let color="black";
+                        let note="";
+                        if ((glycan.upvotes || 0) > 0) {
+                            color = "green";
+                            note = "GOOD"
+                        } else if ((glycan.downvotes || 0) > 0) {
+                            color = "red";
+                            note = "BAD"
+                        }
+                        let value = (glycan.upvotes || 0)+(glycan.downvotes || 0);
+        
                         innerdiv += `<tr id=glycan-${fig_id}-${gly_idx+1}>`;
                         innerdiv += `
                             <td>
-                                <div style="font-weight:bold; background: rgba(255, 0, 0, 0.8);
+                                <div onclick="scrollAndHighlight('glycan-${fig_id}-${gly_idx + 1}', event);" style="font-weight:bold; background: rgba(255, 0, 0, 0.8); cursor: pointer;
                                 color: white;padding: 1px 2px; border-bottom-right-radius: 4px;">
                                 ${gly_idx+1}
                                 </div>
+                                <div style="font-weight: 1000;"><span style="color:green; cursor: pointer;" onclick="mark(${fig_id},${gly_idx},'upvote');">&#129093;</span><span id="votes-${fig_id}-${gly_idx}" style="color:${color};">${value}</span><span style="color:red; cursor: pointer;" onclick="mark(${fig_id},${gly_idx},'downvote');">&#129095;</span></div>
+                                <div id="note-${fig_id}-${gly_idx}" style="font-weight: 1000;">${note}</div>
                             </td>
                             <td style="vertical-align:middle;" width="50%">
                                 <div style="position: relative; display: inline-block; max-width: 550px;">

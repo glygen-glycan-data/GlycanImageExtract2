@@ -31,8 +31,6 @@ try:
 except ImportError:
     import ConfigParser as configparser
 
-
-
 class APIErrorBase(RuntimeError):
 
     def __init__(self, msg):
@@ -79,7 +77,6 @@ class APIFramework:
         self._examples_html = "examples.html"
         self._abstract_html = "abstract.html"
         self._result_html = "result.html"
-
 
         self._file_upload_finished_html = None
 
@@ -293,6 +290,24 @@ class APIFramework:
 
         return flask.jsonify(res)
 
+    def get_result(self,list_id,lock=False,timeout=None):
+        thing = {"Error": "list_id (%s) not found" % list_id}
+        if list_id in self.result_cache:
+            thing = self.result_cache[list_id]
+        elif os.path.exists(f"static/files/{list_id}/results.json"):
+            thing = json.loads(open(f"static/files/{list_id}/results.json").read())
+        elif os.path.exists(f"static/examples/{list_id}/results.json"):
+            thing = json.loads(open(f"static/examples/{list_id}/results.json").read())
+            thing['location'] = 'examples'
+        return thing
+
+    def save_result(self,list_id,result):
+        # We should lock so that we don't get two at once...
+        self.result_cache[list_id] = result
+        location = result.get('location','files')
+        wh = open(f"static/{location}/{list_id}/results.json",'wt')
+        json.dump(result,wh,indent=2)
+        wh.close()
 
     def retrieve(self):
         if flask.request.method in ['GET', 'POST']:
@@ -313,19 +328,8 @@ class APIFramework:
         list_ids = json.loads(p["list_ids"])
         res = []
         for list_id in list_ids:
-            thing = {"Error": "list_id (%s) not found" % list_id}
-            if list_id in self.result_cache:
-                thing = self.result_cache[list_id]
-            elif os.path.exists(f"static/files/{list_id}/results.json"):
-                thing = json.loads(open(f"static/files/{list_id}/results.json").read())
-            elif os.path.exists(f"static/examples/{list_id}/results.json"):
-                thing = json.loads(open(f"static/examples/{list_id}/results.json").read())
-                thing['location'] = 'examples'
-                
-            res.append(thing)
-
+            res.append(self.get_result(list_id))
         return flask.jsonify(res)
-
 
     def upload_file(self):
         # print("UPLOAD FILE")
@@ -500,6 +504,7 @@ class APIFramework:
         # self._flask_app.add_url_rule("/examples", "examples", self.examples, methods=["GET", "POST"])
         self._flask_app.add_url_rule("/result", "result", self.result, methods=["GET", "POST"])
         self._flask_app.add_url_rule("/result/<id>", "result", self.result, methods=["GET", "POST"])
+        self._flask_app.add_url_rule("/mark", "mark", self.mark, methods=["GET", "POST"])
 
         if self._file_based_job:
             print("Got the functions")

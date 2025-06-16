@@ -29,6 +29,7 @@ import json
 import cv2
 import traceback
 
+import threading
 
 class ReferenceAPIParaBased(APIFramework):
     pass
@@ -120,12 +121,67 @@ class ReferenceAPIFileBased(APIFramework):
             id = flask.request.args['id']
         return flask.render_template(self._result_html, urlprefix=self._prefix, list_id=id)
 
+    def mark(self):
+        resultid = flask.request.args['resultid']
+        glycanid = flask.request.args['glycanid']
+        note = flask.request.args['note']
+
+        if self._lock.acquire(timeout=2):
+            if resultid not in self._resultid_locks:
+                self._resultid_locks[resultid] = threading.Lock()
+            self._lock.release()
+        else:
+            print("Status: ERROR:LOCK_TIMEOUT, ResultID: %s, GlycanID: %s, Note: %s."%(resultid,glycanid,note),file=sys.stderr)
+            return flask.jsonify(dict(status="ERROR"))
+
+        try:
+
+            if self._resultid_locks[resultid].acquire(timeout=2):
+    
+                res = self.get_result(resultid)
+                if res.get('location') == 'examples':
+                    self._resultid_locks[resultid].release()
+                    print("Status: ERROR:EXAMPLE, ResultID: %s, GlycanID: %s, Note: %s."%(resultid,glycanid,note),file=sys.stderr)
+                    return flask.jsonify(dict(status="ERROR"))
+    
+                figureindex,glycanindex=map(int,glycanid.split('.'))
+                glycan = res['result']['figure_result'][figureindex]['glycans'][glycanindex]
+                votes = glycan.get('upvotes',0) - glycan.get('downvotes',0)
+                if note == "upvote":
+                    votes += 1
+                elif note == "downvote":
+                    votes -= 1
+                else:
+                    glycan['note'] = note
+                if votes >= 0:
+                    glycan['upvotes'] = votes
+                    glycan['downvotes'] = 0
+                else:
+                    glycan['upvotes'] = 0
+                    glycan['downvotes'] = -votes
+                self.save_result(resultid,res)
+            else:
+                print("Status: ERROR:RESULT_TIMEOUT, ResultID: %s, GlycanID: %s, Note: %s."%(resultid,glycanid,note),file=sys.stderr)
+                return flask.jsonify(dict(status="ERROR"))
+
+        except:
+            self._resultid_locks[resultid].release()
+            traceback.print_exc()
+            print("Status: ERROR, ResultID: %s, GlycanID: %s, Note: %s."%(resultid,glycanid,note),file=sys.stderr)
+            return flask.jsonify(dict(status="ERROR"))
+        
+        self._resultid_locks[resultid].release()
+        print("Status: OK, ResultID: %s, GlycanID: %s, UpVotes: %s, DownVotes: %s, Note: %s."%(resultid,glycanid,glycan.get('upvotes',0),glycan.get('downvotes',0),glycan.get('note',"")),file=sys.stderr)
+        return flask.jsonify(dict(status="OK",resultid=resultid,glycanid=glycanid,upvotes=glycan.get('upvotes',0),downvotes=glycan.get('downvotes',0),note=glycan.get('note',"")))
+    
 if __name__ == '__main__':
     multiprocessing.freeze_support()
 
     fb_api = ReferenceAPIFileBased()
     fb_api.parse_config("GlyImageExtractor.ini")
 
+    fb_api._resultid_locks = {}
+    fb_api._lock = threading.Lock()
     fb_api.start()
 
 
