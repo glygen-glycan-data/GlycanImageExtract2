@@ -166,6 +166,11 @@ for j in range(iterations):
                 continue
             bad = True
             break
+        for l in gly.all_links():
+            pp = l.parent_pos() 
+            if pp != None and len(pp) > 1:
+                bad = True
+                break
         if bad:
             continue
         if randmode in ("mono","biasmono"):
