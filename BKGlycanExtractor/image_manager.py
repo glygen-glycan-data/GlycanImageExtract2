@@ -146,11 +146,18 @@ class Image_Data:
                             path[1] = [(p[0] + x_shift, p[1] + y_shift) for p in path[1]]
 
         groups = {}
+        element_lookup = {} 
+        anomeric_lookup = {} 
+        
         for e in elements:
             if e.hasAttribute('ID'):
                 data_type = e.getAttribute("data.type")
                 gid = e.getAttribute("ID")
+                
+                element_lookup[gid] = e # Store the element for later lookup 
+                
                 if data_type == 'Monosaccharide':
+                    anomeric_lookup[e.getAttribute("data.residueIndex")] = e.getAttribute("data.residueAnomericState") if e.hasAttribute("data.residueAnomericState") else "" 
                     name = e.getAttribute("data.residueName") 
                     if name not in self.valid_monos:
                         raise ValueError("SVG Parser: %s not a valid mono name"%(name,))
@@ -201,7 +208,14 @@ class Image_Data:
         for g in groups:
             if g[0] == 'l':
                 t = g.split(':')[1].split(',')
-                out.append(['l',t[0],t[1]])
+                
+                # Use the stored element to get attributes and add them to the SVG file
+                element = element_lookup[g] 
+                anomeric_config = anomeric_lookup[element.getAttribute("data.parentResidueIndex")] if element.hasAttribute("data.parentResidueIndex") else "" 
+                carbon_number = element.getAttribute("data.parentPositions") if element.hasAttribute("data.parentPositions") else "" 
+                linkage_data = ['l', t[0], t[1], carbon_number, anomeric_config] 
+                out.append(linkage_data) 
+
             if g[0] == 'r':
                 i = g.split(':')[-1]
                 tmp = ['m',i]
@@ -287,10 +301,3 @@ class Image_Data:
         if blur:
             img = cv2.blur(img, (4,4))
         cv2.imwrite(image_file, img)
-
-
-
-
-
-
-
