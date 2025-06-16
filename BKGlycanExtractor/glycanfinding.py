@@ -61,16 +61,13 @@ class YOLOGlycanFinder(YOLOModel,GlycanFinder):
         YOLOModel.__init__(self,params)
 
     def find_boxes(self, obj):
-        image = obj.image()
-        return self.get_YOLO_output(image)
+        return sorted(self.get_YOLO_output(obj.image()),key=lambda b: b.bbox())
 
     def find_objects(self, obj):
-        boxes = self.find_boxes(obj)
         obj.clear_glycans()
-        for box in boxes:
+        for box in self.find_boxes(obj):
             obj.add_glycan(box=box,classid=box.get('classid'),classlabel=box.get('classlabel'))
         return obj.glycans()
-    
     
 class SingleGlycanImage(GlycanFinder):
     
