@@ -134,3 +134,8 @@ dmypy.json
 *.weights
 *.labels
 *.cache.*
+
+
+WebApplication/input/
+WebApplication/static/files/
+test*/
