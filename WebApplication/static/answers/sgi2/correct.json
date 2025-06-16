@@ -1,0 +1,21 @@
+{
+  "result": {
+    "figure_result": [
+      {
+        "glycans": [
+          {
+            "IUPAC": "NeuAc?2-?Gal?1-?GlcNAc?1-?Gal?1-?GlcNAc?1-?Man?1-?(Man?1-?(Man?1-?)Man?1-?)Man?1-?GlcNAc?1-?(Fuc?1-?)GlcNAc",
+            "accession": "G38382KG",
+            "bbox": [
+              0,
+              0,
+              968,
+              262
+            ],
+            "composition_str": "GlcNAc(4)NeuAc(1)Fuc(1)Man(5)Gal(2)"
+          }
+        ]
+      }
+    ]
+  }
+}

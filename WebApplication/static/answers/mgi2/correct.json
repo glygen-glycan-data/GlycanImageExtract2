@@ -1,0 +1,43 @@
+{
+  "result": {
+    "figure_result": [
+      {
+        "glycans": [
+          {
+            "IUPAC": "GlcNAc?1-?(Gal?1-?GlcNAc?1-?Man?1-?)(Gal?1-?GlcNAc?1-?(Gal?1-?GlcNAc?1-?)Man?1-?)Man?1-?GlcNAc?1-?(Fuc?1-?)GlcNAc",
+            "accession": "G78130XL",
+            "bbox": [
+              0,
+              54,
+              330,
+              440
+            ],
+            "composition_str": "GlcNAc(6)Fuc(1)Man(3)Gal(3)"
+          },
+          {
+            "IUPAC": "NeuAc?2-?Gal?1-?GlcNAc?1-?Gal?1-?GlcNAc?1-?Man?1-?(Man?1-?(Man?1-?)Man?1-?)Man?1-?GlcNAc?1-?(Fuc?1-?)GlcNAc",
+            "accession": "G38382KG",
+            "bbox": [
+              199,
+              0,
+              268,
+              494
+            ],
+            "composition_str": "GlcNAc(4)NeuAc(1)Fuc(1)Man(5)Gal(2)"
+          },
+          {
+            "IUPAC": "NeuAc?2-?Gal?1-?GlcNAc?1-?(Gal?1-?GlcNAc?1-?)Man?1-?(Gal?1-?GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?(Fuc?1-?)GlcNAc",
+            "accession": "G66420HM",
+            "bbox": [
+              384,
+              0,
+              269,
+              494
+            ],
+            "composition_str": "GlcNAc(5)NeuAc(1)Fuc(1)Man(3)Gal(3)"
+          }
+        ]
+      }
+    ]
+  }
+}

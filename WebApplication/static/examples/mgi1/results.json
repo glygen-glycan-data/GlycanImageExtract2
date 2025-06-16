@@ -1,10 +1,10 @@
 {
-  "id": "08aea5c98090e626950fc9d6fcb30ca0bc11159e0b192abba47cef5a8b6c33f7",
+  "id": "1bf08eb52bd884c6c4055b8a8c06a2132d1fb30f27b8108300f3b48fe18327de",
   "result": {
-    "id": "08aea5c98090e626950fc9d6fcb30ca0bc11159e0b192abba47cef5a8b6c33f7",
-    "start time": 1749566124.3375854,
-    "end time": 1749566165.9807284,
-    "runtime": 41.64314293861389,
+    "id": "1bf08eb52bd884c6c4055b8a8c06a2132d1fb30f27b8108300f3b48fe18327de",
+    "start time": 1749772440.4042535,
+    "end time": 1749772486.8619514,
+    "runtime": 46.45769786834717,
     "error": [],
     "figure_result": [
       {
@@ -432,7 +432,9 @@
                 ]
               }
             ],
-            "width": 1175
+            "width": 1175,
+            "upvotes": 1,
+            "downvotes": 0
           },
           {
             "IUPAC": "NeuAc?2-?Gal?1-?GlcNAc?1-?Man?1-?(NeuAc?2-?Gal?1-?GalNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?GlcNAc",
@@ -823,7 +825,9 @@
                 ]
               }
             ],
-            "width": 1094
+            "width": 1094,
+            "upvotes": 1,
+            "downvotes": 0
           }
         ],
         "height": 1036,
@@ -834,7 +838,7 @@
   },
   "finished": true,
   "submission_detail": {
-    "id": "08aea5c98090e626950fc9d6fcb30ca0bc11159e0b192abba47cef5a8b6c33f7",
+    "id": "1bf08eb52bd884c6c4055b8a8c06a2132d1fb30f27b8108300f3b48fe18327de",
     "original_file_name": "2_glycans.png",
     "file_type": "multi_figure_img"
   }

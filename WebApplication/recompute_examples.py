@@ -4,6 +4,14 @@ import sys, os, glob, json
 import time, shutil
 import requests
 
+parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+
+# Add the parent directory to sys.path to import BKGlycanExtractor
+sys.path.append(parent_dir)
+
+from BKGlycanExtractor.compareboxes import CompareBoxes
+from BKGlycanExtractor.bbox import BoundingBox
+
 class APIFrameworkClient:
 
     class APISubmitError(RuntimeError):
@@ -87,8 +95,13 @@ extractor = APIFrameworkClient(apiurl=apiurl,
                                request_interval=5,
                                max_retrieve_wait = 1200)
 
+pattens = ["*"]
+if len(sys.argv) > 1:
+    patterns = sys.argv[1:]
+
 tasks = []
-for resultfile in glob.glob("static/examples/*/results.json"):
+for pat in patterns:
+  for resultfile in sorted(glob.glob("static/examples/%s/results.json"%(pat,))):
     basedir = os.path.split(resultfile)[0]
     result = json.loads(open(resultfile).read())
     inputfilename = result['submission_detail']['original_file_name']
@@ -100,6 +113,36 @@ for resultfile in glob.glob("static/examples/*/results.json"):
     print("Example %s submitted. "%(exampledir,))
     time.sleep(1)
 
+def update_votes(instance):
+    result = json.loads(open("static/examples/"+instance+"/results.json").read())
+    correct = json.loads(open("static/answers/"+instance+"/correct.json").read())
+    for f1,f2 in zip(result["result"]["figure_result"],correct["result"]["figure_result"]):
+        for g1 in f1["glycans"]:
+            g1bb = BoundingBox(**dict(zip("xywh",g1['bbox'])))
+            bestg2 = None
+            bestiou = -1
+            for g2 in f2["glycans"]:
+                g2bb = BoundingBox(**dict(zip("xywh",g2['bbox'])))
+                iou = CompareBoxes.iou(g1bb,g2bb)
+                if iou > 0.7 and iou > bestiou:
+                    bestiou = iou
+                    bestg2 = g2
+            if not bestg2:
+                continue
+            g2 = bestg2
+            if g1.get("IUPAC"):
+                if g1.get("IUPAC") == g2["IUPAC"]:
+                    g1['upvotes'] = 1; g1['downvotes'] = 0;
+                else:
+                    g1['upvotes'] = 0; g1['downvotes'] = 1
+            else:
+                if g1.get("composition_str") == g2["composition_str"]:
+                    g1['upvotes'] = 1; g1['downvotes'] = 0;
+                else:
+                    g1['upvotes'] = 0; g1['downvotes'] = 1
+    with open("static/examples/"+instance+"/results.json",'wt') as wh:
+        json.dump(result,wh,indent=2)
+
 for exampledir,taskid in tasks:
     result = {}
     try:
@@ -110,8 +153,8 @@ for exampledir,taskid in tasks:
         shutil.rmtree("static/examples/"+exampledir)
         shutil.copytree("static/files/"+taskid,
                         "static/examples/"+exampledir)
+        update_votes(exampledir)
         print("Example %s done."%(exampledir,))
     else:
         print("Example %s not updated."%(exampledir,))
-    
 

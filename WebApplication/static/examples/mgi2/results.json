@@ -1,10 +1,10 @@
 {
-  "id": "819c597072e441a544a6cb0cfe4cae5cebf3f0d4bf92f668748a63c1325ca83f",
+  "id": "c02d0f789cb7f3ea9782581b348a37481b2017906f54de2e329ba7d7ab14481c",
   "result": {
-    "id": "819c597072e441a544a6cb0cfe4cae5cebf3f0d4bf92f668748a63c1325ca83f",
-    "start time": 1749566273.9887536,
-    "end time": 1749566323.724636,
-    "runtime": 49.73588252067566,
+    "id": "c02d0f789cb7f3ea9782581b348a37481b2017906f54de2e329ba7d7ab14481c",
+    "start time": 1749772441.4362135,
+    "end time": 1749772500.8920627,
+    "runtime": 59.455849170684814,
     "error": [],
     "figure_result": [
       {
@@ -462,7 +462,9 @@
                 ]
               }
             ],
-            "width": 329
+            "width": 329,
+            "upvotes": 1,
+            "downvotes": 0
           },
           {
             "IUPAC": "NeuAc?2-?Gal?1-?GlcNAc?1-?Gal?1-?GlcNAc?1-?Man?1-?(Man?1-?(Man?1-?)Man?1-?)Man?1-?GlcNAc?1-?(Fuc?1-?)GlcNAc",
@@ -928,7 +930,9 @@
                 ]
               }
             ],
-            "width": 267
+            "width": 267,
+            "upvotes": 1,
+            "downvotes": 0
           },
           {
             "IUPAC": "NeuAc?2-?Gal?1-?GlcNAc?1-?(Gal?1-?GlcNAc?1-?)Man?1-?(Gal?1-?GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?(Fuc?1-?)GlcNAc",
@@ -1383,7 +1387,9 @@
                 ]
               }
             ],
-            "width": 268
+            "width": 268,
+            "upvotes": 1,
+            "downvotes": 0
           }
         ],
         "height": 494,
@@ -1394,7 +1400,7 @@
   },
   "finished": true,
   "submission_detail": {
-    "id": "819c597072e441a544a6cb0cfe4cae5cebf3f0d4bf92f668748a63c1325ca83f",
+    "id": "c02d0f789cb7f3ea9782581b348a37481b2017906f54de2e329ba7d7ab14481c",
     "original_file_name": "pdf7_extra.png",
     "file_type": "multi_figure_img"
   }

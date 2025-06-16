@@ -1,10 +1,10 @@
 {
-  "id": "0eadb9afa1bfd3835933ed6f9c452f63bf9382c396dfece3ec935461b92ca0d6",
+  "id": "28284cd0de261fe94d5d9cdb2770e1d9b2c82416d0e342d436178e2b546200f6",
   "result": {
-    "id": "0eadb9afa1bfd3835933ed6f9c452f63bf9382c396dfece3ec935461b92ca0d6",
-    "start time": 1749566487.5463362,
-    "end time": 1749566508.8718832,
-    "runtime": 21.325546979904175,
+    "id": "28284cd0de261fe94d5d9cdb2770e1d9b2c82416d0e342d436178e2b546200f6",
+    "start time": 1749772500.8967423,
+    "end time": 1749772526.459965,
+    "runtime": 25.563222646713257,
     "error": [],
     "figure_result": [
       {
@@ -295,7 +295,9 @@
                 ]
               }
             ],
-            "width": 341
+            "width": 341,
+            "upvotes": 1,
+            "downvotes": 0
           }
         ],
         "height": 212,
@@ -306,7 +308,7 @@
   },
   "finished": true,
   "submission_detail": {
-    "id": "0eadb9afa1bfd3835933ed6f9c452f63bf9382c396dfece3ec935461b92ca0d6",
+    "id": "28284cd0de261fe94d5d9cdb2770e1d9b2c82416d0e342d436178e2b546200f6",
     "original_file_name": "f4003b0298c8e8f4576146bd232601e0.png",
     "file_type": "single_figure_img"
   }

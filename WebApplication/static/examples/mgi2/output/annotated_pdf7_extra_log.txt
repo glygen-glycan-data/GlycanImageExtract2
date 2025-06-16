@@ -1,3 +1,3 @@
-819c597072e441a544a6cb0cfe4cae5cebf3f0d4bf92f668748a63c1325ca83f
-/data2/projects/GlyGen/GlycanImageExtract2/WebApplication/static/files/819c597072e441a544a6cb0cfe4cae5cebf3f0d4bf92f668748a63c1325ca83f/output/annotated_pdf7_extra.png
+c02d0f789cb7f3ea9782581b348a37481b2017906f54de2e329ba7d7ab14481c
+/data2/projects/GlyGen/GlycanImageExtract2/WebApplication/static/files/c02d0f789cb7f3ea9782581b348a37481b2017906f54de2e329ba7d7ab14481c/output/annotated_pdf7_extra.png
 Cycle found. Dropping least confident link: {'mono_ids': [1, 9], 'confidence': 0.795318603515625, 'classid': 0, 'classlabel': 'link'}

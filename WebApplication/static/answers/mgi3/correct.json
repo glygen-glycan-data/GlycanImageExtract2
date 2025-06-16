@@ -1,0 +1,43 @@
+{
+  "result": {
+    "figure_result": [
+      {
+        "glycans": [
+          {
+            "IUPAC": "Man?1-?(Man?1-?)Man?1-?GlcNAc?1-?(Fuc?1-?)GlcNAc",
+            "accession": "G27815BZ",
+            "bbox": [
+              19,
+              13,
+              225,
+              110
+            ],
+            "composition_str": "GlcNAc(2)Fuc(1)Man(3)"
+          },
+          {
+            "IUPAC": "Man?1-?(Man?1-?)Man?1-?(Man?1-?)Man?1-?GlcNAc?1-?GlcNAc",
+            "accession": "G73636FD",
+            "bbox": [
+              46,
+              168,
+              240,
+              99
+            ],
+            "composition_str": "GlcNAc(2)Man(5)"
+          },
+          {
+            "IUPAC": "Man?1-?Man?1-?(Man?1-?Man?1-?)Man?1-?(Man?1-?(Man?1-?)Man?1-?)Man?1-?GlcNAc",
+            "accession": "G85612WL",
+            "bbox": [
+              291,
+              51,
+              246,
+              181
+            ],
+            "composition_str": "GlcNAc(1)Man(9)"
+          }
+        ]
+      }
+    ]
+  }
+}
