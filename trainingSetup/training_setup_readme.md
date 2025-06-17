@@ -19,5 +19,5 @@ Then follow the interactive setup:
 
 
 ## Train model  
-Run the training script: train_model.py  
-Note: Follow the instructions wrt setting up google drive folders - which is provided in the script before you start training.
+Run the training script: yolo_v3_training.ipynb
+Note: Follow the instructions wrt setting up google drive folders - which is provided in yolo_v3_training.ipynb before you start training.
