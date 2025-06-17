@@ -146,16 +146,14 @@ class Image_Data:
                             path[1] = [(p[0] + x_shift, p[1] + y_shift) for p in path[1]]
 
         groups = {}
-        element_lookup = {} 
-        
         
         for e in elements:
             if e.hasAttribute('ID'):
                 data_type = e.getAttribute("data.type")
                 gid = e.getAttribute("ID")
                 anomer = e.getAttribute("data.residueAnomericState") if e.hasAttribute("data.residueAnomericState") else ""
-
-                element_lookup[gid] = e # Store the element for later lookup 
+                parent_bond = e.getAttribute("data.parentPositions") if e.hasAttribute("data.parentPositions") else "" 
+                child_bond = e.getAttribute("data.childPositions") if e.hasAttribute("data.childPositions") else ""
                 
                 if data_type == 'Monosaccharide':
                     name = e.getAttribute("data.residueName") 
@@ -192,8 +190,9 @@ class Image_Data:
                             break
 
                 elif data_type == 'Linkage':
-                    gid = e.getAttribute("ID")     
-                    groups[gid] = []
+                    gid = e.getAttribute("ID")   
+                    t = gid.split(':')[1].split(',')
+                    groups[gid] = ['l', t[0], child_bond, parent_bond, t[1]]  
 
                 elif gid == "r-1:1": # reducing-end squiggle
                     for ch in e.childNodes:
@@ -207,17 +206,10 @@ class Image_Data:
         out = []
 
         for g in groups:
-            #print(f"g:{g},groups[g]:{groups[g]}") #ADDED FOR DEBUGGING
 
             # linkages
-            if g[0] == 'l':
-                
-                t = g.split(':')[1].split(',')
-                element = element_lookup[g] 
-                parent_bond = element.getAttribute("data.parentPositions") if element.hasAttribute("data.parentPositions") else "" 
-                child_bond = element.getAttribute("data.childPositions") if element.hasAttribute("data.childPositions") else ""
-                linkage_data = ['l', t[0], child_bond, parent_bond, t[1]] 
-                out.append(linkage_data) 
+            if g[0][0] == 'l':
+                out.append(groups[g])
 
             # monosaccharides
             if g[0] == 'r':
