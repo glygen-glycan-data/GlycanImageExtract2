@@ -147,17 +147,17 @@ class Image_Data:
 
         groups = {}
         element_lookup = {} 
-        anomeric_lookup = {} 
+        
         
         for e in elements:
             if e.hasAttribute('ID'):
                 data_type = e.getAttribute("data.type")
                 gid = e.getAttribute("ID")
-                
+                anomer = e.getAttribute("data.residueAnomericState") if e.hasAttribute("data.residueAnomericState") else ""
+
                 element_lookup[gid] = e # Store the element for later lookup 
                 
                 if data_type == 'Monosaccharide':
-                    anomeric_lookup[e.getAttribute("data.residueIndex")] = e.getAttribute("data.residueAnomericState") if e.hasAttribute("data.residueAnomericState") else "" 
                     name = e.getAttribute("data.residueName") 
                     if name not in self.valid_monos:
                         raise ValueError("SVG Parser: %s not a valid mono name"%(name,))
@@ -177,6 +177,7 @@ class Image_Data:
                     pathname = stylestring.split(")",1)[0]
                     groups[gid] = []           
                     groups[gid].append(str(name))
+                    groups[gid].append(anomer)
                     for i in parsed_groups[pathname][0][1]:
                         groups[gid].append(i)
 
@@ -206,16 +207,19 @@ class Image_Data:
         out = []
 
         for g in groups:
+            #print(f"g:{g},groups[g]:{groups[g]}") #ADDED FOR DEBUGGING
+
+            # linkages
             if g[0] == 'l':
-                t = g.split(':')[1].split(',')
                 
-                # Use the stored element to get attributes and add them to the SVG file
+                t = g.split(':')[1].split(',')
                 element = element_lookup[g] 
-                anomeric_config = anomeric_lookup[element.getAttribute("data.childResidueIndex")] if element.hasAttribute("data.childResidueIndex") else "" 
-                carbon_number = element.getAttribute("data.parentPositions") if element.hasAttribute("data.parentPositions") else "" 
-                linkage_data = ['l', t[0], t[1], carbon_number, anomeric_config] 
+                parent_bond = element.getAttribute("data.parentPositions") if element.hasAttribute("data.parentPositions") else "" 
+                child_bond = element.getAttribute("data.childPositions") if element.hasAttribute("data.childPositions") else ""
+                linkage_data = ['l', t[0], child_bond, parent_bond, t[1]] 
                 out.append(linkage_data) 
 
+            # monosaccharides
             if g[0] == 'r':
                 i = g.split(':')[-1]
                 tmp = ['m',i]
