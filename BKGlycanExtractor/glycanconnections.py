@@ -445,6 +445,8 @@ class KnownLink(GlycanConnector):
 
     def find_boxes(self,obj):
         image_path = obj.image_path()
+        assert image_path, "KnownMono can only run on SingleGlycanImage glycan finder semantics objects"
+
         box_id = 0
 
         box_coords = {}
@@ -481,7 +483,7 @@ class KnownLink(GlycanConnector):
                 width = x_max - x_min 
                 height = y_max - y_min
 
-                box = BoundingBox(x1=x_min, y1=y_min, x2=x_max, y2=y_max, id=box_id, classid=0, classlabel=self.get_label(0),image=obj.image()) 
+                box = BoundingBox(x1=x_min, y1=y_min, x2=x_max, y2=y_max, id=box_id, classid=0, classlabel=self.get_label(0),image=obj.image(),parent=mono1,child=link) 
                 box.pad(self.params['boxpadding']) # known data is absolute
                 boxes.append(box)
                 
@@ -498,21 +500,10 @@ class KnownLink(GlycanConnector):
                                       
 
     def find_objects(self,obj):
-        image_path = obj.image_path()
-        assert image_path, "KnownMono can only run on SingleGlycanImage glycan finder semantics objects"
-        
-        links_path = image_path.rsplit('.',1)[0] + "_map.txt"
-        obj.semantics['undirected_links'] = []
-
-        links = collections.defaultdict(list)
-        with open(links_path, 'r') as file:
-            for line in file:
-                if line.startswith('l'):
-                    data_points = line.split()
-                    link1 = int(data_points[1])
-                    link2 = int(data_points[4])
-
-                    obj.add_undirected_link(link1,link2,**{'classlabel':self.get_label(0)})
+        boxes = self.find_boxes(obj)
+        obj.clear_undirected_links()
+        for box in boxes:
+            obj.add_undirected_link(box.get('parent'),box.get('child'),classlabel=box.get('classlabel'),box=box)
 
         return obj.undirected_links()
 
