@@ -332,7 +332,6 @@ class YOLOMonos(YOLOModel,MonoID):
 
         return boxes
 
-
 class KnownMono(MonoID):
 
     # Need to be able to support any monosaccharide symbol in generated code
@@ -370,14 +369,14 @@ class KnownMono(MonoID):
                     data_points = line.split()
                     mono_id = data_points[1]
                     name = data_points[2]
+                    anomer = data_points[3]
                     x_coords = []
                     y_coords = []
 
-                    for coords in data_points[3:]:
-                        if ',' in coords:
-                            x,y = map(int,coords.split(','))
-                            x_coords.append(x)
-                            y_coords.append(y)
+                    for coords in data_points[4:-1]:
+                        x,y = map(int,coords.split(','))
+                        x_coords.append(x)
+                        y_coords.append(y)
 
                     x_min = min(x_coords)
                     y_min = min(y_coords)

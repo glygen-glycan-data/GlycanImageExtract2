@@ -289,7 +289,7 @@ class KnownRoot(RootFinder):
                     x_coords = []
                     y_coords = []
 
-                    for coords in data_points[3:]:
+                    for coords in data_points[4:]:
                         if ',' in coords:
                             x,y = map(int,coords.split(','))
                             x_coords.append(x)

@@ -455,7 +455,7 @@ class KnownLink(GlycanConnector):
             for line in file:
                 data_points = line.split()
                 if line.startswith('l'):
-                    links[data_points[1]].append(data_points[2])
+                    links[data_points[1]].append(data_points[4])
 
                 if line.startswith('m'):
                     mono_id = data_points[1]
@@ -463,7 +463,7 @@ class KnownLink(GlycanConnector):
                     x_coords = []
                     y_coords = []
 
-                    for coords in data_points[3:-1]:
+                    for coords in data_points[4:-1]:
                         x,y = map(int,coords.split(','))
                         x_coords.append(x)
                         y_coords.append(y)
@@ -510,13 +510,9 @@ class KnownLink(GlycanConnector):
                 if line.startswith('l'):
                     data_points = line.split()
                     link1 = int(data_points[1])
-                    link2 = int(data_points[2])
+                    link2 = int(data_points[4])
 
                     obj.add_undirected_link(link1,link2,**{'classlabel':self.get_label(0)})
 
         return obj.undirected_links()
-
-
-
-
 
