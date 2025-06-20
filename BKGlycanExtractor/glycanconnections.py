@@ -445,6 +445,9 @@ class KnownLink(GlycanConnector):
 
     def find_boxes(self,obj):
         image_path = obj.image_path()
+
+        assert image_path, "KnownLink can only run on SingleGlycanImage glycan finder semantics objects"
+
         box_id = 0
 
         box_coords = {}
@@ -454,10 +457,10 @@ class KnownLink(GlycanConnector):
         with open(image_data, 'r') as file:
             for line in file:
                 data_points = line.split()
-                if line.startswith('l'):
+                if data_points[0] == "l":
                     links[data_points[1]].append(data_points[4])
 
-                if line.startswith('m'):
+                if data_points[0] == "m":
                     mono_id = data_points[1]
                     name = data_points[2]
                     x_coords = []
@@ -481,7 +484,11 @@ class KnownLink(GlycanConnector):
                 width = x_max - x_min 
                 height = y_max - y_min
 
-                box = BoundingBox(x1=x_min, y1=y_min, x2=x_max, y2=y_max, id=box_id, classid=0, classlabel=self.get_label(0),image=obj.image()) 
+                box = BoundingBox(x1=x_min, y1=y_min, x2=x_max, y2=y_max, 
+                                  id=box_id, image=obj.image(),
+                                  classid=0, classlabel=self.get_label(0), 
+                                  parent=mono1, child=link)
+
                 box.pad(self.params['boxpadding']) # known data is absolute
                 boxes.append(box)
                 
@@ -497,29 +504,17 @@ class KnownLink(GlycanConnector):
         return boxes
 
 
-    def find_objects(self,obj): 
-        image_path = obj.image_path()
-        assert image_path, "KnownMono can only run on SingleGlycanImage glycan finder semantics objects"
-        
-        links_path = image_path.rsplit('.',1)[0] + "_map.txt"
-        obj.semantics['undirected_links'] = []
-
-        links = collections.defaultdict(list)
-        with open(links_path, 'r') as file:
-            for line in file:
-                if line.startswith('l'):
-                    data_points = line.split()
-                    link1 = int(data_points[1])
-                    link2 = int(data_points[4])
-
-                    obj.add_undirected_link(link1,link2,**{'classlabel':self.get_label(0)})
-
+    def find_objects(self,obj):
+        boxes = self.find_boxes(obj)
+        obj.clear_undirected_links()
+        for box in boxes:
+            obj.add_undirected_link(box.get('parent'),box.get('child'),classid=box.get('classid'),classlabel=box.get('classlabel'),box=box)
         return obj.undirected_links()
 
 
-class KnownLinkWithInfo(GlycanConnector):
+class KnownLinkWithInfo(KnownLink):
 
-    labels = ['a2','a3','a4','a6','b2','b3','b4','b6'] # Currently not used.
+    labels = ['a1', 'a2','a3','a4', 'a5', 'a6', 'a8', 'b1', 'b2', 'b3', 'b4', 'b5', 'b6', 'b8', 'x1', 'x2', 'x3', 'x4', 'x5', 'x6', 'x8', 'ax', 'bx', 'xx']
 
     defaults = {
         'boxpadding': 0,
@@ -533,27 +528,36 @@ class KnownLinkWithInfo(GlycanConnector):
 
     def find_boxes(self,obj):
         image_path = obj.image_path()
+        # print(image_path)
+
+        assert image_path, "KnownLinkWithInfo can only run on SingleGlycanImage glycan finder semantics objects"
+
         box_id = 0
 
         box_coords = {}
         links = collections.defaultdict(list)
         boxes = []
         image_data = image_path.rsplit('.',1)[0] + "_map.txt"
-
         
         mono_anomers = {}
         carbon_numbers = {}
         with open(image_data, 'r') as file:
             for line in file:
                 data_points = line.split()
-                if line.startswith('l'):
+                if data_points[0] == 'l':
                     links[data_points[1]].append(data_points[4])
-                    carbon_numbers[data_points[1]] = data_points[3] # Store child carbon number
+                    if data_points[2] != '?':
+                        carbon_numbers[data_points[4]] = data_points[2]
+                    else:
+                        carbon_numbers[data_points[4]] = 'x'
 
-                if line.startswith('m'):
+                if data_points[0] == 'm':
                     mono_id = data_points[1]
                     name = data_points[2]
-                    mono_anomers[mono_id] = data_points[3] 
+                    if data_points[3] != '?':
+                        mono_anomers[mono_id] = data_points[3]
+                    else:
+                        mono_anomers[mono_id] = 'x'
                     x_coords = []
                     y_coords = []
 
@@ -575,10 +579,14 @@ class KnownLinkWithInfo(GlycanConnector):
                 width = x_max - x_min 
                 height = y_max - y_min
 
-                label = f"{mono_anomers[mono2]}{carbon_numbers[mono1]}"  
+                label = f"{mono_anomers[link]}{carbon_numbers[link]}"  
+                label_index = self.get_label_index(label)
 
-                #box = BoundingBox(x1=x_min, y1=y_min, x2=x_max, y2=y_max, id=box_id, classid=0, classlabel=self.get_label(0),image=obj.image()) # Uses get labels (currently not functional)
-                box = BoundingBox(x1=x_min, y1=y_min, x2=x_max, y2=y_max, id=box_id, classid=0, classlabel=label,image=obj.image())  
+                box = BoundingBox(x1=x_min, y1=y_min, x2=x_max, y2=y_max, 
+                                  id=box_id, image=obj.image(),
+                                  classid=label_index, classlabel=label,
+                                  parent=mono1, child=link)
+
                 box.pad(self.params['boxpadding']) # known data is absolute
                 boxes.append(box)
                 
@@ -592,34 +600,3 @@ class KnownLinkWithInfo(GlycanConnector):
             )
 
         return boxes
-
-    
-    def find_objects(self, obj):
-        image_path = obj.image_path()
-        assert image_path, "KnownMono can only run on SingleGlycanImage glycan finder semantics objects"
-        
-        links_path = image_path.rsplit('.', 1)[0] + "_map.txt"
-        obj.semantics['undirected_links'] = []
-
-        # get monosaccharide anomeric info
-        mono_anomers = {}
-        with open(links_path, 'r') as file:
-            for line in file:
-                if line.startswith('m'):
-                    data_points = line.split()
-                    mono_id = int(data_points[1])                    
-                    mono_anomers[mono_id] = data_points
-
-                # get links info
-                if line.startswith('l'):
-                    data_points = line.split()
-                    link1 = int(data_points[1])
-                    link2 = int(data_points[4])
-                    carbon_num = data_points[3] 
-                    child_anomer = mono_anomers.get(link2)
-                    
-                    # Create label and add undirected link
-                    link_label = f"{child_anomer}{carbon_num}"
-                    obj.add_undirected_link(link1, link2, classlabel=link_label)
-
-        return obj.undirected_links()

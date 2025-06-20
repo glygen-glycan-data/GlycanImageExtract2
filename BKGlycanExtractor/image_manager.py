@@ -192,7 +192,7 @@ class Image_Data:
                 elif data_type == 'Linkage':
                     gid = e.getAttribute("ID")   
                     t = gid.split(':')[1].split(',')
-                    groups[gid] = ['l', t[0], child_bond, parent_bond, t[1]]  
+                    groups[gid] = ['l', t[0], parent_bond, child_bond, t[1]]  
 
                 elif gid == "r-1:1": # reducing-end squiggle
                     for ch in e.childNodes:
@@ -228,9 +228,11 @@ class Image_Data:
         def sortkey(l):
             try:
                 intval = int(l[2])
+                strval = ''
             except ValueError:
-                intval = l[2]
-            return labelorder[l[0]],int(l[1]),intval
+                intval = 1e+20
+                strval = l[2]
+            return labelorder[l[0]],int(l[1]),intval,strval
 
         out.sort(key=sortkey)   
 
