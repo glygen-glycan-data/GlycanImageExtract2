@@ -513,8 +513,8 @@ class KnownLink(GlycanConnector):
 
 
 class KnownLinkWithInfo(KnownLink):
-
-    labels = ['a1', 'a2','a3','a4', 'a5', 'a6', 'a8', 'b1', 'b2', 'b3', 'b4', 'b5', 'b6', 'b8', 'x1', 'x2', 'x3', 'x4', 'x5', 'x6', 'x8', 'ax', 'bx', 'xx']
+    
+    labels = ['a1', 'a2','a3','a4', 'a5', 'a6', 'a8', 'b1', 'b2', 'b3', 'b4', 'b5', 'b6', 'b8', 'x1', 'x2', 'x3', 'x4', 'x5', 'x6', 'x8', 'ax', 'bx', 'xx', 'a?', 'b?', 'x?'] 
 
     defaults = {
         'boxpadding': 0,
@@ -528,7 +528,7 @@ class KnownLinkWithInfo(KnownLink):
 
     def find_boxes(self,obj):
         image_path = obj.image_path()
-        # print(image_path)
+        # print(image_path) 
 
         assert image_path, "KnownLinkWithInfo can only run on SingleGlycanImage glycan finder semantics objects"
 
@@ -546,10 +546,10 @@ class KnownLinkWithInfo(KnownLink):
                 data_points = line.split()
                 if data_points[0] == 'l':
                     links[data_points[1]].append(data_points[4])
-                    if data_points[2] != '?':
-                        carbon_numbers[data_points[4]] = data_points[2]
+                    if data_points[3] != '?': 
+                        carbon_numbers[data_points[4]] = data_points[3] 
                     else:
-                        carbon_numbers[data_points[4]] = 'x'
+                        carbon_numbers[data_points[4]] = 'x' 
 
                 if data_points[0] == 'm':
                     mono_id = data_points[1]
@@ -567,7 +567,7 @@ class KnownLinkWithInfo(KnownLink):
                         y_coords.append(y)
 
                     box_coords[mono_id] = dict(x_coords=[min(x_coords), max(x_coords)], y_coords=[min(y_coords), max(y_coords)])
-
+        
         for mono1, mono2 in links.items():
             for link in mono2:
                 x_coords = box_coords[mono1]['x_coords'] + box_coords[link]['x_coords']
@@ -579,7 +579,7 @@ class KnownLinkWithInfo(KnownLink):
                 width = x_max - x_min 
                 height = y_max - y_min
 
-                label = f"{mono_anomers[link]}{carbon_numbers[link]}"  
+                label = f"{mono_anomers[link]}{carbon_numbers[link]}"   
                 label_index = self.get_label_index(label)
 
                 box = BoundingBox(x1=x_min, y1=y_min, x2=x_max, y2=y_max, 
