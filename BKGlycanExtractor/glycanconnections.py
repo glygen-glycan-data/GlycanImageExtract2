@@ -547,7 +547,7 @@ class KnownLinkWithInfo(KnownLink):
                 if data_points[0] == 'l':
                     links[data_points[1]].append(data_points[4])
                     if data_points[3] != '?': 
-                        carbon_numbers[data_points[4]] = data_points[3] 
+                        carbon_numbers[data_points[4]] = data_points[2] 
                     else:
                         carbon_numbers[data_points[4]] = 'x' 
 
