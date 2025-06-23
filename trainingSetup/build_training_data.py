@@ -1,7 +1,10 @@
 #!.venv/bin/python
 '''
 File is used to build a zip file which includes:
-1) Training data: .png images and .txt files (<classid> <relative_center_x> <relative_center_y> <width> <height)
+1) Training data: .png images and .txt files (<classid> <relative_center_x> <relative_center_y> <width> <height>)
+Note: * attention: <relative_center_x> <relative_center_y> - are center of rectangle (not top-left corner)
+reference: https://github.com/AlexeyAB/darknet#how-to-train-to-detect-your-custom-objects
+
 2) classes.txt: which contains all the labels for the training
 
 Note: If no known finder is supplied via cmd flag (--finder), then KnownGlycanBoxes finder will be used automatically.
@@ -79,6 +82,8 @@ for image_path in images:
         for b in result:
             classid = b.get('classid')
             x,y,w,h = b.center_relative()
+
+            # <classid> <relative_center_x> <relative_center_y> <width> <height>
             f.write(f"{classid} {x} {y} {w} {h}\n") 
 
     shutil.copy(image_path, folder_name)
@@ -86,7 +91,7 @@ for image_path in images:
 # create labels file
 labels_file = os.path.join(folder_name, 'classes.txt')
 with open(labels_file, 'w') as f:
-    print("finder",finder)
+    # print("finder",finder)
     for label in finder.get_labels():
         f.write(f"{label}\n")
 
