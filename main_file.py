@@ -151,11 +151,10 @@ for image in sorted(images):
 
 #     # #     # print("-->",gly0.semantics)
         
-#         IUPAC0 = Glycan_Semantics.IUPAC(gly0)
-#         IUPAC1 = Glycan_Semantics.IUPAC(gly1)
-        
-# #         print("Known IUPAC: ",IUPAC0)
-# #         print("Detected IUPAC: ",IUPAC1 if IUPAC1 else 'No sequence detected')
+        IUPAC0 = Glycan_Semantics.IUPAC(gly0) 
+        IUPAC1 = Glycan_Semantics.IUPAC(gly1) 
+        print("Known IUPAC: ",IUPAC0) 
+        print("Detected IUPAC: ",IUPAC1 if IUPAC1 else 'No sequence detected') 
 #         print("\nDo the IUPAC sequences match?", IUPAC0==IUPAC1)
 
 

@@ -576,13 +576,32 @@ class Glycan_Semantics(Image_Semantics):
         iupac = iupac[::-1] # IUPAC sequences are read in reverse order
         return ''.join(iupac)
 
-
+    def find_link_info(self, parent_id, child_id): # Helper function for IUPAC generation with YOLO linkages
+        """Find link information between parent and child monosaccharides"""
+        for link in self.undirected_links():
+            if set(link['mono_ids']) == {parent_id, child_id}:
+                return link
+        return None
+    
     def generate_iupac(self,iupac, adj, visited, parent, u):
         visited.add(u)
 
         # Get the current node's data
         symbol = self.monosaccharide(u).get('symbol')
-        extension = '?1-?' if symbol not in ['NeuAc', 'NeuGc'] else '?2-?'
+        #extension = '?1-?' if symbol not in ['NeuAc', 'NeuGc'] else '?2-?' #Old line before YOLO linkage detection
+        
+        # determine the extension based on the link class label 
+        if parent != -1: 
+            link_info = self.find_link_info(parent, u)
+            if link_info and link_info.get('classlabel') and link_info.get('classlabel') != 'link':
+                label = link_info.get('classlabel')
+                a = label[0] # anomer
+                c = label[1] # carbon number
+                extension = f'{a}1-{c}' if symbol not in ['NeuAc', 'NeuGc'] else f'{a}2-{c}'
+            else:
+                # Fallback to generic linkages
+                extension = '?1-?' if symbol not in ['NeuAc', 'NeuGc'] else '?2-?'
+        
         data = symbol + extension if parent != -1 else symbol
 
         # Append the current node's data to the result
