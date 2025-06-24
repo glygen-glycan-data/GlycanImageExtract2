@@ -24,6 +24,7 @@ parser.add_argument("-F", "--force", action='store_true', help="Force re-downloa
 parser.add_argument("-s", "--skip", type=str, help="File of accessions to skip. Default: None.", default=None)
 parser.add_argument("-r", "--random", type=str, help="Randomization mode. One of uniform accessions (uniform), biased accessions (biased), random monosaccharides (mono), random monosaccharides + baised accessions (biasmono). Default: uniform.", default="uniform")
 parser.add_argument("-A", "--accessions", type=str, help="Limit to specific accessions by regular expression or prefix. Default: No restriction.", default=None)
+parser.add_argument("-L", "--linkage", action='store_true', help="Require glycosydic linkage information (display: normalinfo). Default: compact, normal, normainfo. ", default=False)
 
 args = parser.parse_args()
 imagenum = args.nimages
@@ -64,6 +65,8 @@ redend_options = [ True, False ]
 orient_options = [ "RL", "LR", "TB", "BT" ]
 notation_options = [ "snfg", "cfg" ]
 display_options = [ "normal", "normalinfo", "compact" ]
+if args.linkage:
+    display_options = [ "normalinfo" ]
 opaque_options = [ True, False ]
 
 valid_monos_str = """
@@ -140,7 +143,8 @@ for j in range(iterations):
         if 'mono' in randmode:
             acc1 = "R%07d"%(outputcount + 1,)
         outfile = os.path.join(output_folder, acc1 + "." + mode)
-        if os.path.exists(outfile):
+        pngfile = os.path.join(output_folder, acc1 + ".png")
+        if os.path.exists(outfile) or os.path.exists(pngfile):
             continue
         seq = gtc.getseq(acc,format='wurcs')
         if not seq:
@@ -166,6 +170,11 @@ for j in range(iterations):
                 continue
             bad = True
             break
+        for l in gly.all_links():
+            pp = l.parent_pos() 
+            if pp != None and len(pp) > 1:
+                bad = True
+                break
         if bad:
             continue
         if randmode in ("mono","biasmono"):
@@ -212,7 +221,9 @@ for j in range(iterations):
         try:
             mapfile = imageData.generate_image(outfile)
         except ValueError:
+            os.unlink(pngfile)
             os.unlink(outfile)
+            os.unlink(mapfile)
             continue
 
         # If mapfile is None, skip the rest of the code
@@ -226,6 +237,8 @@ for j in range(iterations):
         comp1 = Composition()
         for l in mapfiledata.splitlines():
             sl = l.split()
+            if sl[0] != 'm':
+                continue
             comp1[sl[2]] += 1
         bad = False
         for m in valid_monos:
@@ -233,6 +246,7 @@ for j in range(iterations):
                 bad = True
         if bad:
             os.unlink(outfile)
+            os.unlink(pngfile)
             os.unlink(mapfile)
             continue
         wh = open(mapfile,'w')
@@ -253,4 +267,5 @@ for j in range(iterations):
         count += 1
         outputcount += 1
 
-print(monofreq)
+if outputcount > 0:
+    print(monofreq)
