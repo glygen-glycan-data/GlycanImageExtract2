@@ -143,7 +143,8 @@ for j in range(iterations):
         if 'mono' in randmode:
             acc1 = "R%07d"%(outputcount + 1,)
         outfile = os.path.join(output_folder, acc1 + "." + mode)
-        if os.path.exists(outfile):
+        pngfile = os.path.join(output_folder, acc1 + ".png")
+        if os.path.exists(outfile) or os.path.exists(pngfile):
             continue
         seq = gtc.getseq(acc,format='wurcs')
         if not seq:
@@ -220,7 +221,9 @@ for j in range(iterations):
         try:
             mapfile = imageData.generate_image(outfile)
         except ValueError:
+            os.unlink(pngfile)
             os.unlink(outfile)
+            os.unlink(mapfile)
             continue
 
         # If mapfile is None, skip the rest of the code
@@ -234,6 +237,8 @@ for j in range(iterations):
         comp1 = Composition()
         for l in mapfiledata.splitlines():
             sl = l.split()
+            if sl[0] != 'm':
+                continue
             comp1[sl[2]] += 1
         bad = False
         for m in valid_monos:
@@ -241,6 +246,7 @@ for j in range(iterations):
                 bad = True
         if bad:
             os.unlink(outfile)
+            os.unlink(pngfile)
             os.unlink(mapfile)
             continue
         wh = open(mapfile,'w')
@@ -261,4 +267,5 @@ for j in range(iterations):
         count += 1
         outputcount += 1
 
-print(monofreq)
+if outputcount > 0:
+    print(monofreq)
