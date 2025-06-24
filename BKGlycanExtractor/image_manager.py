@@ -223,7 +223,7 @@ class Image_Data:
                     tmp[0] = 'r'
                 for p in groups[g]:
                     if type(p) == tuple:
-                        tmp.append(str(int(p[0]*width_ratio)) +',' + str(int(p[1]*height_ratio)))
+                        tmp.append(str(int(round(p[0]*width_ratio))) +',' + str(int(round(p[1]*height_ratio))))
                     else:
                         tmp.append(str(p))
                 out.append(tmp)
