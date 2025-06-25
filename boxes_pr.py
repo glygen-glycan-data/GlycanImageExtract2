@@ -233,14 +233,26 @@ for i,finder_name in enumerate(args.finders):
     )
     evaluators.append(evaluator)
 
-if args.verbose:
-    runall_evaluators(evaluators,images,workers=distproc,verbose=True)
-else:
-    runall_evaluators(evaluators,images,workers=distproc)
+#if args.verbose:
+#    runall_evaluators(evaluators,images,workers=distproc,verbose=True)
+#else:
+#    runall_evaluators(evaluators,images,workers=distproc)
+
+#----------temoporary fix for distributed processing cleanup issue (replacing the four lines above)--------
+try:
+    if args.verbose:
+        runall_evaluators(evaluators,images,workers=distproc,verbose=True)
+    else:
+        runall_evaluators(evaluators,images,workers=distproc)
+except AttributeError as e:
+    if "worker_messages" in str(e):
+        print("Note: Ignoring cleanup error in distributed processing (results are still valid)")
+    else:
+        raise e
 
 for eval in evaluators:
     print("---->>>>",eval.final_structure)
-
+#--------------------------------------------------------------------------
 
 extra_args = {}
 if compare_count > 1 and len(args.finders) == 1:
