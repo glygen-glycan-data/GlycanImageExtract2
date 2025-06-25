@@ -577,7 +577,6 @@ class Glycan_Semantics(Image_Semantics):
         return ''.join(iupac)
 
     def find_link_info(self, parent_id, child_id): # Helper function for IUPAC generation with YOLO linkages
-        """Find link information between parent and child monosaccharides"""
         for link in self.undirected_links():
             if set(link['mono_ids']) == {parent_id, child_id}:
                 return link
