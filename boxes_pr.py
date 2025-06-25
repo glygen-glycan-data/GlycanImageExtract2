@@ -129,7 +129,7 @@ known_step=KnownRoot
 [Links]
 figure_steps=SingleGlycanImage
 glycan_steps=KnownMono
-known_step=KnownLink
+known_step=KnownLinkWithInfo
 
 [Glycan]
 figure_steps=
