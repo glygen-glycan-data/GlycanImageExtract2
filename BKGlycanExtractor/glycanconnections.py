@@ -19,7 +19,7 @@ from .glycanannotator import Config
 from .bbox import BoundingBox
 from .finder import Finder
 from .finder import Finder
-from BKGlycanExtractor import LinksCompare, DebugMode
+from BKGlycanExtractor import LinksCompare, DebugMode, CompareBoxes
 
 
 class GlycanConnector(Finder):
@@ -332,6 +332,11 @@ class OriginalConnector(HeuristicConnector):
 
 
 class ConnectYOLO(YOLOModel,GlycanConnector):
+    '''
+    This is a base class - this doesnt drop any extra links/cycles.
+    Derieved classes will implement methods like - drop_cycles.
+    Hence hook methods are present in this base class - so that the derieved classes can override the hook methods and additional features can be added
+    '''
     defaults = {
         'conf_threshold': 0.5,
         'boxpadding': 0,
@@ -353,6 +358,9 @@ class ConnectYOLO(YOLOModel,GlycanConnector):
         YOLOModel.__init__(self,params)
         GlycanConnector.__init__(self)
 
+    def links_post_processing(self, undirected_links):
+        pass
+
     def find_boxes(self, obj):
         image = obj.image()
         boxes = self.get_YOLO_output(image)
@@ -366,7 +374,7 @@ class ConnectYOLO(YOLOModel,GlycanConnector):
 
         return boxes
 
-# returns a list of connected monosaccharide objects 
+    # returns a list of connected monosaccharide objects 
     def find_objects(self, obj):
         ''' returns list of undirected links'''
         detected_boxes = self.find_boxes(obj)
@@ -401,7 +409,7 @@ class ConnectYOLO(YOLOModel,GlycanConnector):
                 for i in range(len(linked_monos)):
                     for j in range(i+1, len(linked_monos)):
                         if linked_monos[i].get('symbol') != 'Fuc' and linked_monos[j].get('symbol') != 'Fuc':
-                            dist = self.euclidean_distance(linked_monos[i], linked_monos[j])
+                            dist = CompareBoxes().euclidean_distance(linked_monos[i], linked_monos[j])
 
                             if dist > max_distance:
                                 max_distance = dist
@@ -413,7 +421,6 @@ class ConnectYOLO(YOLOModel,GlycanConnector):
 
         id_added = defaultdict(set)  # Track already added IDs for each key
         for (mono1, mono2), dbox in links:
-            # print(mono1.get('id'),mono1.get('symbol'),mono2.get('id'),mono2.get('symbol'),dbox)
             id1, id2 = mono1.get('id'), mono2.get('id')
 
             if id2 not in id_added[id1]:  
@@ -423,13 +430,95 @@ class ConnectYOLO(YOLOModel,GlycanConnector):
                 id_added[id1].add(id2)
                 id_added[id2].add(id1)
 
+        # undirected links - sorted by confidence in descending order
+        obj.semantics['undirected_links'].sort(key=lambda link: link.get('confidence', 0.0), reverse=True)
+
+        # HOOK METHOD
+        # at this point we have all the undirected links,
+        # so hook methods can be added here for post_processing
+        self.links_post_processing(obj)
+
+        # check if no. of links are sufficient for the no. of monos detected
+        # no.of monos-1 == no. of links
+        links_count = len(obj.undirected_links())
+        monos_count = len(obj.monosaccharides())
+
+        obj.semantics["links_count"] = links_count
+        obj.semantics["monos_count"] = monos_count
+
+        if monos_count - 1 != links_count:
+            obj.glycan_error("Count of the monosaccharides do not match w.r.t count of the links")
+        
         return obj.undirected_links()
 
 
-    def euclidean_distance(self,mbox1,mbox2):
-        bx1_cen_x, bx1_cen_y = mbox1['center']
-        bx2_cen_x, bx2_cen_y = mbox2['center']
-        return math.sqrt((bx1_cen_x - bx2_cen_x)**2 + (bx1_cen_y - bx2_cen_y)**2)
+class YOLOLinksFilter(ConnectYOLO):
+    """
+    Derieved class - used to eliminate extra links and links that form cycles in the glycan structure.
+    """
+
+    defaults = {
+        'conf_threshold': 0.5,
+        'boxpadding': 0,
+        'expandimage': 0,
+        'iou_threshold': 0.4
+    }
+
+    def __init__(self,**kwargs):
+        super().__init__(**kwargs)
+
+    
+    # HOOK METHOD
+    def links_post_processing(self, obj):
+        """
+        Accepts links in descending order of confidence, but skips any link that
+        forms a cycle. This builds a maximum-confidence spanning tree (Kruskals algo).
+        Logs the skipped/cycle causing links in semantics["non_tree_links"].
+        """
+        links = sorted(obj.undirected_links(), key=lambda l: -l.get("confidence", 0.0))
+        mono_ids_set = {m_id for link in links for m_id in link["mono_ids"]}
+        num_nodes = len(mono_ids_set)
+
+        parent = {node: node for node in mono_ids_set}
+
+        def find(x):
+            while parent[x] != x:
+                parent[x] = parent[parent[x]]
+                x = parent[x]
+            return x
+
+        def union(x, y):
+            root_x = find(x)
+            root_y = find(y)
+            if root_x == root_y:
+                return False  # Cycle!
+            parent[root_y] = root_x
+            return True
+
+        accepted = []
+
+
+        for link in links:
+            if len(accepted) == num_nodes - 1:
+                # Tree is complete, any remaining edges are rejected
+                link["reason"] = "Tree is already complete. Extra edge dropped."
+                obj.link_cycle(link)
+                continue
+
+            u, v = link["mono_ids"]
+            if union(u, v):
+                accepted.append(link)
+            else:
+                link["reason"] = "Cycle detected. Dropped the edge."
+                obj.link_cycle(link)
+
+        # Update links in the object
+        obj.set_undirected_links(accepted)
+
+        # Disjointed tree error
+        if len(accepted) < num_nodes - 1:
+            obj.glycan_error("Unable to build the structure due to missing edges")
+
         
 
 class KnownLink(GlycanConnector):

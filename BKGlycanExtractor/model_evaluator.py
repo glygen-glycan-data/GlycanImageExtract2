@@ -621,7 +621,7 @@ def runall_evaluators(evaluators, images, workers=None, verbose="TQDM"):
 
         end_time = time.time()
         execution_time = end_time - start_time
-        if verbose:
-            print(f"\nStage {i+1} Execution Time: {execution_time} seconds")
+        if verbose == True:
+            print(f"Stage {i+1}: Execution Time: {execution_time} sec.")
 
     proc.stage_process_finish()

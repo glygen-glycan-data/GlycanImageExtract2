@@ -25,9 +25,9 @@ class CompareBoxes:
             return False
 
     @staticmethod
-    def euclidean_distance(obj1,obj2):
-        obj1_cen_x, obj1_cen_y = obj1['center']
-        obj2_cen_x, obj2_cen_y = obj2['center']
+    def euclidean_distance(box1,box2):
+        obj1_cen_x, obj1_cen_y = box1.center()
+        obj2_cen_x, obj2_cen_y = box2.center()
         return math.sqrt((obj1_cen_x - obj2_cen_x)**2 + (obj1_cen_y - obj2_cen_y)**2) 
 
     @staticmethod

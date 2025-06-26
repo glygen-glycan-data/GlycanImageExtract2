@@ -6,6 +6,7 @@ from . model_evaluator import *
 from . debug_methods import DebugMode
 from . json_logger import log_data
 from . distproc import DistributedProcessing
+from . bbox import BoundingBox
 # from . webapp_processjob import JobInstance
 # from .scripts import parse_path
 # from . yolomodels import YOLOModel
