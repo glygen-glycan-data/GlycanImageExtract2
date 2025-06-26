@@ -424,8 +424,7 @@ class ConnectYOLO(YOLOModel,GlycanConnector):
             id1, id2 = mono1.get('id'), mono2.get('id')
 
             if id2 not in id_added[id1]:  
-                #obj.add_undirected_link(id1, id2, confidence=float(dbox.get('confidence')), classid=dbox.get('classid'), classlabel=dbox.get('classlabel')) # original line, hashed by campbell
-                obj.add_undirected_link(id1, id2, confidence=float(dbox.get('confidence')), classid=dbox.get('classid'), classlabel=dbox.get('classlabel'), box=dbox) # Added by campbell
+                obj.add_undirected_link(id1, id2, confidence=float(dbox.get('confidence')), classid=dbox.get('classid'), classlabel=dbox.get('classlabel'), box=dbox)
 
                 id_added[id1].add(id2)
                 id_added[id2].add(id1)
