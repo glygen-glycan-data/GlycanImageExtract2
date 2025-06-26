@@ -22,6 +22,7 @@ from . bbox import BoundingBox
 from . yolomodels import YOLOModel 
 from . glycanannotator import Config
 from . finder import Finder
+from collections import Counter
 from BKGlycanExtractor import DebugMode
 
 # Base class
@@ -142,21 +143,19 @@ class CleanGlycanImage(GlycanFinder):
         boxes = []
         for gly in obj.glycans():
             img = gly.image()
-            cropped_img, cleaned_img, (x, y, w, h) = self.process_image(img)
+            cropped_img, cleaned_img = self.process_image(img)
             box = gly.get('box') 
-            # print("box",box)
 
-            new_box = box.clone()
-            new_box.update_bbox(x=x,y=y,w=w,h=h)
-            # print("new_box",new_box)
+            # new_box = box.clone()
+            # new_box.update_bbox(x=x,y=y,w=w,h=h)
 
 
             # saving the cleaned_image and original seperately - so that we have access to both the 
             # original and cleaned image for the webpage, but question is whether I should update the
             # coordinates (offset it) of the bounding boxes wrt to the cleaned image?
             box.set('image',cleaned_img)
-            box.set('extracted_image', cropped_img)
-            box_details = dict(id=gly.get('id'), box=box, image=cleaned_img, extracted_image=cropped_img)
+            box.set('extracted_image', img)
+            box_details = dict(id=gly.get('id'), box=box, image=cleaned_img, extracted_image=img)
             boxes.append(box_details)
 
         return boxes
@@ -206,5 +205,35 @@ class CleanGlycanImage(GlycanFinder):
         cv2.drawContours(out, contours, largest_index, (255, 255, 255), -1)
         _, out = cv2.threshold(out, 230, 255, cv2.THRESH_BINARY_INV)
         cleaned_image = cv2.bitwise_or(out, cropped_image)
+
+
+        # Estimate background color
+        bg_color = self.get_dominant_background_color(img)
+
+        # pad the cropped and cleaned image with a white background to resize the extracted image to 
+        # its original dimensions
+        # Create background using dominant color
+        background_cropped = np.full_like(img, bg_color)
+        background_cleaned = np.full_like(img, bg_color)
+
+        # Overlay cropped and cleaned images
+        background_cropped[y:y+h, x:x+w] = cropped_image
+        background_cleaned[y:y+h, x:x+w] = cleaned_image
         
-        return cropped_image, cleaned_image, (x, y, w, h)
+        return background_cropped, background_cleaned
+
+
+    
+    def get_dominant_background_color(self,img):
+        # Resize to speed up color counting
+        small_img = cv2.resize(img, (100, 100), interpolation=cv2.INTER_AREA)
+
+        # Reshape to a list of pixels
+        pixels = small_img.reshape(-1, 3)
+
+        # Convert to tuple for Counter
+        pixels = [tuple(p) for p in pixels]
+
+        # Count pixel frequencies
+        most_common_color = Counter(pixels).most_common(1)[0][0]
+        return np.array(most_common_color, dtype=np.uint8)
