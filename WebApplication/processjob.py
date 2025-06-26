@@ -101,7 +101,7 @@ class JobInstance:
         final_path = rel_path
         
         # Debugging: Print the relative path after conversion
-        print(f"Converted relative path: {final_path}")
+        # print(f"Converted relative path: {final_path}")
         
         return final_path
 
@@ -197,50 +197,18 @@ class JobInstance:
         Process IUPAC-related metadata for a single glycan.
         """
 
-        errors = []
-        structure_errors = []
-        error_found = False
-
         IUPAC_data = {
             "composition_str": gly_semantics.compstr(),
-            "links_count": len(gly_semantics.undirected_links()),
-            "monos_count": len(gly_semantics.monosaccharides()),
-            "errors": errors,
-            "structure_errors": structure_errors,
             "orientation": "RL",
         }
 
-        # if conditions to log errors 
-        if not gly_semantics.root():
-            error_message = f"Unable to determine the root of the glycan structure."
-            self.log_file.write(error_message + '\n')
-            structure_errors.append(error_message)
-            errors.append(error_message)
-            error_found = True
-
-        is_tree, error_message = gly_semantics.traverse_tree()
-        if not is_tree:
-            error_found = True
-            errors.append("Unable to identify all linkages in the glycan structure.")
-
-        if error_message != '':
-            self.log_file.write(error_message + '\n')
-            structure_errors.append(error_message)
-
-        iupac_found = False
-        if not error_found:
+        if len(gly_semantics.get_glycan_errors()) == 0:
             IUPAC_data["IUPAC"] = gly_semantics.IUPAC()
             # can get orienation only after the IUPAC is generated - because we access to directed links
             IUPAC_data["orientation"] = gly_semantics.glycan_orientation()
-            # lookup_key = IUPAC_data["IUPAC"]
-            # iupac_found = True
-        # else:
-            # lookup_key = IUPAC_data["composition_str"]
 
         iupac = IUPAC_data.get("IUPAC")
         compstr = IUPAC_data.get("composition_str")
-
-        # gly_image = searchGlyImage(lookup_key, orientation=IUPAC_data["orientation"])
 
         # GNOME URL
         uri_base = "https://gnome.glyomics.org/StructureBrowser.html?"
@@ -337,7 +305,6 @@ class JobInstance:
         config = Config_Manager()
         self.pipeline_name = self.pipeline_mapping[self.file_type]
         pipeline = config.get_pipeline(self.pipeline_name)
-        print("figure_path",figure_path)
         figure_semantics = pipeline.run(figure_path)
 
         # Annotate and save images
