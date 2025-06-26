@@ -26,6 +26,7 @@ class DistributedProcessing(object):
         if target:
             self.target = target
         self.verbose = verbose
+        self.serialproc = False
         self.manager = None
         self.worker_procs = []
         self.procs = []
@@ -439,6 +440,7 @@ class DistributedProcessing(object):
     def serial(self,**shared_data):
         self.shared_data = shared_data
         self.iterresults = self.serialiterresults
+        self.serialproc = True
         return self
 
     def serialiterresults(self):
@@ -544,7 +546,8 @@ class DistributedProcessing(object):
             yield result['result']
 
     def stage_process_finish(self):
-        self.allshutdown()
+        if not self.serialproc:
+            self.allshutdown()
                                                                                                          
 def do_task(task,**kwargs):
     # print("Worker %s:%s: Task %s delay %s starting..."%(kwargs.get('hostname'),kwargs.get('worker_index'),
