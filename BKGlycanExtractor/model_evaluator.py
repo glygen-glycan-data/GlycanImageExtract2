@@ -92,10 +92,10 @@ class CompareBase(object):
         edges = []
         confidence_scores = set()
 
-        print("-----",pred_objs)
-        print("kno",known_objs)
+        # print("-----",pred_objs)
+        # print("kno",known_objs)
         for p_id, pred_obj in enumerate(pred_objs):
-            print("pred_obj",pred_obj)
+            # print("pred_obj",pred_obj)
             scaled_trunc_conf = self.scaled_trunc_conf(pred_obj.get('confidence'))
             
             for k_id, known_obj in enumerate(known_objs):
@@ -149,8 +149,8 @@ class CompareBase(object):
                 matched_gt.add(known_id)
                 matched_pred.add(pred_id)
 
-                print("\nknown",item['classlabel'][0])
-                print("pred",item['classlabel'][1])
+                # print("\nknown",item['classlabel'][0])
+                # print("pred",item['classlabel'][1])
                 if item['classlabel'][0] == item['classlabel'][1]:
                     TP += 1
                 else:
@@ -337,7 +337,7 @@ class Evaluator:
         
 
     def process_results(self,collected_results):
-        print("all_pipelines",self.pipelines)
+        # print("all_pipelines",self.pipelines)
         aggregated_results = {}
 
         all_confidences = set()
@@ -358,7 +358,7 @@ class Evaluator:
         for conf in sorted_confidences:
             # print("\nconf",conf)
             for pred_name, data in collected_results.items():
-                print("pred_name",pred_name)
+                # print("pred_name",pred_name)
                 for image_name, results in data.items():
                     relevant_confs = [c for c in results.keys() if c >= conf]
                     if relevant_confs:
@@ -621,7 +621,7 @@ def runall_evaluators(evaluators, images, workers=None, verbose="TQDM"):
 
         end_time = time.time()
         execution_time = end_time - start_time
-        if verbose:
-            print(f"\nStage {i+1} Execution Time: {execution_time} seconds")
+        if verbose == True:
+            print(f"Stage {i+1}: Execution Time: {execution_time} sec.")
 
     proc.stage_process_finish()
