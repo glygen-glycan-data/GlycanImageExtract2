@@ -146,18 +146,16 @@ class Image_Data:
                             path[1] = [(p[0] + x_shift, p[1] + y_shift) for p in path[1]]
 
         groups = {}
-        element_lookup = {} 
-        anomeric_lookup = {} 
         
         for e in elements:
             if e.hasAttribute('ID'):
                 data_type = e.getAttribute("data.type")
                 gid = e.getAttribute("ID")
-                
-                element_lookup[gid] = e # Store the element for later lookup 
+                anomer = e.getAttribute("data.residueAnomericState") if e.hasAttribute("data.residueAnomericState") else ""
+                parent_bond = e.getAttribute("data.parentPositions") if e.hasAttribute("data.parentPositions") else "" 
+                child_bond = e.getAttribute("data.childPositions") if e.hasAttribute("data.childPositions") else ""
                 
                 if data_type == 'Monosaccharide':
-                    anomeric_lookup[e.getAttribute("data.residueIndex")] = e.getAttribute("data.residueAnomericState") if e.hasAttribute("data.residueAnomericState") else "" 
                     name = e.getAttribute("data.residueName") 
                     if name not in self.valid_monos:
                         raise ValueError("SVG Parser: %s not a valid mono name"%(name,))
@@ -177,6 +175,7 @@ class Image_Data:
                     pathname = stylestring.split(")",1)[0]
                     groups[gid] = []           
                     groups[gid].append(str(name))
+                    groups[gid].append(anomer)
                     for i in parsed_groups[pathname][0][1]:
                         groups[gid].append(i)
 
@@ -191,8 +190,9 @@ class Image_Data:
                             break
 
                 elif data_type == 'Linkage':
-                    gid = e.getAttribute("ID")     
-                    groups[gid] = []
+                    gid = e.getAttribute("ID")   
+                    t = gid.split(':')[1].split(',')
+                    groups[gid] = ['l', t[0], parent_bond, child_bond, t[1]]  
 
                 elif gid == "r-1:1": # reducing-end squiggle
                     for ch in e.childNodes:
@@ -206,16 +206,12 @@ class Image_Data:
         out = []
 
         for g in groups:
-            if g[0] == 'l':
-                t = g.split(':')[1].split(',')
-                
-                # Use the stored element to get attributes and add them to the SVG file
-                element = element_lookup[g] 
-                anomeric_config = anomeric_lookup[element.getAttribute("data.parentResidueIndex")] if element.hasAttribute("data.parentResidueIndex") else "" 
-                carbon_number = element.getAttribute("data.parentPositions") if element.hasAttribute("data.parentPositions") else "" 
-                linkage_data = ['l', t[0], t[1], carbon_number, anomeric_config] 
-                out.append(linkage_data) 
 
+            # linkages
+            if g[0][0] == 'l':
+                out.append(groups[g])
+
+            # monosaccharides
             if g[0] == 'r':
                 i = g.split(':')[-1]
                 tmp = ['m',i]
@@ -232,9 +228,11 @@ class Image_Data:
         def sortkey(l):
             try:
                 intval = int(l[2])
+                strval = ''
             except ValueError:
-                intval = l[2]
-            return labelorder[l[0]],int(l[1]),intval
+                intval = 1e+20
+                strval = l[2]
+            return labelorder[l[0]],int(l[1]),intval,strval
 
         out.sort(key=sortkey)   
 

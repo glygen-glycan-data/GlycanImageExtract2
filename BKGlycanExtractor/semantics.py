@@ -180,29 +180,20 @@ class Figure_Semantics(Image_Semantics):
                     color1 = alternative_color if alternative_color else color # orange for alternatives
                 self.annotate(x1,y1,x2,y2,text=text,xtoff=2,ytoff=-2,color=color1,thickness=1)   
 
-    def annotate_links(self,color=(255, 255, 0)):
+    def annotate_links(self,color=(255, 255, 0),labels=False):
         for glycan in self.semantics['glycans']:
             # monosaccharides and root labelling
             for link in glycan.undirected_links():
+                box = link.get('box')
+                x_min,y_min,x_max,y_max = box.corners()
 
-                fromid, toid = link['mono_ids']
-                from_mono = glycan.monosaccharide(fromid)
-                x1,y1,x2,y2 = from_mono['box'].corners()
-
-                to_mono = glycan.monosaccharide(toid)
-                _x1,_y1,_x2,_y2 = to_mono['box'].corners()
-
-                x_coords = [x1,x2,_x1,_x2]
-                y_coords = [y1,y2,_y1,_y2]
-
-                x_min, x_max = min(x_coords), max(x_coords)
-                y_min, y_max = min(y_coords), max(y_coords) 
-
-                self.annotate(x_min,y_min,x_max,y_max,color=color,thickness=1)
+                text=''
+                if labels:
+                    text = link.get('classlabel','')
+                self.annotate(x_min,y_min,x_max,y_max,color=color,text=text,thickness=1)
 
     def write_image(self,**kwargs):
         cv2.imwrite(self.make_filename(**kwargs), self.image())
-
 
 class Glycan_Semantics(Image_Semantics):
 
@@ -213,6 +204,7 @@ class Glycan_Semantics(Image_Semantics):
         self.semantics['monos'] = {}
         self.semantics['non_tree_links'] = []
         self.semantics['glycan_errors'] = []
+        self.semantics['undirected_links'] = []
         self.semantics.update(kwargs)
 
     def glycan_box(self):
@@ -236,6 +228,9 @@ class Glycan_Semantics(Image_Semantics):
 
     def clear_monos(self):
         self.semantics['monos'] = {}
+
+    def clear_undirected_links(self):
+        self.semantics['undirected_links'] = []
 
     def add_mono(self,classlabel,symbol,box,**kwargs):
         if kwargs.get('id') is None:
@@ -330,7 +325,7 @@ class Glycan_Semantics(Image_Semantics):
         self.semantics['monos'][fromid]['links'] = new_links  
 
     def undirected_links(self):
-        return self.semantics.get('undirected_links')
+        return self.semantics['undirected_links']
 
     def set_undirected_links(self,links):
         self.semantics['undirected_links'] = links
@@ -429,13 +424,31 @@ class Glycan_Semantics(Image_Semantics):
         iupac = iupac[::-1] # IUPAC sequences are read in reverse order
         return ''.join(iupac)
 
-
+    def find_link_info(self, parent_id, child_id): # Helper function for IUPAC generation with YOLO linkages
+        for link in self.undirected_links():
+            if set(link['mono_ids']) == {parent_id, child_id}:
+                return link
+        return None
+    
     def generate_iupac(self,iupac, adj, visited, parent, u):
         visited.add(u)
 
         # Get the current node's data
         symbol = self.monosaccharide(u).get('symbol')
-        extension = '?1-?' if symbol not in ['NeuAc', 'NeuGc'] else '?2-?'
+        #extension = '?1-?' if symbol not in ['NeuAc', 'NeuGc'] else '?2-?' #Old line before YOLO linkage detection
+        
+        # determine the extension based on the link class label 
+        if parent != -1: 
+            link_info = self.find_link_info(parent, u)
+            if link_info and link_info.get('classlabel') and link_info.get('classlabel') != 'link':
+                label = link_info.get('classlabel')
+                a = label[0] # anomer
+                c = label[1] # carbon number
+                extension = f'{a}1-{c}' if symbol not in ['NeuAc', 'NeuGc'] else f'{a}2-{c}'
+            else:
+                # Fallback to generic linkages
+                extension = '?1-?' if symbol not in ['NeuAc', 'NeuGc'] else '?2-?'
+        
         data = symbol + extension if parent != -1 else symbol
 
         # Append the current node's data to the result

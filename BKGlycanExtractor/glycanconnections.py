@@ -424,8 +424,9 @@ class ConnectYOLO(YOLOModel,GlycanConnector):
             id1, id2 = mono1.get('id'), mono2.get('id')
 
             if id2 not in id_added[id1]:  
-                obj.add_undirected_link(id1, id2, confidence=float(dbox.get('confidence')), classid=dbox.get('classid'), classlabel=dbox.get('classlabel'))
-                
+                #obj.add_undirected_link(id1, id2, confidence=float(dbox.get('confidence')), classid=dbox.get('classid'), classlabel=dbox.get('classlabel')) # original line, hashed by campbell
+                obj.add_undirected_link(id1, id2, confidence=float(dbox.get('confidence')), classid=dbox.get('classid'), classlabel=dbox.get('classlabel'), box=dbox) # Added by campbell
+
                 id_added[id1].add(id2)
                 id_added[id2].add(id1)
 
@@ -534,6 +535,9 @@ class KnownLink(GlycanConnector):
 
     def find_boxes(self,obj):
         image_path = obj.image_path()
+
+        assert image_path, "KnownLink can only run on SingleGlycanImage glycan finder semantics objects"
+
         box_id = 0
 
         box_coords = {}
@@ -543,16 +547,16 @@ class KnownLink(GlycanConnector):
         with open(image_data, 'r') as file:
             for line in file:
                 data_points = line.split()
-                if line.startswith('l'):
-                    links[data_points[1]].append(data_points[2])
+                if data_points[0] == "l":
+                    links[data_points[1]].append(data_points[4])
 
-                if line.startswith('m'):
+                if data_points[0] == "m":
                     mono_id = data_points[1]
                     name = data_points[2]
                     x_coords = []
                     y_coords = []
 
-                    for coords in data_points[3:-1]:
+                    for coords in data_points[4:-1]:
                         x,y = map(int,coords.split(','))
                         x_coords.append(x)
                         y_coords.append(y)
@@ -570,7 +574,11 @@ class KnownLink(GlycanConnector):
                 width = x_max - x_min 
                 height = y_max - y_min
 
-                box = BoundingBox(x1=x_min, y1=y_min, x2=x_max, y2=y_max, id=box_id, classid=0, classlabel=self.get_label(0),image=obj.image()) 
+                box = BoundingBox(x1=x_min, y1=y_min, x2=x_max, y2=y_max, 
+                                  id=box_id, image=obj.image(),
+                                  classid=0, classlabel=self.get_label(0), 
+                                  parent=mono1, child=link)
+
                 box.pad(self.params['boxpadding']) # known data is absolute
                 boxes.append(box)
                 
@@ -584,28 +592,105 @@ class KnownLink(GlycanConnector):
             )
 
         return boxes
-                                      
+
 
     def find_objects(self,obj):
-        image_path = obj.image_path()
-        assert image_path, "KnownMono can only run on SingleGlycanImage glycan finder semantics objects"
-        
-        links_path = image_path.rsplit('.',1)[0] + "_map.txt"
-        obj.semantics['undirected_links'] = []
-
-        links = collections.defaultdict(list)
-        with open(links_path, 'r') as file:
-            for line in file:
-                if line.startswith('l'):
-                    data_points = line.split()
-                    link1 = int(data_points[1])
-                    link2 = int(data_points[2])
-
-                    obj.add_undirected_link(link1,link2,**{'classlabel':self.get_label(0)})
-
+        boxes = self.find_boxes(obj)
+        obj.clear_undirected_links()
+        for box in boxes:
+            obj.add_undirected_link(box.get('parent'),box.get('child'),classid=box.get('classid'),classlabel=box.get('classlabel'),box=box)
         return obj.undirected_links()
 
 
+class KnownLinkWithInfo(KnownLink):
+    
+    labels = ['a1', 'a2','a3','a4', 'a5', 'a6', 'a7', 'a8', 'a9', 'b1', 'b2', 'b3', 'b4', 'b5', 'b6', 'b8', 'x1', 'x2', 'x3', 'x4', 'x5', 'x6', 'x8', 'ax', 'bx', 'xx'] 
 
+    defaults = {
+        'boxpadding': 0,
+    }
 
+    def __init__(self,**kwargs):
+        self.params = dict(
+            boxpadding = Config.get_param('boxpadding', Config.INT, kwargs, self.defaults),
+        )
+        GlycanConnector.__init__(self)
+
+    def find_boxes(self,obj):
+        image_path = obj.image_path()
+        # print(image_path) 
+
+        assert image_path, "KnownLinkWithInfo can only run on SingleGlycanImage glycan finder semantics objects"
+
+        box_id = 0
+
+        box_coords = {}
+        links = collections.defaultdict(list)
+        boxes = []
+        image_data = image_path.rsplit('.',1)[0] + "_map.txt"
+        
+        mono_anomers = {}
+        carbon_numbers = {}
+        with open(image_data, 'r') as file:
+            for line in file:
+                data_points = line.split()
+                if data_points[0] == 'l':
+                    links[data_points[1]].append(data_points[4])
+                    if data_points[2] != '?': 
+                        carbon_numbers[data_points[4]] = data_points[2] 
+                    else:
+                        carbon_numbers[data_points[4]] = 'x' 
+
+                if data_points[0] == 'm':
+                    mono_id = data_points[1]
+                    name = data_points[2]
+                    if data_points[3] != '?':
+                        mono_anomers[mono_id] = data_points[3]
+                    else:
+                        mono_anomers[mono_id] = 'x'
+                    x_coords = []
+                    y_coords = []
+
+                    for coords in data_points[4:-1]:
+                        x,y = map(int,coords.split(','))
+                        x_coords.append(x)
+                        y_coords.append(y)
+
+                    box_coords[mono_id] = dict(x_coords=[min(x_coords), max(x_coords)], y_coords=[min(y_coords), max(y_coords)])
+        
+        for mono1, mono2 in links.items():
+            for link in mono2:
+                x_coords = box_coords[mono1]['x_coords'] + box_coords[link]['x_coords']
+                y_coords = box_coords[mono1]['y_coords'] + box_coords[link]['y_coords']
+
+                x_min, x_max = min(x_coords), max(x_coords)
+                y_min, y_max = min(y_coords), max(y_coords) 
+                
+                width = x_max - x_min 
+                height = y_max - y_min
+
+                label = f"{mono_anomers[link]}{carbon_numbers[link]}"   
+                label_index = self.get_label_index(label)
+
+                box = BoundingBox(x1=x_min, y1=y_min, x2=x_max, y2=y_max, 
+                                  id=box_id, image=obj.image(),
+                                  classid=label_index, classlabel=label,
+                                  parent=mono1, child=link)
+
+                box.pad(self.params['boxpadding']) # known data is absolute
+                boxes.append(box)
+                
+                box_id += 1
+        
+        if DebugMode.debug:
+            DebugMode.log_data(
+                identifier = DebugMode.curr_image,
+                data = {'links_known':len(boxes)},
+                image_data = DebugMode.image_data
+            )
+
+        return boxes
+
+class ConnectYOLOInfo(ConnectYOLO):
+    finder_class = "InfoLinks"
 
