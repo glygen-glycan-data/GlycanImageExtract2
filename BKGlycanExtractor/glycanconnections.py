@@ -601,3 +601,7 @@ class KnownLinkWithInfo(KnownLink):
             )
 
         return boxes
+
+class ConnectYOLOInfo(ConnectYOLO):
+    finder_class = "InfoLinks"
+

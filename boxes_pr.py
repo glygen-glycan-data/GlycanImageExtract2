@@ -129,6 +129,11 @@ known_step=KnownRoot
 [Links]
 figure_steps=SingleGlycanImage
 glycan_steps=KnownMono
+known_step=KnownLink
+
+[InfoLinks]
+figure_steps=SingleGlycanImage
+glycan_steps=KnownMono
 known_step=KnownLinkWithInfo
 
 [Glycan]
@@ -201,10 +206,12 @@ for i,finder_name in enumerate(args.finders):
     known_pipeline.set_steps('glycan', cm.get_finders(glycan_steps))
 
     known_step_name = finder_section.get('known_step')
+    kf = cm.get_finder(known_step_name, **known_kwargs.get(finder_name,{}))
+    assert set(kf.labels) >=  set(f.labels), "%s != %s"%(kf.labels,f.labels)
     if f.finder_class == "Glycan":
-        known_pipeline.add_step('figure', cm.get_finder(known_step_name),**known_kwargs.get(finder_name,{}))
+        known_pipeline.add_step('figure', kf)
     else:
-        known_pipeline.add_step('glycan', cm.get_finder(known_step_name, **known_kwargs.get(finder_name,{})))
+        known_pipeline.add_step('glycan', kf)
     
     pipelines = {}
     pipelines[finder_name] = (pred_pipeline,known_pipeline)
