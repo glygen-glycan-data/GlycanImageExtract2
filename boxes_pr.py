@@ -240,20 +240,10 @@ for i,finder_name in enumerate(args.finders):
     )
     evaluators.append(evaluator)
 
-#if args.verbose:
-#    runall_evaluators(evaluators,images,workers=distproc,verbose=True)
-#else:
-#    runall_evaluators(evaluators,images,workers=distproc)
-
-#----------temporary fix for distributed processing cleanup issue (replacing the four lines above) -by campbell--------
-try:
-    if args.verbose:
-        runall_evaluators(evaluators,images,workers=distproc,verbose=True)
-    else:
-        runall_evaluators(evaluators,images,workers=distproc)
-except AttributeError as e:
-    raise e
-#--------------------------------------------------------------------------
+if args.verbose:
+    runall_evaluators(evaluators,images,workers=distproc,verbose=True)
+else:
+    runall_evaluators(evaluators,images,workers=distproc)
 
 for eval in evaluators:
     print("---->>>>",eval.final_structure)
