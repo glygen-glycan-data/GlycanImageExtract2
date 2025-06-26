@@ -423,6 +423,16 @@ class DistributedProcessing(object):
             self.allshutdown()
 
     def allshutdown(self):
+        #---------------added by campbell to bypass error------------#
+        # In serial processing mode, there are no workers to shut down
+        if self.manager is None:
+            return
+        
+        # Only do worker management if we're in distributed processing mode
+        if not hasattr(self, 'workerids'):
+            self.workerids = set()
+        #------------------------------------------------------------#            
+        
         while not self.worker_messages_empty():
             msg = self.worker_messages.get()
             if msg[0] == "WORKERID":

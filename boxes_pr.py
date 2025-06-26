@@ -245,17 +245,14 @@ for i,finder_name in enumerate(args.finders):
 #else:
 #    runall_evaluators(evaluators,images,workers=distproc)
 
-#----------temoporary fix for distributed processing cleanup issue (replacing the four lines above)--------
+#----------temporary fix for distributed processing cleanup issue (replacing the four lines above) -by campbell--------
 try:
     if args.verbose:
         runall_evaluators(evaluators,images,workers=distproc,verbose=True)
     else:
         runall_evaluators(evaluators,images,workers=distproc)
 except AttributeError as e:
-    if "worker_messages" in str(e):
-        print("Note: Ignoring cleanup error in distributed processing (results are still valid)")
-    else:
-        raise e
+    raise e
 #--------------------------------------------------------------------------
 
 for eval in evaluators:
