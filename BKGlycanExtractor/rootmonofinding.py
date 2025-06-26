@@ -5,6 +5,7 @@ class for various methods of identifying the root monosacharide
 import logging
 
 import numpy as np
+import math
 
 from .bbox import BoundingBox
 from .yolomodels import YOLOModel
@@ -174,6 +175,7 @@ class YOLORootFinder(YOLOModel, RootFinder):
         )
 
         # YOLOModel gets the labels from the current Class and you can use this to set classlabels in the YOLOclass
+        self.cb = CompareBoxes()
         YOLOModel.__init__(self,params)
         RootFinder.__init__(self)
         
@@ -190,65 +192,90 @@ class YOLORootFinder(YOLOModel, RootFinder):
             )
 
         return boxes
+
+    def match_root_to_mono(self, obj, root):
+        semantic_monos = list(obj.monosaccharides())
+            
+        if semantic_monos == []:
+            return None
+        
+        intersection_list = [0]*len(semantic_monos)
+
+        for i, mono in enumerate(semantic_monos):
+            if self.cb.have_intersection(mono['box'], root):
+                intersection_list[i] = self.cb.intersection_area(mono['box'], root)
+                
+        max_int_idx = np.argmax(intersection_list)
+        
+        box = semantic_monos[max_int_idx]['box']
+        # this is the monosaccharide which matched with the root
+        selected_mono = semantic_monos[max_int_idx]
+
+        euclidean_distance = self.cb.euclidean_distance(box,root)
+
+        x1,y1,w1,h1 = box.bbox()
+        x2,y2,w2,h2 = root.bbox()
+        avg_width = (w1 + w2) / 2
+        avg_height = (h1 + h2) / 2
+
+        avg_object_size = math.sqrt((avg_width**2 + avg_height**2))  # diagonal
+
+        # helps determine if the two detected boxes (monos and root) are close enough to be considered the same object
+        normalized_dist = euclidean_distance / avg_object_size
+
+        return normalized_dist, selected_mono
+
     
     def find_objects(self, obj):
         boxes = self.find_boxes(obj)
 
         root_boxes = []
-        root_mono = None
+        root = None
 
         for box in boxes:
             if box.get('classid') == 0:
                 root_boxes.append(box)
-
+                root_boxes.append(box)
+        
         if len(root_boxes) > 1:
             print("Log data: Multiple Roots were detected")
-            # print("Log data: Multiple Roots were detected", [(mono.get('confidence'), dir(mono)) for mono in root_boxes])
             obj.log("Multiple roots (%d) were detected"%(len(root_boxes),))
             confidences = [mono.get('confidence') for mono in root_boxes]
             best_index = np.argmax(confidences)
-            root_mono = root_boxes[best_index]
+            root = root_boxes[best_index]
         elif len(root_boxes) == 0:
-            print("Log: No root was detected")
-            obj.log("No root was detected")
+            print("Log: Unable to find root")
+            obj.log("Unable to find root")
+            obj.glycan_error("Unable to find root")
             obj.no_root()
         else:
-            root_mono = root_boxes[0]
+            root = root_boxes[0]
 
-        if root_mono:
-            semantic_monos = list(obj.monosaccharides())
-            
-            if semantic_monos == []:
-                return None
+        if root:
 
-            comparison_alg = CompareBoxes()
-            
-            intersection_list = [0]*len(semantic_monos)
+            normalized_dist, selected_mono = self.match_root_to_mono(obj,root)
 
-            for i, mono in enumerate(semantic_monos):
-                if comparison_alg.have_intersection(mono['box'], root_mono):
-                    intersection_list[i] = comparison_alg.intersection_area(mono['box'], root_mono)
-                    
-            max_int_idx = np.argmax(intersection_list)
-            
-            box = semantic_monos[max_int_idx]['box']
-            t_area = box.area()
-            d_area = root_mono.area()
-            
-            inter = intersection_list[max_int_idx]
-            
-            # if monos/roots training model was trained on different sized boxes - 
-            # then this variation in box sizes between monos and root could cause issues like
-            # detection is not sufficient or they might not overlap enough to pass the true case
-            # A better solution: compare the detection based on the proximty of the centers - which might solve
-            # the issue of having to differnt boxpadding based on the training models setup
-            if ((inter == t_area and comparison_alg.training_contained(box, root_mono))
-            or (inter == d_area and comparison_alg.detection_sufficient(box, root_mono))
-            or comparison_alg.is_overlapping(box, root_mono)):
-                root = semantic_monos[max_int_idx]
-                obj.set_root(root.get('id'),**{'confidence':float(root_mono.get('confidence')),'classlabel': root_mono.get('classlabel')})
+            # likely the same object
+            if normalized_dist <= 0.5:
+                obj.set_root(selected_mono.get('id'),**{'confidence':float(root.get('confidence')),'classlabel': root.get('classlabel')})
+
+                # add alternate root
+                # this may or may not intersect the first best root (optionally if we want to
+                # add only the second best root - just add a break statement in the for loop)
+                if len(root_boxes) > 1:
+                    root_boxes_sorted = sorted(root_boxes, key=lambda mono: mono.get('confidence', 0), reverse=True)
+                    roots_taken = set()
+                    roots_taken.add(selected_mono.get('id'))
+
+                    for i in range(1,len(root_boxes_sorted)):
+                        normalized_dist, selected_mono = self.match_root_to_mono(obj,root_boxes_sorted[i])
+                        if normalized_dist <= 0.5 and selected_mono.get('id') not in roots_taken:
+                            altr = {'classlabel': root_boxes_sorted[i].get('classlabel'),'confidence':float(root_boxes_sorted[i].get('confidence')), "mono_id": selected_mono.get('id')}
+                            obj.add_alternative_root(altr)
             else:
                 obj.no_root()  
+                obj.glycan_error("Unable to find root")
+                obj.log("Unable to find root")
 
         return [ obj.root() ]
 

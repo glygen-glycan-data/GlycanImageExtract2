@@ -203,43 +203,6 @@ class Figure_Semantics(Image_Semantics):
     def write_image(self,**kwargs):
         cv2.imwrite(self.make_filename(**kwargs), self.image())
 
-    # def training_data(self,folder_name):
-    #     # need labels - monos need labels file
-    #     # root - need labels file
-    #     # links - need labels file
-
-    #     # print("\nself.params",pipeline.get_steps("glycan")[0].labels)
-    #     # classid_mappings = {"GlcNAc": 0, "NeuAc":1,"Fuc":2,"Man":3,"GalNAc":4,"Gal":5,"Glc":6,"NeuGc":7, "Xyl": 8}
-    #     # labels = pipeline.get_steps("glycan")[0].labels
-    #     # classid_mappings = {label:idx for idx,label in enumerate(labels)}
-
-    #     image_path = self.image_path()
-    #     image_filename = os.path.basename(image_path)
-    #     base_filename = os.path.splitext(image_filename)[0]
-
-    #     # os.makedirs(folder_name, exist_ok=True)
-    #     # metadata_dir = os.path.join(folder_name, "metadata")
-    #     # os.makedirs(metadata_dir, exist_ok=True)
-    #     # metadata_file = os.path.join(metadata_dir, "metadata.txt")
-
-    #     # print("file",metadata_file)
-
-    #     # with open(metadata_file,'w') as f:
-    #     #     f.write('labels: ' + ', '.join(labels) + '\n')
-
-    #         # for k,v in pipeline.get_steps("glycan")[0].params.items():
-    #         #     f.write(f"{k}: {v}\n")
-
-        
-    #     training_file_path = os.path.join(folder_name, base_filename + ".txt")
-    #     with open(training_file_path, 'w') as f:  # Open the file to write annotations
-    #         for glycan in self.semantics['glycans']:
-    #             for mono in glycan.monosaccharides():
-    #                 x,y,w,h = mono['box'].center_relative()
-    #                 class_id = classid_mappings[mono.get('classlabel')]
-    #                 f.write(f"{class_id} {x} {y} {w} {h}\n") 
-
-    #     shutil.copy(image_path, folder_name)
 
 class Glycan_Semantics(Image_Semantics):
 
@@ -248,6 +211,8 @@ class Glycan_Semantics(Image_Semantics):
         self.semantics['box'] = box
         self.semantics['bbox'] = box.bbox()
         self.semantics['monos'] = {}
+        self.semantics['non_tree_links'] = []
+        self.semantics['glycan_errors'] = []
         self.semantics.update(kwargs)
 
     def glycan_box(self):
@@ -256,6 +221,16 @@ class Glycan_Semantics(Image_Semantics):
     def glycan(self):
         return [self.semantics]
 
+    # to log links which either create a cycle or are extra w.r.t number of monos
+    def link_cycle(self,data):
+        self.semantics['non_tree_links'].append(data)
+
+    def glycan_error(self,error_msg):
+        self.semantics['glycan_errors'].append(error_msg)
+
+    def get_glycan_errors(self):
+        return self.semantics['glycan_errors']
+        
     def image(self):
         return self.semantics['image']
 
@@ -316,148 +291,22 @@ class Glycan_Semantics(Image_Semantics):
     def root(self):
         return self.semantics.get('root',None)
 
-
-    def find(self, u):
-        if u not in self.parent:
-            self.parent[u] = u
-        if self.parent[u] != u:
-            self.parent[u] = self.find(self.parent[u])
-        return self.parent[u]
-
-    def union(self, u, v):
-        pu, pv = self.find(u), self.find(v)
-        if pu == pv:
-            return False  # cycle detected
-        self.parent[pu] = pv
-        return True
-
-
-    def filter_links_to_tree(self):
-        links = self.undirected_links()
-        # uf = UnionFind()
-
-        kept_links = []
-        cycle_links = []
-
-        for link in links:
-            id1, id2 = link["mono_ids"]
-            if self.union(id1, id2):
-                kept_links.append(link)
-            else:
-                cycle_links.append(link)
-
-        if cycle_links:
-            # Drop the link with the lowest confidence
-            cycle_links.sort(key=lambda l: l.get('confidence', 0.0))
-            dropped = cycle_links[0]
-            print(f"Cycle found. Dropping least confident link: {dropped}")
-            cycle_links.remove(dropped)
-            kept_links += cycle_links  # If you want to keep the rest
-
-        return kept_links
-
+    def add_alternative_root(self,altr):
+        r = self.root()
+        if 'alternative' not in r:
+            r['alternative'] = []
+        r['alternative'].append(altr)
 
     def build_adjacency_list(self):
-        error_msg = ''
         adj = defaultdict(list)
-        parent = {}
 
-        def find(u):
-            while parent.get(u, u) != u:
-                parent[u] = parent.get(parent[u], parent[u])
-                u = parent[u]
-            return u
-
-        def union(u, v):
-            pu, pv = find(u), find(v)
-            if pu == pv:
-                return False  # cycle detected
-            parent[pu] = pv
-            return True
-
-        links = self.undirected_links()
-        kept_links = []
-        cycle_links = []
-
-        for link in links:
-            id1, id2 = link["mono_ids"]
-            if union(id1, id2):
-                kept_links.append(link)
-            else:
-                cycle_links.append(link)
-
-        # Drop least confident cycle-forming link
-        if cycle_links:
-            cycle_links.sort(key=lambda l: l.get('confidence', 0.0))
-            dropped = cycle_links.pop(0)
-            print(f"Cycle found. Dropping least confident link: {dropped}")
-            error_msg = f"Cycle found. Dropping least confident link: {dropped}"
-            kept_links += cycle_links  # Keep remaining cycle links, optional
-
-        for link in kept_links:
+        for link in self.undirected_links():
             id1, id2 = link["mono_ids"]
             link_without_ids = {k: v for k, v in link.items() if k != "mono_ids"}
             adj[id1].append((id2, link_without_ids))
             adj[id2].append((id1, link_without_ids))
 
-        return adj, error_msg
-
-    # used after undirected_links are already populated 
-    # def build_adjacency_list(self):
-
-    #     adj = defaultdict(list)
-
-    #     for link in self.undirected_links():
-    #         id1, id2 = link["mono_ids"]
-    #          # removed 'mono_ids' because it has undirected_links which are in sorted order - since we dont want to propagate this pattern in the adjacency list
-    #         link_without_ids = {k: v for k, v in link.items() if k != "mono_ids"} 
-    #         adj[id1].append((id2, link_without_ids)) 
-    #         adj[id2].append((id1, link_without_ids))
-
-    #     return adj
-
-    # build adjacency list from undirected links
-    # if root is present - use that as the start to traverse the tree, if not use any random node and traverse the tree.
-    # During the traversal if node is already visited - then there must be a cycle
-    # At the end - if all nodes are not visited - then the tree must be disjointed
-
-    def traverse_tree(self):
-        adj,error_msg = self.build_adjacency_list()
-        visited = set()
-
-        root = self.root()
-
-        if root:
-            first_node = root['mono_id']
-        elif adj:
-            first_node = next(iter(adj))
-        else:
-            return False, "Graph is empty: no root and no nodes in adjacency list."
-
-        stack = [(first_node, -1)]      # current_node, parent
-
-        visited.add(first_node)
-
-        while stack:
-            u, parent = stack.pop()
-            for v, other_info in adj[u]:
-                if v not in visited:
-                    visited.add(v)
-                    stack.append((v,u))
-                else:
-                    if v == parent:
-                        continue
-                    else:
-                        return False, f"Cycle detected at node '{v}' (visited from node '{u}')."
-
-        # check if all nodes were visited
-        all_nodes = set(m['id'] for m in self.monosaccharides())
-        unvisited = all_nodes - visited
-        if unvisited:
-            return False, f"Tree is disjointed. Unvisited nodes: {', '.join(str(node) for node in unvisited)}"
-
-        print("tree traversal", error_msg)
-        return True, error_msg
+        return adj
                     
     def clear_links(self,mono_id):
         self.semantics['monos'][mono_id]['links'] = []
@@ -471,7 +320,7 @@ class Glycan_Semantics(Image_Semantics):
         return [link for item in self.monosaccharides() if item.get('links') for link in item['links']]  
 
     def links(self,id):
-        return self.semantics['monos'][id]['links']
+        return self.semantics['monos'][id].get('links')
 
     def delete_link(self,fromid,toid):
         new_links = [
@@ -483,6 +332,8 @@ class Glycan_Semantics(Image_Semantics):
     def undirected_links(self):
         return self.semantics.get('undirected_links')
 
+    def set_undirected_links(self,links):
+        self.semantics['undirected_links'] = links
 
     def add_undirected_link(self,id1,id2,**kwargs):
         self.semantics['undirected_links'].append({"mono_ids": list(sorted((id1,id2))),**kwargs})
@@ -497,7 +348,7 @@ class Glycan_Semantics(Image_Semantics):
 
 
     def create_links(self):
-        adj,_ = self.build_adjacency_list()
+        adj = self.build_adjacency_list()
         root_id = self.root().get("mono_id")
 
         visited = set()
@@ -562,7 +413,6 @@ class Glycan_Semantics(Image_Semantics):
         
     def IUPAC(self):
         root = self.root()
-        # print("IUPAC called",root)
         if not root:
             return None
 
@@ -571,12 +421,10 @@ class Glycan_Semantics(Image_Semantics):
 
         root_id = root.get('mono_id')
         iupac = []
-        adj,_ = self.build_adjacency_list()
+        adj = self.build_adjacency_list()
         visited = set()
 
         self.generate_iupac(iupac, adj, visited, -1, root_id)
-
-        # print("iupac",iupac)
        
         iupac = iupac[::-1] # IUPAC sequences are read in reverse order
         return ''.join(iupac)
@@ -636,6 +484,9 @@ class Glycan_Semantics(Image_Semantics):
         root_mono = self.monosaccharide(root_id)
         root_box = root_mono.get('box')
         root_links = self.links(root_id)
+
+        if not root_links:
+            return "BT"
 
         for link in root_links:
             fromid, toid = link['fromid'], link['toid']
