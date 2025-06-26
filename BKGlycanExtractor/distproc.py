@@ -308,7 +308,7 @@ class DistributedProcessing(object):
     def worker_messages_empty(self):
         try:
             return self.worker_messages.empty()
-        except (BrokenPipeError,EOFError):
+        except (BrokenPipeError,EOFError,AttributeError):
             pass
         return True
 
