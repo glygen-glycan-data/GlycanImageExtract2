@@ -285,26 +285,24 @@ def calculate_precision_recall(tp, fp, fn):
     if total_predictions > 0:
         precision = tp / total_predictions
         precision_fraction = f"{tp}/{total_predictions}"
-        precision_percent = f"{precision:.1%}"
     else:
         precision_fraction = "0/0"
-        precision_percent = "N/A"
+        precision = "N/A"
     
     # Calculate recall
     if total_ground_truth > 0:
         recall = tp / total_ground_truth
         recall_fraction = f"{tp}/{total_ground_truth}"
-        recall_percent = f"{recall:.1%}"
     else:
         recall_fraction = "0/0" 
-        recall_percent = "N/A"
+        recall = "N/A"
     
-    return precision_fraction, precision_percent, recall_fraction, recall_percent
+    return precision_fraction, precision, recall_fraction, recall
 
 # Prepare data for CSV
 csv_data = []
-csv_headers = ['finder', 'class', 'total_gt_instances', 'precision_fraction', 'precision_percent', 
-               'recall_fraction', 'recall_percent', 'TP', 'FP', 'FN']
+csv_headers = ['finder', 'class', 'total_gt_instances', 'precision_fraction', 'precision_decimal', 
+               'recall_fraction', 'recall_decimal', 'TP', 'FP', 'FN']
 
 
 for evaluator in evaluators:
@@ -332,12 +330,12 @@ for evaluator in evaluators:
             total_ground_truth = tp + fn
             
             # Calculate precision and recall using helper function
-            precision_fraction, precision_percent, recall_fraction, recall_percent = calculate_precision_recall(tp, fp, fn)
+            precision_fraction, precision, recall_fraction, recall = calculate_precision_recall(tp, fp, fn)
             
             # Add to CSV data (with quotes to prevent date conversion)
             csv_data.append([
-                finder_name, class_name, total_ground_truth, f'"{precision_fraction}"', precision_percent,
-                f'"{recall_fraction}"', recall_percent, tp, fp, fn
+                finder_name, class_name, total_ground_truth, f'"{precision_fraction}"', precision,
+                f'"{recall_fraction}"', recall, tp, fp, fn
             ])
         
         else:
@@ -353,12 +351,12 @@ for evaluator in evaluators:
             fn = final_metrics['FN']
             total_ground_truth = tp + fn
             
-            precision_fraction, precision_percent, recall_fraction, recall_percent = calculate_precision_recall(tp, fp, fn)
+            precision_fraction, precision, recall_fraction, recall = calculate_precision_recall(tp, fp, fn)
             
             # Add to CSV data
             csv_data.append([
-                finder_name, "ALL", total_ground_truth, f'"{precision_fraction}"', precision_percent,
-                f'"{recall_fraction}"', recall_percent, tp, fp, fn
+                finder_name, "ALL", total_ground_truth, f'"{precision_fraction}"', precision,
+                f'"{recall_fraction}"', recall, tp, fp, fn
             ])
 
 # Sort CSV data by total_gt_instances 
