@@ -270,6 +270,115 @@ Evaluator.plotprecisionrecall(
     **extra_args
 )
 
+#---------------new section added by campbell----------------
+# creates csv file with precision and recall by class and finder
+
+import csv
+import os
+
+def calculate_precision_recall(tp, fp, fn):
+    
+    total_predictions = tp + fp
+    total_ground_truth = tp + fn
+    
+    # Calculate precision
+    if total_predictions > 0:
+        precision = tp / total_predictions
+        precision_fraction = f"{tp}/{total_predictions}"
+        precision_percent = f"{precision:.1%}"
+    else:
+        precision_fraction = "0/0"
+        precision_percent = "N/A"
+    
+    # Calculate recall
+    if total_ground_truth > 0:
+        recall = tp / total_ground_truth
+        recall_fraction = f"{tp}/{total_ground_truth}"
+        recall_percent = f"{recall:.1%}"
+    else:
+        recall_fraction = "0/0" 
+        recall_percent = "N/A"
+    
+    return precision_fraction, precision_percent, recall_fraction, recall_percent
+
+# Prepare data for CSV
+csv_data = []
+csv_headers = ['finder', 'class', 'total_gt_instances', 'precision_fraction', 'precision_percent', 
+               'recall_fraction', 'recall_percent', 'TP', 'FP', 'FN']
+
+
+for evaluator in evaluators:
+    for pipeline_details, result_data in evaluator.final_structure.items():
+        fields = "curve_index,predictor,predictor_index,comparitor,comparitor_index".split(',')
+        details = dict(zip(fields, pipeline_details))
+        finder_name = details.get('predictor', 'Unknown')
+        
+        # Check if this is class-restricted evaluation
+        comparitor = details.get('comparitor', 'Unknown')
+        
+        if 'class=' in comparitor and comparitor != 'class=None':
+            class_name = comparitor.split('class=')[1]
+            
+            # Get the final metrics
+            if not result_data:
+                continue
+                
+            first_conf = min(result_data.keys())
+            final_metrics = result_data[first_conf]
+            
+            tp = final_metrics['TP']
+            fp = final_metrics['FP'] 
+            fn = final_metrics['FN']
+            total_ground_truth = tp + fn
+            
+            # Calculate precision and recall using helper function
+            precision_fraction, precision_percent, recall_fraction, recall_percent = calculate_precision_recall(tp, fp, fn)
+            
+            # Add to CSV data (with quotes to prevent date conversion)
+            csv_data.append([
+                finder_name, class_name, total_ground_truth, f'"{precision_fraction}"', precision_percent,
+                f'"{recall_fraction}"', recall_percent, tp, fp, fn
+            ])
+        
+        else:
+            # For overall evaluation (no class restriction), show aggregate
+            if not result_data:
+                continue
+                
+            first_conf = min(result_data.keys())
+            final_metrics = result_data[first_conf]
+            
+            tp = final_metrics['TP']
+            fp = final_metrics['FP'] 
+            fn = final_metrics['FN']
+            total_ground_truth = tp + fn
+            
+            precision_fraction, precision_percent, recall_fraction, recall_percent = calculate_precision_recall(tp, fp, fn)
+            
+            # Add to CSV data
+            csv_data.append([
+                finder_name, "ALL", total_ground_truth, f'"{precision_fraction}"', precision_percent,
+                f'"{recall_fraction}"', recall_percent, tp, fp, fn
+            ])
+
+# Sort CSV data by total_gt_instances 
+csv_data.sort(key=lambda x: x[2], reverse=True)
+
+# Save to CSV file
+if csv_data:
+    csv_filename = "precision_recall_summary.csv"
+    csv_path = os.path.join("presentation", csv_filename)
+    
+    # Ensure presentation directory exists
+    os.makedirs("presentation", exist_ok=True)
+    
+    with open(csv_path, 'w', newline='', encoding='utf-8') as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerow(csv_headers)
+        writer.writerows(csv_data)
+    
+    print(f"\nSummary saved to: {csv_path}")
+# -------------------------------- #
 
 # -----------------------------
 # Old Code that works - all finder pipelines will have to use same config params
