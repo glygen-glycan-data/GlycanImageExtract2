@@ -409,7 +409,7 @@ class ConnectYOLO(YOLOModel,GlycanConnector):
                 for i in range(len(linked_monos)):
                     for j in range(i+1, len(linked_monos)):
                         if linked_monos[i].get('symbol') != 'Fuc' and linked_monos[j].get('symbol') != 'Fuc':
-                            dist = CompareBoxes().euclidean_distance(linked_monos[i], linked_monos[j])
+                            dist = CompareBoxes().euclidean_distance(linked_monos[i]['box'], linked_monos[j]['box'])
 
                             if dist > max_distance:
                                 max_distance = dist
