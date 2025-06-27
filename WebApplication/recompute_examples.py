@@ -95,7 +95,7 @@ extractor = APIFrameworkClient(apiurl=apiurl,
                                request_interval=5,
                                max_retrieve_wait = 1200)
 
-pattens = ["*"]
+patterns = ["*"]
 if len(sys.argv) > 1:
     patterns = sys.argv[1:]
 
@@ -131,7 +131,7 @@ def update_votes(instance):
                 continue
             g2 = bestg2
             if g1.get("IUPAC"):
-                if g1.get("IUPAC") == g2["IUPAC"]:
+                if g1.get("IUPAC") == g2.get("IUPAC","__XXXXXX__"):
                     g1['upvotes'] = 1; g1['downvotes'] = 0;
                 else:
                     g1['upvotes'] = 0; g1['downvotes'] = 1
