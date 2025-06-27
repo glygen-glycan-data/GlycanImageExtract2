@@ -16,7 +16,7 @@ import argparse
 
 parser = argparse.ArgumentParser(description="Randomized glycan image generation")
 parser.add_argument("-n", "--nimages", type=int, help="Number of images. Default: 100.", default=100)
-parser.add_argument("-B", "--batchsize", type=int, help="Number of images with each randomly selected set of options. Default: 10.", default=10)
+# parser.add_argument("-B", "--batchsize", type=int, help="Number of images with each randomly selected set of options. Default: 10.", default=10)
 # parser.add_argument("-f", "--format", type=str, help="Image format. One of \"png\" or \"svg\". Default: png.", default='png')
 parser.add_argument("-o", "--outdir", type=str, help="Ouput directory. Default: current directory.", default=None)
 parser.add_argument("-c", "--clear", action='store_true', help="Clear output directory first.", default=False)
@@ -29,6 +29,7 @@ parser.add_argument("-L", "--linkage", action='store_true', help="Require glycos
 args = parser.parse_args()
 imagenum = args.nimages
 mode = "svg"
+args.batchsize = 1
 cachemode = 'c'
 if args.force:
     cachemode = 'n'
@@ -63,10 +64,12 @@ iterations = imagenum//batch
 scale_options = [ 0.5, 1.0, 2.0, 4.0, ]
 redend_options = [ True, False ]
 orient_options = [ "RL", "LR", "TB", "BT" ]
-notation_options = [ "snfg", "cfg" ]
+notation_options = [ "snfg", "cfg", "snfglink", "cfglink" ]
 display_options = [ "normal", "normalinfo", "compact" ]
 if args.linkage:
-    display_options = [ "normalinfo" ]
+    display_options = [ "normal", "compact" ] + 18*[ "normalinfo" ]
+    # display_options = [ "normalinfo" ]
+    notation_options = [ "snfg", "cfg" ]
 opaque_options = [ True, False ]
 
 valid_monos_str = """
@@ -232,10 +235,10 @@ for j in range(iterations):
             continue
 
         h = open(mapfile)
-        mapfiledata = h.read()
+        mapfiledata = list(h.read().splitlines())
         h.close()
         comp1 = Composition()
-        for l in mapfiledata.splitlines():
+        for l in mapfiledata:
             sl = l.split()
             if sl[0] != 'm':
                 continue
@@ -249,6 +252,15 @@ for j in range(iterations):
             os.unlink(pngfile)
             os.unlink(mapfile)
             continue
+        if imageWriter.get('display') not in ("normalinfo",):
+            for i in range(len(mapfiledata)):
+                sl = mapfiledata[i].split()
+                if sl[0] == "m":
+                   sl[3] = "?"
+                elif sl[0] == "l":
+                   sl[2] = "?"
+                   sl[3] = "?"
+                mapfiledata[i] = "\t".join(sl)
         wh = open(mapfile,'w')
         if acc1 != acc:
             print("# orig_accession:",acc,file=wh)
@@ -259,7 +271,7 @@ for j in range(iterations):
         print("# iupac:",gly_iupac,file=wh)
         topo_iupac = ip.toStr(topo(gly))
         print("# topo:",topo_iupac,file=wh)
-        wh.write(mapfiledata)
+        wh.write("\n".join(mapfiledata))
         wh.close()
         print(outputcount,acc1,file=sys.stderr)
         monofreq.add(comp)
