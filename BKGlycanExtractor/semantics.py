@@ -435,15 +435,13 @@ class Glycan_Semantics(Image_Semantics):
 
         # Get the current node's data
         symbol = self.monosaccharide(u).get('symbol')
-        #extension = '?1-?' if symbol not in ['NeuAc', 'NeuGc'] else '?2-?' #Old line before YOLO linkage detection
         
-        # determine the extension based on the link class label 
+        # determine the extension based on predicted class label
         if parent != -1: 
             link_info = self.find_link_info(parent, u)
             if link_info and link_info.get('classlabel') and link_info.get('classlabel') != 'link':
-                label = link_info.get('classlabel')
-                a = label[0] # anomer
-                c = label[1] # carbon number
+                a = link_info.get('anomer', '?')
+                c = link_info.get('carbon', '?')
                 extension = f'{a}1-{c}' if symbol not in ['NeuAc', 'NeuGc'] else f'{a}2-{c}'
             else:
                 # Fallback to generic linkages
