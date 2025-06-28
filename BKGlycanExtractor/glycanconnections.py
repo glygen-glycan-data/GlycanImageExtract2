@@ -636,9 +636,13 @@ class KnownLinkWithInfo(KnownLink):
                 if data_points[0] == 'l':
                     links[data_points[1]].append(data_points[4])
                     if data_points[2] != '?': 
-                        carbon_numbers[data_points[4]] = data_points[2] 
+                        carbon_numbers[data_points[4]] = data_points[2] # child
                     else:
                         carbon_numbers[data_points[4]] = 'x' 
+                    if data_points[3] != '?':
+                        carbon_numbers[data_points[1]] = data_points[3] # parent
+                    else:
+                        carbon_numbers[data_points[1]] = 'x'
 
                 if data_points[0] == 'm':
                     mono_id = data_points[1]
@@ -671,7 +675,7 @@ class KnownLinkWithInfo(KnownLink):
                 label = f"{mono_anomers[link]}{carbon_numbers[link]}"   
                 label_index = self.get_label_index(label)
                 anomer = mono_anomers[link]
-                child_carbon = carbon_numbers[link]
+                child_carbon =  carbon_numbers[link]
                 parent_carbon = carbon_numbers[mono1]
 
                 box = BoundingBox(x1=x_min, y1=y_min, x2=x_max, y2=y_max, 
