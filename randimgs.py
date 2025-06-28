@@ -25,6 +25,7 @@ parser.add_argument("-s", "--skip", type=str, help="File of accessions to skip. 
 parser.add_argument("-r", "--random", type=str, help="Randomization mode. One of uniform accessions (uniform), biased accessions (biased), random monosaccharides (mono), random monosaccharides + baised accessions (biasmono). Default: uniform.", default="uniform")
 parser.add_argument("-A", "--accessions", type=str, help="Limit to specific accessions by regular expression or prefix. Default: No restriction.", default=None)
 parser.add_argument("-L", "--linkage", action='store_true', help="Require glycosydic linkage information (display: normalinfo). Default: compact, normal, normainfo. ", default=False)
+parser.add_argument("-N", "--no_links", action='store_true', help="Do not display glycosydic linkage information (display: normal, compact). Default: compact, normal, normainfo.", default=False)
 
 args = parser.parse_args()
 imagenum = args.nimages
@@ -69,6 +70,9 @@ display_options = [ "normal", "normalinfo", "compact" ]
 if args.linkage:
     display_options = [ "normal", "compact" ] + 18*[ "normalinfo" ]
     # display_options = [ "normalinfo" ]
+    notation_options = [ "snfg", "cfg" ]
+if args.no_links:
+    display_options = [ "normal", "compact" ]
     notation_options = [ "snfg", "cfg" ]
 opaque_options = [ True, False ]
 
