@@ -221,12 +221,16 @@ for j in range(iterations):
                 continue
 
         imageWriter.writeImage(seq,outfile)
+        mapfile = None
         try:
             mapfile = imageData.generate_image(outfile)
-        except ValueError:
-            os.unlink(pngfile)
-            os.unlink(outfile)
-            os.unlink(mapfile)
+        except (ValueError,FileNotFoundError):
+            if os.path.exists(pngfile):
+                os.unlink(pngfile)
+            if os.path.exists(outfile):
+                os.unlink(outfile)
+            if mapfile is not None and os.path.exists(mapfile):
+                os.unlink(mapfile)
             continue
 
         # If mapfile is None, skip the rest of the code
@@ -261,6 +265,13 @@ for j in range(iterations):
                    sl[2] = "?"
                    sl[3] = "?"
                 mapfiledata[i] = "\t".join(sl)
+        if imageWriter.get('reducing_end') not in (True,):
+            for i in range(len(mapfiledata)):
+                sl = mapfiledata[i].split()
+                if sl[0] == "m":
+                   sl[3] = "?"
+                   mapfiledata[i] = "\t".join(sl)
+                   break
         wh = open(mapfile,'w')
         if acc1 != acc:
             print("# orig_accession:",acc,file=wh)
