@@ -639,10 +639,6 @@ class KnownLinkWithInfo(KnownLink):
                         carbon_numbers[data_points[4]] = data_points[2] # associate parent carbon with child
                     else:
                         carbon_numbers[data_points[4]] = 'x' 
-                    #if data_points[3] != '?':
-                    #    carbon_numbers[data_points[1]] = data_points[3] # parent
-                    #else:
-                    #    carbon_numbers[data_points[1]] = 'x'
 
                 if data_points[0] == 'm':
                     mono_id = data_points[1]
