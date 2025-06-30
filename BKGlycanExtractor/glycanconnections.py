@@ -636,13 +636,13 @@ class KnownLinkWithInfo(KnownLink):
                 if data_points[0] == 'l':
                     links[data_points[1]].append(data_points[4])
                     if data_points[2] != '?': 
-                        carbon_numbers[data_points[4]] = data_points[2] # child
+                        carbon_numbers[data_points[4]] = data_points[2] # associate parent carbon with child
                     else:
                         carbon_numbers[data_points[4]] = 'x' 
-                    if data_points[3] != '?':
-                        carbon_numbers[data_points[1]] = data_points[3] # parent
-                    else:
-                        carbon_numbers[data_points[1]] = 'x'
+                    #if data_points[3] != '?':
+                    #    carbon_numbers[data_points[1]] = data_points[3] # parent
+                    #else:
+                    #    carbon_numbers[data_points[1]] = 'x'
 
                 if data_points[0] == 'm':
                     mono_id = data_points[1]
@@ -675,14 +675,13 @@ class KnownLinkWithInfo(KnownLink):
                 label = f"{mono_anomers[link]}{carbon_numbers[link]}"   
                 label_index = self.get_label_index(label)
                 anomer = mono_anomers[link]
-                child_carbon =  carbon_numbers[link]
-                parent_carbon = carbon_numbers[mono1]
+                parent_carbon_bond = carbon_numbers[link] 
 
                 box = BoundingBox(x1=x_min, y1=y_min, x2=x_max, y2=y_max, 
                                   id=box_id, image=obj.image(),
                                   classid=label_index, classlabel=label,
                                   parent=mono1, child=link, anomer=anomer,
-                                  child_carbon=child_carbon, parent_carbon=parent_carbon)
+                                parent_carbon_bond=parent_carbon_bond)
 
                 box.pad(self.params['boxpadding']) # known data is absolute
                 boxes.append(box)
@@ -756,7 +755,7 @@ class ConnectYOLOInfo(ConnectYOLO):
                 classlabel = dbox.get('classlabel', '')
                 obj.add_undirected_link(id1, id2, confidence=float(dbox.get('confidence')), classid=dbox.get('classid'),
                                         classlabel=classlabel, box=dbox, anomer=classlabel[0], 
-                                         carbon=classlabel[1])
+                                         parent_carbon_bond=classlabel[1])
 
                 id_added[id1].add(id2)
                 id_added[id2].add(id1)

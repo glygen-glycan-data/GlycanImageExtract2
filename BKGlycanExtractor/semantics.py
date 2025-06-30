@@ -439,13 +439,9 @@ class Glycan_Semantics(Image_Semantics):
         # determine the extension based on predicted class label
         if parent != -1: 
             link_info = self.find_link_info(parent, u)
-            if link_info and link_info.get('classlabel') and link_info.get('classlabel') != 'link':
-                a = link_info.get('anomer', '?')
-                c = link_info.get('carbon', '?')
-                extension = f'{a}1-{c}' if symbol not in ['NeuAc', 'NeuGc'] else f'{a}2-{c}'
-            else:
-                # Fallback to generic linkages
-                extension = '?1-?' if symbol not in ['NeuAc', 'NeuGc'] else '?2-?'
+            a = link_info.get('anomer', '?') if link_info.get('anomer') != 'x' else '?'
+            c = link_info.get('parent_carbon_bond', '?') if link_info.get('parent_carbon_bond') != 'x' else '?'
+            extension = f'{a}1-{c}' if symbol not in ['NeuAc', 'NeuGc'] else f'{a}2-{c}'
         
         data = symbol + extension if parent != -1 else symbol
 
