@@ -1,4 +1,4 @@
-#!.venv/bin/python
+#!../.venv/bin/python
 '''
 File is used to build a zip file which includes:
 1) Training data: .png images and .txt files (<classid> <relative_center_x> <relative_center_y> <width> <height>)

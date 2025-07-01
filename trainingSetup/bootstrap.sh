@@ -1,10 +1,10 @@
 #!/bin/bash
 # if the script fails - the below line helps terminate the script as soon as an error occurs
 set -euo pipefail
-set -x
+# set -x
 
 SCRIPTURL="https://raw.githubusercontent.com/glygen-glycan-data/GlycanImageExtract2/refs/heads/dev/trainingSetup/"
-DARKNET_SOURCE="https://github.com/AlexeyAB/darknet/archive/6f3ba4422e5719a0fed1ff45045ebaa0c236d582.zip"
+DARKNET_SRC="https://github.com/AlexeyAB/darknet/archive/6f3ba4422e5719a0fed1ff45045ebaa0c236d582.zip"
 RCLONE_VERSION="v1.69.1"
 
 log_exit() {
@@ -29,6 +29,7 @@ download() {
 }
 
 RCLONE=""
+CLEAN="0"
 
 while [ "$#" -gt 0 ]; do
     case $1 in
@@ -36,11 +37,16 @@ while [ "$#" -gt 0 ]; do
             RCLONE="$2"
             shift 2
             ;;
+        --clean)
+            CLEAN="1"
+            shift 1
+            ;;
         -h|--help)
-            echo "Usage: ./bootstrap.sh [ --rclone_config <URL> ] [ remaining options ]"
+            echo "Usage: ./bootstrap.sh [ options ]"
             echo ""
-            echo "Required:"
-	    echo "  --rclone_config       URL location of rclone configuration \(optional\)"
+            echo "Arguments:"
+	    echo "  --rclone_config   File or URL of rclone config."
+	    echo "  --clean           Remove existing downloads."
             exit 0
             ;;
         *)
@@ -57,6 +63,11 @@ RCLONE_DIR="$BASE/rclone"
 RCLONE_BIN="$BASE/rclone/rclone"
 RCLONE_VERSION="v1.69.1"
 RCLONE_FULLVER="rclone-${RCLONE_VERSION}-linux-amd64"
+DARKNET_DIR="$BASE/darknet"
+
+if [ "$CLEAN" -eq 1 ]; then
+  rm -rf "$RCLONE_CONF" "$RCLONE_DIR" "$SCRIPTS" "$DARKNET_DIR"
+fi
 
 if [ -n "$RCLONE" -a ! -f "$RCLONE_CONF" ]; then
     download "$RCLONE" "$RCLONE_CONF"
@@ -73,7 +84,6 @@ if [ ! -d "$SCRIPTS" ]; then
     download "$SCRIPTURL/$f" "$SCRIPTS/$f"
   done
 fi
-DARKNET_DIR="$BASE/darknet"
 if [ ! -d "$DARKNET_DIR" ]; then
     echo ">> Cloning darknet..."
     wget -O $BASE/darknet.zip "$DARKNET_SRC"
@@ -88,7 +98,7 @@ fi
 
 # Validate required args
 if [ ! -f "$RCLONE_CONF" ]; then
-    echo "Error: --rclone_config is required" | tee -a "$LOGFILE"
+    echo "Error: --rclone_config is required"
     exit 1
 fi
 
