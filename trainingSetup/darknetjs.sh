@@ -1,7 +1,7 @@
 #!/bin/bash
 # if the script fails - the below line helps terminate the script as soon as an error occurs
 set -euo pipefail
-set -x
+# set -x
 
 TMPDIR=""
 
@@ -109,9 +109,13 @@ if [ ! -f "$RCLONE_CONF" ]; then
 fi
 if exists "$RESULTS/$NAME" ; then
     if [ "$CLEAN" -eq 1 ]; then
-	rclone rmdirs "$RESULTS/$NAME"
+	rclone purge "$RESULTS/$NAME"
+	if exists "$RESULTS/$NAME" ; then
+	    echo "Error: --job_name $NAME is still in $RESULTS."
+	    exit 1
+        fi
     else
-	echo "Error: --job_name has already been used in $RESULTS."
+	echo "Error: --job_name $NAME has already been used in $RESULTS."
 	exit 1
     fi
 fi
@@ -132,8 +136,8 @@ YOLO_CONFIG="yolov3_${EXP}.cfg"
 TRAIN_CONFIG="train.data"
 TRAINING_FILE="train.txt"
 VALIDATION_FILE="valid.txt"
-TRAIN_LOG="train.log"
-RCLONE_LOG="rclone.log"
+TRAIN_LOG="train-log.txt"
+RCLONE_LOG="rclone-log.txt"
 
 mkdir -p "$EXPROOT"
 cd "$EXPROOT"
@@ -196,31 +200,32 @@ LAST_WEIGHTS_FILE="$YOLO_WEIGHTS/yolov3_${EXP}_last.weights"
 FINAL_WEIGHTS_FILE="$YOLO_WEIGHTS/yolov3_${EXP}_final.weights"
 BEST_WEIGHTS_FILE="$YOLO_WEIGHTS/yolov3_${EXP}_best.weights"
 
-DARKNET="sudo docker run -it --gpus all -v .:/src sherensberk/darknet:2204.550.1241-devel darknet"
+DARKNET="sudo docker run --gpus all -v .:/src sherensberk/darknet:2204.550.1241-devel darknet"
 
-$DARKNET detector train "$TRAIN_CONFIG" "$YOLO_CONFIG" ./darknet53.conv.74 -dont_show -map >$TRAIN_LOG 2>&1 &
+$DARKNET detector train "$TRAIN_CONFIG" "$YOLO_CONFIG" ./darknet53.conv.74 -dont_show -map -nocolour </dev/null >$TRAIN_LOG 2>&1 &
 
 # Get the PID of the training process
 TRAIN_PID=$!
 
 TMPDIR=$(mktemp -d)
+touch "$RCLONE_LOG"
 
 upload_files() {
   for FILE in "$@"; do
     if [ -f "$FILE" ]; then
       BASENAME=$(basename "$FILE")
-      echo "INFO: Found $BASENAME. Uploading to Drive..."
 
       if [ ! -f "$TMPDIR/$BASENAME" -o "$FILE" -nt "$TMPDIR/$BASENAME" ]; then
+
+        echo "INFO: Uploading $BASENAME to drive..."  >>"$RCLONE_LOG" 2>&1
 
         # Make a temp copy to avoid errors from writing in progress
         cp -f "$FILE" "$TMPDIR/$BASENAME"
 
         # Upload using the original filename by specifying the full destination path
-        rclone copyto \
-          --update --verbose --progress \
-          --log-file="$RCLONE_LOG" \
-          "$TMPDIR/$BASENAME" "$DRIVEROOT/$BASENAME"
+        rclone copyto --update --verbose \
+          "$TMPDIR/$BASENAME" "$DRIVEROOT/$BASENAME" >>"$RCLONE_LOG" 2>&1 
+
       fi
     fi
   done
@@ -230,7 +235,7 @@ upload_files() {
 echo ">> Monitoring weights and uploading to Drive..."
 while kill -0 "$TRAIN_PID" 2>/dev/null; do
 
-  upload_files $YOLO_WEIGHTS/yolo*.weights *.log chart*.png
+  upload_files $YOLO_WEIGHTS/yolo*.weights *-log.txt chart*.png
   sleep 60
 
 done
