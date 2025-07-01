@@ -214,21 +214,15 @@ upload_files() {
   for FILE in "$@"; do
     if [ -f "$FILE" ]; then
       BASENAME=$(basename "$FILE")
-
       if [ ! -f "$TMPDIR/$BASENAME" -o "$FILE" -nt "$TMPDIR/$BASENAME" ]; then
-
         echo "INFO: Uploading $BASENAME to drive..."  >>"$RCLONE_LOG" 2>&1
-
         # Make a temp copy to avoid errors from writing in progress
         cp -f "$FILE" "$TMPDIR/$BASENAME"
-
-        # Upload using the original filename by specifying the full destination path
-        rclone copyto --update --verbose \
-          "$TMPDIR/$BASENAME" "$DRIVEROOT/$BASENAME" >>"$RCLONE_LOG" 2>&1 
-
       fi
     fi
   done
+  rclone copy --update --verbose \
+          "$TMPDIR" "$DRIVEROOT" >>"$RCLONE_LOG" 2>&1 
 }
 
 
