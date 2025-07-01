@@ -96,7 +96,7 @@ else
     echo ">> Darknet already exists. Skipping download."
 fi
 
-python -m pip install --user gdown
+python3 -m pip install --user gdown
 
 # Validate required args
 if [ ! -f "$RCLONE_CONF" ]; then

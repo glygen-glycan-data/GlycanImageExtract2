@@ -3,9 +3,11 @@
 set -euo pipefail
 set -x
 
+TMPDIR=""
+
 log_exit() {
   if [ -n "$TMPDIR" -a -d "$TMPDIR" ]; then
-    rm -f "$TMPDIR"
+    rm -rf "$TMPDIR"
   fi
   local code=$?
   echo "$(date '+%Y-%m-%d %H:%M:%S') Script exited with code $code"
@@ -21,8 +23,8 @@ rclone() {
 download() {
   rm -f "$2"
   case "$1" in 
-    https://drive.google.com/*) gdown "$1" "$2";;
-    http*) wget --no-check-certificate -O "$2" "$1";;
+    https://drive.google.com/*) gdown -q -O "$2" "$1";;
+    http*) wget --no-check-certificate -q -O "$2" "$1";;
     *) rclone copyto "$1" "$2";;
   esac
   if [ ! -s "$2" ]; then
@@ -41,9 +43,9 @@ exists() {
 
 RESULTS=""
 NAME=""
-PY_ARGS=()
+CLEAN="0"
 
-while [[ "$#" -gt 0 ]]; do
+while [ "$#" -gt 0 ]; do
     case $1 in
         --image_folder)
             RESULTS="$2"
@@ -53,14 +55,19 @@ while [[ "$#" -gt 0 ]]; do
             NAME="$2"
             shift 2
             ;;
+	--clean)
+            CLEAN=1
+            shift
+            ;;
         -h|--help)
-            echo "Usage: ./darknetjs.sh --image_folder <location> --job_name <name> \[other options passed to Python\]"
+            echo "Usage: ./darknetjs.sh --image_folder <location> --job_name <name> \[optional parameters\]"
             echo ""
             echo "Required:"
             echo "  --image_folder   Writable Google drive folder for images and results"
             echo "  --job_name       Job name for this training run"
             echo ""
-            echo "Optional Python args \(passed to update_yolo_cfg.py\):"
+            echo "Optional:"
+            echo "  --clean          Remove local and remote job folders"
             echo "  --batch          Batch size for YOLO config"
             echo "  --subdivisions   Subdivisions for YOLO config"
             echo "  --height         Input image height"
@@ -68,13 +75,8 @@ while [[ "$#" -gt 0 ]]; do
             echo "  --learning_rate  Learning rate for YOLO"
             exit 0
             ;;
-        --*)
-            PY_ARGS+=("$1" "$2")
-            shift 2
-            ;;
         *)
-            # If you want to handle positional args differently, do it here
-            shift
+            break
             ;;
     esac
 done
@@ -86,7 +88,7 @@ RCLONE_BIN="$BASE/rclone/rclone"
 
 # Validate required args
 if [ -z "$RESULTS" ]; then
-    echo "Error: --image_folder is required" | tee -a "$LOGFILE"
+    echo "Error: --image_folder is required"
     exit 1
 fi
 if [ -z "$NAME" ]; then
@@ -94,21 +96,29 @@ if [ -z "$NAME" ]; then
     exit 1
 fi
 if [ -d "$NAME" ]; then
-    echo "Error: --job_name has already been used locally."
-    exit 1
-fi
-if exists "$RESULTS/$NAME" ; then
-    echo "Error: --job_name has already been used in $RESULTS."
-    exit 1
+    if [ "$CLEAN" -eq 1 ]; then
+	rm -rf "$NAME"
+    else
+        echo "Error: --job_name has already been used locally."
+        exit 1
+    fi
 fi
 if [ ! -f "$RCLONE_CONF" ]; then
     echo "Error: "$RCLONE_CONF" not found." 
     exit 1
 fi
+if exists "$RESULTS/$NAME" ; then
+    if [ "$CLEAN" -eq 1 ]; then
+	rclone rmdirs "$RESULTS/$NAME"
+    else
+	echo "Error: --job_name has already been used in $RESULTS."
+	exit 1
+    fi
+fi
 
 echo "Image folder: $RESULTS"
 echo "Job name: $NAME"
-echo "Other args for Python script: ${PY_ARGS[*]}"
+echo "Training parameters:" "$@"
 
 EXP="$NAME"
 EXPROOT="$BASE/$NAME"
@@ -128,10 +138,10 @@ RCLONE_LOG="rclone.log"
 mkdir -p "$EXPROOT"
 cd "$EXPROOT"
 
-echo "INFO: Download "$RESULTS/images.zip from Google Drive..."
+echo "INFO: Download $RESULTS/images.zip from Google Drive..."
 download "$RESULTS/images.zip" "images.zip"
 mkdir -p "$YOLO_DATA"
-unzip -j "images.zip" -d "$YOLO_DATA"
+unzip -qq -j "images.zip" -d "$YOLO_DATA"
 
 # Move classes.txt out of YOLO_DATA
 mv "$YOLO_DATA/classes.txt" .
@@ -144,7 +154,7 @@ upload "$EXPROOT/yolov3_${EXP}.labels" "$DRIVEROOT/yolov3_${EXP}.labels"
 # YOLO_CLASSES - Count the number of non-empty lines in classes.txt
 # This tells us how many classes are defined (ignoring any blank lines)
 YOLO_CLASSES=$(grep -v '^\s*$' "classes.txt" | wc -l)
-echo "INFO: Total number of classes: $YOLO_CLASSES" | tee -a "$LOGFILE"
+echo "INFO: Total number of classes: $YOLO_CLASSES"
 
 YOLO_FILTERS=$(( (YOLO_CLASSES + 5) * 3 ))
 TRAIN_CONFIG="train.data"
@@ -172,7 +182,7 @@ DARKNET_DIR="$BASE/darknet"
 # get the original yolo config everytime (-f flag ensures this behaviour)
 cp -f $DARKNET_DIR/cfg/yolov3.cfg "$YOLO_CONFIG"
 
-python3 $SCRIPTS/update_yolo_cfg.py --yolo_config $YOLO_CONFIG --classes $YOLO_CLASSES "${PY_ARGS[@]}"
+python3 $SCRIPTS/update_yolo_cfg.py --yolo_config $YOLO_CONFIG --classes $YOLO_CLASSES "$@"
 
 # copy/overwrite yolo config file to drive
 upload "$YOLO_CONFIG" "$DRIVEROOT/$YOLO_CONFIG"
@@ -201,7 +211,7 @@ upload_files() {
       BASENAME=$(basename "$FILE")
       echo "INFO: Found $BASENAME. Uploading to Drive..."
 
-      if [ ! -f "$TMPDIR/$BASENAME" -o "$FILE" -nt "$TMPDIR/$BASENAME" ]
+      if [ ! -f "$TMPDIR/$BASENAME" -o "$FILE" -nt "$TMPDIR/$BASENAME" ]; then
 
         # Make a temp copy to avoid errors from writing in progress
         cp -f "$FILE" "$TMPDIR/$BASENAME"
@@ -211,7 +221,7 @@ upload_files() {
           --update --verbose --progress \
           --log-file="$RCLONE_LOG" \
           "$TMPDIR/$BASENAME" "$DRIVEROOT/$BASENAME"
-
+      fi
     fi
   done
 }
