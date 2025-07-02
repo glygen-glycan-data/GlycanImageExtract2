@@ -97,7 +97,7 @@ if [ ! -d "$DARKNET_DIR" ]; then
     mv $BASE/darknet-* $DARKNET_DIR
 fi
 
-python3 -m pip install --user -q gdown
+python3 -m pip install --user -q gdown openstackclient
 
 # Validate required args
 if [ ! -f "$RCLONE_CONF" ]; then
