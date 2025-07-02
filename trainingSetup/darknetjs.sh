@@ -245,7 +245,7 @@ done
 rm -f $TMPDIR/*
 
 echo "INFO: Uploading last weights to Drive..."
-upload_files $YOLO_WEIGHTS/yolo*.weights *.log chart*.png
+upload_files $YOLO_WEIGHTS/yolo*.weights *-log.txt chart*.png
 
 if [ -f "$LAST_WEIGHTS_FILE" ]; then
   echo "SUCCESS: Training complete. Final sync of weights to Drive done..."
