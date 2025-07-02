@@ -66,10 +66,10 @@ RCLONE_FULLVER="rclone-${RCLONE_VERSION}-linux-amd64"
 DARKNET_DIR="$BASE/darknet"
 
 if [ "$CLEAN" -eq 1 ]; then
-  rm -rf "$RCLONE_CONF" "$RCLONE_DIR" "$SCRIPTS" "$DARKNET_DIR"
+  rm -rf "$RCLONE_DIR" "$SCRIPTS" "$DARKNET_DIR"
 fi
 
-if [ -n "$RCLONE" -a ! -f "$RCLONE_CONF" ]; then
+if [ -n "$RCLONE" ]; then
     download "$RCLONE" "$RCLONE_CONF"
 fi
 if [ ! -d "$RCLONE_DIR" ]; then
@@ -89,15 +89,12 @@ if [ ! -d "$SCRIPTS" ]; then
   mv -f "$SCRIPTS/bootstrap.sh" "$BASE"
 fi
 if [ ! -d "$DARKNET_DIR" ]; then
-    echo ">> Cloning darknet..."
     download "$DARKNET_SRC" $BASE/darknet.zip 
     unzip -qq $BASE/darknet.zip -d $BASE
     rm -f $BASE/darknet.zip
 
     # Rename the extracted folder to 'darknet'
     mv $BASE/darknet-* $DARKNET_DIR
-else
-    echo ">> Darknet already exists. Skipping download."
 fi
 
 python3 -m pip install --user -q gdown
