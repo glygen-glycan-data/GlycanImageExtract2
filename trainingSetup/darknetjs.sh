@@ -228,7 +228,7 @@ upload_files() {
       fi
     fi
   done
-  rclone copy --update --verbose \
+  rclone copy --verbose \
           "$TMPDIR" "$DRIVEROOT" >>"$RCLONE_LOG" 2>&1 
 }
 
@@ -241,19 +241,16 @@ while kill -0 "$TRAIN_PID" 2>/dev/null; do
 
 done
 
+# clear $TMPDIR to make sure we get the last version of everything!
+rm -f $TMPDIR/*
+
+echo "INFO: Uploading last weights to Drive..."
+upload_files $YOLO_WEIGHTS/yolo*.weights *.log chart*.png
+
 if [ -f "$LAST_WEIGHTS_FILE" ]; then
-
-  sleep 5
-
-  echo "INFO: Uploading last weights to Drive..."
-  upload_files $YOLO_WEIGHTS/yolo*.weights *.log chart*.png
-  
   echo "SUCCESS: Training complete. Final sync of weights to Drive done..."
-
 else
-
   echo "WARNING: Training completed but final weights not found at $LAST_WEIGHTS_FILE"
-
 fi
 
 
