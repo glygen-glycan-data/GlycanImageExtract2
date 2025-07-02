@@ -4,6 +4,7 @@ set -euo pipefail
 # set -x
 
 TMPDIR=""
+touch $HOME/.noshutdown
 
 log_exit() {
   if [ -n "$TMPDIR" -a -d "$TMPDIR" ]; then
@@ -11,6 +12,10 @@ log_exit() {
   fi
   local code=$?
   echo "$(date '+%Y-%m-%d %H:%M:%S') Script exited with code $code"
+  if [ -f $HOME/.openrc.sh -a ! -f $HOME/.noshutdown ]; then
+      source $HOME/.openrc.sh
+      openstack server shelve `cat /run/cloud-init/.instance-id`
+  fi
 }
 
 # This line makes sure log_exit is called no matter how the script exits (e.g., exit 1, error, or reaching the end)
@@ -203,6 +208,8 @@ BEST_WEIGHTS_FILE="$YOLO_WEIGHTS/yolov3_${EXP}_best.weights"
 DARKNET="sudo docker run --gpus all -v .:/src sherensberk/darknet:2204.550.1241-devel darknet"
 
 $DARKNET detector train "$TRAIN_CONFIG" "$YOLO_CONFIG" ./darknet53.conv.74 -dont_show -map -nocolour </dev/null >$TRAIN_LOG 2>&1 &
+
+rm -f $HOME/.noshutdown
 
 # Get the PID of the training process
 TRAIN_PID=$!
