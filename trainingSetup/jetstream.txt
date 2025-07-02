@@ -1,0 +1,38 @@
+
+* Setup:
+  - Make an rclone config file for your Google drive (one time)
+    * place in GlycanImageExtract2/trainingSetup/rclone.conf 
+    * DO NOT CHECK THIS FILE INTO GITHUB!
+  - Get the openstack credentials (one time)
+    * place in GlycanImageExtract2/trainingSetup/openrc.sh
+    * DO NOT CHECK THIS FILE INTO GITHUB!
+  - Make your training dataset
+    * Use randimgs.py to generate a directory of images
+    * Use build_training_data.py to build training data from
+      image directory and KnownFinder class
+    * Upload to your Google drive
+      - e.g. rclone --config rclone.conf copyto images.zip gd:YOLO/YOLORedEnd/images.zip
+
+* Exosphere:
+  - Navigate to https://jetstream2.exosphere.app/
+  - Add your public key for cluster login as a public SSH-Key in exosphere (one time)
+    * Find it in your ~/.ssh/authorized_keys file
+  - start exosphere instance in NSF ACCESS allocation
+    * click "Random Name"
+    * choose Rocky Linux 9, instance type g3.xl
+    * use default root disk size
+    * select your SSH-Key (important)
+    * Web-desktop isn't needed.
+    * copy IP address from instance dashboard
+
+* Bootstrap instance (download/install requirements)
+  - log into cluster
+  - cd GlycanImageExtract2/trainingSetup
+  - ./setup.sh IP-address
+
+* Training 
+  - ssh exouser@IP-address
+    * ./scripts/darknetjs.sh --image_folder gd:YOLO/YOLORedEnd --job_name redend_v1 >& darknet.log &
+    * tail -f darknet.log redend_v1/*-log.txt 
+    * instance should shelve itself when done (doesn't use SUs)
+
