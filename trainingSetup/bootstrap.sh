@@ -28,15 +28,10 @@ download() {
   fi
 }
 
-RCLONE=""
 CLEAN="0"
 
 while [ "$#" -gt 0 ]; do
     case $1 in
-        --rclone_config)
-            RCLONE="$2"
-            shift 2
-            ;;
         --clean)
             CLEAN="1"
             shift 1
@@ -69,9 +64,6 @@ if [ "$CLEAN" -eq 1 ]; then
   rm -rf "$RCLONE_DIR" "$SCRIPTS" "$DARKNET_DIR"
 fi
 
-if [ -n "$RCLONE" ]; then
-    download "$RCLONE" "$RCLONE_CONF"
-fi
 if [ ! -d "$RCLONE_DIR" ]; then
     download "https://downloads.rclone.org/${RCLONE_VERSION}/${RCLONE_FULLVER}.zip" "${RCLONE_FULLVER}.zip"
     unzip -qq "${RCLONE_FULLVER}.zip"
@@ -99,9 +91,13 @@ fi
 
 python3 -m pip install --user -q gdown openstackclient
 
-# Validate required args
 if [ ! -f "$RCLONE_CONF" ]; then
-    echo "Error: --rclone_config is required"
+    echo "Error: rclone config is required"
+    exit 1
+fi
+
+if [ ! -f ".openrc.sh" ]; then
+    echo "Error: open stack credentials are required"
     exit 1
 fi
 
