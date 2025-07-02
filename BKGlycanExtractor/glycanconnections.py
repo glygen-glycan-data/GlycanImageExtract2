@@ -331,150 +331,22 @@ class OriginalConnector(HeuristicConnector):
         return black_masks
 
 
-class ConnectYOLO(YOLOModel,GlycanConnector):
-    '''
-    This is a base class - this doesnt drop any extra links/cycles.
-    Derieved classes will implement methods like - drop_cycles.
-    Hence hook methods are present in this base class - so that the derieved classes can override the hook methods and additional features can be added
-    '''
-    defaults = {
-        'conf_threshold': 0.5,
-        'boxpadding': 0,
-        'expandimage': 0,
-        'iou_threshold': 0.4
-    }
+class ObjectFilter:
+    def filter(self, objlist,obj):
+        raise NotImplemented
 
-    def __init__(self,**kwargs):
-
-        params = dict(
-            config = Config.get_param('config', Config.CONFIGFILE, kwargs, self.defaults),
-            weights = Config.get_param('weights', Config.CONFIGFILE, kwargs, self.defaults),
-            conf_threshold = Config.get_param('conf_threshold', Config.FLOAT, kwargs, self.defaults),
-            iou_threshold = Config.get_param('iou_threshold', Config.FLOAT, kwargs, self.defaults),
-            boxpadding = Config.get_param('boxpadding', Config.INT, kwargs, self.defaults),
-            expandimage = Config.get_param('expandimage', Config.INT, kwargs, self.defaults)
-        )
-
-        YOLOModel.__init__(self,params)
-        GlycanConnector.__init__(self)
-
-    def links_post_processing(self, undirected_links):
-        pass
-
-    def find_boxes(self, obj):
-        image = obj.image()
-        boxes = self.get_YOLO_output(image)
-
-        # if DebugMode.debug:
-        #     DebugMode.log_data(
-        #         identifier = DebugMode.curr_image,
-        #         data = {'links':[len(boxes)]},
-        #         image_path = DebugMode.image_path
-        #     )
-
-        return boxes
-
-    # returns a list of connected monosaccharide objects 
-    def find_objects(self, obj):
-        ''' returns list of undirected links'''
-        detected_boxes = self.find_boxes(obj)
-
-        obj.semantics['undirected_links'] = []
-
-        links = []
-
-        id_link_map = defaultdict(list)
-        id_added = defaultdict(set)  # Track already added IDs for each key
-
-        for dbox in detected_boxes:
-            # print(dbox)
-            linked_monos = []
-            x1, y1, x2, y2 = dbox.corners()
-
-            for mono in obj.monosaccharides(): 
-                x_cen, y_cen = mono['center']
-
-                if x_cen > x1 and x_cen < x2 and y_cen > y1 and y_cen < y2:
-                    linked_monos.append(mono)
-
-            if len(linked_monos) == 2:
-                links.append([linked_monos, dbox])
-
-            elif len(linked_monos) > 2 and len(linked_monos) <= 4:
-
-                max_distance = 0
-
-                farthest_pair = (None, None)
-        
-                for i in range(len(linked_monos)):
-                    for j in range(i+1, len(linked_monos)):
-                        if linked_monos[i].get('symbol') != 'Fuc' and linked_monos[j].get('symbol') != 'Fuc':
-                            dist = CompareBoxes().euclidean_distance(linked_monos[i]['box'], linked_monos[j]['box'])
-
-                            if dist > max_distance:
-                                max_distance = dist
-                                farthest_pair = [linked_monos[i], linked_monos[j]]
-
-                if farthest_pair != (None, None):
-                    links.append([farthest_pair, dbox])
-
-
-        id_added = defaultdict(set)  # Track already added IDs for each key
-        for (mono1, mono2), dbox in links:
-            id1, id2 = mono1.get('id'), mono2.get('id')
-
-            if id2 not in id_added[id1]:  
-                obj.add_undirected_link(id1, id2, confidence=float(dbox.get('confidence')), classid=dbox.get('classid'), classlabel=dbox.get('classlabel'), box=dbox)
-
-                id_added[id1].add(id2)
-                id_added[id2].add(id1)
-
-        # undirected links - sorted by confidence in descending order
-        obj.semantics['undirected_links'].sort(key=lambda link: link.get('confidence', 0.0), reverse=True)
-
-        # HOOK METHOD
-        # at this point we have all the undirected links,
-        # so hook methods can be added here for post_processing
-        self.links_post_processing(obj)
-
-        # check if no. of links are sufficient for the no. of monos detected
-        # no.of monos-1 == no. of links
-        links_count = len(obj.undirected_links())
-        monos_count = len(obj.monosaccharides())
-
-        obj.semantics["links_count"] = links_count
-        obj.semantics["monos_count"] = monos_count
-
-        if monos_count - 1 != links_count:
-            obj.glycan_error("Count of the monosaccharides do not match w.r.t count of the links")
-        
-        return obj.undirected_links()
-
-
-class YOLOLinksFilter(ConnectYOLO):
+class FilterLinks(ObjectFilter):   
     """
     Derieved class - used to eliminate extra links and links that form cycles in the glycan structure.
     """
 
-    defaults = {
-        'conf_threshold': 0.5,
-        'boxpadding': 0,
-        'expandimage': 0,
-        'iou_threshold': 0.4
-    }
-
-    def __init__(self,**kwargs):
-        super().__init__(**kwargs)
-
-    
-    # HOOK METHOD
-    def links_post_processing(self, obj):
+    def filter(self,objlist,obj):
         """
         Accepts links in descending order of confidence, but skips any link that
         forms a cycle. This builds a maximum-confidence spanning tree (Kruskals algo).
         Logs the skipped/cycle causing links in semantics["non_tree_links"].
         """
-        links = sorted(obj.undirected_links(), key=lambda l: -l.get("confidence", 0.0))
+        links = objlist
         mono_ids_set = {m_id for link in links for m_id in link["mono_ids"]}
         num_nodes = len(mono_ids_set)
 
@@ -511,14 +383,155 @@ class YOLOLinksFilter(ConnectYOLO):
                 link["reason"] = "Cycle detected. Dropped the edge."
                 obj.link_cycle(link)
 
+
+        objlist[:] = accepted
+
         # Update links in the object
-        obj.set_undirected_links(accepted)
+        # obj.set_undirected_links(accepted)
 
         # Disjointed tree error
-        if len(accepted) < num_nodes - 1:
+        if len(objlist) < num_nodes - 1:
             obj.glycan_error("Unable to build the structure due to missing edges")
+            
 
-        
+class ConnectYOLO(YOLOModel,GlycanConnector):
+
+    filters = [FilterLinks()]
+
+    defaults = {
+        'conf_threshold': 0.5,
+        'boxpadding': 0,
+        'expandimage': 0,
+        'iou_threshold': 0.4
+    }
+
+    def __init__(self,**kwargs):
+
+        params = dict(
+            config = Config.get_param('config', Config.CONFIGFILE, kwargs, self.defaults),
+            weights = Config.get_param('weights', Config.CONFIGFILE, kwargs, self.defaults),
+            conf_threshold = Config.get_param('conf_threshold', Config.FLOAT, kwargs, self.defaults),
+            iou_threshold = Config.get_param('iou_threshold', Config.FLOAT, kwargs, self.defaults),
+            boxpadding = Config.get_param('boxpadding', Config.INT, kwargs, self.defaults),
+            expandimage = Config.get_param('expandimage', Config.INT, kwargs, self.defaults)
+        )
+
+        YOLOModel.__init__(self,params)
+        GlycanConnector.__init__(self)
+
+
+    def find_boxes(self, obj):
+        image = obj.image()
+        boxes = self.get_YOLO_output(image)
+
+        # if DebugMode.debug:
+        #     DebugMode.log_data(
+        #         identifier = DebugMode.curr_image,
+        #         data = {'links':[len(boxes)]},
+        #         image_path = DebugMode.image_path
+        #     )
+
+        return boxes
+
+
+    def find_objects(self, obj):
+
+        obj_list = []
+
+        id_added = defaultdict(set)  # Track used mono pairs
+
+        boxes = self.find_boxes(obj)
+
+        # boxes are sorted based on confidence 
+        # monos will be mapped to the detected boxes using greedy technique - so it is good to have the boxes sorted before 
+        # and then have unique mono_ids mapped to the detected boxes
+        detected_boxes = sorted(boxes, key=lambda box: float(box.get('confidence', 0)),reverse=True)
+
+        for box in detected_boxes:
+            link_obj = self.box_to_object(box,obj,id_added)
+            if link_obj:
+                obj_list.append(link_obj)
+
+        self.filter_objects(obj_list,obj)
+
+        obj.set_undirected_links(obj_list)
+
+        return obj_list
+
+
+    def box_to_object(self,dbox,obj,id_added):
+        ''' Process a single detected box: find the linked monos in the box, return link info if valid '''
+
+        linked_monos = []
+        x1, y1, x2, y2 = dbox.corners()
+
+        for mono in obj.monosaccharides(): 
+            x_cen, y_cen = mono['center']
+
+            if x_cen > x1 and x_cen < x2 and y_cen > y1 and y_cen < y2:
+                linked_monos.append(mono)
+
+        if len(linked_monos) == 2:
+            pair = (linked_monos[0], linked_monos[1])
+        elif 2 < len(linked_monos) <= 4:    # more than 2 monos present in the same detected box
+            farthest_pair = self.find_farthest_pair(linked_monos)
+            if not farthest_pair:
+                return None
+            pair = farthest_pair
+
+        else:
+            return None
+
+        id1, id2 = pair[0].get('id'), pair[1].get('id')
+
+        if not self.is_new_link(id1, id2, id_added):
+            return None  # Already linked
+
+        return self.make_link(pair[0], pair[1], dbox)
+
+
+    def is_new_link(self, id1, id2, id_added):
+        ''' Return True if this link is new, mark as added '''
+        if id2 in id_added[id1]:
+            return False
+        id_added[id1].add(id2)
+        id_added[id2].add(id1)
+        return True
+
+    def find_farthest_pair(self, monos):
+        ''' Find farthest pair ignoring Fuc '''
+        max_distance = 0
+        farthest_pair = None
+
+        for i in range(len(monos)):
+            for j in range(i + 1, len(monos)):
+                if monos[i].get('symbol') != 'Fuc' and monos[j].get('symbol') != 'Fuc':
+                    dist = CompareBoxes().euclidean_distance(monos[i]['box'], monos[j]['box'])
+                    if dist > max_distance:
+                        max_distance = dist
+                        farthest_pair = (monos[i], monos[j])
+
+        return farthest_pair
+
+    def make_link(self, mono1, mono2, dbox):
+        ''' Make undirected link dict and add to obj '''
+        id1, id2 = mono1.get('id'), mono2.get('id')
+        link_info = {
+            'classid': dbox.get('classid'),
+            'classlabel': dbox.get('classlabel'),
+            'confidence': float(dbox.get('confidence')),
+            'mono_ids': [id1,id2],
+            'box': dbox
+        }
+        return link_info
+
+    
+    # since this is the method in the parent class - no filters are inherited, so we fallback to [] + current defined filters
+    # or if you need to completely change the order of the filters execution - you can override the entire method in the Base class
+    def filter_objects(self,object_list,obj):
+        for f in getattr(super(), "filters", []) + self.filters:
+            f.filter(object_list,obj)
+
 
 class KnownLink(GlycanConnector):
 
