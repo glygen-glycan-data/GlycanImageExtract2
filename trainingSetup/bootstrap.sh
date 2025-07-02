@@ -90,7 +90,7 @@ if [ ! -d "$SCRIPTS" ]; then
 fi
 if [ ! -d "$DARKNET_DIR" ]; then
     echo ">> Cloning darknet..."
-    wget -O $BASE/darknet.zip "$DARKNET_SRC"
+    download "$DARKNET_SRC" $BASE/darknet.zip 
     unzip -qq $BASE/darknet.zip -d $BASE
     rm -f $BASE/darknet.zip
 
@@ -100,7 +100,7 @@ else
     echo ">> Darknet already exists. Skipping download."
 fi
 
-python3 -m pip install --user gdown
+python3 -m pip install --user -q gdown
 
 # Validate required args
 if [ ! -f "$RCLONE_CONF" ]; then
