@@ -456,6 +456,12 @@ class ConnectYOLO(YOLOModel,GlycanConnector):
 
         obj.set_undirected_links(obj_list)
 
+
+        # adding a final check after all filtering steps are done
+        # if no.of monos-1 == no.of links
+        if len(obj_list) != len(obj.monosaccharides())-1:
+            obj.glycan_error("Count of the monosaccharides do not match w.r.t count of the links")
+
         return obj_list
 
 
