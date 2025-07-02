@@ -80,8 +80,11 @@ if [ ! -d "$RCLONE_DIR" ]; then
 fi
 if [ ! -d "$SCRIPTS" ]; then
   mkdir -p "$SCRIPTS"
-  for f in darknet.sh darknetjs.sh update_yolo_cfg.py split_data.py; do
+  for f in darknet.sh darknetjs.sh update_yolo_cfg.py split_data.py bootstrap.sh; do
     download "$SCRIPTURL/$f" "$SCRIPTS/$f"
+    case $f in
+      *.sh) chmod +x $f ;;
+    esac
   done
 fi
 if [ ! -d "$DARKNET_DIR" ]; then
