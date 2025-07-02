@@ -20,7 +20,7 @@ download() {
   if [ -f "$1" ]; then
     cp -r "$1" "$2"
   else
-    wget --no-check-certificate -O "$2" "$1";
+    wget --no-check-certificate -q -O "$2" "$1";
     if [ ! -s "$2" ]; then
       echo "Download $1 failed..." 1>&2
       exit 1;
@@ -74,7 +74,7 @@ if [ -n "$RCLONE" -a ! -f "$RCLONE_CONF" ]; then
 fi
 if [ ! -d "$RCLONE_DIR" ]; then
     download "https://downloads.rclone.org/${RCLONE_VERSION}/${RCLONE_FULLVER}.zip" "${RCLONE_FULLVER}.zip"
-    unzip "${RCLONE_FULLVER}.zip"
+    unzip -qq "${RCLONE_FULLVER}.zip"
     mv -f "${RCLONE_FULLVER}" "${RCLONE_DIR}"
     rm -f "${RCLONE_FULLVER}.zip"
 fi
@@ -83,14 +83,15 @@ if [ ! -d "$SCRIPTS" ]; then
   for f in darknet.sh darknetjs.sh update_yolo_cfg.py split_data.py bootstrap.sh; do
     download "$SCRIPTURL/$f" "$SCRIPTS/$f"
     case $f in
-      *.sh) chmod +x $f ;;
+      *.sh) chmod +x "$SCRIPTS/$f" ;;
     esac
   done
+  mv -f "$SCRIPTS/bootstrap.sh" "$BASE"
 fi
 if [ ! -d "$DARKNET_DIR" ]; then
     echo ">> Cloning darknet..."
     wget -O $BASE/darknet.zip "$DARKNET_SRC"
-    unzip $BASE/darknet.zip -d $BASE
+    unzip -qq $BASE/darknet.zip -d $BASE
     rm -f $BASE/darknet.zip
 
     # Rename the extracted folder to 'darknet'
