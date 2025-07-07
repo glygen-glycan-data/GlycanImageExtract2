@@ -109,6 +109,11 @@ figure_steps=SingleGlycanImage
 glycan_steps=KnownMono
 known_step=KnownLink
 
+[InfoLinks]
+figure_steps=SingleGlycanImage
+glycan_steps=KnownMono
+known_step=KnownLinkWithInfo
+
 [Glycan]
 figure_steps=
 glycan_steps=
