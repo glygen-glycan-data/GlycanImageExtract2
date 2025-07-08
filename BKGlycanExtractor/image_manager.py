@@ -356,7 +356,7 @@ class Image_Data:
 
     #campbell
     def write_link(self, e, anomer, parent_bond):
-        print('using write_link')
+        #print('using write_link')
         text_elements = e.getElementsByTagName('text')
         
         # Filter to only text elements with content
@@ -371,7 +371,7 @@ class Image_Data:
         # If only one text element, write anomer to it
         if len(valid_text_elements) == 1 and anomer:
             current_text = valid_text_elements[0].firstChild.nodeValue.strip()
-            print(f'replacing single text element {current_text} with anomer {anomer}')
+            #print(f'replacing single text element {current_text} with anomer {anomer}')
             valid_text_elements[0].firstChild.nodeValue = anomer
             anomer_updated = True
         else:
@@ -393,7 +393,7 @@ class Image_Data:
         
     #campbell
     def write_anomer(self, e, anomer):
-        print('using write_anomer')
+        #print('using write_anomer')
         if e.hasAttribute('data.residueAnomericState'):
             # Set the new anomer value
             e.setAttribute('data.residueAnomericState', anomer)
