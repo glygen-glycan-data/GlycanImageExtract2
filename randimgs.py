@@ -75,6 +75,9 @@ if args.linkage:
 if args.no_links:
     display_options = [ "normal", "compact" ]
     notation_options = [ "snfg", "cfg" ]
+if args.writelinks:
+    display_options = ["normalinfo"]
+    notation_options = [ "snfg", "cfg" ]
 opaque_options = [ True, False ]
 
 valid_monos_str = """
