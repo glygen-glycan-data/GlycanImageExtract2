@@ -75,7 +75,7 @@ class Image_Data:
         for image_file in img_manager.images:
             self.generate_image(image_file)
 
-    def generate_image(self,image_file,force=False):
+    def generate_image(self,image_file,force=False, **kwargs): #campbell
         base_name,extn = image_file.rsplit('.', 1)
         assert extn.lower() == "svg"
 
@@ -87,7 +87,13 @@ class Image_Data:
             return
         if not force and os.path.exists(txt_file):
             return
-        self.svg_parser(image_file,txt_file)
+        
+        # campbell
+        if kwargs.get('overwrite_links'):
+            self.svg_parser(image_file,txt_file, change_all_links=kwargs.get('overwrite_links')) 
+        else:
+            self.svg_parser(image_file,txt_file) 
+
         self.svg_to_png(image_file,png_image)
         self.random_colors(png_image)
         return txt_file
@@ -155,7 +161,15 @@ class Image_Data:
                 parent_bond = e.getAttribute("data.parentPositions") if e.hasAttribute("data.parentPositions") else "" 
                 child_bond = e.getAttribute("data.childPositions") if e.hasAttribute("data.childPositions") else ""
                 
+                #campbell
+                if kwargs.get('change_all_links'):
+                    anomer, parent_bond = self.get_written_link(kwargs.get('change_all_links'))
+                
                 if data_type == 'Monosaccharide':
+
+                    if kwargs.get('change_all_links'): #campbell
+                        self.write_anomer(e,anomer)
+
                     name = e.getAttribute("data.residueName") 
                     if name not in self.valid_monos:
                         raise ValueError("SVG Parser: %s not a valid mono name"%(name,))
@@ -190,9 +204,14 @@ class Image_Data:
                             break
 
                 elif data_type == 'Linkage':
+
                     gid = e.getAttribute("ID")   
                     t = gid.split(':')[1].split(',')
                     groups[gid] = ['l', t[0], parent_bond, child_bond, t[1]]  
+
+                elif gid[0:2] == 'li':
+                    if kwargs.get('change_all_links'):
+                        self.write_link(e, anomer, parent_bond)
 
                 elif gid == "r-1:1": # reducing-end squiggle
                     for ch in e.childNodes:
@@ -238,6 +257,13 @@ class Image_Data:
 
         with open(outfile, 'w') as of:
             of.write('\n'.join([ "\t".join(line) for line in out]))
+
+        #campbell
+        if kwargs.get('change_all_links'):
+            # Save the modified SVG back to the original file
+            with open(infile, 'w') as f:
+                svg_file.writexml(f, encoding='UTF-8')
+            print(f"Modified SVG saved to {infile}")
 
     def svg_to_png(self,infile,outfile):
         svg2png(file_obj=open(infile, "rb"), write_to=outfile)
@@ -299,3 +325,109 @@ class Image_Data:
         if blur:
             img = cv2.blur(img, (4,4))
         cv2.imwrite(image_file, img)
+
+
+    #campbell
+    #def write_link(self, e, anomer, parent_bond):
+    #    print('using write_link')
+    #    text_elements = e.getElementsByTagName('text')
+    #    
+    #    carbon_updated = False
+    #    anomer_updated = False
+    #    
+    #    for text_elem in text_elements:
+    #        if text_elem.firstChild and text_elem.firstChild.nodeValue:
+    #            current_text = text_elem.firstChild.nodeValue.strip()
+    #            
+    #            # Check if this is the carbon number
+    #            if current_text.isdigit() and not carbon_updated:
+    #                # Replace the carbon number
+    #                print(f'replacing carbon# {text_elem.firstChild.nodeValue} with {parent_bond}')
+    #              text_elem.firstChild.nodeValue = str(parent_bond)
+    #                carbon_updated = True
+    #                
+    #                
+    #            # Check if this is the anomer
+    #            elif current_text in ['α', 'β'] and not anomer_updated:
+    #                # Replace the anomer
+    #                print(f'replacing anomer {text_elem.firstChild.nodeValue} with {anomer}')
+    #                text_elem.firstChild.nodeValue = anomer
+    #                anomer_updated = True
+
+    #campbell
+    def write_link(self, e, anomer, parent_bond):
+        print('using write_link')
+        text_elements = e.getElementsByTagName('text')
+        
+        # Filter to only text elements with content
+        valid_text_elements = []
+        for text_elem in text_elements:
+            if text_elem.firstChild and text_elem.firstChild.nodeValue:
+                valid_text_elements.append(text_elem)
+        
+        carbon_updated = False
+        anomer_updated = False
+        
+        # If only one text element, write anomer to it
+        if len(valid_text_elements) == 1 and anomer:
+            current_text = valid_text_elements[0].firstChild.nodeValue.strip()
+            print(f'replacing single text element {current_text} with anomer {anomer}')
+            valid_text_elements[0].firstChild.nodeValue = anomer
+            anomer_updated = True
+        else:
+            # If multiple text elements, first = carbon#, second = anomer
+            for text_elem in valid_text_elements:
+                current_text = text_elem.firstChild.nodeValue.strip()
+                
+                # First text element = carbon number
+                if not carbon_updated and parent_bond:  
+                    print(f'replacing carbon# {current_text} with {parent_bond}')
+                    text_elem.firstChild.nodeValue = str(parent_bond)
+                    carbon_updated = True
+                # Second text element = anomer
+                elif not anomer_updated and anomer:  
+                    print(f'replacing anomer {current_text} with {anomer}')
+                    text_elem.firstChild.nodeValue = anomer
+                    anomer_updated = True
+
+        
+    #campbell
+    def write_anomer(self, e, anomer):
+        print('using write_anomer')
+        if e.hasAttribute('data.residueAnomericState'):
+            # Set the new anomer value
+            e.setAttribute('data.residueAnomericState', anomer)
+
+    # campbell
+    def get_written_link(self, link_value):
+   
+        anomer = ""
+        parent_bond = ""
+        
+        if isinstance(link_value, str):
+            # Check if it's a full link (anomer + carbon#)
+            if len(link_value) >= 2 and link_value[0].isalpha() and link_value[1:].isdigit():
+                anomer = link_value[0]
+                parent_bond = link_value[1:]
+            # Check if it's just an anomer (single letter)
+            elif len(link_value) == 1 and link_value.isalpha():
+                anomer = link_value
+                parent_bond = " "
+            # Check if it's just a carbon number
+            elif link_value.isdigit():
+                anomer = " "
+                parent_bond = link_value
+            else:
+                # Handle unexpected format - maybe log a warning
+                print(f"Warning: Unexpected link format: {link_value}")
+        elif isinstance(link_value, list) and len(link_value) >= 2:
+            # Handle list format like ['a', '5']
+            anomer = str(link_value[0])
+            parent_bond = str(link_value[1])
+        elif isinstance(link_value, bool) and link_value:
+            # Handle boolean True - use defaults or some other logic
+            anomer = " "
+            parent_bond = " "
+        
+        return anomer, parent_bond
+            

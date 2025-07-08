@@ -25,7 +25,8 @@ parser.add_argument("-s", "--skip", type=str, help="File of accessions to skip. 
 parser.add_argument("-r", "--random", type=str, help="Randomization mode. One of uniform accessions (uniform), biased accessions (biased), random monosaccharides (mono), random monosaccharides + baised accessions (biasmono). Default: uniform.", default="uniform")
 parser.add_argument("-A", "--accessions", type=str, help="Limit to specific accessions by regular expression or prefix. Default: No restriction.", default=None)
 parser.add_argument("-L", "--linkage", action='store_true', help="Require glycosydic linkage information (display: normalinfo). Default: compact, normal, normainfo. ", default=False)
-parser.add_argument("-N", "--no_links", action='store_true', help="Do not display glycosydic linkage information (display: normal, compact). Default: compact, normal, normainfo.", default=False)
+parser.add_argument("--no_links", action='store_true', help="Do not display glycosydic linkage information (display: normal, compact). Default: compact, normal, normainfo.", default=False)
+parser.add_argument("--writelinks", type=str, help="overwrite all links to the specification [anomer,carbon#]", default=False)
 
 args = parser.parse_args()
 imagenum = args.nimages
@@ -227,7 +228,7 @@ for j in range(iterations):
         imageWriter.writeImage(seq,outfile)
         mapfile = None
         try:
-            mapfile = imageData.generate_image(outfile)
+            mapfile = imageData.generate_image(outfile, overwrite_links=args.writelinks) #campbell
         except (ValueError,FileNotFoundError):
             if os.path.exists(pngfile):
                 os.unlink(pngfile)
@@ -290,7 +291,7 @@ for j in range(iterations):
         wh.close()
         print(outputcount,acc1,file=sys.stderr)
         monofreq.add(comp)
-        os.unlink(outfile)
+        #os.unlink(outfile) #campbell
         count += 1
         outputcount += 1
 
