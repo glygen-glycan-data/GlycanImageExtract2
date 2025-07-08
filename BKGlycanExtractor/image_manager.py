@@ -381,12 +381,12 @@ class Image_Data:
                 
                 # First text element = carbon number
                 if not carbon_updated and parent_bond:  
-                    print(f'replacing carbon# {current_text} with {parent_bond}')
+                    # print(f'replacing carbon# {current_text} with {parent_bond}')
                     text_elem.firstChild.nodeValue = str(parent_bond)
                     carbon_updated = True
                 # Second text element = anomer
                 elif not anomer_updated and anomer:  
-                    print(f'replacing anomer {current_text} with {anomer}')
+                    # print(f'replacing anomer {current_text} with {anomer}')
                     text_elem.firstChild.nodeValue = anomer
                     anomer_updated = True
 
