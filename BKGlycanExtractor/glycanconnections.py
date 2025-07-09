@@ -670,13 +670,13 @@ class KnownLinkWithInfo(KnownLink):
 
                 label = f"{mono_anomers[link]}{carbon_numbers[link]}"   
                 label_index = self.get_label_index(label)
-                anomer = mono_anomers[link]
-                parent_carbon_bond = carbon_numbers[link] 
+                anomer = (mono_anomers[link])
+                parent_carbon_bond = carbon_numbers[link]
 
                 box = BoundingBox(x1=x_min, y1=y_min, x2=x_max, y2=y_max, 
                                   id=box_id, image=obj.image(),
                                   classid=label_index, classlabel=label,
-                                  parent=mono1, child=link, anomer=anomer,
+                                  parent=int(mono1), child=int(link), anomer=anomer,
                                 parent_carbon_bond=parent_carbon_bond)
 
                 box.pad(self.params['boxpadding']) # known data is absolute
@@ -692,6 +692,13 @@ class KnownLinkWithInfo(KnownLink):
             )
 
         return boxes
+    
+    def find_objects(self,obj):
+        boxes = self.find_boxes(obj)
+        obj.clear_undirected_links()
+        for box in boxes:
+            obj.add_undirected_link(box.get('parent'),box.get('child'),classid=box.get('classid'),classlabel=box.get('classlabel'),box=box, anomer=box.get('anomer'), parent_carbon_bond=box.get('parent_carbon_bond'))
+        return obj.undirected_links()
 
 class ConnectYOLOInfo(ConnectYOLO):
     finder_class = "InfoLinks"
@@ -749,7 +756,7 @@ class ConnectYOLOInfo(ConnectYOLO):
             if id2 not in id_added[id1]:
 
                 classlabel = dbox.get('classlabel', '')
-                obj.add_undirected_link(id1, id2, confidence=float(dbox.get('confidence')), classid=dbox.get('classid'),
+                obj.add_undirected_link(int(id1), int(id2), confidence=float(dbox.get('confidence')), classid=dbox.get('classid'),
                                         classlabel=classlabel, box=dbox, anomer=classlabel[0], 
                                          parent_carbon_bond=classlabel[1])
 

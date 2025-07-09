@@ -113,7 +113,7 @@ pipeline1 = config.get_pipeline(pipeline_name)
 
 sgi = config.get_finder("SingleGlycanImage")
 sm =  config.get_finder("KnownMono")
-sl = config.get_finder("KnownLink")
+sl = config.get_finder("KnownLinkWithInfo")
 sr = config.get_finder("KnownRoot")
 pipeline0 = GlycanExtractorPipeline()
 pipeline0.add_step("figure",sgi)
@@ -153,7 +153,7 @@ for image in sorted(images):
         
         IUPAC0 = Glycan_Semantics.IUPAC(gly0) 
         IUPAC1 = Glycan_Semantics.IUPAC(gly1) 
-        print("Known IUPAC: ",IUPAC0) 
+        print("Known IUPAC   : ",IUPAC0) 
         print("Detected IUPAC: ",IUPAC1 if IUPAC1 else 'No sequence detected') 
 #         print("\nDo the IUPAC sequences match?", IUPAC0==IUPAC1)
 
