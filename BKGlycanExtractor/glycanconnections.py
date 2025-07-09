@@ -670,7 +670,7 @@ class KnownLinkWithInfo(KnownLink):
 
                 label = f"{mono_anomers[link]}{carbon_numbers[link]}"   
                 label_index = self.get_label_index(label)
-                anomer = (mono_anomers[link])
+                anomer = mono_anomers[link]
                 parent_carbon_bond = carbon_numbers[link]
 
                 box = BoundingBox(x1=x_min, y1=y_min, x2=x_max, y2=y_max, 
