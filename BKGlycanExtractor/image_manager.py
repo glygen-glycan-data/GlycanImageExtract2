@@ -361,40 +361,66 @@ class Image_Data:
                 
 
     def get_written_link(self, link_value):
-   
         anomer = ""
         parent_bond = ""
         
-        if isinstance(link_value, str):
-            if link_value == "xx" or link_value == "??":
+        if isinstance(link_value, str) and len(link_value) == 2:
+            # First character is anomer
+            if link_value[0] == "x":
                 anomer = "?"
-                parent_bond = "?"
-            elif link_value == " ":
+            elif link_value[0] == "_":
                 anomer = " "
-                parent_bond = " "
-            elif len(link_value) == 2 and link_value[0] in "x?" and link_value[1].isdigit() and link_value[1] in "123456789":
-                anomer = "?"
-                parent_bond = link_value[1]
-            elif len(link_value) == 2 and link_value[1] in "x?" and link_value[0] in "ab":
-                anomer = link_value[0]
-                parent_bond = "?"
-            elif len(link_value) >= 2 and link_value[0].isalpha() and link_value[1:].isdigit():
-                anomer = link_value[0]
-                parent_bond = link_value[1:]
-            elif len(link_value) == 1 and link_value.isalpha():
-                anomer = link_value
-                parent_bond = " "
-            elif link_value.isdigit():
-                anomer = " "
-                parent_bond = link_value
-            elif isinstance(link_value, int):      
-                anomer = "?"
-                parent_bond = str(link_value)
             else:
-                print(f"Warning: Unexpected link format: {link_value}")
-        elif isinstance(link_value, list) and len(link_value) >= 2:
-            # Handle list format like ['a', '5']
-            anomer = str(link_value[0])
-            parent_bond = str(link_value[1])
+                anomer = link_value[0]
+            
+            # Second character is parent_bond
+            if link_value[1] == "x":
+                parent_bond = "?"
+            elif link_value[1] == "_":
+                parent_bond = " "
+            else:
+                parent_bond = link_value[1]
+        else:
+            print(f"Warning: Expected 2-character string, got: {link_value}")
         
-        return anomer, parent_bond        
+        return anomer, parent_bond
+        
+    
+    #def get_written_link(self, link_value):
+    #
+    #    anomer = ""
+    #    parent_bond = ""
+    #    
+    #    if isinstance(link_value, str):
+    #        if link_value == "xx" or link_value == "??":
+    #            anomer = "?"
+    #            parent_bond = "?"
+    #        elif link_value == "__":
+    #            anomer = " "
+    #            parent_bond = " "
+    #        elif len(link_value) == 2 and link_value[0] in "x?" and link_value[1].isdigit() and link_value[1] in "123456789":
+    #            anomer = "?"
+    #            parent_bond = link_value[1]
+    #        elif len(link_value) == 2 and link_value[1] in "x?" and link_value[0] in "ab":
+    #            anomer = link_value[0]
+    #            parent_bond = "?"
+    #        elif len(link_value) >= 2 and link_value[0].isalpha() and link_value[1:].isdigit():
+    #            anomer = link_value[0]
+    #            parent_bond = link_value[1:]
+    #        elif len(link_value) == 1 and link_value.isalpha():
+    #            anomer = link_value
+    #            parent_bond = " "
+    #        elif link_value.isdigit():
+    #            anomer = " "
+    #            parent_bond = link_value
+    #        elif isinstance(link_value, int):      
+    #            anomer = "?"
+    #            parent_bond = str(link_value)
+    #        else:
+    #            print(f"Warning: Unexpected link format: {link_value}")
+    #    elif isinstance(link_value, list) and len(link_value) >= 2:
+    #        # Handle list format like ['a', '5']
+    #        anomer = str(link_value[0])
+    #        parent_bond = str(link_value[1])
+    #    
+    #    return anomer, parent_bond        

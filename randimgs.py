@@ -294,7 +294,7 @@ for j in range(iterations):
         wh.close()
         print(outputcount,acc1,file=sys.stderr)
         monofreq.add(comp)
-        #os.unlink(outfile) #campbell
+        os.unlink(outfile)
         count += 1
         outputcount += 1
 
