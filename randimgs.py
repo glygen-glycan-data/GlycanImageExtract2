@@ -128,7 +128,7 @@ monofreq['Count'] = len(valid_monos)
 imageData = Image_Data(valid_monos)
 
 outputcount = 0
-seen = trained_accesions
+seen = trained_accessions
 for j in range(iterations):
     imageWriter = GlycanImage()
     imageWriter.set('scale',random.choice(scale_options))
@@ -146,7 +146,7 @@ for j in range(iterations):
         acc = random.choice(accs)
         if acc in seen:
             continue
-        # print("random choice:",acc,file=sys.stderr)
+        print("random choice:",acc,file=sys.stderr)
         seen.add(acc)
         acc1 = acc
         if 'mono' in randmode:
