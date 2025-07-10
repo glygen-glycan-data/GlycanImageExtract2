@@ -117,11 +117,9 @@ if accregex:
     imagenum = min(imagenum,len(accs))
 
 # accessions your model was trained on, to avoid testing on them
+trained_accessions = set()
 if badaccfile is not None:
-    trained_accessions = set()
-    with open(badaccfile) as f:
-        for l in f:
-            trained_accessions.add(l.rstrip())
+    trained_accessions = set(open(badaccfile).read().split())
 
 monofreq = Composition()
 monofreq.set(*valid_monos,value=1)
@@ -130,7 +128,7 @@ monofreq['Count'] = len(valid_monos)
 imageData = Image_Data(valid_monos)
 
 outputcount = 0
-seen = set()
+seen = trained_accesions
 for j in range(iterations):
     imageWriter = GlycanImage()
     imageWriter.set('scale',random.choice(scale_options))
