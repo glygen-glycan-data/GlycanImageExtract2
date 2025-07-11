@@ -230,6 +230,11 @@ for j in range(iterations):
                 continue
 
         imageWriter.writeImage(seq,outfile)
+
+        #campbell
+        if randmode in ("linkinfo"):
+            outfile = imageData.change_linkinfo(imageWriter.get('display'), outfile) 
+
         mapfile = None
         try:
             mapfile = imageData.generate_image(outfile, overwrite_links=args.writelinks) #campbell

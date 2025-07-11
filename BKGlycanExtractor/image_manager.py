@@ -386,11 +386,11 @@ class Image_Data:
         return anomer, parent_bond
         
     
-    def change_linkinfo(self, display_options, infile, anomers=['?',' ','a','a','b','b'], carbons=['?',' ',2,2,3,3,4,4,6,6,8,8]):
+    def change_linkinfo(self, display, infile, anomers=['?',' ','a','a','b','b'], carbons=['?',' ',2,2,3,3,4,4,6,6,8,8]):
     
         # if there isn't link info, continue
-        if display_options != 'normalinfo': 
-            return
+        if display != 'normalinfo': 
+            return infile
 
         svg_file = xml.dom.minidom.parse(infile)
         svg = svg_file.getElementsByTagName('svg')[0]
@@ -404,7 +404,7 @@ class Image_Data:
                 # write anomer & carbon# to "li" lines
                 if gid[0:2] == 'li':
                     anomer = random.choice(anomers)
-                    parent_bond = random.choice(parent_bond)
+                    parent_bond = random.choice(carbons)
                     self.write_link(e, anomer, parent_bond)
                     parent, child = map(int, gid.split(":")[1].split(","))
                     
@@ -425,7 +425,8 @@ class Image_Data:
                             if p == parent and c == child:
                                 if e2.hasAttribute('data.parentPositions'):
                                     e2.setAttribute('data.parentPositions', parent_bond)
-        print('changed links and writing out svg')    
+        print('changed links')    
+        return svg_file
         # write the svg out
-        with open(infile, 'w') as f:
-            svg_file.writexml(f, encoding='UTF-8')
+        #with open(infile, 'w') as f:
+        #    svg_file.writexml(f, encoding='UTF-8')
