@@ -22,7 +22,7 @@ parser.add_argument("-o", "--outdir", type=str, help="Ouput directory. Default: 
 parser.add_argument("-c", "--clear", action='store_true', help="Clear output directory first.", default=False)
 parser.add_argument("-F", "--force", action='store_true', help="Force re-download of GlyTouCan accessions and sequences", default=False)
 parser.add_argument("-s", "--skip", type=str, help="File of accessions to skip. Default: None.", default=None)
-parser.add_argument("-r", "--random", type=str, help="Randomization mode. One of uniform accessions (uniform), biased accessions (biased), random monosaccharides (mono), random monosaccharides + baised accessions (biasmono). Default: uniform.", default="uniform")
+parser.add_argument("-r", "--random", type=str, help="Randomization mode. One of uniform accessions (uniform), biased accessions (biased), random monosaccharides (mono), random monosaccharides + baised accessions (biasmono), random linkages (linkinfo). Default: uniform.", default="uniform")
 parser.add_argument("-A", "--accessions", type=str, help="Limit to specific accessions by regular expression or prefix. Default: No restriction.", default=None)
 parser.add_argument("-L", "--linkage", action='store_true', help="Require glycosydic linkage information (display: normalinfo). Default: compact, normal, normainfo. ", default=False)
 parser.add_argument("--no_links", action='store_true', help="Do not display glycosydic linkage information (display: normal, compact). Default: compact, normal, normainfo.", default=False)
@@ -57,7 +57,7 @@ badaccfile = args.skip
 if badaccfile:
     assert os.path.isfile(badaccfile)
 randmode = args.random
-assert randmode in ("uniform","biased","mono","biasmono")
+assert randmode in ("uniform","biased","mono","biasmono","linkinfo") #campbell
 
 print("Start randimg...")
 
@@ -149,7 +149,7 @@ for j in range(iterations):
         print("random choice:",acc,file=sys.stderr)
         seen.add(acc)
         acc1 = acc
-        if 'mono' in randmode:
+        if 'mono' in randmode or 'linkinfo' in randmode: #campbell
             acc1 = "R%07d"%(outputcount + 1,)
         outfile = os.path.join(output_folder, acc1 + "." + mode)
         pngfile = os.path.join(output_folder, acc1 + ".png")

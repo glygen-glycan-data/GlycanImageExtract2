@@ -386,41 +386,46 @@ class Image_Data:
         return anomer, parent_bond
         
     
-    #def get_written_link(self, link_value):
-    #
-    #    anomer = ""
-    #    parent_bond = ""
-    #    
-    #    if isinstance(link_value, str):
-    #        if link_value == "xx" or link_value == "??":
-    #            anomer = "?"
-    #            parent_bond = "?"
-    #        elif link_value == "__":
-    #            anomer = " "
-    #            parent_bond = " "
-    #        elif len(link_value) == 2 and link_value[0] in "x?" and link_value[1].isdigit() and link_value[1] in "123456789":
-    #            anomer = "?"
-    #            parent_bond = link_value[1]
-    #        elif len(link_value) == 2 and link_value[1] in "x?" and link_value[0] in "ab":
-    #            anomer = link_value[0]
-    #            parent_bond = "?"
-    #        elif len(link_value) >= 2 and link_value[0].isalpha() and link_value[1:].isdigit():
-    #            anomer = link_value[0]
-    #            parent_bond = link_value[1:]
-    #        elif len(link_value) == 1 and link_value.isalpha():
-    #            anomer = link_value
-    #            parent_bond = " "
-    #        elif link_value.isdigit():
-    #            anomer = " "
-    #            parent_bond = link_value
-    #        elif isinstance(link_value, int):      
-    #            anomer = "?"
-    #            parent_bond = str(link_value)
-    #        else:
-    #            print(f"Warning: Unexpected link format: {link_value}")
-    #    elif isinstance(link_value, list) and len(link_value) >= 2:
-    #        # Handle list format like ['a', '5']
-    #        anomer = str(link_value[0])
-    #        parent_bond = str(link_value[1])
-    #    
-    #    return anomer, parent_bond        
+    def change_linkinfo(self, display_options, infile, anomers=['?',' ','a','a','b','b'], carbons=['?',' ',2,2,3,3,4,4,6,6,8,8]):
+    
+        # if there isn't link info, continue
+        if display_options != 'normalinfo': 
+            return
+
+        svg_file = xml.dom.minidom.parse(infile)
+        svg = svg_file.getElementsByTagName('svg')[0]
+        elements = svg.getElementsByTagName('g')
+        
+        for e in elements:
+            if e.hasAttribute('ID'):
+                data_type = e.getAttribute("data.type")
+                gid = e.getAttribute("ID")
+                
+                # write anomer & carbon# to "li" lines
+                if gid[0:2] == 'li':
+                    anomer = random.choice(anomers)
+                    parent_bond = random.choice(parent_bond)
+                    self.write_link(e, anomer, parent_bond)
+                    parent, child = map(int, gid.split(":")[1].split(","))
+                    
+                    
+                    for e2 in elements:
+                        data_type = e.getAttribute("data.type")
+                        gid = e.getAttribute("ID")
+
+                        # change the child anomer
+                        if data_type == 'Monosaccharide':
+                            id = int(gid.split(":")[1])
+                            if id == child:
+                                self.write_anomer(e2, anomer)   
+
+                        # change the parent bond
+                        elif data_type == 'Linkage':
+                            p, c = map(int, gid.split(":")[1].split(","))
+                            if p == parent and c == child:
+                                if e2.hasAttribute('data.parentPositions'):
+                                    e2.setAttribute('data.parentPositions', parent_bond)
+        print('changed links and writing out svg')    
+        # write the svg out
+        with open(infile, 'w') as f:
+            svg_file.writexml(f, encoding='UTF-8')
