@@ -184,6 +184,9 @@ for j in range(iterations):
             if pp != None and len(pp) > 1:
                 bad = True
                 break
+            if list(pp)[0] not in (2,3,4,6,8):
+                bad = True
+                break
         if bad:
             continue
         if randmode in ("mono","biasmono"):
