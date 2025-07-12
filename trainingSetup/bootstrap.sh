@@ -96,8 +96,17 @@ if [ ! -f "$RCLONE_CONF" ]; then
     exit 1
 fi
 
-if [ ! -f ".openrc.sh" ]; then
+if [ ! -f "$BASE/.openrc.sh" ]; then
     echo "Error: open stack credentials are required"
     exit 1
 fi
+
+# minimally test these...
+
+echo "RClone remotes..."
+"$RCLONE_BIN" --config "$RCLONE_CONF" listremotes
+
+echo "OpenStack instances..."
+source "$BASE/.openrc.sh"
+openstack server list
 
