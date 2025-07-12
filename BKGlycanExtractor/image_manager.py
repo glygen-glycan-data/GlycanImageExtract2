@@ -390,6 +390,7 @@ class Image_Data:
     
         # if there isn't link info, continue
         if display != 'normalinfo': 
+            print('not normalinfo')
             return infile
 
         svg_file = xml.dom.minidom.parse(infile)
@@ -426,7 +427,7 @@ class Image_Data:
                                 if e2.hasAttribute('data.parentPositions'):
                                     e2.setAttribute('data.parentPositions', parent_bond)
         print('changed links')    
-        return svg_file
         # write the svg out
-        #with open(infile, 'w') as f:
-        #    svg_file.writexml(f, encoding='UTF-8')
+        with open(infile, 'w') as f:
+            svg_file.writexml(f, encoding='UTF-8')
+        return infile

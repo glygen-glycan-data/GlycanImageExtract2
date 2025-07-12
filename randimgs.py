@@ -233,7 +233,8 @@ for j in range(iterations):
 
         #campbell
         if randmode in ("linkinfo"):
-            outfile = imageData.change_linkinfo(imageWriter.get('display'), outfile) 
+            #outfile = imageData.change_linkinfo(imageWriter.get('display'), outfile) 
+            imageData.change_linkinfo(imageWriter.get('display'), outfile) 
 
         mapfile = None
         try:
