@@ -11,37 +11,41 @@
     let delay = 5;
 
     function query() {
-        let request_URL = "{{urlprefix}}/retrieve?list_ids=" + JSON.stringify([list_id]);
+        let request_URL = "{{urlprefix}}/get_job_status/" + list_id;
         jQuery.getJSON(request_URL, function (d) {
-            let tmp = d[0];
-
             // in ms
+            console.log(d);
             let time_lapsed = new Date().getTime() - start_time_stamp;
 
-            if (tmp.finished) {
-                calculation_time = Math.floor(tmp.result["runtime"]);
+            if (d.state == "Complete" || d.state == "Error" || d.finished == true) {
+                // calculation_time = Math.floor(tmp.result["runtime"]);
                 // console.log("runtime")
                 // console.log(tmp.result["runtime"])
                 if (window.document.location.toString().includes("file_upload")) {
                     window.document.location = "{{urlprefix}}/result/"+list_id;
                 } else {
-                    addDownloadButton(tmp);
+                    let request_URL = "{{urlprefix}}/retrieve?list_ids=" + JSON.stringify([list_id]);
+                    jQuery.getJSON(request_URL, function (d) {
+                      let tmp = d[0];
+                      addDownloadButton(tmp);
+                    })
                 }
             }
             else {
-                result.innerHTML = "<h3>Your file has been successfully uploaded for analysis.</h3><h3 id=\"info\">Please wait</h3>"
+                result.innerHTML = "<h3 id=\"status\">Your job was successfully submitted.</h3><h3 id=\"info\">Please wait</h3>"
                 
                 wait_cycle_index += 1;
                 wait_cycle_index = wait_cycle_index % 4;
 
-                let additional_message = "";
-                // if (time_lapsed > 20*1000){
-                //    // Takes more than 10 seconds after submission
-                //    additional_message = "It might take longer for large file. "
-                // }
+                let additional_message = "Job Status: " + d.state + " - " + d.status + ".";
+                if (d.status == d.state || d.status == "") {
+                    additional_message = "Job Status: " + d.state + ".";
+                }
 
+                let status = document.getElementById("status");
+                status.innerText = additional_message
                 let info = document.getElementById("info");
-                info.innerText = additional_message + wait_cycle[wait_cycle_index];
+                info.innerText = wait_cycle[wait_cycle_index];
 
                 setTimeout(query, delay * 1000)
             }
@@ -121,7 +125,6 @@
         var alert_str = ""
         var resstr = ""
 
-
         alert_data.innerHTML = alert_str
 
         // resstr += "<h3>Analysis complete. ("+calculation_time+" sec)<h3>\n<ul>";
@@ -138,6 +141,9 @@
             resstr += "<span><a style='background-color:#e8e3e3; font-weight:400; border-radius:20px;padding:1px 5px 1px 5px;' target=\"_blank\" href=\"{{urlprefix}}/static/" + location + "/" + list_id + "/input/" + encodeURIComponent(result.submission_detail.original_file_name) + "\">Original Image</a></span>"
         }
         // resstr += "<a style='background-color:#e8e3e3; font-weight:400; border-radius:20px;padding:1px 5px 1px 5px;' href=\"" + "{{urlprefix}}/result/" + list_id + "\">Bookmark</a></h3>";
+        if (result['state'] == "Error") {
+            resstr = "";
+        }
         reselt.innerHTML = resstr;
 
         document.getElementById("extracted").style = "display: block;";
@@ -227,24 +233,24 @@
                     glycans.forEach(function (glycan, gly_idx) {
                         
                         let color="black";
-                        let note="";
+                        let note="&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;";
                         if ((glycan.upvotes || 0) > 0) {
                             color = "green";
                             note = "GOOD"
                         } else if ((glycan.downvotes || 0) > 0) {
                             color = "red";
                             note = "BAD"
-                        }
+                        } 
                         let value = (glycan.upvotes || 0)+(glycan.downvotes || 0);
         
                         innerdiv += `<tr id=glycan-${fig_id}-${gly_idx+1}>`;
                         innerdiv += `
-                            <td>
+                            <td width="200px">
                                 <div onclick="scrollAndHighlight('glycan-${fig_id}-${gly_idx + 1}', event);" style="font-weight:bold; background: rgba(255, 0, 0, 0.8); cursor: pointer;
                                 color: white;padding: 1px 2px; border-bottom-right-radius: 4px;">
                                 ${gly_idx+1}
                                 </div>
-                                <div style="font-weight: 1000;"><span style="color:green; cursor: pointer;" onclick="mark(${fig_id},${gly_idx},'upvote');">&#129093;</span><span id="votes-${fig_id}-${gly_idx}" style="color:${color};">${value}</span><span style="color:red; cursor: pointer;" onclick="mark(${fig_id},${gly_idx},'downvote');">&#129095;</span></div>
+                                <div style="display: block; font-weight: 1000; vertical-align: middle;"><img style="cursor: pointer; padding-bottom: 4px;" width="15px" src="/static/images/up-arrow.svg" onclick="mark(${fig_id},${gly_idx},'upvote');"><span id="votes-${fig_id}-${gly_idx}" style="color:${color};">${value}</span><img style="cursor: pointer; padding-bottom: 4px;" width="15px" src="/static/images/down-arrow.svg" onclick="mark(${fig_id},${gly_idx},'downvote');"></div>
                                 <div id="note-${fig_id}-${gly_idx}" style="font-weight: 1000;">${note}</div>
                             </td>
                             <td style="vertical-align:middle;" width="50%">
@@ -295,7 +301,7 @@
                                         <div style="display: inline-block; margin: 10px;">
                                             <button onclick="toggleIUPAC('iupac-${fig_id}-${gly_idx}', 'iupac-text-${fig_id}-${gly_idx}')" 
                                                     style="background-color:#7c7d7d; color:white; border:none; border-radius:5px; cursor:pointer;">
-                                                IUPAC&nbsp;<b>&#128464;</b>
+                                                IUPAC&nbsp;<img style="padding-bottom: 3px;" src="/static/images/copypaste.svg" width="15px">
                                             </button>
 
                                         </div>
@@ -307,7 +313,7 @@
                                         <div style="display: inline-block; margin: 10px;">
                                             <button onclick="toggleIUPAC('wurcs-${fig_id}-${gly_idx}', 'wurcs-text-${fig_id}-${gly_idx}')" 
                                                     style="background-color:#7c7d7d; color:white; border:none; border-radius:5px; cursor:pointer;">
-                                                WURCS&nbsp;<b>&#128464;</b>
+                                                WURCS&nbsp;<img style="padding-bottom: 3px;" src="/static/images/copypaste.svg" width="15px">
                                             </button>
                                         </div>
                                     `
@@ -318,7 +324,7 @@
                                         <div style="display: inline-block; margin: 10px;">
                                             <button onclick="toggleIUPAC('composition-${fig_id}-${gly_idx}', 'composition-text-${fig_id}-${gly_idx}')" 
                                                     style="background-color:#7c7d7d; color:white; border:none; border-radius:5px; cursor:pointer;">
-                                                Composition&nbsp;<b>&#128464;</b>
+                                                Composition&nbsp;<img style="padding-bottom: 3px;" src="/static/images/copypaste.svg" width="15px">
                                             </button>
                                         </div>
                                     `
@@ -328,7 +334,7 @@
                                     innerdiv += `
                                         <div style="display: inline-block; margin: 10px;">
                                             <A href="${glycan.gnomeurl}" target="_gnome_"
-                                                    style="background-color:#7c7d7d; color:white; border:none; border-radius:5px; cursor:pointer; appearance: button; text-decoration: none; font-weight: 300; padding: 1px 4px 1px 4px;">GNOme&nbsp;<b>&#10138;</b></A>
+                                                    style="background-color:#7c7d7d; color:white; border:none; border-radius:5px; cursor:pointer; appearance: button; text-decoration: none; font-weight: 300; padding: 1px 4px 1px 4px;">GNOme&nbsp;<img src="/static/images/externallink.svg" width="15px" style="padding-bottom: 2px;"></A>
                                         </div>
                                     `
                                 }
@@ -361,6 +367,15 @@
 
         innerdiv += "</tbody>"
         innerdiv += "</table>";
+
+        if (result['state'] == "Error") {
+            if (result['status'] == "") {
+              innerdiv = "<h3>Unexpected Error! Please notify <A href=\"mailto:nje5+extractor@georgetown.edu?Subject=Glycan Image Extractor error...&Body=%0AJob ID: " + list_id + "%0A\">Nathan Edwards</A><P/><b>Job&nbsp;ID:&nbsp;"+list_id+".</b></h3>";
+            } else {
+              innerdiv = "<h3>Error: "+result['status']+"<P/><b>Job&nbsp;ID:&nbsp;"+list_id+".</b></h3>";
+            }
+        }
+
         div.innerHTML = innerdiv;
 
     }

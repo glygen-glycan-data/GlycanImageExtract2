@@ -13,6 +13,8 @@ import atexit
 import hashlib
 import multiprocessing
 import json
+from collections import defaultdict
+import threading
 
 import os, ssl
 
@@ -45,6 +47,13 @@ class APIParameterError(APIErrorBase):
 
 class APIFramework:
 
+    # job states
+    UNKOWN = 'Unkown'
+    QUEUED = 'Queued'
+    RUNNING = 'Running'
+    ERROR = 'Error'
+    COMPLETE = 'Complete'
+
     def __init__(self):
 
         self._verbose_level = 100
@@ -70,6 +79,11 @@ class APIFramework:
         self.result_cache = {}
         self.task_queue   = multiprocessing.Queue()
         self.result_queue = multiprocessing.Queue()
+        self.task_index = 0
+        self.task_index_lock = threading.Lock()
+
+        self.task_list = set()
+        self.task_list_lock = threading.Lock()
 
         self._template_folder = None
         self._home_html = None
@@ -242,16 +256,59 @@ class APIFramework:
             return flask.render_template(self._home_html, urlprefix=self._prefix, **kwargs)
 
     def file_upload_finished_page(self, **kwargs):
-
         if self._file_upload_finished_html is None:
             return flask.jsonify("Not Implemented")
         else:
             return flask.render_template(self._file_upload_finished_html, urlprefix=self._prefix, **kwargs)
 
-    def get_unfinished_job_count(self):
+    def get_jobs_ahead(self,tid):
+        tind = self.result_cache[tid].get("task_index",1e+10)
+        ahead = 0
+        with self.task_list_lock:
+            for tid1 in self.task_list:
+                if self.result_cache[tid1].get('state') == self.QUEUED and \
+                   self.result_cache[tid1].get("task_index",0) < tind:
+                    ahead += 1
+        return ahead
+
+    def get_job_status(self,tid=None):
+        params = self.api_para()
+        if 'tid' in params:
+            tid = params['tid']
+        status = "Job status not available."
+        state = self.UNKOWN
+        finished = False
         self.update_results(getall=True)
-        n = len(list(filter(lambda x: not x["finished"], self.result_cache.values())))
-        return flask.jsonify(n)
+        result = self.get_result(tid)
+        if 'Error' not in result:
+            status = result.get("status","Job status not available.")
+            state =  result.get("state",state)
+            finished = result.get("finished",False)
+            if state == self.QUEUED:
+                status = "Position %d in the job queue"%(self.get_jobs_ahead(tid)+1,)
+        return flask.jsonify(dict(status=status,state=state,finished=finished))
+
+    def get_job_counts(self):
+        self.update_results(getall=True)
+        states = defaultdict(int)
+        for x in self.result_cache.values():
+            states[x["state"]] += 1
+        return flask.jsonify(states)
+
+    def get_next_task_index(self):
+        with self.task_index_lock:
+            self.task_index += 1
+            task_index = self.task_index
+        return task_index
+
+    def add_to_task_list(self,tid):
+        with self.task_list_lock:
+            self.task_list.add(tid)
+
+    def remove_from_task_list(self,tid):
+        with self.task_list_lock:
+            if tid in self.task_list:
+                self.task_list.remove(tid)
 
     def submit(self):
         if flask.request.method in ['GET', 'POST']:
@@ -276,8 +333,12 @@ class APIFramework:
             list_id = task_detail["id"]
             status = {
                 "id": list_id,
+                "task_index": self.get_next_task_index(),
                 "submission_detail": task_detail,
                 "finished": False,
+                "state": self.QUEUED,
+                "status": "",
+                "queue time": time.time(),
                 "result": {}
             }
 
@@ -286,6 +347,7 @@ class APIFramework:
             else:
                 self.task_queue.put(task_detail)
                 self.result_cache[list_id] = status
+                self.add_to_task_list(list_id)
             self.output(1, "Job received by API: %s" % (task_detail))
 
         return flask.jsonify(res)
@@ -402,7 +464,10 @@ class APIFramework:
 
             status = {
                 "id": list_id,
+                "task_index": self.get_next_task_index(),
                 "submission_detail": task_detail,
+                "state": self.QUEUED,
+                "status": "",
                 "finished": False,
                 "file_type": file_type,
                 "result": {}
@@ -413,6 +478,7 @@ class APIFramework:
             else:
                 self.task_queue.put(task_detail)
                 self.result_cache[list_id] = status
+                self.add_to_task_list(list_id)
             self.output(1, "Job received by API: %s" % (task_detail))
 
         return flask.jsonify([status])
@@ -484,8 +550,14 @@ class APIFramework:
 
             try:
                 res = self.result_queue.get_nowait()
-                self.result_cache[res["id"]]["result"] = res
-                self.result_cache[res["id"]]['finished'] = True
+                if 'state' in res:
+                    self.result_cache[res["id"]]['state'] = res["state"]
+                if 'status' in res:
+                    self.result_cache[res["id"]]['status'] = res["status"]
+                if res.get("finished",False):
+                    self.result_cache[res["id"]]["result"] = res
+                    self.result_cache[res["id"]]['finished'] = True
+                    self.remove_from_task_list(res["id"])    
             except queue.Empty:
                 break
             except KeyError:
@@ -505,6 +577,9 @@ class APIFramework:
         self._flask_app.add_url_rule("/result", "result", self.result, methods=["GET", "POST"])
         self._flask_app.add_url_rule("/result/<id>", "result", self.result, methods=["GET", "POST"])
         self._flask_app.add_url_rule("/mark", "mark", self.mark, methods=["GET", "POST"])
+        self._flask_app.add_url_rule("/get_job_counts", "get_job_counts", self.get_job_counts, methods=["GET", "POST"])
+        self._flask_app.add_url_rule("/get_job_status", "get_job_status", self.get_job_status, methods=["GET", "POST"])
+        self._flask_app.add_url_rule("/get_job_status/<tid>", "get_job_status", self.get_job_status, methods=["GET", "POST"])
 
         if self._file_based_job:
             print("Got the functions")

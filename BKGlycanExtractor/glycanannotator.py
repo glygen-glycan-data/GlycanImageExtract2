@@ -61,16 +61,31 @@ class GlycanExtractorPipeline():
             gep.set_steps(stage,self.get_steps(stage))
         return gep
     
-    def run(self,image):
+    def run(self,image,progress_callback=None):
         # empty figure semantics
         figure_semantics = Figure_Semantics(image)
         
+        if progress_callback:
+            progress_callback(stage="PIPELINE",checkpoint="START")
+            progress_callback(stage="FIGURE",checkpoint="START")
+
         for figstep in self.steps['figure']:
             figstep.execute(figure_semantics)
 
-        for glycan_semantics in figure_semantics.glycans():
+        nglycan = len(figure_semantics.glycans())
+        if progress_callback:
+            progress_callback(stage="FIGURE",checkpoint="DONE",nglycan=nglycan)
+
+        for i,glycan_semantics in enumerate(figure_semantics.glycans()):
+            if progress_callback:
+                progress_callback(stage="GLYCAN",checkpoint="START",index=i+1,nglycan=nglycan)
             for glystep in self.steps['glycan']:
                 glystep.execute(glycan_semantics)
+            if progress_callback:
+                progress_callback(stage="GLYCAN",checkpoint="DONE",index=i+1,nglycan=nglycan)
+
+        if progress_callback:
+            progress_callback(stage="PIPELINE",checkpoint="DONE",nglycan=nglycan)
 
         return figure_semantics
 

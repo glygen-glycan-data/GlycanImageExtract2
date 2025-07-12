@@ -49,7 +49,7 @@ class ReferenceAPIFileBased(APIFramework):
         # Prevent name collision
         task_str = p["original_file_name"] + str(random.randint(10000, 99999))
         task_str = task_str.encode("utf-8")
-        list_id = hashlib.sha256(task_str).hexdigest()
+        list_id = hashlib.sha256(task_str).hexdigest()[:16]
 
         res["id"] = list_id
         res["original_file_name"] = p["original_file_name"]
@@ -60,7 +60,7 @@ class ReferenceAPIFileBased(APIFramework):
 
     @staticmethod
     def worker(pid, task_queue, result_queue, params):
-        print(pid, "Start")
+        # print(pid, "Start")
 
         while True:
             task_detail = task_queue.get(block=True)
@@ -69,7 +69,7 @@ class ReferenceAPIFileBased(APIFramework):
             error = []
 
             token = task_detail["id"]
-            
+
             # setting absolute paths - useful for docker
             PROJECT_ROOT = os.path.abspath(os.path.dirname(__file__))
             workdir = os.path.join(PROJECT_ROOT, "static", "files", token)
@@ -80,13 +80,27 @@ class ReferenceAPIFileBased(APIFramework):
             # Factory method - class reference is passed via get_prcessor() 
             # which is instantiated below
             job_class = JobInstance.get_processor(task_detail)
-            job_instance = job_class(task_detail)
-            job_instance.process_file()
+            job_instance = job_class(task_detail,msg_queue=result_queue)
+            try:
+                job_instance.process_file()
+            except:
+                traceback.print_exc()
+                error.append(traceback.format_exc())
 
             result = job_instance.get_results()
 
             calculation_end_time = time.time()
             calculation_time_cost = calculation_end_time - calculation_start_time
+
+            status = ""
+            if len(error) == 0:
+                state = APIFramework.COMPLETE
+            else:
+                state = APIFramework.ERROR
+                if "AttributeError: 'NoneType' object has no attribute 'shape'" in error[-1]:
+                    status = "File could not be interpreted as an image."
+                elif "pdfminer.pdfparser.PDFSyntaxError: No /Root object! - Is this really a PDF?" in error[-1]:
+                    status = "File could not be interpreted as a PDF."
 
             # information for webservice (API Framework)
             res = {
@@ -95,12 +109,15 @@ class ReferenceAPIFileBased(APIFramework):
                 "end time": calculation_end_time,
                 "runtime": calculation_time_cost,
                 "error": error,
-                "figure_result": result
+                "figure_result": result,
+                "finished": True,
+                "state": state,
+                "status": status,
             }
 
             result_queue.put(res)
 
-            res1 = dict(id=token,result=res,finished=True,submission_detail=task_detail)
+            res1 = dict(id=token,result=res,finished=res['finished'],state=res['state'],status=res['status'],submission_detail=task_detail)
 
             file_path = os.path.join(workdir, "results.json")
             with open(file_path, 'w') as f:

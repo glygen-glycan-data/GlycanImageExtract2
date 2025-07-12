@@ -6,6 +6,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from submit import searchGlyLookup, searchGlyImage, sendToGNOme
 from PIL import Image
 from hashlib import md5
+from APIFramework import APIFramework
 
 
 
@@ -27,8 +28,9 @@ class JobInstance:
         'multi_figure_pdf': 'MultipleGlycanImage-YOLOFinders'
     }
 
-    def __init__(self, task_detail):
+    def __init__(self, task_detail, msg_queue = None):
         self.id = task_detail.get('id')
+        self.msg_queue = msg_queue
         self.original_file_name = task_detail.get('original_file_name')
         self.file_type = task_detail.get('file_type')
 
@@ -59,8 +61,19 @@ class JobInstance:
         self.job_finished = False
         self.results = []
 
-    
-    
+    def update_status(self,status,state=None):
+        msg = dict(id=self.id)
+        if state is not None:
+            msg['state'] = state
+            msg['status'] = ""
+        if status is not None:
+            msg['status'] = status
+        if state is not None or status is not None:
+            self.msg_queue.put(msg)
+
+    def update_state(self,state,status=None):
+        self.update_status(status=None,state=state)
+
     @staticmethod
     def get_processor(task_detail):
         original_file_name = task_detail.get('original_file_name')
@@ -298,6 +311,14 @@ class JobInstance:
 
             # gly_semantics.set("page_num",page_num)
 
+    def progress_callback(self,**kwargs):
+        if kwargs.get('stage') == "GLYCAN" and kwargs.get('checkpoint') == "DONE":
+            nglycan = kwargs.get('nglycan')
+            index = kwargs.get('index')
+            if self.pageno == 0:
+                self.update_status("Processing image, analyzed %d/%d glycan(s)"%(index,nglycan))
+            else:
+                self.update_status("Processing image %d from page %d, analyzed %d/%d glycan(s)"%(self.imageno,self.pageno,index,nglycan))
 
     def find_glycans(self, figure_path, image_folders):
 
@@ -305,7 +326,13 @@ class JobInstance:
         config = Config_Manager()
         self.pipeline_name = self.pipeline_mapping[self.file_type]
         pipeline = config.get_pipeline(self.pipeline_name)
-        figure_semantics = pipeline.run(figure_path)
+        figure_semantics = pipeline.run(figure_path,self.progress_callback)
+
+        nglycan = len(figure_semantics.glycans())
+        if self.pageno == 0:
+            self.update_status("Processing image, postprocessing %d glycan(s)"%(nglycan))
+        else:
+            self.update_status("Processing image %d from page %d, postprocessing %d glycan(s)"%(self.imageno,self.pageno,nglycan))
 
         # Annotate and save images
         self.annotate_image(figure_semantics)
@@ -317,12 +344,12 @@ class JobInstance:
 
 
 class ImageJob(JobInstance):
-    def __init__(self, task_detail):
-        super().__init__(task_detail)
-
+    # def __init__(self, *args, **kwargs):
+    #     super().__init__(*args, **kwargs)
 
     def process_file(self):
         self.jobstate(False)
+        self.update_state(APIFramework.RUNNING)
 
         base_path = os.path.dirname(os.path.abspath(__file__))
         input_file = os.path.join(base_path, "input", self.id, self.original_file_name)
@@ -343,6 +370,9 @@ class ImageJob(JobInstance):
 
         self.create_directories(*image_folders.values())
 
+        self.update_status("Processing image")
+        self.imageno = 1
+        self.pageno = 0
         self.find_glycans(self.input_filepath,image_folders)
 
         # self.glycan_obj['file_format_error'] = (
@@ -358,8 +388,8 @@ class ImageJob(JobInstance):
 
 
 class PDFJob(JobInstance):
-    def __init__(self, task_detail):
-        super().__init__(task_detail)
+    # def __init__(self, task_detail):
+    #     super().__init__(task_detail)
 
     def process_file(self):
         """
@@ -367,6 +397,7 @@ class PDFJob(JobInstance):
         Handles file verification, page/image extraction, and glycan annotation.
         """
         self.jobstate(False)  
+        self.update_state(APIFramework.RUNNING)
 
         base_path = os.path.dirname(os.path.abspath(__file__))
         input_file = os.path.join(base_path, "input", self.id, self.original_file_name)
@@ -400,6 +431,7 @@ class PDFJob(JobInstance):
             # and just need find_glycans() here with figure path?
             # self.find_glycans(figure_path,image_folders)
             page_metadata = [data for data in images_metadata if data['image_page'] == page_index+1]
+            self.pageno = (page_index+1)
             self.process_pdf_page(figure_path, page_metadata, image_folders)
 
         # self.log_file.close()
@@ -441,7 +473,7 @@ class PDFJob(JobInstance):
         # self.find_glycans(figure_path,image_folders)
         
         # do we need the below? since find_glycans() is already identifying each image
-        for image_data in page_metadata:
+        for image_index,image_data in enumerate(page_metadata):
             xref = image_data["xref"]
             img_name = f"{image_data['image_id']}"
             box = image_data["box"]
@@ -459,15 +491,21 @@ class PDFJob(JobInstance):
                 images_path = os.path.join(image_folders['figures_dir'], f"{xref}.png")
                 # fitx.Pixmap - uses this xref (as ID) to extract the pixel data for that image and save it.
                 pix = fitz.Pixmap(fitz.open(self.input_filepath), xref)
-                pix.save(images_path)
+                goodsave = False
+                try:
+                    pix.save(images_path)
+                    goodsave = True
+                except ValueError:
+                    pass
+                if not goodsave:
+                    pix = fitz.Pixmap(fitz.csRGB,pix)
+                    pix.save(images_path)
 
                 self.log_file.write(f"\nSaved image to {images_path}")
-
+                
+                self.imageno = (image_index+1)
+                self.update_status("Processing image %d from page %d"%(self.imageno,self.pageno))
                 self.find_glycans(images_path,image_folders)
-
-        
-        
-            
 
     # def process_pdf_page(self, page, image_metadata):
     #     """
