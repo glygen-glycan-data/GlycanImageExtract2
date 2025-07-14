@@ -57,7 +57,7 @@ badaccfile = args.skip
 if badaccfile:
     assert os.path.isfile(badaccfile)
 randmode = args.random
-assert randmode in ("uniform","biased","mono","biasmono","linkinfo") #campbell
+assert randmode in ("uniform","biased","mono","biasmono","linkinfo")
 
 print("Start randimg...")
 
@@ -149,7 +149,7 @@ for j in range(iterations):
         print("random choice:",acc,file=sys.stderr)
         seen.add(acc)
         acc1 = acc
-        if 'mono' in randmode or 'linkinfo' in randmode: #campbell
+        if 'mono' in randmode or 'linkinfo' in randmode:
             acc1 = "R%07d"%(outputcount + 1,)
         outfile = os.path.join(output_folder, acc1 + "." + mode)
         pngfile = os.path.join(output_folder, acc1 + ".png")
@@ -231,14 +231,9 @@ for j in range(iterations):
 
         imageWriter.writeImage(seq,outfile)
 
-        #campbell
-        if randmode in ("linkinfo"):
-            #outfile = imageData.change_linkinfo(imageWriter.get('display'), outfile) 
-            imageData.change_linkinfo(imageWriter.get('display'), outfile) 
-
         mapfile = None
         try:
-            mapfile = imageData.generate_image(outfile, overwrite_links=args.writelinks) #campbell
+            mapfile = imageData.generate_image(outfile, overwrite_links=args.writelinks, display=imageWriter.get('display')) #campbell
         except (ValueError,FileNotFoundError):
             if os.path.exists(pngfile):
                 os.unlink(pngfile)

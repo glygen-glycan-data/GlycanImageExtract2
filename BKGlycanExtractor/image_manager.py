@@ -90,6 +90,8 @@ class Image_Data:
         
         if kwargs.get('overwrite_links'):
             self.svg_parser(image_file,txt_file, change_all_links=kwargs.get('overwrite_links')) 
+        elif kwargs.get('randmode') == 'linkinfo':
+            self.svg_parser(image_file,txt_file, display=kwargs.get('display')) 
         else:
             self.svg_parser(image_file,txt_file) 
 
@@ -213,6 +215,12 @@ class Image_Data:
                 elif gid[0:2] == 'li':
                     if kwargs.get('change_all_links'):
                         self.write_link(e, anomer, parent_bond)
+
+                    if kwargs.get('randmode') == 'linkinfo':
+                        if kwargs.get('display') != 'normalinfo': 
+                            continue 
+                        else:
+                            anomer, parent_bond = self.change_one_link(self, infile, e, gid, data_type, groups)
 
                 elif gid == "r-1:1": # reducing-end squiggle
                     for ch in e.childNodes:
@@ -431,3 +439,52 @@ class Image_Data:
         with open(infile, 'w') as f:
             svg_file.writexml(f, encoding='UTF-8')
         return infile
+    
+    
+    
+    def change_one_link(self, infile, e, gid, data_type, groups, anomers=['?',' ','a','a','b','b'], carbons=['?',' ',2,2,3,3,4,4,6,6,8,8]):
+
+        # if there isn't link info, continue
+        #if display != 'normalinfo': 
+        #    print('not normalinfo')
+        #    return infile
+
+        svg_file = xml.dom.minidom.parse(infile)
+        svg = svg_file.getElementsByTagName('svg')[0]
+        elements = svg.getElementsByTagName('g')
+
+        # randomly select anomer and parent_bond
+        anomer = random.choice(anomers)
+        parent_bond = random.choice(carbons)
+        self.write_link(e, anomer, parent_bond)
+        
+        parent, child = map(int, gid.split(":")[1].split(","))
+        
+        for e2 in elements:
+            data_type = e.getAttribute("data.type")
+            gid = e.getAttribute("ID")
+
+            # change the child anomer
+            if data_type == 'Monosaccharide':
+                id = int(gid.split(":")[1])
+                if id == child:
+                    if e2.hasAttribute('data.residueAnomericState'):
+                        e2.setAttribute('data.residueAnomericState', anomer)
+                    groups[gid][3] = anomer if anomer != ' ' else '?'
+
+            # change the parent bond
+            elif data_type == 'Linkage':
+                p, c = map(int, gid.split(":")[1].split(","))
+                if p == parent and c == child:
+                    if e2.hasAttribute('data.parentPositions'):
+                        e2.setAttribute('data.parentPositions', parent_bond)
+                    groups[gid][2] == parent_bond if parent_bond != ' ' else '?'
+
+        #------I added this to the end of svg_parser so it doesn't need to be done at every linkinfo overwrite-----
+        #print('changed links')    
+        # write the svg out
+        #with open(infile, 'w') as f:
+        #    infile.writexml(f, encoding='UTF-8')
+        #return infile
+        
+        return anomer, parent_bond
