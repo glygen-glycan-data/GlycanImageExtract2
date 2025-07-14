@@ -22,12 +22,12 @@ def make_splits(image_dir, train_txt, val_txt, split_ratio=0.8):
     # Write train.txt
     with open(train_txt, 'w') as f:
         for name in train_files:
-            f.write(os.path.abspath(os.path.join(image_dir, f"{name}.png")) + '\n')
+            f.write(os.path.join(image_dir, f"{name}.png") + '\n')
 
     # Write val.txt
     with open(val_txt, 'w') as f:
         for name in val_files:
-            f.write(os.path.abspath(os.path.join(image_dir, f"{name}.png")) + '\n')
+            f.write(os.path.join(image_dir, f"{name}.png") + '\n')
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
