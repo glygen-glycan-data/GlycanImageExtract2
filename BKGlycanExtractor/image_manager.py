@@ -213,8 +213,6 @@ class Image_Data:
                 elif gid[0:2] == 'li':
                     if kwargs.get('change_all_links'):
                         self.write_link(e, anomer, parent_bond)
-                    #else:    
-                    #    anomer, parent_bond = self.change_linkinfo(self, infile, e, gid, data_type, groups) # campbell- probalby can remove
 
                 elif gid == "r-1:1": # reducing-end squiggle
                     for ch in e.childNodes:
@@ -403,7 +401,7 @@ class Image_Data:
         print(f"Modified SVG saved to {infile}")      
 
 
-    def linkinfo_writer(self, infile, outfile, anomers=['?',' ','a','a','b','b'], carbons=['?',' ',2,2,3,3,4,4,6,6,8,8]): # pass x,y,groups kwargs so parse_groups function can take them? campbell
+    def linkinfo_writer(self, infile, outfile, anomers=['?',' ','a','a','b','b'], carbons=['?',' ',2,2,3,3,4,4,6,6,8,8]):
         svg_file = xml.dom.minidom.parse(infile)
         svg = svg_file.getElementsByTagName('svg')[0]
         elements = svg.getElementsByTagName('g')
