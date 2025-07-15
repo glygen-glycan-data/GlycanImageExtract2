@@ -9,6 +9,8 @@ import matplotlib.pyplot as plt
 import math
 import os
 import re
+import csv
+import json
 import copy
 import cv2
 from collections import defaultdict
@@ -502,8 +504,9 @@ class Evaluator:
                 step_recall.append(0)
                 step_precision.append(step_precision[-1])
 
-                # print("\nstep_prec",step_precision)
-                # print("\nstep_recall",step_recall)
+                print("\nstep_prec",step_precision)
+                print("\nstep_recall",step_recall)
+                Evaluator.write_step_pr_to_csv(step_precision, step_recall, details)
 
                 # Plot on figure 1
                 plt.figure(1)
@@ -568,9 +571,129 @@ class Evaluator:
         
         return pr, pr_zoom
 
-
-
-    
+    @staticmethod
+    def write_step_pr_to_csv(step_precision, step_recall, details, filename="step_pr.csv"):
+        
+        # Ensure presentation directory exists
+        presentation_dir = "presentation"
+        os.makedirs(presentation_dir, exist_ok=True)
+        
+        csv_path = os.path.join(presentation_dir, filename)
+        data_cache_path = os.path.join(presentation_dir, f"{filename}_cache.json")
+        
+        # Create identifier for this curve
+        predictor = details.get('predictor', 'Unknown')
+        comparitor = details.get('comparitor', 'Unknown')
+        curve_id = f"{predictor}_{comparitor}"
+        
+        # Extract class from comparitor if present
+        class_name = "ALL"
+        if 'class=' in comparitor and comparitor != 'class=None':
+            try:
+                class_name = comparitor.split('class=')[1].split(',')[0].strip()
+            except:
+                class_name = "ALL"
+        
+        # Extract IOU from comparitor if present
+        iou_value = "N/A"
+        if "iou=" in comparitor:
+            try:
+                iou_value = comparitor.split("iou=")[1].split(",")[0].split(" ")[0]
+            except:
+                iou_value = "N/A"
+        
+        # Load existing data cache or create new one
+        if os.path.exists(data_cache_path):
+            with open(data_cache_path, 'r') as f:
+                data_cache = json.load(f)
+        else:
+            data_cache = {}
+        
+        # Store current data in cache
+        if curve_id not in data_cache:
+            data_cache[curve_id] = {
+                'finder': predictor,
+                'comparitor': comparitor,
+                'iou': iou_value,
+                'classes': {}
+            }
+        
+        # Store precision/recall data for this class
+        data_cache[curve_id]['classes'][class_name] = {
+            'precision': step_precision,
+            'recall': step_recall
+        }
+        
+        # Save updated cache
+        with open(data_cache_path, 'w') as f:
+            json.dump(data_cache, f)
+        
+        # Collect all unique classes across all curves
+        all_classes = set()
+        max_points = 0
+        for curve_data in data_cache.values():
+            all_classes.update(curve_data['classes'].keys())
+            for class_data in curve_data['classes'].values():
+                max_points = max(max_points, len(class_data['precision']))
+        
+        all_classes = sorted(list(all_classes))
+        
+        # Create column headers
+        headers = ['curve_id', 'finder', 'comparitor', 'IOU', 'point_index']
+        for class_name in all_classes:
+            headers.extend([f'{class_name}_precision', f'{class_name}_recall'])
+        
+        # Write complete CSV with all data
+        with open(csv_path, 'w', newline='', encoding='utf-8') as csvfile:
+            writer = csv.writer(csvfile)
+            writer.writerow(headers)
+            
+            # Group curves by finder
+            finders = {}
+            for curve_id, curve_data in data_cache.items():
+                finder = curve_data['finder']
+                if finder not in finders:
+                    finders[finder] = {}
+                finders[finder][curve_id] = curve_data
+            
+            # Write data for each finder
+            for finder_name, finder_curves in finders.items():
+                # Find the maximum number of points for this finder
+                finder_max_points = 0
+                for curve_data in finder_curves.values():
+                    for class_data in curve_data['classes'].values():
+                        finder_max_points = max(finder_max_points, len(class_data['precision']))
+                
+                # Write one row per point index for this finder
+                for point_idx in range(finder_max_points):
+                    row = [
+                        f'{finder_name}_combined',  # curve_id for this finder
+                        finder_name,                # finder name
+                        'combined_classes',         # comparitor 
+                        'N/A',                     # IOU
+                        point_idx
+                    ]
+                    
+                    # Add precision/recall for each class for this finder
+                    for class_name in all_classes:
+                        precision = ''
+                        recall = ''
+                        
+                        # Find the data for this class at this point index for this finder
+                        for curve_id, curve_data in finder_curves.items():
+                            if (class_name in curve_data['classes'] and 
+                                point_idx < len(curve_data['classes'][class_name]['precision'])):
+                                precision = curve_data['classes'][class_name]['precision'][point_idx]
+                                recall = curve_data['classes'][class_name]['recall'][point_idx]
+                                break  # Use the first found data for this class
+                        
+                        row.extend([precision, recall])
+                    
+                    writer.writerow(row)
+        
+        print(f"Step PR data written to: {csv_path}")
+        
+        
 
     # @staticmethod
     # def critical_value_graph(all_boxes):
