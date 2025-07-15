@@ -90,8 +90,6 @@ class Image_Data:
         
         if kwargs.get('overwrite_links'):
             self.svg_parser(image_file,txt_file, change_all_links=kwargs.get('overwrite_links')) 
-        elif kwargs.get('randmode') == 'linkinfo':
-            self.svg_parser(image_file,txt_file, display=kwargs.get('display')) 
         else:
             self.svg_parser(image_file,txt_file) 
 
@@ -215,12 +213,8 @@ class Image_Data:
                 elif gid[0:2] == 'li':
                     if kwargs.get('change_all_links'):
                         self.write_link(e, anomer, parent_bond)
-
-                    if kwargs.get('randmode') == 'linkinfo':
-                        if kwargs.get('display') != 'normalinfo': 
-                            continue 
-                        else:
-                            anomer, parent_bond = self.change_one_link(self, infile, e, gid, data_type, groups)
+                    #else:    
+                    #    anomer, parent_bond = self.change_linkinfo(self, infile, e, gid, data_type, groups) # campbell- probalby can remove
 
                 elif gid == "r-1:1": # reducing-end squiggle
                     for ch in e.childNodes:
@@ -392,99 +386,231 @@ class Image_Data:
             print(f"Warning: Expected 2-character string, got: {link_value}")
         
         return anomer, parent_bond
-        
-    
-    def change_linkinfo(self, display, infile, anomers=['?',' ','a','a','b','b'], carbons=['?',' ',2,2,3,3,4,4,6,6,8,8]):
-    
-        # if there isn't link info, continue
-        if display != 'normalinfo': 
-            print('not normalinfo')
-            return infile
 
+
+    # new svg parser:
+    def svg_parser2(self,infile,outfile,**kwargs):
         svg_file = xml.dom.minidom.parse(infile)
         svg = svg_file.getElementsByTagName('svg')[0]
         elements = svg.getElementsByTagName('g')
         
+        parsed_groups, width_ratio, height_ratio = self.parse_groups(infile) #kwargs to pass are x,y,groups
+        groups = self.build_groups(elements, parsed_groups) 
+        
+        self.write_map(outfile, groups, width_ratio, height_ratio)
+        with open(infile, 'w') as f:
+            svg_file.writexml(f, encoding='UTF-8')
+        print(f"Modified SVG saved to {infile}")      
+
+
+    def linkinfo_writer(self, infile, outfile, anomers=['?',' ','a','a','b','b'], carbons=['?',' ',2,2,3,3,4,4,6,6,8,8]): # pass x,y,groups kwargs so parse_groups function can take them? campbell
+        svg_file = xml.dom.minidom.parse(infile)
+        svg = svg_file.getElementsByTagName('svg')[0]
+        elements = svg.getElementsByTagName('g')
+        
+        parsed_groups, width_ratio, height_ratio = self.parse_groups(infile) #kwargs to pass are x,y,groups
+        groups = self.build_groups(elements, parsed_groups, anomers=anomers, carbons=carbons) 
+        groups = self.change_linkinfo(groups,elements)    
+        
+        self.write_map(outfile, groups, width_ratio, height_ratio)
+        with open(infile, 'w') as f:
+            svg_file.writexml(f, encoding='UTF-8')
+        print(f"Modified SVG saved to {infile}")      
+
+
+    def parse_groups(self,infile, **kwargs):
+        x = kwargs.get('x',None)
+        y = kwargs.get('y',None)
+        groups = kwargs.get('groups',None)
+
+        svg_file = xml.dom.minidom.parse(infile)
+        svg = svg_file.getElementsByTagName('svg')[0]
+        svg_viewbox = svg.getAttribute('viewBox').split()
+        svg_width = svg_viewbox[2]
+        svg_height = svg_viewbox[3] 
+        raw_width = float(svg_width)
+        raw_height = float(svg_height)
+        width_ratio = x and (x / raw_width) or 1
+        height_ratio = y and (y / raw_height) or 1
+    
+        if groups:
+            elements = [g for g in svg.getElementsByTagName('g') if (g.hasAttribute('ID') and g.getAttribute('ID') in groups)]
+            elements.extend([p for p in svg.getElementsByTagName('path') if (p.hasAttribute('ID') and p.getAttribute('ID') in groups)])
+        else:
+            elements = svg.getElementsByTagName('g')
+
+        parsed_groups = {}
+        for e in elements:
+            pointset_count = 0
+            if e.nodeName == 'g':
+                for node in e.childNodes:
+                    if node.nodeName == 'defs':
+                        clipPaths = node.childNodes
+                        for clipPath in clipPaths:
+                            if clipPath.nodeName == 'clipPath':
+                                clipPathID = clipPath.getAttribute('id')
+                                svgpaths = clipPath.childNodes
+                                paths = []
+                                for path in svgpaths:
+                                    if path.nodeName == 'path':
+                                        points = get_points(path.getAttribute('d'))
+                                        for pointset in points:
+                                            paths.append([clipPathID, pointset])
+                                            pointset_count += 1
+                                parsed_groups[clipPathID] = paths
+            else:
+                points = get_points(e.getAttribute('d'))
+                for pointset in points:
+                    paths.append([e.getAttribute('ID'), pointset])
+            if e.hasAttribute('transform'):
+                for transform in re.findall(r'(\w+)\((-?\d+.?\d*),(-?\d+.?\d*)\)', e.getAttribute('transform')):
+                    if transform[0] == 'translate':
+                        x_shift = float(transform[1])
+                        y_shift = float(transform[2])
+                        for path in paths:
+                            path[1] = [(p[0] + x_shift, p[1] + y_shift) for p in path[1]]
+        return parsed_groups, width_ratio, height_ratio
+
+
+    def build_groups(self, elements, parsed_groups, **kwargs):
+        groups = {}
         for e in elements:
             if e.hasAttribute('ID'):
                 data_type = e.getAttribute("data.type")
                 gid = e.getAttribute("ID")
+
+                if data_type == 'Monosaccharide':
+                    
+                    name = e.getAttribute("data.residueName") 
+                    if name not in self.valid_monos:
+                        raise ValueError("SVG Parser: %s not a valid mono name"%(name,))
+                    
+                    stylestring = None
+                    for ch in e.childNodes:
+                        if not hasattr(ch,'getAttribute'):
+                            continue
+                        stylestring = ch.getAttribute("style")
+                        if 'clip-path:url' not in stylestring:
+                            continue
+                        break
+                    if stylestring is None:
+                        continue
+
+                    stylestring = stylestring.split("clip-path:url(#",1)[1]
+                    pathname = stylestring.split(")",1)[0]
+                    groups[gid] = []           
+                    groups[gid].append(str(name))
+                    anomer = e.getAttribute("data.residueAnomericState") if e.getAttribute("data.residueAnomericState") else ""
+                    groups[gid].append(anomer) if anomer != " " else groups[gid].append("?")
+
+                    for i in parsed_groups[pathname][0][1]:
+                        groups[gid].append(i)
+
+                    for ch in e.childNodes:
+                        if hasattr(ch,'hasAttribute') and ch.hasAttribute("height"):
+                            length = int(ch.getAttribute("height"))
+                            assert length == int(ch.getAttribute("width"))
+                            cx = int(ch.getAttribute("x")) + length/2
+                            cy = int(ch.getAttribute("y")) + length/2
+                            groups[gid].append((cx,cy))
+                            groups[gid].append(length)
+                            break
+                    
+                elif data_type == 'Linkage':
+                    #establish parent_bond either from linkinfo choices or from value in the svg
+                    parent_bond = e.getAttribute("data.parentPositions") if e.getAttribute("data.parentPositions") else ""
+                    child_bond = e.getAttribute("data.childPositions") if e.hasAttribute("data.childPositions") else ""
+                    gid = e.getAttribute("ID")   
+                    t = gid.split(':')[1].split(',')
+                    if parent_bond != " ": 
+                        groups[gid] = ['l', t[0], parent_bond, child_bond, t[1]]  
+                    else:
+                        groups[gid] = ['l', t[0], "?", child_bond, t[1]] 
+
+                elif gid[0:2] == 'li':
+                    if kwargs.get('change_all_links'):
+                        self.write_link(e, anomer, parent_bond)
                 
-                # write anomer & carbon# to "li" lines
-                if gid[0:2] == 'li':
-                    anomer = random.choice(anomers)
-                    parent_bond = random.choice(carbons)
-                    self.write_link(e, anomer, parent_bond)
-                    parent, child = map(int, gid.split(":")[1].split(","))
-                    
-                    
-                    for e2 in elements:
-                        data_type = e.getAttribute("data.type")
-                        gid = e.getAttribute("ID")
+                elif gid == "r-1:1": # reducing-end squiggle
+                    for ch in e.childNodes:
+                        if hasattr(ch,'hasAttribute') and ch.hasAttribute("d"):
+                            points = get_points(ch.getAttribute('d'))
+                            groups[gid] = [ "~" ] + points[0]
 
-                        # change the child anomer
-                        if data_type == 'Monosaccharide':
-                            id = int(gid.split(":")[1])
-                            if id == child:
-                                self.write_anomer(e2, anomer)   
+                # elif gid == "l-1:1,2": # reducing-end squiggle link
+                #      groups[gid] = []
 
-                        # change the parent bond
-                        elif data_type == 'Linkage':
-                            p, c = map(int, gid.split(":")[1].split(","))
-                            if p == parent and c == child:
-                                if e2.hasAttribute('data.parentPositions'):
-                                    e2.setAttribute('data.parentPositions', parent_bond)
-        print('changed links')    
-        # write the svg out
-        with open(infile, 'w') as f:
-            svg_file.writexml(f, encoding='UTF-8')
-        return infile
-    
-    
-    
-    def change_one_link(self, infile, e, gid, data_type, groups, anomers=['?',' ','a','a','b','b'], carbons=['?',' ',2,2,3,3,4,4,6,6,8,8]):
-
-        # if there isn't link info, continue
-        #if display != 'normalinfo': 
-        #    print('not normalinfo')
-        #    return infile
-
-        svg_file = xml.dom.minidom.parse(infile)
-        svg = svg_file.getElementsByTagName('svg')[0]
-        elements = svg.getElementsByTagName('g')
-
-        # randomly select anomer and parent_bond
-        anomer = random.choice(anomers)
-        parent_bond = random.choice(carbons)
-        self.write_link(e, anomer, parent_bond)
+            return groups
         
-        parent, child = map(int, gid.split(":")[1].split(","))
-        
-        for e2 in elements:
-            data_type = e.getAttribute("data.type")
-            gid = e.getAttribute("ID")
+    def change_linkinfo(self, groups, elements):
+        for e in elements:
+            if e.hasAttribute('ID'):
+                data_type = e.getAttribute("data.type")
+                gid = e.getAttribute("ID")
 
-            # change the child anomer
-            if data_type == 'Monosaccharide':
-                id = int(gid.split(":")[1])
-                if id == child:
-                    if e2.hasAttribute('data.residueAnomericState'):
-                        e2.setAttribute('data.residueAnomericState', anomer)
-                    groups[gid][3] = anomer if anomer != ' ' else '?'
+            if gid[0:2] == 'li':
+                anomer = random.choice("anomers")
+                parent_bond = random.choice("carbons")
+                parent, child = map(int, gid.split(":")[1].split(","))
 
-            # change the parent bond
-            elif data_type == 'Linkage':
-                p, c = map(int, gid.split(":")[1].split(","))
-                if p == parent and c == child:
-                    if e2.hasAttribute('data.parentPositions'):
-                        e2.setAttribute('data.parentPositions', parent_bond)
-                    groups[gid][2] == parent_bond if parent_bond != ' ' else '?'
+                # cycle back through the elements
+                for e2 in elements:
+                    data_type = e.getAttribute("data.type")
+                    gid = e.getAttribute("ID")
 
-        #------I added this to the end of svg_parser so it doesn't need to be done at every linkinfo overwrite-----
-        #print('changed links')    
-        # write the svg out
-        #with open(infile, 'w') as f:
-        #    infile.writexml(f, encoding='UTF-8')
-        #return infile
-        
-        return anomer, parent_bond
+                    # change the child anomer
+                    if data_type == 'Monosaccharide':
+                        id = int(gid.split(":")[1])
+                        if id == child:
+                            if e2.hasAttribute('data.residueAnomericState'):
+                                e2.setAttribute('data.residueAnomericState', anomer)
+                            groups[gid][3] = anomer if anomer != ' ' else '?'
+
+                    # change the parent bond
+                    elif data_type == 'Linkage':
+                        p, c = map(int, gid.split(":")[1].split(","))
+                        if p == parent and c == child:
+                            if e2.hasAttribute('data.parentPositions'):
+                                e2.setAttribute('data.parentPositions', parent_bond)
+                            groups[gid][2] == parent_bond if parent_bond != ' ' else '?'
+        return groups
+            
+    
+    def write_map(self, outfile, groups, width_ratio, height_ratio):
+            out = []
+
+            for g in groups:
+
+                # linkages
+                if g[0][0] == 'l':
+                    out.append(groups[g])
+
+                # monosaccharides
+                if g[0] == 'r':
+                    i = g.split(':')[-1]
+                    tmp = ['m',i]
+                    if groups[g][0] == "~":
+                        tmp[0] = 'r'
+                    for p in groups[g]:
+                        if type(p) == tuple:
+                            tmp.append(str(int(round(p[0]*width_ratio))) +',' + str(int(round(p[1]*height_ratio))))
+                        else:
+                            tmp.append(str(p))
+                    out.append(tmp)
+
+            labelorder = dict(r=0,m=1,l=2)
+            def sortkey(l):
+                try:
+                    intval = int(l[2])
+                    strval = ''
+                except ValueError:
+                    intval = 1e+20
+                    strval = l[2]
+                return labelorder[l[0]],int(l[1]),intval,strval
+
+            out.sort(key=sortkey)   
+
+            with open(outfile, 'w') as of:
+                of.write('\n'.join([ "\t".join(line) for line in out]))
+            
+            

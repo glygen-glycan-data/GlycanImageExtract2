@@ -153,7 +153,7 @@ for j in range(iterations):
             acc1 = "R%07d"%(outputcount + 1,)
         outfile = os.path.join(output_folder, acc1 + "." + mode)
         pngfile = os.path.join(output_folder, acc1 + ".png")
-        if os.path.exists(outfile) or os.path.exists(pngfile):
+        if os.path.exists(outfile) or os.path.exists(pngfile): 
             continue
         seq = gtc.getseq(acc,format='wurcs')
         if not seq:
@@ -231,9 +231,10 @@ for j in range(iterations):
 
         imageWriter.writeImage(seq,outfile)
 
+
         mapfile = None
         try:
-            mapfile = imageData.generate_image(outfile, overwrite_links=args.writelinks, display=imageWriter.get('display')) #campbell
+            mapfile = imageData.generate_image(outfile, overwrite_links=args.writelinks) #campbell
         except (ValueError,FileNotFoundError):
             if os.path.exists(pngfile):
                 os.unlink(pngfile)
@@ -247,6 +248,10 @@ for j in range(iterations):
         if mapfile is None:
             print(f"Error: mapfile is None for {outfile}. Skipping...")
             continue
+
+        if args.random == 'linkinfo': # campbell
+            if imageWriter.display == 'normalinfo':
+                imageWriter.linkinfo_writer(outfile, mapfile) 
 
         h = open(mapfile)
         mapfiledata = list(h.read().splitlines())
