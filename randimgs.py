@@ -250,8 +250,8 @@ for j in range(iterations):
             continue
 
         if args.random == 'linkinfo': # campbell
-            if imageWriter.display == 'normalinfo':
-                imageWriter.linkinfo_writer(outfile, mapfile) 
+            if imageWriter.get('display') == 'normalinfo':
+                imageData.linkinfo_writer(outfile, mapfile) 
 
         h = open(mapfile)
         mapfiledata = list(h.read().splitlines())
@@ -265,8 +265,10 @@ for j in range(iterations):
         bad = False
         for m in valid_monos:
             if comp1[m] != comp[m]:
+                print('COMPOSITIOIN MISMATCH') #CAMPBELL
                 bad = True
         if bad:
+            print('BAD') #CAMPBELL
             os.unlink(outfile)
             os.unlink(pngfile)
             os.unlink(mapfile)

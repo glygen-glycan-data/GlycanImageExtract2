@@ -392,36 +392,43 @@ class Image_Data:
         svg = svg_file.getElementsByTagName('svg')[0]
         elements = svg.getElementsByTagName('g')
         
-        parsed_groups, width_ratio, height_ratio = self.parse_groups(infile) #kwargs to pass are x,y,groups
-        groups = self.build_groups(elements, parsed_groups) 
+        parsed_groups, width_ratio, height_ratio = self.parse_groups(svg_file)
+        
+        if kwargs.get('change_all_links'):
+            groups = self.build_groups(elements, parsed_groups, change_all_links=kwargs.get('change_all_links')) 
+        else:
+            groups = self.build_groups(elements, parsed_groups) 
         
         self.write_map(outfile, groups, width_ratio, height_ratio)
-        with open(infile, 'w') as f:
-            svg_file.writexml(f, encoding='UTF-8')
-        print(f"Modified SVG saved to {infile}")      
+        
+        if kwargs.get('change_all_links'):
+            # Save the modified SVG back to the original file
+            with open(infile, 'w') as f:
+                svg_file.writexml(f, encoding='UTF-8')
+            print(f"Modified SVG saved to {infile}")
 
 
-    def linkinfo_writer(self, infile, outfile, anomers=['?',' ','a','a','b','b'], carbons=['?',' ',2,2,3,3,4,4,6,6,8,8]):
+    def linkinfo_writer(self, infile, outfile, anomers=['?',' ','a','a','b','b'], carbons=['?',' ','2','2','3','3','4','4','6','6','8','8']):
         svg_file = xml.dom.minidom.parse(infile)
         svg = svg_file.getElementsByTagName('svg')[0]
         elements = svg.getElementsByTagName('g')
         
-        parsed_groups, width_ratio, height_ratio = self.parse_groups(infile) #kwargs to pass are x,y,groups
-        groups = self.build_groups(elements, parsed_groups, anomers=anomers, carbons=carbons) 
-        groups = self.change_linkinfo(groups,elements)    
+        parsed_groups, width_ratio, height_ratio = self.parse_groups(svg_file)
+        groups = self.build_groups(elements, parsed_groups) 
+        groups = self.change_linkinfo(groups, elements, infile, svg_file, anomers=anomers, carbons=carbons)    
         
         self.write_map(outfile, groups, width_ratio, height_ratio)
-        with open(infile, 'w') as f:
-            svg_file.writexml(f, encoding='UTF-8')
-        print(f"Modified SVG saved to {infile}")      
+
+        png_file = infile.rsplit('.', 1)[0] + '.png'
+        self.svg_to_png(infile, png_file)
+        self.random_colors(png_file)
 
 
-    def parse_groups(self,infile, **kwargs):
+    def parse_groups(self,svg_file, **kwargs):
         x = kwargs.get('x',None)
         y = kwargs.get('y',None)
         groups = kwargs.get('groups',None)
 
-        svg_file = xml.dom.minidom.parse(infile)
         svg = svg_file.getElementsByTagName('svg')[0]
         svg_viewbox = svg.getAttribute('viewBox').split()
         svg_width = svg_viewbox[2]
@@ -527,7 +534,7 @@ class Image_Data:
 
                 elif gid[0:2] == 'li':
                     if kwargs.get('change_all_links'):
-                        self.write_link(e, anomer, parent_bond)
+                        self.write_link(e, kwargs.get('change_all_links')[0], kwargs.get('change_all_links')[1])
                 
                 elif gid == "r-1:1": # reducing-end squiggle
                     for ch in e.childNodes:
@@ -538,77 +545,83 @@ class Image_Data:
                 # elif gid == "l-1:1,2": # reducing-end squiggle link
                 #      groups[gid] = []
 
-            return groups
+        return groups
         
-    def change_linkinfo(self, groups, elements):
+    def change_linkinfo(self, groups, elements, infile, svg_file, anomers, carbons):
         for e in elements:
             if e.hasAttribute('ID'):
-                data_type = e.getAttribute("data.type")
                 gid = e.getAttribute("ID")
 
-            if gid[0:2] == 'li':
-                anomer = random.choice("anomers")
-                parent_bond = random.choice("carbons")
-                parent, child = map(int, gid.split(":")[1].split(","))
+                if gid[0:2] == 'li':
+                    anomer = random.choice(anomers)
+                    parent_bond = random.choice(carbons)
+                    self.write_link(e, anomer, parent_bond)
+                    parent, child = map(int, gid.split(":")[1].split(","))
 
-                # cycle back through the elements
-                for e2 in elements:
-                    data_type = e.getAttribute("data.type")
-                    gid = e.getAttribute("ID")
+                    # cycle back through the elements
+                    for e2 in elements:
+                        data_type2 = e2.getAttribute("data.type")
+                        gid2 = e2.getAttribute("ID")
 
-                    # change the child anomer
-                    if data_type == 'Monosaccharide':
-                        id = int(gid.split(":")[1])
-                        if id == child:
-                            if e2.hasAttribute('data.residueAnomericState'):
-                                e2.setAttribute('data.residueAnomericState', anomer)
-                            groups[gid][3] = anomer if anomer != ' ' else '?'
+                        # change the child anomer
+                        if data_type2 == 'Monosaccharide':
+                            id = int(gid2.split(":")[1])
+                            if id == child:
+                                if e2.hasAttribute('data.residueAnomericState'):
+                                    e2.setAttribute('data.residueAnomericState', anomer)
+                                groups[gid2][3] = anomer if anomer != ' ' else '?'
 
-                    # change the parent bond
-                    elif data_type == 'Linkage':
-                        p, c = map(int, gid.split(":")[1].split(","))
-                        if p == parent and c == child:
-                            if e2.hasAttribute('data.parentPositions'):
-                                e2.setAttribute('data.parentPositions', parent_bond)
-                            groups[gid][2] == parent_bond if parent_bond != ' ' else '?'
+                        # change the parent bond
+                        elif data_type2 == 'Linkage':
+                            p, c = map(int, gid2.split(":")[1].split(","))
+                            if p == parent and c == child:
+                                if e2.hasAttribute('data.parentPositions'):
+                                    e2.setAttribute('data.parentPositions', parent_bond)
+                                groups[gid2][2] = parent_bond if parent_bond != ' ' else '?'
+        
+        with open(infile, 'w') as f:
+            svg_file.writexml(f, encoding='UTF-8')
+            print(f"Modified SVG saved to {infile}")  
+
         return groups
             
     
     def write_map(self, outfile, groups, width_ratio, height_ratio):
-            out = []
+    
+        out = []
 
-            for g in groups:
+        for g in groups:
 
-                # linkages
-                if g[0][0] == 'l':
-                    out.append(groups[g])
+            # linkages
+            if g[0][0] == 'l':
+                out.append(groups[g])
 
-                # monosaccharides
-                if g[0] == 'r':
-                    i = g.split(':')[-1]
-                    tmp = ['m',i]
-                    if groups[g][0] == "~":
-                        tmp[0] = 'r'
-                    for p in groups[g]:
-                        if type(p) == tuple:
-                            tmp.append(str(int(round(p[0]*width_ratio))) +',' + str(int(round(p[1]*height_ratio))))
-                        else:
-                            tmp.append(str(p))
-                    out.append(tmp)
+            # monosaccharides
+            if g[0] == 'r':
+                i = g.split(':')[-1]
+                tmp = ['m',i]
+                if groups[g][0] == "~":
+                    tmp[0] = 'r'
+                for p in groups[g]:
+                    if type(p) == tuple:
+                        tmp.append(str(int(round(p[0]*width_ratio))) +',' + str(int(round(p[1]*height_ratio))))
+                    else:
+                        tmp.append(str(p))
+                out.append(tmp)
 
-            labelorder = dict(r=0,m=1,l=2)
-            def sortkey(l):
-                try:
-                    intval = int(l[2])
-                    strval = ''
-                except ValueError:
-                    intval = 1e+20
-                    strval = l[2]
-                return labelorder[l[0]],int(l[1]),intval,strval
+        labelorder = dict(r=0,m=1,l=2)
+        def sortkey(l):
+            try:
+                intval = int(l[2])
+                strval = ''
+            except ValueError:
+                intval = 1e+20
+                strval = l[2]
+            return labelorder[l[0]],int(l[1]),intval,strval
 
-            out.sort(key=sortkey)   
+        out.sort(key=sortkey)   
 
-            with open(outfile, 'w') as of:
-                of.write('\n'.join([ "\t".join(line) for line in out]))
-            
+        with open(outfile, 'w') as of:
+            of.write('\n'.join([ "\t".join(line) for line in out]))
+        
             
