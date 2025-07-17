@@ -265,10 +265,8 @@ for j in range(iterations):
         bad = False
         for m in valid_monos:
             if comp1[m] != comp[m]:
-                print('COMPOSITIOIN MISMATCH') #CAMPBELL
                 bad = True
         if bad:
-            print('BAD') #CAMPBELL
             os.unlink(outfile)
             os.unlink(pngfile)
             os.unlink(mapfile)
