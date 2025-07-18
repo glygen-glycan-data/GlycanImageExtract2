@@ -569,7 +569,7 @@ class Image_Data:
                             if id == child:
                                 if e2.hasAttribute('data.residueAnomericState'):
                                     e2.setAttribute('data.residueAnomericState', anomer)
-                                groups[gid2][3] = anomer if anomer != ' ' else '?'
+                                groups[gid2][1] = anomer if anomer != ' ' else '?'
 
                         # change the parent bond
                         elif data_type2 == 'Linkage':
