@@ -603,7 +603,8 @@ class KnownLink(GlycanConnector):
 
 class KnownLinkWithInfo(KnownLink):
     
-    labels = ['a1', 'a2','a3','a4', 'a5', 'a6', 'a7', 'a8', 'a9', 'b1', 'b2', 'b3', 'b4', 'b5', 'b6', 'b7', 'b8', 'b9', 'x1', 'x2', 'x3', 'x4', 'x5', 'x6', 'x7', 'x8', 'x9', 'ax', 'bx', 'xx'] 
+    # labels = ['a1', 'a2','a3','a4', 'a5', 'a6', 'a7', 'a8', 'a9', 'b1', 'b2', 'b3', 'b4', 'b5', 'b6', 'b7', 'b8', 'b9', 'x1', 'x2', 'x3', 'x4', 'x5', 'x6', 'x7', 'x8', 'x9', 'ax', 'bx', 'xx'] 
+    labels = ['a2','a3','a4', 'a6', 'a8', 'b2', 'b3', 'b4', 'b6', 'x2', 'x3', 'x4', 'x6', 'ax', 'bx', 'xx'] 
 
     defaults = {
         'boxpadding': 0,
