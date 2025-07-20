@@ -80,6 +80,10 @@ if args.writelinks:
     notation_options = [ "snfg", "cfg" ]
 opaque_options = [ True, False ]
 
+# used by linkinfo randomization
+anomer_options = [ " ", "?", "a", "a", "b", "b" ]
+bond_options = [ " ", "?", "2", "2", "3", "3", "4", "4", "6", "6", "8", "8" ]
+
 valid_monos_str = """
 Glc Gal Man
 NeuAc NeuGc
@@ -146,10 +150,10 @@ for j in range(iterations):
         acc = random.choice(accs)
         if acc in seen:
             continue
-        print("random choice:",acc,file=sys.stderr)
+        # print("random choice:",acc,file=sys.stderr)
         seen.add(acc)
         acc1 = acc
-        if 'mono' in randmode or 'linkinfo' in randmode:
+        if randmode in ("mono","biasmono","linkinfo"):
             acc1 = "R%07d"%(outputcount + 1,)
         outfile = os.path.join(output_folder, acc1 + "." + mode)
         pngfile = os.path.join(output_folder, acc1 + ".png")
@@ -231,10 +235,14 @@ for j in range(iterations):
 
         imageWriter.writeImage(seq,outfile)
 
+        if randmode == "linkinfo" and imageWriter.get('display') == 'normalinfo':
+            # shutil.copy(outfile,outfile+".orig") # Make a copy for debugging...
+            # this will re-write the SVG file...
+            imageData.randomize_linkinfo(outfile,anomers=anomer_options,carbon_bonds=bond_options)
 
         mapfile = None
         try:
-            mapfile = imageData.generate_image(outfile, overwrite_links=args.writelinks) #campbell
+            mapfile = imageData.generate_image(outfile)
         except (ValueError,FileNotFoundError):
             if os.path.exists(pngfile):
                 os.unlink(pngfile)
@@ -248,10 +256,6 @@ for j in range(iterations):
         if mapfile is None:
             print(f"Error: mapfile is None for {outfile}. Skipping...")
             continue
-
-        if args.random == 'linkinfo': # campbell
-            if imageWriter.get('display') == 'normalinfo':
-                imageData.linkinfo_writer(outfile, mapfile) 
 
         h = open(mapfile)
         mapfiledata = list(h.read().splitlines())
@@ -301,7 +305,7 @@ for j in range(iterations):
         wh.close()
         print(outputcount,acc1,file=sys.stderr)
         monofreq.add(comp)
-        os.unlink(outfile)
+        # os.unlink(outfile)
         count += 1
         outputcount += 1
 

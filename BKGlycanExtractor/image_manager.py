@@ -12,7 +12,7 @@ from . svg_parse_path import get_points
 
 class Image_Manager:
     def __init__(self,glycan_folder,pattern='*.png,*.jpg'):
-        self.glob = [pattern_type.strip()[1:] if pattern_type.strip().startswith('*') else pattern_type.strip() for pattern_type in pattern.split(',')]
+        self.globs = pattern.split(',')
         self.images = self.get_images(glycan_folder)
 
     def __iter__(self):
@@ -35,7 +35,7 @@ class Image_Manager:
         return sorted(images)
 
     def match_glob(self,image_file):
-        return any(image_file.name.endswith(ext) for ext in self.glob)
+        return any(fnmatch(image_file.name,ext) for ext in self.globs)
 
 
 
@@ -75,7 +75,7 @@ class Image_Data:
         for image_file in img_manager.images:
             self.generate_image(image_file)
 
-    def generate_image(self,image_file,force=False, **kwargs):
+    def generate_image(self,image_file,force=False,**kwargs):
         base_name,extn = image_file.rsplit('.', 1)
         assert extn.lower() == "svg"
 
@@ -88,15 +88,187 @@ class Image_Data:
         if not force and os.path.exists(txt_file):
             return
         
-        if kwargs.get('overwrite_links'):
-            self.svg_parser(image_file,txt_file, change_all_links=kwargs.get('overwrite_links')) 
-        else:
-            self.svg_parser(image_file,txt_file) 
-
+        self.make_semantics_file(image_file,txt_file)
         self.svg_to_png(image_file,png_image)
         self.random_colors(png_image)
         return txt_file
+
+    def parse_clippaths(self,svg):
+        cppoints = {}
+        for cp in svg.getElementsByTagName('clipPath'):
+            clipPathID = cp.getAttribute('id')
+            points = self.get_path(cp)
+            assert points is not None
+            cppoints[clipPathID] = points
+        return cppoints
+
+    def get_path(self,e):
+        points = None
+        for ch in e.childNodes:
+            if ch.nodeName == "path":
+                points = get_points(ch.getAttribute('d'))
+                break
+        if points is not None:
+            return points[0]
+        return None
+
+    def find_clippath(self,e):
+        for ch in e.childNodes:
+            stylestring = None
+            if not hasattr(ch,'getAttribute'):
+                continue
+            stylestring = ch.getAttribute("style")
+            if 'clip-path:url(#' not in stylestring:
+                continue
+            break
+        if stylestring is not None:
+            stylestring = stylestring.split("clip-path:url(#",1)[1]
+            pathname = stylestring.split(")",1)[0]
+            return pathname
+        return None
+
+    def find_dimensions(self,e):
+        length = None
+        for ch in e.childNodes:
+            if hasattr(ch,'hasAttribute') and ch.hasAttribute("height"):
+                length = int(ch.getAttribute("height"))
+                assert length == int(ch.getAttribute("width"))
+                cx = int(ch.getAttribute("x")) + length/2
+                cy = int(ch.getAttribute("y")) + length/2
+                break
+        if length == None:
+            return None
+        return dict(center=(cx,cy),diameter=length)
+
+    def parse_elements(self,svg):
+        elements = {}
+        for e in svg.getElementsByTagName('g'):
+
+            if not e.hasAttribute('ID'):
+                continue
+
+            gid = e.getAttribute("ID")
+            e.setIdAttribute("ID")
+
+            data_type = e.getAttribute("data.type")
             
+            if data_type == "Monosaccharide":           
+                id = int(gid.split(':')[1])
+
+                name = e.getAttribute("data.residueName") 
+                if name not in self.valid_monos:
+                    raise ValueError("SVG Parser: %s not a valid mono name"%(name,))
+                anomer = e.getAttribute("data.residueAnomericState")
+
+                clippath = self.find_clippath(e)
+                assert clippath is not None
+
+                dims = self.find_dimensions(e)
+                assert dims is not None
+
+                elements[gid] = dict(id=id,datatype=data_type,name=name,anomer=anomer,clippath=clippath,**dims)
+
+            elif data_type == "Linkage":
+                fromid,toid = map(int,gid.split(":")[1].split(','))
+                parent_bond = e.getAttribute("data.parentPositions")
+                child_bond = e.getAttribute("data.childPositions")
+
+                elements[gid] = dict(fromid=fromid,toid=toid,datatype=data_type,parent_bond=parent_bond,child_bond=child_bond)
+
+            elif gid == "r-1:1":
+                # Not a monosaccharide, must be the redend squiggle
+                id = int(gid.split(':')[1])
+
+                points = self.get_path(e)
+                assert points is not None
+
+                elements[gid] = dict(id=id,datatype="RedEndMarker",points=points)
+
+            elif gid == "l-1:1,2":
+                # Not a linkage, must be the redend link
+                fromid,toid = map(int,gid.split(":")[1].split(','))
+
+                elements[gid] = dict(fromid=fromid,toid=toid,datatype="RedEndLink")
+                
+        return elements
+
+    def make_semantics_file(self,infile,outfile):
+        svg_file = xml.dom.minidom.parse(infile)
+        svg = svg_file.getElementsByTagName('svg')[0]
+        
+        clippaths = self.parse_clippaths(svg)
+        elements = self.parse_elements(svg)
+
+        rows = []
+
+        datatype_order = dict(RedEndMarker=1,Monosaccharide=2,Linkage=3)
+        for e in sorted(elements.values(),key=lambda e: (datatype_order.get(e['datatype'],0),e.get('id',0),e.get('fromid',0),e.get('toid',0))):
+            row = None
+            if e['datatype'] == "Monosaccharide":
+                row = [ "m", e['id'], e['name'], e['anomer'] ]
+                row += [ "%d,%d"%p for p in clippaths[e['clippath']] ]
+                row += [ "%d,%d"%e['center'], e['diameter'] ]
+            elif e['datatype'] == "Linkage":
+                row = [ "l", e['fromid'], e['parent_bond'], e['child_bond'], e['toid'] ]
+            elif e['datatype'] == "RedEndMarker":
+                row = [ "r", e['id'], "~" ]
+                row += [ "%d,%d"%p for p in e['points'] ]
+            
+            if row is not None:
+                rows.append(row)
+
+        with open(outfile, 'w') as of:
+            for row in rows:
+                print("\t".join(map(str,row)),file=of)
+
+        return
+
+    def randomize_anomers(self,svgdoc,elements,anomers):
+
+        assert all([ (a in ('a','b',' ','?')) for a in anomers ])
+
+        for lgid,e in elements.items():
+            if e['datatype'] not in ('Linkage','RedEndLink'):
+                continue
+
+            newanomer = random.choice(anomers)
+            assert newanomer in ('a','b',' ','?')
+
+            togid = "r-1:%d"%(e['toid'],)
+            toele = svgdoc.getElementById(togid)
+            toele.setAttribute("data.residueAnomericState",newanomer if newanomer in ('a','b') else "?")
+
+            ligid = lgid.replace('l-1:','li-1:')
+            liele = svgdoc.getElementById(ligid)
+
+            teeles = [ te for te in liele.getElementsByTagName('text') if te.firstChild.nodeValue ]
+            # last one is anomer
+            if newanomer == "a":
+                teeles[-1].firstChild.nodeValue = "\u03B1" #alpha
+            elif newanomer == "b":
+                teeles[-1].firstChild.nodeValue = "\u03B2" #beta
+            else:
+                teeles[-1].firstChild.nodeValue = newanomer
+        return 
+
+    def randomize_linkinfo(self,infile,anomers=None,carbon_bonds=None):
+
+        if anomers is None:
+            anomers = ['?',' ','a','a','b','b']
+        if carbon_bonds is None:
+            carbon_bonds = ['?',' ','2','2','3','3','4','4','6','6','8','8']
+
+        svg_file = xml.dom.minidom.parse(infile)
+        svg = svg_file.getElementsByTagName('svg')[0]
+        
+        elements = self.parse_elements(svg)
+        self.randomize_anomers(svg_file,elements,anomers)
+
+        with open(infile, 'w') as f:
+            svg_file.writexml(f, encoding='UTF-8')
+
+        return
+
     def svg_parser(self,infile,outfile,**kwargs):
 
         x = kwargs.get('x',None)
