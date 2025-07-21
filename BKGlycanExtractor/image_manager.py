@@ -275,6 +275,53 @@ class Image_Data:
         return 
 
 
+    def randomize_anomercarbon_pairs(self,svgdoc,elements,anomers,a_carbons=['8'], b_carbons=[' ','?'], x_carbons=['2','3','4','6','?',' ']):
+        assert all([ (a in ('a','b',' ','?')) for a in anomers ])
+
+        for lgid,e in elements.items():
+            if e['datatype'] not in ('Linkage','RedEndLink'):
+                continue
+
+            # randomize anomer
+            newanomer = random.choice(anomers)
+            assert newanomer in ('a','b',' ','?')
+
+            # logic based carbon selection with goal of raising % of rare linkages bx a8 x3 x4 x6 x2
+            if newanomer == "a":
+                newcarbon = random.choice(a_carbons)
+            elif newanomer == "b":
+                newcarbon = random.choice(b_carbons)
+            elif newanomer in (' ','?'):
+                newcarbon = random.choice(x_carbons)
+            else:
+                raise ValueError("Unknown anomer %s"%newanomer)
+
+            a_togid = "r-1:%d"%(e['toid'],)
+            a_toele = svgdoc.getElementById(a_togid)
+            a_toele.setAttribute("data.residueAnomericState",newanomer if newanomer in ('a','b') else "?")
+
+            c_togid = "l-1:%d,%d"%(e['fromid'],e['toid'])
+            c_toele = svgdoc.getElementById(c_togid)
+            c_toele.setAttribute("data.parentPositions",newcarbon if newcarbon in ('2','3','4','6','8') else "?")
+
+            ligid = lgid.replace('l-1:','li-1:')
+            liele = svgdoc.getElementById(ligid)
+ 
+            teeles = [ te for te in liele.getElementsByTagName('text') if te.firstChild.nodeValue ]
+            # last one is anomer
+            if newanomer == "a":
+                teeles[-1].firstChild.nodeValue = "\u03B1" #alpha
+            elif newanomer == "b":
+                teeles[-1].firstChild.nodeValue = "\u03B2" #beta
+            else:
+                teeles[-1].firstChild.nodeValue = newanomer
+
+            # first one is carbon bond
+            teeles[0].firstChild.nodeValue = newcarbon
+
+        return 
+
+    
     def randomize_linkinfo(self,infile,anomers=None,carbon_bonds=None):
 
         if anomers is None:
@@ -286,8 +333,9 @@ class Image_Data:
         svg = svg_file.getElementsByTagName('svg')[0]
         
         elements = self.parse_elements(svg)
-        self.randomize_anomers(svg_file,elements,anomers)
-        self.randomize_parent_carbon_bonds(svg_file,elements,carbon_bonds)
+        # self.randomize_anomers(svg_file,elements,anomers)
+        # self.randomize_parent_carbon_bonds(svg_file,elements,carbon_bonds)
+        self.randomize_anomercarbon_pairs(svg_file,elements,anomers)
 
         with open(infile, 'w') as f:
             svg_file.writexml(f, encoding='UTF-8')
