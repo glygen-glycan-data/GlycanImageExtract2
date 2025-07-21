@@ -136,7 +136,7 @@ def update_votes(instance):
                 else:
                     g1['upvotes'] = 0; g1['downvotes'] = 1
             else:
-                if g1.get("composition_str") == g2["composition_str"]:
+                if g1.get("composition_str") == g2.get("composition_str","__XXXXXX__"):
                     g1['upvotes'] = 1; g1['downvotes'] = 0;
                 else:
                     g1['upvotes'] = 0; g1['downvotes'] = 1

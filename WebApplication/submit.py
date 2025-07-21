@@ -5,7 +5,7 @@ import requests
 
 from urllib.request import urlopen
 from urllib.parse import urlencode
-
+from urllib.error import HTTPError
 
 devemail="nje5+converter@georgetown.edu"
 
@@ -13,7 +13,16 @@ def request_api(baseurl, target, **kwargs):
     """Generic function to call glyomics.org APIs"""
     url = baseurl + target
     data = urlencode(kwargs).encode('utf8')
-    response = urlopen(url, data).read()
+    attempts = 0
+    while True:
+        try:
+            attempts += 1
+            response = urlopen(url, data).read()
+            break
+        except HTTPError:
+            if attempts > 5:
+                raise 
+        time.sleep(5)
     return json.loads(response)
 
 

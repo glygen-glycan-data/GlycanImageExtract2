@@ -15,6 +15,9 @@ import multiprocessing
 import json
 from collections import defaultdict
 import threading
+import random as random_module
+import base64
+import glob
 
 import os, ssl
 
@@ -79,11 +82,15 @@ class APIFramework:
         self.result_cache = {}
         self.task_queue   = multiprocessing.Queue()
         self.result_queue = multiprocessing.Queue()
+
         self.task_index = 0
         self.task_index_lock = threading.Lock()
 
         self.task_list = set()
         self.task_list_lock = threading.Lock()
+
+        self.session_task_list = defaultdict(list)
+        self.session_task_list_lock = threading.Lock()
 
         self._template_folder = None
         self._home_html = None
@@ -131,6 +138,8 @@ class APIFramework:
             self._flask_app = flask.Flask(self._app_name)
         else:
             self._flask_app = flask.Flask(self._app_name, template_folder=self.abspath(self._template_folder))
+        self._flask_app.secret_key = self.makeid(self._app_name,random=False,length=16)
+        # self._flask_app.config['PERMANENT_SESSION_LIFETIME'] = 30*24*3600 # 30 days
 
     def set_prefix(self, prefix):
         self._prefix = prefix
@@ -238,6 +247,21 @@ class APIFramework:
             if "prefix" in res["basic"]:
                self.set_prefix(res["basic"]["prefix"])
 
+    def makeid(self,*params,random=False,length=16,sep=":"):
+        msgparts = list(params)
+        if random:
+            msgparts.append("".join([ random_module.choice("0123456789") for i in range(16)]))
+        msg = sep.join(map(str,msgparts))
+        return base64.b32encode(hashlib.sha256(msg.encode()).digest()).decode()[:length].lower()
+
+    def get_session(self):
+        sessionid = flask.session.get('sessionid')
+        if not sessionid:
+            sessionid = self.makeid(random=True,length=16)
+            flask.session.permanent = True        
+            flask.session['sessionid'] = sessionid
+        print("Sessionid:",sessionid,file=sys.stderr)
+        return sessionid
 
     # Worker function
     @staticmethod
@@ -249,7 +273,7 @@ class APIFramework:
 
     # FLASK handlers, need to be overwrite for your own app
     def home(self, **kwargs):
-
+        sessionid = self.get_session()
         if self._home_html is None:
             return flask.jsonify("Hello from %s:%s" % (self.host(), self.port()))
         else:
@@ -289,11 +313,21 @@ class APIFramework:
         return flask.jsonify(dict(status=status,state=state,finished=finished))
 
     def get_job_counts(self):
-        self.update_results(getall=True)
+        self.update_results(getall=False)
         states = defaultdict(int)
         for x in self.result_cache.values():
             states[x["state"]] += 1
         return flask.jsonify(states)
+
+    def get_recent_jobs(self):
+        sid = self.get_session()
+        recent_jobs = []
+        with self.session_task_list_lock:
+            for tid in map(lambda t: t[0],sorted(self.session_task_list[sid],key=lambda t: -t[1])[:10]):
+                task1 = dict((k,v) for k,v in self.get_result(tid).items() if k != 'result')
+                recent_jobs.append(task1)
+        print(recent_jobs)
+        return recent_jobs
 
     def get_next_task_index(self):
         with self.task_index_lock:
@@ -301,9 +335,11 @@ class APIFramework:
             task_index = self.task_index
         return task_index
 
-    def add_to_task_list(self,tid):
+    def add_to_task_lists(self,tid,sid,stime):
         with self.task_list_lock:
             self.task_list.add(tid)
+        with self.session_task_list_lock:
+            self.session_task_list[sid].append((tid,stime))
 
     def remove_from_task_list(self,tid):
         with self.task_list_lock:
@@ -318,6 +354,8 @@ class APIFramework:
 
         if "tasks" not in p:
             return flask.jsonify("Please submit with actual tasks")
+
+        sessionid = self.get_session()
 
         # Suppose to be a list
         raw_tasks = json.loads(p["tasks"])
@@ -338,7 +376,8 @@ class APIFramework:
                 "finished": False,
                 "state": self.QUEUED,
                 "status": "",
-                "queue time": time.time(),
+                "submit_time": time.time(),
+                "sessionid": sessionid,
                 "result": {}
             }
 
@@ -347,12 +386,12 @@ class APIFramework:
             else:
                 self.task_queue.put(task_detail)
                 self.result_cache[list_id] = status
-                self.add_to_task_list(list_id)
+                self.add_to_task_lists(list_id, sessionid, status['submit_time'])
             self.output(1, "Job received by API: %s" % (task_detail))
 
         return flask.jsonify(res)
 
-    def get_result(self,list_id,lock=False,timeout=None):
+    def get_result(self,list_id):
         thing = {"Error": "list_id (%s) not found" % list_id}
         if list_id in self.result_cache:
             thing = self.result_cache[list_id]
@@ -429,6 +468,7 @@ class APIFramework:
             else:
                 return flask.jsonify("Invalid file or URL"), 400
 
+            sessionid = self.get_session()
 
             # Create task details
             task_detail = self.form_task({"original_file_name": filename, "file_type": file_type})
@@ -470,6 +510,8 @@ class APIFramework:
                 "status": "",
                 "finished": False,
                 "file_type": file_type,
+                "submit_time": time.time(),
+                "sessionid": sessionid,
                 "result": {}
             }
 
@@ -478,7 +520,7 @@ class APIFramework:
             else:
                 self.task_queue.put(task_detail)
                 self.result_cache[list_id] = status
-                self.add_to_task_list(list_id)
+                self.add_to_task_lists(list_id,sessionid,status['submit_time'])
             self.output(1, "Job received by API: %s" % (task_detail))
 
         return flask.jsonify([status])
@@ -558,6 +600,11 @@ class APIFramework:
                     self.result_cache[res["id"]]["result"] = res
                     self.result_cache[res["id"]]['finished'] = True
                     self.remove_from_task_list(res["id"])    
+
+                file_path = os.path.join("static/files/"+res["id"], "results.json")
+                with open(file_path, 'w') as f:
+                    json.dump(self.result_cache[res["id"]],f,indent=2)
+
             except queue.Empty:
                 break
             except KeyError:
@@ -580,6 +627,7 @@ class APIFramework:
         self._flask_app.add_url_rule("/get_job_counts", "get_job_counts", self.get_job_counts, methods=["GET", "POST"])
         self._flask_app.add_url_rule("/get_job_status", "get_job_status", self.get_job_status, methods=["GET", "POST"])
         self._flask_app.add_url_rule("/get_job_status/<tid>", "get_job_status", self.get_job_status, methods=["GET", "POST"])
+        self._flask_app.add_url_rule("/get_recent_jobs", "get_recent_jobs", self.get_recent_jobs, methods=["GET", "POST"])
 
         if self._file_based_job:
             print("Got the functions")
@@ -607,10 +655,23 @@ class APIFramework:
         return
 
 
+    def populate_session_tasks(self):
+        for f in glob.glob("static/files/*/results.json"):
+            try:
+                data = json.loads(open(f).read())
+            except json.decoder.JSONDecodeError:
+                continue
+            if 'sessionid' in data:
+                tid = data['id']
+                sid = data['sessionid']
+                stime = data['submit_time']
+                self.session_task_list[sid].append((tid,stime))
+        print(self.session_task_list)
 
     def start(self):
         self.load_route()
         self.manipulate_dirs()
+        self.populate_session_tasks()
 
         self._deamon_process_pool = []
         for i in range(self._worker_num):
@@ -622,8 +683,8 @@ class APIFramework:
 
         self.cleanup()
 
-        # self._flask_app.run(self.host(), self.port())
-        self._flask_app.run(self.host(), self.port(), debug=True)
+        self._flask_app.run(self.host(), self.port())
+        # self._flask_app.run(self.host(), self.port(), debug=True)
 
     def cleanup(self):
         atexit.register(self.terminate_all)

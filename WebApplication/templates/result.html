@@ -102,11 +102,11 @@
                elt.style.color = "green";
                elt1.innerHTML = "GOOD";
            } else if (d.downvotes > 0) {
-               elt.style.color = "red";
-               elt1.innerHTML = "BAD";
+               elt.style.color = "#ff3333";
+               elt1.innerHTML = "&nbsp;BAD&nbsp;";
            } else {
                elt.style.color = "black";
-               elt1.innerHTML = "";
+               elt1.innerHTML = "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;";
            }
          }
        });
@@ -238,8 +238,8 @@
                             color = "green";
                             note = "GOOD"
                         } else if ((glycan.downvotes || 0) > 0) {
-                            color = "red";
-                            note = "BAD"
+                            color = "#ff3333";
+                            note = "&nbsp;BAD&nbsp;"
                         } 
                         let value = (glycan.upvotes || 0)+(glycan.downvotes || 0);
         

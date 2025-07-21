@@ -3,6 +3,7 @@
 import sys
 import os
 import argparse
+import base64
 
 
 parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
@@ -34,7 +35,6 @@ import threading
 class ReferenceAPIParaBased(APIFramework):
     pass
 
-
 import subprocess
 class ReferenceAPIFileBased(APIFramework):
 
@@ -47,13 +47,9 @@ class ReferenceAPIFileBased(APIFramework):
         res = {}
 
         # Prevent name collision
-        task_str = p["original_file_name"] + str(random.randint(10000, 99999))
-        task_str = task_str.encode("utf-8")
-        list_id = hashlib.sha256(task_str).hexdigest()[:16]
-
-        res["id"] = list_id
         res["original_file_name"] = p["original_file_name"]
         res['file_type'] = p['file_type']
+        res["id"] = self.makeid(p["original_file_name"],p["file_type"],random=True,length=10)
 
         return res
 
@@ -114,18 +110,16 @@ class ReferenceAPIFileBased(APIFramework):
                 "state": state,
                 "status": status,
             }
-
             result_queue.put(res)
 
-            res1 = dict(id=token,result=res,finished=res['finished'],state=res['state'],status=res['status'],submission_detail=task_detail)
+            # res1 = dict(id=token,result=res,finished=res['finished'],state=res['state'],status=res['status'],submission_detail=task_detail)
+            # file_path = os.path.join(workdir, "results.json")
+            # with open(file_path, 'w') as f:
+            #    json.dump(res1,f,indent=2)
 
-            file_path = os.path.join(workdir, "results.json")
-            with open(file_path, 'w') as f:
-                json.dump(res1,f,indent=2)
 
-
-    def home(self):
-        return flask.render_template(self._home_html, urlprefix=self._prefix)
+    # def home(self):
+    #     return flask.render_template(self._home_html, urlprefix=self._prefix)
 
     # def examples(self):
     #     return flask.render_template(self._examples_html, basedir="static/examples")
