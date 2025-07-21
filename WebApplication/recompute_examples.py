@@ -110,7 +110,7 @@ for pat in patterns:
     task = dict(fileType=filetype,fileURL=(apiurl+"/"+inputpath))
     exampledir = os.path.split(basedir)[1]
     tasks.append((exampledir,extractor.submit(task=task,request="file_upload")))
-    print("Example %s submitted. "%(exampledir,))
+    print("Example %s submitted (%s). "%(exampledir,tasks[-1][1]))
     time.sleep(1)
 
 def update_votes(instance):
@@ -154,7 +154,7 @@ for exampledir,taskid in tasks:
         shutil.copytree("static/files/"+taskid,
                         "static/examples/"+exampledir)
         update_votes(exampledir)
-        print("Example %s done."%(exampledir,))
+        print("Example %s done (%s)."%(exampledir,taskid))
     else:
-        print("Example %s not updated."%(exampledir,))
+        print("Example %s not updated (%s)."%(exampledir,taskid))
 
