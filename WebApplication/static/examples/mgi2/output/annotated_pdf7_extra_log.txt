@@ -1,2 +1,2 @@
-6ceed3ddbd9f17195f960652bf51f0b62d568b1f8b1723717e3f6a42301a8b5a
-/home/nmathias/GlycanImageExtract2/WebApplication/static/files/6ceed3ddbd9f17195f960652bf51f0b62d568b1f8b1723717e3f6a42301a8b5a/output/annotated_pdf7_extra.png
+eqyzy4y473
+/data2/projects/GlyGen/GlycanImageExtract2-dev/WebApplication/static/files/eqyzy4y473/output/annotated_pdf7_extra.png

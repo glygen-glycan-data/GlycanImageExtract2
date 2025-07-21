@@ -1,2 +1,2 @@
-bba610242c65373cd3d7829798b1e042de97a74a324f2ab3832fb42a586934e6
-/home/nmathias/GlycanImageExtract2/WebApplication/static/files/bba610242c65373cd3d7829798b1e042de97a74a324f2ab3832fb42a586934e6/output/annotated_multi_glycans.png
+f5vq2ze2g3
+/data2/projects/GlyGen/GlycanImageExtract2-dev/WebApplication/static/files/f5vq2ze2g3/output/annotated_multi_glycans.png

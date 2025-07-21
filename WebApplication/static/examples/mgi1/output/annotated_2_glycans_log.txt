@@ -1,2 +1,2 @@
-f24029f921103a6f36fbadb25e3a95af0cae60a79e64a5383fa7e8b38f184510
-/home/nmathias/GlycanImageExtract2/WebApplication/static/files/f24029f921103a6f36fbadb25e3a95af0cae60a79e64a5383fa7e8b38f184510/output/annotated_2_glycans.png
+rf3sepvmka
+/data2/projects/GlyGen/GlycanImageExtract2-dev/WebApplication/static/files/rf3sepvmka/output/annotated_2_glycans.png

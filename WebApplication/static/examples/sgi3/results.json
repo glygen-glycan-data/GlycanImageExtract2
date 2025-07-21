@@ -1,10 +1,22 @@
 {
-  "id": "548554500da14b2ead6bfa3f251e7637560436393db2c2829b808b4e1134dd7f",
+  "id": "zgbio3xywr",
+  "task_index": 18,
+  "submission_detail": {
+    "original_file_name": "058a64f0cda3490dffac747dfb599cef.png",
+    "file_type": "single_figure_img",
+    "id": "zgbio3xywr"
+  },
+  "state": "Complete",
+  "status": "",
+  "finished": true,
+  "file_type": "single_figure_img",
+  "submit_time": 1753124476.0165424,
+  "sessionid": "djelsbcw2kk6fbde",
   "result": {
-    "id": "548554500da14b2ead6bfa3f251e7637560436393db2c2829b808b4e1134dd7f",
-    "start time": 1751301709.2445848,
-    "end time": 1751301734.7124588,
-    "runtime": 25.46787405014038,
+    "id": "zgbio3xywr",
+    "start time": 1753125134.0882432,
+    "end time": 1753125157.378603,
+    "runtime": 23.29035973548889,
     "error": [],
     "figure_result": [
       {
@@ -32,56 +44,55 @@
             "image_name": "058a64f0cda3490dffac747dfb599cef-1.png",
             "image_path": "extracted_figures/images/058a64f0cda3490dffac747dfb599cef-1.png",
             "linkexpl": "Extracted successfully using accession",
-            "links_count": 11,
             "log": [
               "[rootmonofinding.py:242 YOLORootFinder.find_objects] Multiple roots (2) were detected"
             ],
             "monos": [
               {
                 "bbox": [
-                  24,
-                  78,
+                  25,
+                  27,
                   33,
-                  32
+                  30
                 ],
                 "center": [
-                  40.5,
-                  94.0
+                  41.5,
+                  42.0
                 ],
                 "classlabel": "NeuAc",
-                "confidence": 0.9999972581863403,
+                "confidence": 0.9999345541000366,
                 "id": 0,
                 "symbol": "NeuAc"
               },
               {
                 "bbox": [
                   25,
-                  25,
+                  78,
                   32,
-                  33
+                  30
                 ],
                 "center": [
                   41.0,
-                  41.5
+                  93.0
                 ],
                 "classlabel": "NeuAc",
-                "confidence": 0.9999958276748657,
+                "confidence": 0.999885082244873,
                 "id": 1,
                 "symbol": "NeuAc"
               },
               {
                 "bbox": [
-                  78,
-                  26,
-                  31,
-                  32
+                  77,
+                  27,
+                  33,
+                  30
                 ],
                 "center": [
                   93.5,
                   42.0
                 ],
                 "classlabel": "Gal",
-                "confidence": 0.9999979734420776,
+                "confidence": 0.999996542930603,
                 "id": 2,
                 "links": [
                   {
@@ -89,7 +100,7 @@
                     "classlabel": "link",
                     "confidence": 0.9999834299087524,
                     "fromid": 2,
-                    "toid": 1
+                    "toid": 0
                   }
                 ],
                 "symbol": "Gal"
@@ -98,15 +109,15 @@
                 "bbox": [
                   77,
                   78,
-                  32,
-                  32
+                  33,
+                  30
                 ],
                 "center": [
-                  93.0,
-                  94.0
+                  93.5,
+                  93.0
                 ],
                 "classlabel": "Gal",
-                "confidence": 0.9999855756759644,
+                "confidence": 0.9999923706054688,
                 "id": 3,
                 "links": [
                   {
@@ -114,81 +125,97 @@
                     "classlabel": "link",
                     "confidence": 0.9999730587005615,
                     "fromid": 3,
-                    "toid": 0
+                    "toid": 1
                   }
                 ],
                 "symbol": "Gal"
               },
               {
                 "bbox": [
-                  129,
-                  78,
-                  33,
-                  32
+                  284,
+                  64,
+                  34,
+                  33
                 ],
                 "center": [
-                  145.5,
-                  94.0
+                  301.0,
+                  80.5
                 ],
                 "classlabel": "GlcNAc",
-                "confidence": 0.9999943971633911,
+                "confidence": 0.9999810457229614,
                 "id": 4,
                 "links": [
                   {
                     "classid": 0,
                     "classlabel": "link",
-                    "confidence": 0.9999443292617798,
+                    "confidence": 0.999936580657959,
                     "fromid": 4,
-                    "toid": 3
+                    "toid": 11
                   }
                 ],
                 "symbol": "GlcNAc"
               },
               {
                 "bbox": [
-                  286,
-                  65,
-                  32,
+                  128,
+                  129,
+                  35,
                   32
                 ],
                 "center": [
-                  302.0,
+                  145.5,
+                  145.0
+                ],
+                "classlabel": "GlcNAc",
+                "confidence": 0.9999685287475586,
+                "id": 5,
+                "symbol": "GlcNAc"
+              },
+              {
+                "bbox": [
+                  337,
+                  65,
+                  33,
+                  32
+                ],
+                "center": [
+                  353.5,
                   81.0
                 ],
                 "classlabel": "GlcNAc",
-                "confidence": 0.9999939203262329,
-                "id": 5,
-                "links": [
-                  {
-                    "classid": 0,
-                    "classlabel": "link",
-                    "confidence": 0.999936580657959,
-                    "fromid": 5,
-                    "toid": 10
-                  }
-                ],
-                "symbol": "GlcNAc"
-              },
-              {
-                "bbox": [
-                  129,
-                  26,
-                  32,
-                  32
-                ],
-                "center": [
-                  145.0,
-                  42.0
-                ],
-                "classlabel": "GlcNAc",
-                "confidence": 0.9999872446060181,
+                "confidence": 0.9999531507492065,
                 "id": 6,
                 "links": [
                   {
                     "classid": 0,
                     "classlabel": "link",
-                    "confidence": 0.99998939037323,
+                    "confidence": 0.9998139142990112,
                     "fromid": 6,
+                    "toid": 4
+                  }
+                ],
+                "symbol": "GlcNAc"
+              },
+              {
+                "bbox": [
+                  128,
+                  26,
+                  33,
+                  32
+                ],
+                "center": [
+                  144.5,
+                  42.0
+                ],
+                "classlabel": "GlcNAc",
+                "confidence": 0.99994957447052,
+                "id": 7,
+                "links": [
+                  {
+                    "classid": 0,
+                    "classlabel": "link",
+                    "confidence": 0.99998939037323,
+                    "fromid": 7,
                     "toid": 2
                   }
                 ],
@@ -196,58 +223,42 @@
               },
               {
                 "bbox": [
-                  338,
-                  65,
-                  32,
-                  32
+                  128,
+                  78,
+                  33,
+                  31
                 ],
                 "center": [
-                  354.0,
-                  81.0
+                  144.5,
+                  93.5
                 ],
                 "classlabel": "GlcNAc",
-                "confidence": 0.9999852180480957,
-                "id": 7,
+                "confidence": 0.9999282360076904,
+                "id": 8,
                 "links": [
                   {
                     "classid": 0,
                     "classlabel": "link",
-                    "confidence": 0.9998139142990112,
-                    "fromid": 7,
-                    "toid": 5
+                    "confidence": 0.9999443292617798,
+                    "fromid": 8,
+                    "toid": 3
                   }
                 ],
                 "symbol": "GlcNAc"
               },
               {
                 "bbox": [
-                  129,
-                  130,
-                  34,
-                  32
-                ],
-                "center": [
-                  146.0,
-                  146.0
-                ],
-                "classlabel": "GlcNAc",
-                "confidence": 0.9999852180480957,
-                "id": 8,
-                "symbol": "GlcNAc"
-              },
-              {
-                "bbox": [
-                  182,
+                  181,
                   26,
-                  32,
+                  33,
                   32
                 ],
                 "center": [
-                  198.0,
+                  197.5,
                   42.0
                 ],
                 "classlabel": "Man",
-                "confidence": 0.9999829530715942,
+                "confidence": 0.9999960660934448,
                 "id": 9,
                 "links": [
                   {
@@ -255,7 +266,39 @@
                     "classlabel": "link",
                     "confidence": 0.9998995065689087,
                     "fromid": 9,
-                    "toid": 6
+                    "toid": 7
+                  }
+                ],
+                "symbol": "Man"
+              },
+              {
+                "bbox": [
+                  181,
+                  104,
+                  32,
+                  31
+                ],
+                "center": [
+                  197.0,
+                  119.5
+                ],
+                "classlabel": "Man",
+                "confidence": 0.9999936819076538,
+                "id": 10,
+                "links": [
+                  {
+                    "classid": 0,
+                    "classlabel": "link",
+                    "confidence": 0.9999698400497437,
+                    "fromid": 10,
+                    "toid": 5
+                  },
+                  {
+                    "classid": 0,
+                    "classlabel": "link",
+                    "confidence": 0.9999285936355591,
+                    "fromid": 10,
+                    "toid": 8
                   }
                 ],
                 "symbol": "Man"
@@ -264,74 +307,41 @@
                 "bbox": [
                   233,
                   64,
-                  32,
-                  33
+                  33,
+                  32
                 ],
                 "center": [
-                  249.0,
-                  80.5
+                  249.5,
+                  80.0
                 ],
                 "classlabel": "Man",
-                "confidence": 0.9999747276306152,
-                "id": 10,
+                "confidence": 0.9999691247940063,
+                "id": 11,
                 "links": [
                   {
                     "classid": 0,
                     "classlabel": "link",
                     "confidence": 0.9999911785125732,
-                    "fromid": 10,
+                    "fromid": 11,
                     "toid": 9
                   },
                   {
                     "classid": 0,
                     "classlabel": "link",
                     "confidence": 0.9999258518218994,
-                    "fromid": 10,
-                    "toid": 11
-                  }
-                ],
-                "symbol": "Man"
-              },
-              {
-                "bbox": [
-                  182,
-                  104,
-                  31,
-                  32
-                ],
-                "center": [
-                  197.5,
-                  120.0
-                ],
-                "classlabel": "Man",
-                "confidence": 0.9999698400497437,
-                "id": 11,
-                "links": [
-                  {
-                    "classid": 0,
-                    "classlabel": "link",
-                    "confidence": 0.9999698400497437,
                     "fromid": 11,
-                    "toid": 8
-                  },
-                  {
-                    "classid": 0,
-                    "classlabel": "link",
-                    "confidence": 0.9999285936355591,
-                    "fromid": 11,
-                    "toid": 4
+                    "toid": 10
                   }
                 ],
                 "symbol": "Man"
               }
             ],
-            "monos_count": 12,
             "non_tree_links": [],
             "orientation": "RL",
             "root": {
               "classlabel": "redend",
               "confidence": 0.9996897578239441,
-              "mono_id": 7
+              "mono_id": 6
             },
             "undirected_links": [
               {
@@ -340,7 +350,7 @@
                 "confidence": 0.9999911785125732,
                 "mono_ids": [
                   9,
-                  10
+                  11
                 ]
               },
               {
@@ -349,7 +359,7 @@
                 "confidence": 0.99998939037323,
                 "mono_ids": [
                   2,
-                  6
+                  7
                 ]
               },
               {
@@ -357,7 +367,7 @@
                 "classlabel": "link",
                 "confidence": 0.9999834299087524,
                 "mono_ids": [
-                  1,
+                  0,
                   2
                 ]
               },
@@ -366,7 +376,7 @@
                 "classlabel": "link",
                 "confidence": 0.9999730587005615,
                 "mono_ids": [
-                  0,
+                  1,
                   3
                 ]
               },
@@ -375,8 +385,8 @@
                 "classlabel": "link",
                 "confidence": 0.9999698400497437,
                 "mono_ids": [
-                  8,
-                  11
+                  5,
+                  10
                 ]
               },
               {
@@ -385,7 +395,7 @@
                 "confidence": 0.9999443292617798,
                 "mono_ids": [
                   3,
-                  4
+                  8
                 ]
               },
               {
@@ -393,8 +403,8 @@
                 "classlabel": "link",
                 "confidence": 0.999936580657959,
                 "mono_ids": [
-                  5,
-                  10
+                  4,
+                  11
                 ]
               },
               {
@@ -402,8 +412,8 @@
                 "classlabel": "link",
                 "confidence": 0.9999285936355591,
                 "mono_ids": [
-                  4,
-                  11
+                  8,
+                  10
                 ]
               },
               {
@@ -420,7 +430,7 @@
                 "classlabel": "link",
                 "confidence": 0.9998995065689087,
                 "mono_ids": [
-                  6,
+                  7,
                   9
                 ]
               },
@@ -429,8 +439,8 @@
                 "classlabel": "link",
                 "confidence": 0.9998139142990112,
                 "mono_ids": [
-                  5,
-                  7
+                  4,
+                  6
                 ]
               }
             ],
@@ -443,12 +453,9 @@
         "image_path": "input/058a64f0cda3490dffac747dfb599cef.png",
         "width": 446
       }
-    ]
-  },
-  "finished": true,
-  "submission_detail": {
-    "id": "548554500da14b2ead6bfa3f251e7637560436393db2c2829b808b4e1134dd7f",
-    "original_file_name": "058a64f0cda3490dffac747dfb599cef.png",
-    "file_type": "single_figure_img"
+    ],
+    "finished": true,
+    "state": "Complete",
+    "status": ""
   }
 }
