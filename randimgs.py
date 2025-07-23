@@ -24,9 +24,8 @@ parser.add_argument("-F", "--force", action='store_true', help="Force re-downloa
 parser.add_argument("-s", "--skip", type=str, help="File of accessions to skip. Default: None.", default=None)
 parser.add_argument("-r", "--random", type=str, help="Randomization mode. One of uniform accessions (uniform), biased accessions (biased), random monosaccharides (mono), random monosaccharides + baised accessions (biasmono), random linkages (linkinfo). Default: uniform.", default="uniform")
 parser.add_argument("-A", "--accessions", type=str, help="Limit to specific accessions by regular expression or prefix. Default: No restriction.", default=None)
-parser.add_argument("-L", "--linkage", action='store_true', help="Require glycosydic linkage information (display: normalinfo). Default: compact, normal, normainfo. ", default=False)
-parser.add_argument("--no_links", action='store_true', help="Do not display glycosydic linkage information (display: normal, compact). Default: compact, normal, normainfo.", default=False)
-parser.add_argument("--writelinks", type=str, help="overwrite all links to the specification [anomer,carbon#]", default=False)
+parser.add_argument("-L", "--linkage", action='store_true', help="Require glycosidic linkage information (display: normalinfo). Default: compact, normal, normainfo. ", default=False)
+parser.add_argument("-N", "--nolinkage", action='store_true', help="Do not display glycosidic linkage information (display: normal, compact). Default: compact, normal, normainfo.", default=False)
 
 args = parser.parse_args()
 imagenum = args.nimages
@@ -72,11 +71,8 @@ if args.linkage:
     display_options = [ "normal", "compact" ] + 18*[ "normalinfo" ]
     # display_options = [ "normalinfo" ]
     notation_options = [ "snfg", "cfg" ]
-if args.no_links:
+if args.nolinkage:
     display_options = [ "normal", "compact" ]
-    notation_options = [ "snfg", "cfg" ]
-if args.writelinks:
-    display_options = ["normalinfo"]
     notation_options = [ "snfg", "cfg" ]
 opaque_options = [ True, False ]
 
@@ -292,20 +288,20 @@ for j in range(iterations):
                    mapfiledata[i] = "\t".join(sl)
                    break
         wh = open(mapfile,'w')
-        if acc1 != acc:
-            print("# orig_accession:",acc,file=wh)
         for k in ('scale','reducing_end','orientation','notation','display','opaque'):
             print("# "+k+":",imageWriter.get(k),file=wh)
-        print("# composition:",comp,file=wh)
+        print("# orig_accession:",acc,file=wh)
+        print("# orig_composition:",comp,file=wh)
         gly_iupac = ip.toStr(gly)
-        print("# iupac:",gly_iupac,file=wh)
+        print("# orig_iupac:",gly_iupac,file=wh)
         topo_iupac = ip.toStr(topo(gly))
-        print("# topo:",topo_iupac,file=wh)
+        print("# orig_topo:",topo_iupac,file=wh)
+        print("# randmode:",randmode,file=wh)
         wh.write("\n".join(mapfiledata))
         wh.close()
-        print(outputcount,acc1,file=sys.stderr)
+        print(outputcount+1,acc1,file=sys.stderr)
         monofreq.add(comp)
-        # os.unlink(outfile)
+        os.unlink(outfile)
         count += 1
         outputcount += 1
 

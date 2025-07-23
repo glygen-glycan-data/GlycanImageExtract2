@@ -6,6 +6,8 @@ assess ovelap, intersection over union value, class comparison, etc
 
 import math
 
+from .bbox import BoundingBox
+
 class CompareBoxes:
 
     def __init__(self, **kw):
@@ -25,10 +27,40 @@ class CompareBoxes:
             return False
 
     @staticmethod
-    def euclidean_distance(box1,box2):
-        obj1_cen_x, obj1_cen_y = box1.center()
-        obj2_cen_x, obj2_cen_y = box2.center()
-        return math.sqrt((obj1_cen_x - obj2_cen_x)**2 + (obj1_cen_y - obj2_cen_y)**2) 
+    def euclidean_distance_points(p1,p2):
+        return math.sqrt((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2) 
+
+    @staticmethod
+    def euclidean_distance(x,y):
+        if isinstance(x,BoundingBox):
+            x1 = x.center()
+        elif isinstance(x,dict):
+            x1 = x['box'].center()
+        else:
+            x1 = x
+        if isinstance(y,BoundingBox):
+            y1 = y.center()
+        elif isinstance(y,dict):
+            y1 = y['box'].center()
+        else:
+            y1 = y
+        return CompareBoxes.euclidean_distance_points(x1,y1)
+
+    @staticmethod
+    def is_contained_in(b1,b2):
+        b1x1,b1y1,b1x2,b1y2 = b1.corners()
+        b2x1,b2y1,b2x2,b2y2 = b2.corners()
+        if b1x1 < b2x1:
+            return False
+        if b1x2 > b2x2:
+            return False
+        if b1y1 < b2y1:
+            return False
+        if b1y2 > b2y2:
+            return False
+        assert intersection_area(b1,b2) == b1.area()
+        return True   
+
 
     @staticmethod
     def proximity(known_box,pred_box):

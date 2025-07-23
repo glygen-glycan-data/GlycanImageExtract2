@@ -547,10 +547,10 @@ class KnownLink(GlycanConnector):
             for line in file:
                 data_points = line.split()
                 if data_points[0] == "l":
-                    links[data_points[1]].append(data_points[4])
+                    links[int(data_points[1])].append(int(data_points[4]))
 
                 if data_points[0] == "m":
-                    mono_id = data_points[1]
+                    mono_id = int(data_points[1])
                     name = data_points[2]
                     x_coords = []
                     y_coords = []
@@ -639,7 +639,7 @@ class KnownLinkWithInfo(KnownLink):
                     if data_points[2] != '?': 
                         carbon_numbers[data_points[4]] = data_points[2] # associate parent carbon with child
                     else:
-                        carbon_numbers[data_points[4]] = 'x' 
+                        carbon_numbers[data_points[4]] = '?' 
 
                 if data_points[0] == 'm':
                     mono_id = data_points[1]
@@ -647,7 +647,7 @@ class KnownLinkWithInfo(KnownLink):
                     if data_points[3] != '?':
                         mono_anomers[mono_id] = data_points[3]
                     else:
-                        mono_anomers[mono_id] = 'x'
+                        mono_anomers[mono_id] = '?'
                     x_coords = []
                     y_coords = []
 
@@ -670,6 +670,7 @@ class KnownLinkWithInfo(KnownLink):
                 height = y_max - y_min
 
                 label = f"{mono_anomers[link]}{carbon_numbers[link]}"   
+                label = label.replace('?','x')
                 label_index = self.get_label_index(label)
                 anomer = mono_anomers[link]
                 parent_carbon_bond = carbon_numbers[link]
@@ -678,7 +679,7 @@ class KnownLinkWithInfo(KnownLink):
                                   id=box_id, image=obj.image(),
                                   classid=label_index, classlabel=label,
                                   parent=int(mono1), child=int(link), anomer=anomer,
-                                parent_carbon_bond=parent_carbon_bond)
+                                  parent_carbon_bond=parent_carbon_bond)
 
                 box.pad(self.params['boxpadding']) # known data is absolute
                 boxes.append(box)
@@ -756,10 +757,14 @@ class ConnectYOLOInfo(ConnectYOLO):
 
             if id2 not in id_added[id1]:
 
-                classlabel = dbox.get('classlabel', '')
-                obj.add_undirected_link(int(id1), int(id2), confidence=float(dbox.get('confidence')), classid=dbox.get('classid'),
-                                        classlabel=classlabel, box=dbox, anomer=classlabel[0], 
-                                         parent_carbon_bond=classlabel[1])
+                classlabel = dbox.get('classlabel', 'xx')
+                anomer = classlabel[0].replace('x','?')
+                bond = classlabel[1].replace('x','?')
+                obj.add_undirected_link(int(id1), int(id2), 
+                                        confidence=float(dbox.get('confidence')), 
+                                        classid=dbox.get('classid'),
+                                        classlabel=classlabel, box=dbox, anomer=anomer,
+                                        parent_carbon_bond=bond)
 
                 id_added[id1].add(id2)
                 id_added[id2].add(id1)

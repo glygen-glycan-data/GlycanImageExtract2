@@ -264,6 +264,11 @@ class Evaluator:
         self.boxeval = boxeval
         self.verbose = verbose
 
+    def clear_pipelines(self):
+        for name,pls in self.pipelines.items():
+            for pl in pls:
+                pl.clear()
+
     @staticmethod
     def check_data_monotonicity(predict, **kwargs):
         for pred_name, data in predict.items():
@@ -739,6 +744,8 @@ def runall_evaluators(evaluators, images, workers=None, verbose="TQDM"):
         for result in proc.stage_process(i+1,images):
             for pred_name, content in result[1].items():
                 collected_results[pred_name][os.path.basename(result[0])] = content
+
+        eval.clear_pipelines()
 
         eval.process_results(collected_results)        
 

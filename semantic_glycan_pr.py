@@ -12,7 +12,7 @@ parser = argparse.ArgumentParser(description="Start")
 
 # required argument
 parser.add_argument(
-    '--pipeline',
+    '--pipelines',
     type = str,
     required = True,
     nargs = '+',
@@ -78,36 +78,39 @@ parser.add_argument(
 args = parser.parse_args()
 distproc = dp.parse_args(parser)
 
-
-
 # pred_pipelines = {}
 # known_pipelines = {}
 
 cm = Config_Manager()
+for pipeline_name in args.pipelines:
+    try:                                                                                                                              
+        cm.get_pipeline(pipeline_name)
+    except LookupError:
+        print("Pipeline \"%s\" not found.\n\nAvailable pipelines:"%(pipeline_name,),file=sys.stderr)
+        for plname in cm.list_pipelines():
+            print("  "+plname,file=sys.stderr)
+        print(file=sys.stderr)
+        sys.exit(1)
+
 images = Image_Manager(args.images)
-images.exclude("*._annotated_biased.*")
-images.exclude("*._annotated.*")
+images.exclude("*annotated*")
 
 evaluators = []
 compare_count = 0
-for i, pipeline_name in enumerate(args.pipeline):
+for i, pipeline_name in enumerate(args.pipelines):
     for compare_type in args.compare:
         kwargs = {'label_type': compare_type}
         pred_pipeline = cm.get_pipeline(pipeline_name)
         pred_finder = cm.get_finder('YOLO_Glycan',**kwargs)
         pred_pipeline.add_step('glycan',pred_finder)
 
-        known_pipeline = cm.get_pipeline('GlycanCompare-KnownFinders')
+        known_pipeline = cm.get_pipeline('GlycanCompare-KnownFindersInfo')
         known_finder = cm.get_finder('Known_Glycan',**kwargs)
         known_pipeline.add_step('glycan',known_finder)
-
-        # pred_pipelines[f"{compare_type}"] = pred_pipeline  
-        # known_pipelines[f"{compare_type}"] = known_pipeline
 
         pipelines = {}
         pipelines[f"{pipeline_name},{compare_type}"] = (pred_pipeline,known_pipeline)
 
-        # Set up comparison strategy
         compares = {}
         for i, proximity in enumerate(args.proximity):
             cmp_key = f"proximity={proximity}"
@@ -128,7 +131,10 @@ for i, pipeline_name in enumerate(args.pipeline):
         )
         evaluators.append(evaluator)
 
-runall_evaluators(evaluators,images,workers=distproc,verbose=args.verbose)
+if args.verbose:
+    runall_evaluators(evaluators,images,workers=distproc,verbose=True)
+else:
+    runall_evaluators(evaluators,images,workers=distproc)
 
 for eval in evaluators:
     print("---->>>>",eval.final_structure)
@@ -136,19 +142,19 @@ for eval in evaluators:
 # result_type: iupac, composition
 extra_args = {}
 if compare_count > 1 and len(args.compare) == 1:
-    label = "%(result_type)s"
-    title = "%(pipeline)s"
+    label = "%(comparitor)s"
+    title = "%(predictor)s"
     extra_args=dict(title=title,label=label)
 elif len(args.compare) > 1 and compare_count == 1:
-    label = "%(result_type)s"
-    title = "%(compare_label)s"
+    label = "%(predictor)s"
+    title = "%(comparitor)s"
     extra_args=dict(title=title,label=label)
 
 Evaluator.plotprecisionrecall(
     evaluators,
     dir="presentation",
-    filename="random",
-    figsize=(10, 8),
+    filename="semantic_glycan",
+    figsize=(8, 6),
     xlim=(0, 1),
     ylim=(0, 1),
     grid=True,

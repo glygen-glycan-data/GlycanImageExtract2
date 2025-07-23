@@ -11,7 +11,7 @@ but implementation may differ by class
 YOLOTrainingData processes training.txt files
 """
 
-import os
+import os, sys, gc
 import math
 
 import cv2
@@ -20,22 +20,35 @@ from collections import defaultdict
 from .bbox import BoundingBox
 from .debug_methods import DebugMode
 
+class YOLOModelCache(object):
+    def __init__(self):
+        self.cache = dict()
+
+    def get(self,weights,netfile):
+        if (weights,netfile) in self.cache:
+            return self.cache[(weights,netfile)]
+        net = cv2.dnn.readNet(weights,netfile)
+        self.cache[(weights,netfile)] = net
+        return net
+
 class YOLOModel:
+
+    modelcache = YOLOModelCache()
     
     def __init__(self, config, multicore=False):
-        weights = config.get("weights",None)
-        net = config.get("config",None)
+        self.weights = config.get("weights",None)
+        self.netfile = config.get("config",None)
         user_labels = config.get("labels",None)
-        file_labels = net.replace(".cfg",".labels")
+        file_labels = self.netfile.replace(".cfg",".labels")
 
         self.conf_threshold = config.get('conf_threshold')
         self.iou_threshold = config.get('iou_threshold')
         self.expandimage = config.get('expandimage',0)
         self.boxpadding = config.get('boxpadding',0)
         
-        if not os.path.isfile(weights):
+        if not os.path.isfile(self.weights):
             raise FileNotFoundError()
-        if not os.path.isfile(net):
+        if not os.path.isfile(self.netfile):
             raise FileNotFoundError()
         if not os.path.isfile(file_labels):   # maybe .labels file should exist irrespective of - if the user provides their own labels or not, so that there is some record of the the true labels used during during training 
             raise FileNotFoundError()
@@ -45,11 +58,12 @@ class YOLOModel:
         else:
             self.labels = [ l.strip() for l in open(file_labels).read().split() ]
 
-
         if not multicore:
             cv2.setNumThreads(1)
 
-        self.net = cv2.dnn.readNet(weights,net)
+    def init_model(self):
+
+        self.net = self.modelcache.get(self.weights,self.netfile)
         
         layer_names = self.net.getLayerNames()
         #compatibility with new opencv versions
@@ -60,15 +74,22 @@ class YOLOModel:
             self.output_layers = [layer_names[i - 1] 
                                   for i in self.net.getUnconnectedOutLayers()]
 
+    def clear_model(self):
+        if hasattr(self,'net'):
+            del self.net
+
     def get_YOLO_output(self, image):
         original_image = image.copy()
         if self.expandimage > 0:
             image = self.expand_image(image,self.expandimage)
         blob = self.format_image(image)
                 
+        if not hasattr(self,'net'):
+            self.init_model()
+
         self.net.setInput(blob)
         outs = self.net.forward(self.output_layers)
-        
+
         confidences = []
         boxes = []
         class_boxes = defaultdict(list)
@@ -133,8 +154,6 @@ class YOLOModel:
                 return num_classes
         raise ValueError("Number of classes not found in the config file.")
 
-
-
     def format_image(self, image):
         return cv2.dnn.blobFromImage(image, 0.00392, (416, 416), (0, 0, 0), True, crop=False)
 
@@ -151,5 +170,4 @@ class YOLOModel:
         bigwhite[expand:(height+expand), expand:(width+expand)] = image
 
         return bigwhite
-
 

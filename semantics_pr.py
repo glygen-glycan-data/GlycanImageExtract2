@@ -85,7 +85,6 @@ parser.add_argument(
 args = parser.parse_args()
 distproc = dp.parse_args(parser)
 
-
 class_restriction = []
 for clsres in args.class_restriction:
     if clsres in ("","-","*","None"):
@@ -135,9 +134,18 @@ cm = Config_Manager()
 known_kwargs = {}
 
 
+for finder_name in args.finders:
+    try:
+        cm.get_finder(finder_name)
+    except LookupError:
+        print("Finder \"%s\" not found.\n\nAvailable finders:"%(finder_name,),file=sys.stderr)
+        for fdname in cm.list_finders():
+            print("  "+fdname,file=sys.stderr)
+        print(file=sys.stderr)
+        sys.exit(1)
+
 images = Image_Manager(args.images)
-images.exclude("*._annotated_biased.*")
-images.exclude("*._annotated.*")
+images.exclude("*annotated*")
 
 evaluators = []
 compare_count = 0
@@ -172,10 +180,12 @@ for i,finder_name in enumerate(args.finders):
     known_pipeline.set_steps('glycan', cm.get_finders(glycan_steps))
 
     known_step_name = finder_section.get('known_step')
+    kf = cm.get_finder(known_step_name, **known_kwargs.get(finder_name,{}))
+    assert set(kf.labels) >=  set(f.labels), "%s >/= %s"%(kf.labels,f.labels)
     if f.finder_class == "Glycan":
-        known_pipeline.add_step('figure', cm.get_finder(known_step_name),**known_kwargs.get(finder_name,{}))
+        known_pipeline.add_step('figure', kf)
     else:
-        known_pipeline.add_step('glycan', cm.get_finder(known_step_name, **known_kwargs.get(finder_name,{})))
+        known_pipeline.add_step('glycan', kf)
     
     pipelines = {}
     pipelines[finder_name] = (pred_pipeline,known_pipeline)
@@ -212,7 +222,6 @@ else:
 for eval in evaluators:
     print("---->>>>",eval.final_structure)
 
-
 extra_args = {}
 if compare_count > 1 and len(args.finders) == 1:
     label = "%(comparitor)s"
@@ -227,8 +236,8 @@ elif len(args.finders) > 1 and compare_count == 1:
 Evaluator.plotprecisionrecall(
     evaluators,
     dir="presentation",
-    filename="links_semantics",
-    figsize=(10, 8),
+    filename="semantics",
+    figsize=(8, 6),
     xlim=(0, 1),
     ylim=(0, 1),
     grid=True,

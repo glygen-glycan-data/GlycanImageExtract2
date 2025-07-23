@@ -1,6 +1,10 @@
 '''
 Subclasses inherting from Finder must define labels
 '''
+
+from .yolomodels import YOLOModel
+import sys
+
 class Finder(object):
     labels = None
 
@@ -37,4 +41,7 @@ class Finder(object):
     def get_labels(self):
         return self._labels
 
+    def clear(self):
+        if isinstance(self,YOLOModel):
+            self.clear_model()
  

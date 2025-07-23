@@ -60,6 +60,12 @@ class GlycanExtractorPipeline():
         for stage in self.pipeline_stages:
             gep.set_steps(stage,self.get_steps(stage))
         return gep
+
+    def clear(self):
+        for figstep in self.steps['figure']:
+            figstep.clear()
+        for glystep in self.steps['glycan']:
+            glystep.clear()
     
     def run(self,image):
         # empty figure semantics
@@ -84,7 +90,7 @@ class GlycanExtractorPipeline():
     def run_evaluation(self,image,boxesonly=False):
 
         figure_semantics = Figure_Semantics(image)
-        
+
         if len(self.steps['glycan']) == 0:
 
             # special case for testing glycan finders

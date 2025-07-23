@@ -263,7 +263,7 @@ Evaluator.plotprecisionrecall(
     evaluators,
     dir="presentation",
     filename="boxes",
-    figsize=(10, 8),
+    figsize=(8, 6),
     xlim=(0, 1),
     ylim=(0, 1),
     grid=True,
