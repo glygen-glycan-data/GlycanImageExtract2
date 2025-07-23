@@ -745,7 +745,7 @@ def runall_evaluators(evaluators, images, workers=None, verbose="TQDM"):
             for pred_name, content in result[1].items():
                 collected_results[pred_name][os.path.basename(result[0])] = content
 
-        eval.clear_pipelines()
+        # eval.clear_pipelines()
 
         eval.process_results(collected_results)        
 

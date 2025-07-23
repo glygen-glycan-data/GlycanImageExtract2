@@ -384,7 +384,7 @@ class DistributedProcessing(object):
                 elif msg[0] == "HEARTBEAT":
                     self.heartbeat[msg[1]] = time.time()
 
-            if self.tasksemptytime is None:
+            if self.tasksempty() and self.tasksemptytime is None:
                 self.tasksemptytime = time.time()
                 
             if self.tasksempty() and not self.incleanup and self.tasksemptytime is not None and (time.time() - self.tasksemptytime) > 30:
