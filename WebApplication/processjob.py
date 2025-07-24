@@ -286,7 +286,10 @@ class JobInstance:
 
             # save origial extracted imaged
             extracted_image_url = os.path.join(image_folders['extracted_images_dir'], image_name)
-            self.save_image(extracted_glycan_image,extracted_image_url)
+            if extracted_glycan_image:
+                self.save_image(extracted_glycan_image,extracted_image_url)
+            else:
+                self.save_image(glycan_image,extracted_image_url)
 
             # gly_semantics.set('image_path',save_origin_url)      
             gly_semantics.set('image_path', image_url)    

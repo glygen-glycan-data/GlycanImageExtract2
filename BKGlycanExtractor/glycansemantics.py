@@ -12,9 +12,15 @@ class Glycan_Base(Finder):
         self.label_type = params.get('label_type')
 
     def get_label(self,obj):
+        res = obj.compstr()
+        if res:
+            obj.set('composition_str',res)
+        res = obj.IUPAC()
+        if res:
+            obj.set('IUPAC',res)
         if self.label_type == 'composition':
-            return obj.compstr()
-        return obj.IUPAC()
+            return obj.get('composition_str')
+        return obj.get('IUPAC')
 
 
 class YOLO_Glycan(Glycan_Base):

@@ -235,7 +235,6 @@ class YOLORootFinder(YOLOModel, RootFinder):
         for box in boxes:
             if box.get('classid') == 0:
                 root_boxes.append(box)
-                root_boxes.append(box)
         
         if len(root_boxes) > 1:
             print("Log data: Multiple Roots were detected")
