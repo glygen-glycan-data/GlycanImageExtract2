@@ -333,9 +333,9 @@ class Image_Data:
         svg = svg_file.getElementsByTagName('svg')[0]
         
         elements = self.parse_elements(svg)
-        # self.randomize_anomers(svg_file,elements,anomers)
-        # self.randomize_parent_carbon_bonds(svg_file,elements,carbon_bonds)
-        self.randomize_anomercarbon_pairs(svg_file,elements,anomers)
+        self.randomize_anomers(svg_file,elements,anomers)
+        self.randomize_parent_carbon_bonds(svg_file,elements,carbon_bonds)
+        # self.randomize_anomercarbon_pairs(svg_file,elements,anomers)
 
         with open(infile, 'w') as f:
             svg_file.writexml(f, encoding='UTF-8')
