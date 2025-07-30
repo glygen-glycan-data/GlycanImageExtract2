@@ -11,6 +11,7 @@ class BoundingBox:
        image image_width image_height
        x y w h
        x y width height
+       bbox
        x1 y1 x2 y2
        rx ry rw rh
        rcx rcy rw rh
@@ -40,6 +41,11 @@ class BoundingBox:
             self.y = int(kwargs['y'])
             self.w = int(kwargs['width'])
             self.h = int(kwargs['height'])
+        elif hasall(kwargs,'bbox'):
+            self.x = int(kwargs['bbox'][0])
+            self.y = int(kwargs['bbox'][1])
+            self.w = int(kwargs['bbox'][2])
+            self.h = int(kwargs['bbox'][3])
         elif hasall(kwargs,'x1','y1','x2','y2'):
             self.x = int(kwargs['x1'])
             self.y = int(kwargs['y1'])
