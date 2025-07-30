@@ -279,8 +279,8 @@ class JobInstance:
         basename = os.path.basename(figure_semantics.image_path()).split('.')[0]
 
         for i, gly_semantics in enumerate(figure_semantics.glycans()):
-            extracted_glycan_image = gly_semantics.semantics.get('extracted_image')
             glycan_image = gly_semantics.semantics.get('image')
+            extracted_glycan_image = gly_semantics.semantics.get('extracted_image',glycan_image)
 
             if glycan_image is None or glycan_image.size == 0:
                 print(f"Skipping glycan {i}: Detected object is missing or empty")
