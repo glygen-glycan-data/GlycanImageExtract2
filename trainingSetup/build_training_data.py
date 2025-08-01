@@ -39,7 +39,13 @@ parser.add_argument(
 parser.add_argument(
     '--zip',
     type = str,
-    help = 'File name to save training data in a zip file. Default: images.zip.'
+    help = 'File name to save training data in a zip file. Default: images.zip'
+)
+
+parser.add_argument(
+    '--finder_file',
+    type = str,
+    help = 'File name, used to save known finder details in the zip file. Default: known_finder.model'
 )
 
 
@@ -47,12 +53,18 @@ args = parser.parse_args()
 
 config = Config_Manager()
 
+
+# CREATE FOLDER FOR ALL TRAINING IMAGES
 folder_name = args.zip if args.zip else "images"
 # If the folder exists, delete it
 if os.path.exists(folder_name):
     shutil.rmtree(folder_name)
 # Create a fresh new folder
 os.makedirs(folder_name,exist_ok=True)
+
+
+# create file to add: Known finder name and related details that were used to build training data
+filename = args.finder_file if args.finder_file else "known_finder"
 
 images = Image_Manager(args.images)
 images.exclude("*.annotated.*")
@@ -69,6 +81,14 @@ if args.finder:
     kwargs = {'boxpadding': 5}   # option to make boxes larger is required
     finder = config.get_finder(step,**kwargs)
     pipeline.add_step(stage,finder)
+
+    model_configs_path = os.path.join(folder_name, filename + ".model")
+    # cfg file should have the same filename as this file with different extensions
+    with open(model_configs_path, 'a') as f:
+        f.write(f"[Finder:{args.finder}]\n")
+        f.write(f"class={args.finder}\n")
+        for k,v in kwargs.items():
+            f.write(f"{k}={v}\n")
 
 
 for image_path in images:
@@ -101,6 +121,6 @@ print("Training data is ready...")
 print(f"{folder_name}.zip")
 
 # delete the images directory
-if os.path.exists(folder_name):
-    shutil.rmtree(folder_name)
+# if os.path.exists(folder_name):
+#     shutil.rmtree(folder_name)
 

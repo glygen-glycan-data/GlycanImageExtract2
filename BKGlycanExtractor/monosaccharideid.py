@@ -14,11 +14,12 @@ from PIL import Image
 from .bbox import BoundingBox
 from .yolomodels import YOLOModel
 from .glycanannotator import Config
-from .finder import Finder
+from .finder import Finder, YOLOFinder, KnownFinder
 from .compareboxes import CompareBoxes
-from BKGlycanExtractor import MonosCompare, DebugMode
+from BKGlycanExtractor import MonosCompare, DebugMode, FilterAlternativeMonos, Mono
 
-
+# We are inheriting YOLOFinder in the heruristic finders are well - might not be a good approach
+# the Heuristic finders have their own find_object and find_boxes (they shouldnt use the base class methods) 
 class MonoID(Finder): 
     '''
     Base class 'Finder' requires that labels should be defined.
@@ -259,7 +260,11 @@ class HeuristicMonos(MonoID):
         img = cv2.filter2D(img, -1, kernel)
         return img
 
-class YOLOMonos(YOLOModel,MonoID):
+
+class YOLOMonos(YOLOFinder,MonoID):
+
+    filters = [FilterAlternativeMonos()]
+    # filters = []
 
     defaults = {
         'conf_threshold': 0.5,
@@ -269,70 +274,83 @@ class YOLOMonos(YOLOModel,MonoID):
     }
 
     def __init__(self,**kwargs):
- 
-        params = dict(
-            config = Config.get_param('config', Config.CONFIGFILE, kwargs, self.defaults),
-            weights = Config.get_param('weights', Config.CONFIGFILE, kwargs, self.defaults),
-            conf_threshold = Config.get_param('conf_threshold', Config.FLOAT, kwargs, self.defaults),
-            iou_threshold = Config.get_param('iou_threshold', Config.FLOAT, kwargs, self.defaults),
-            boxpadding = Config.get_param('boxpadding', Config.INT, kwargs, self.defaults),
-            expandimage = Config.get_param('expandimage', Config.INT, kwargs, self.defaults),
-            labels = self.labels
-        )        
 
-        self.cb = CompareBoxes()
-        YOLOModel.__init__(self,params)
+        # you have all details from the .model file including the knownFinder class - use that to create an instance which has all 
+        # values and pass that to YOLO (someone could still go and change things during runtime if they wanted it - in the model file)
+        # so how to change args during runtime? edit .model file?
+
+        # params = dict(
+        #     config = Config.get_param('config', Config.CONFIGFILE, kwargs, self.defaults),
+        #     weights = Config.get_param('weights', Config.CONFIGFILE, kwargs, self.defaults),
+        #     conf_threshold = Config.get_param('conf_threshold', Config.FLOAT, kwargs, self.defaults),
+        #     iou_threshold = Config.get_param('iou_threshold', Config.FLOAT, kwargs, self.defaults),
+        #     boxpadding = Config.get_param('boxpadding', Config.INT, kwargs, self.defaults),
+        #     expandimage = Config.get_param('expandimage', Config.INT, kwargs, self.defaults),
+        #     labels = self.labels
+        # )   
+
+        self.config = Config.get_param('config', Config.CONFIGFILE, kwargs, self.defaults)
+        self.training_config = self.config.split('.')[0] + '.model'
+        self.weights = Config.get_param('weights', Config.CONFIGFILE, kwargs, self.defaults) 
+
+        self.known_finder = self.get_known_finder(self.training_config) 
+
+        # move this
+        # self.cb = CompareBoxes()
+        YOLOModel.__init__(self,self.defaults)
         MonoID.__init__(self)
 
+
     def find_objects(self, obj):
+        obj_list = []
+
         mono_boxes = self.find_boxes(obj)
+        # maybe sort these boxes in find_boxes() itself - but depends...we had planned to keep find_boxes clean (but this is not a major change in my opinion and can be done in find_boxes)
+        # detected_boxes = sorted(mono_boxes, key=lambda box: float(box.get('confidence', 0)),reverse=True)
         obj.clear_monos()
 
         for id, box in enumerate(mono_boxes):
-            # print(box)
-            classid = box.get('classid')
-            conf = float(box.get('confidence'))
-            classlabel = box.get('classlabel')
-            box.set('id', id)
-            box.set('symbol', classlabel)
-            obj.add_mono(classlabel=classlabel,symbol=classlabel,box=box,id=id,confidence=conf)
+            obj_list.append(self.box_to_object(id+1,box)) 
 
-        # check for overlaps, necessarily with different classes, keep
-        # highest confidence as primary - do not expect bad
-        # cases, predictions are not expected to partially overlap
-        sortedmono = sorted(obj.monosaccharides(),key=lambda m: -m['confidence'])
-        removed = set()
-        for i1 in range(0,len(sortedmono)-1):
-            if i1 in removed:
-                continue
-            m1 = sortedmono[i1]
-            for i2 in range(i1+1,len(sortedmono)):
-                if i2 in removed:
-                    continue
-                m2 = sortedmono[i2]
-                if self.cb.have_intersection(m1.get('box'),m2.get('box')):
-                    obj.monosaccharide(m2['id'])['iou'] = self.cb.iou(m1.get('box'),m2.get('box'))
-                    obj.make_alternative_mono(m1['id'],m2['id'])
-                    removed.add(i2)
+        # what to do with the rejected monos after filtering?
+        # Earlier the rejected mono with the highest conf was added as an alternative to the data structure...
+        # Do we still want this to hold true - or should be just maintain a seperate list of rejects?
+        # If we decide to not add alternative monos: we will have a list of rejected monos associated with a mono id - so we
+        # can later still retrieve the highest confidence rejected mono as an alternative for the accepted monos
+        # print("obj_list",obj_list)
+        # Note: the rejected list contains all the rejects from all the filters used so far
+        accepted, rejected = self.filter_objects(obj_list)
 
+        # add a step to process the rejected monos?
+        # so idea here is to add the alternative monos present in the rejected list
+
+        # add arg (optional) rejected as well in obj.set_monosaccharides() --> so that it gets
+        # set in the semantics
+        # monos accepted dict -- semnatics
+        # monos rejected dict - with reason  --> semantics
+        # do the same for roots and undirected links seperately
+        obj.set_monosaccharides(accepted,rejected)
+
+        # print("MONOS",len(obj.monosaccharides()), obj.semantics)
         return obj.monosaccharides()
 
-    def find_boxes(self, obj):
-        image = obj.image()
-        boxes = self.get_YOLO_output(image)
+    def box_to_object(self, id, box):
+        box.set('id', id)
+        classlabel = box.get('classlabel')
+        box.set('symbol', classlabel)
 
-        if DebugMode.debug:
-            DebugMode.log_data(
-            identifier= DebugMode.curr_image,
-            data={'monos':[len(boxes)]},
-            image_path = DebugMode.image_path,
-            )
+        mono = Mono(
+            classlabel=classlabel,
+            symbol=classlabel,
+            box=box,
+            # id=id,
+            confidence=float(box.get('confidence'))
+        )
 
-            DebugMode.info = None
+        return mono
 
-        return boxes
 
-class KnownMono(MonoID):
+class KnownMono(KnownFinder,MonoID):
 
     # Need to be able to support any monosaccharide symbol in generated code
     # maybe allow users to add their own known monos labels?
@@ -353,80 +371,38 @@ class KnownMono(MonoID):
         obj.clear_monos()
         for box in mono_boxes:
             box.set_image_dimensions(image_width=obj.width(),image_height=obj.height())
-            obj.add_mono(classlabel=box.get('classlabel'),symbol=box.get('symbol'),box=box,id=box.get('id'))
+
+            mono = Mono(
+                classlabel=box.get('classlabel'),
+                symbol=box.get('symbol'),
+                box=box,
+                id=box.get('id'),
+            )
+
+            obj.add_mono(mono)
 
         return obj.monosaccharides()
 
-    # original
+
     def find_boxes(self, obj):
         image_path = obj.image_path()
         assert image_path, "KnownMono can only run on SingleGlycanImage glycan finder semantics objects"
         boxes = []
-        image_data = image_path.rsplit('.',1)[0] + "_map.txt"
-        with open(image_data, 'r') as file:
-            for line in file:
-                if line.startswith('m'):
-                    data_points = line.split()
-                    mono_id = data_points[1]
-                    name = data_points[2]
-                    anomer = data_points[3]
-                    x_coords = []
-                    y_coords = []
 
-                    for coords in data_points[4:-1]:
-                        x,y = map(int,coords.split(','))
-                        x_coords.append(x)
-                        y_coords.append(y)
+        map_dict = self.get_known_data(image_path)
+        print("\nmap_dict",map_dict)
 
-                    x_min = min(x_coords)
-                    y_min = min(y_coords)
-                    x_max = max(x_coords)
-                    y_max = max(y_coords)
-
-                    box = BoundingBox(x1=x_min,y1=y_min,x2=x_max,y2=y_max,symbol=name,classid=self.get_label_index(name),classlabel=name,id=int(mono_id),image=obj.image())
-                    box.pad(self.params['boxpadding']) # known data is absolute
-                    boxes.append(box)
-
-        if DebugMode.debug:
-            DebugMode.log_data(
-                identifier= DebugMode.curr_image,
-                data={'monos_known':len(boxes)},
-                image_data = DebugMode.image_data,
+        for mono_id, mono_details in map_dict['monos'].items():
+            box = BoundingBox(x1=mono_details['x_min'],y1=mono_details['y_min'],
+                            x2=mono_details['x_max'],y2=mono_details['y_max'],
+                            symbol=mono_details['symbol'],
+                            classid=self.get_label_index(mono_details['symbol']),
+                            classlabel=mono_details['symbol'],
+                            id=mono_id,
+                            image=obj.image()
             )
 
+            box.pad(self.params['boxpadding']) # known data is absolute
+            boxes.append(box)
+
         return boxes
-
-    # created for training txt files data -  delete later
-    # def find_boxes(self,obj):
-    #     image_path = obj.image_path()
-    #     assert image_path, "KnownMono can only run on SingleGlycanImage glycan finder semantics objects"
-    #     boxes = []
-
-    #     img = Image.open(image_path)
-    #     cv2_img = cv2.imread(image_path)
-    #     imwidth, imheight = img.size
-
-    #     image_path = image_path.rsplit('.',1)[0] + ".txt"
-    #     with open(image_path, 'r') as file:
-    #         for id, line in enumerate(file):
-    #             c_id, rcx, rcy, rw, rh = map(float, line.strip().split())
-    #             c_id = int(c_id)
-    #             symbol = self.get_label(c_id)
-    #             box = BoundingBox(rcx=rcx, rcy=rcy, rw=rw, rh=rh,
-    #                         image_width=imwidth, image_height=imheight,
-    #                         classid=c_id,classlabel=symbol, symbol=symbol,id=id)
-                
-    #             # box = BoundingBox(x1=x_min,y1=y_min,x2=x_max,y2=y_max,symbol=name,classid=self.get_label_index(name),classlabel=name,id=int(mono_id))
-    #             box.pad(self.params['boxpadding']) # known data is absolute
-    #             boxes.append(box)
-
-    #     if DebugMode.debug:
-    #         DebugMode.log_data(
-    #             identifier= DebugMode.curr_image,
-    #             data={'monos_known':len(boxes)},
-    #             image_path = DebugMode.image_path,
-    #         )
-
-    #     return boxes
-
-

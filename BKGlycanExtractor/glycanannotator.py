@@ -199,7 +199,10 @@ class Config(object):
 
     def get(self,key,default=None):
         # Retrieve string value for key from the relevant section
-        return self.config_manager.get(self.section_name,key,default).strip()
+        val = self.config_manager.get(self.section_name,key,default)
+        if val:
+            return val.strip()
+        return val
 
     def step_names(self,key,default=None):
         if self.has(key):

@@ -17,6 +17,10 @@ class Glycan_Base(Finder):
         return obj.IUPAC()
 
 
+# create two different class for IUPAC AND COMPOSITION - not like this 
+# defaults = {
+#         'label_type': 'composition'
+#     }
 class YOLO_Glycan(Glycan_Base):
 
     defaults = {
@@ -39,7 +43,8 @@ class YOLO_Glycan(Glycan_Base):
             [link.get("confidence") for link in obj.all_links() if link.get("confidence") is not None],
             default=1.1  # or any appropriate fallback confidence
         )
-
+    
+    # this should also add IUPAC/COMPOSITION in the semnatics - it should be in the pipeline
     def find_objects(self, obj):
         obj.set('classlabel',self.get_label(obj) )
         obj.set('center',obj.glycan_box().center())     # helps for proximity
