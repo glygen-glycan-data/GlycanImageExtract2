@@ -25,6 +25,7 @@ from .compareboxes import CompareBoxes
 from .debug_methods import DebugMode
 from .glycanannotator import Config_Manager
 from .distproc import DistributedProcessing as dp
+from .semantics import BoxPredictionSemantics
 
 class CompareBase(object):
     def __init__(self,precision=8,verbose=False,whole_image=False,restrict_class=None,**kwargs):
@@ -165,7 +166,20 @@ class CompareBase(object):
         self.update_metrics(results,last_threshold,gt_count,0,0,gt_count)
 
         return results
-        
+    
+    def proximity(self,b1,b2):
+        if isinstance(b1,BoxPredictionSemantics):
+            b1 = b1.box()
+        if isinstance(b2,BoxPredictionSemantics):
+            b2 = b2.box()
+        return CompareBoxes.proximity(b1,b2)
+
+    def iou(self,b1,b2):
+        if isinstance(b1,BoxPredictionSemantics):
+            b1 = b1.box()
+        if isinstance(b2,BoxPredictionSemantics):
+            b2 = b2.box()
+        return CompareBoxes.iou(b1,b2)
 
 class BoxCompare(CompareBase):
     def __init__(self, iou=0.5, **kwargs):
@@ -173,7 +187,7 @@ class BoxCompare(CompareBase):
         self.iou_threshold = iou
         
     def valid_assignemnt(self, known_box, pred_box, match_info={}):
-        iou = CompareBoxes.iou(known_box, pred_box)
+        iou = self.iou(known_box, pred_box)
         match_info['iou'] = iou
         return iou >= self.iou_threshold
 
@@ -190,7 +204,7 @@ class MonosCompare(CompareBase):
         self.proximity_threshold = proximity
 
     def valid_assignemnt(self, known_obj, pred_obj, match_info={}):
-        proximity = CompareBoxes.proximity(known_obj, pred_obj)
+        proximity = self.proximity(known_obj,pred_obj)
         match_info['proximity'] = proximity
         return proximity <= self.proximity_threshold
 
@@ -240,7 +254,7 @@ class GlycanCompare(CompareBase):
         self.proximity_threshold = proximity
 
     def valid_assignemnt(self, known_obj, pred_obj, match_info={}):
-        proximity = CompareBoxes.proximity(known_obj, pred_obj)
+        proximity = self.proximity(known_obj, pred_obj)
         match_info['proximity'] = proximity
         return proximity <= self.proximity_threshold
 

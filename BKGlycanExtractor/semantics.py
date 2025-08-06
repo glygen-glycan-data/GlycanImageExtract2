@@ -388,10 +388,10 @@ class GlycanSemantics(ImageSemantics):
         self.unset('rejected_monos')
 
     def monos(self):
-        return self['monos'].values()
+        return list(self['monos'].values())
 
     def monoids(self):
-        return self['monos'].keys()
+        return list(self['monos'].keys())
 
     def has_mono(self,id):
         return (id in self['monos'])

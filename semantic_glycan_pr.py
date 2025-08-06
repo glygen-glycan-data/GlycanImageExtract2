@@ -85,8 +85,7 @@ distproc = dp.parse_args(parser)
 
 cm = Config_Manager()
 images = Image_Manager(args.images)
-images.exclude("*._annotated_biased.*")
-images.exclude("*._annotated.*")
+images.exclude("*annotated*")
 
 evaluators = []
 compare_count = 0
@@ -94,11 +93,11 @@ for i, pipeline_name in enumerate(args.pipeline):
     for compare_type in args.compare:
         kwargs = {'label_type': compare_type}
         pred_pipeline = cm.get_pipeline(pipeline_name)
-        pred_finder = cm.get_finder('YOLO_Glycan',**kwargs)
+        pred_finder = cm.get_finder('YOLOGlycan',**kwargs)
         pred_pipeline.add_step('glycan',pred_finder)
 
         known_pipeline = cm.get_pipeline('GlycanCompare-KnownFinders')
-        known_finder = cm.get_finder('Known_Glycan',**kwargs)
+        known_finder = cm.get_finder('KnownGlycan',**kwargs)
         known_pipeline.add_step('glycan',known_finder)
 
         # pred_pipelines[f"{compare_type}"] = pred_pipeline  
@@ -128,7 +127,10 @@ for i, pipeline_name in enumerate(args.pipeline):
         )
         evaluators.append(evaluator)
 
-runall_evaluators(evaluators,images,workers=distproc,verbose=args.verbose)
+if args.verbose:
+    runall_evaluators(evaluators,images,workers=distproc,verbose=args.verbose)
+else:
+    runall_evaluators(evaluators,images,workers=distproc)
 
 for eval in evaluators:
     print("---->>>>",eval.final_structure)

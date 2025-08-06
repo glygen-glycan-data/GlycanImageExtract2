@@ -98,7 +98,7 @@ class GlycanExtractorPipeline():
 
     def run_evaluation(self,image,boxesonly=False):
 
-        figure_semantics = FigureSemantics(image)
+        figure_semantics = FigureSemantics(image_path=image)
         
         if len(self.steps['glycan']) == 0:
 
