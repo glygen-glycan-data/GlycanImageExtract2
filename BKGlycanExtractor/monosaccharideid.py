@@ -16,7 +16,8 @@ from .yolomodels import YOLOModel
 from .glycanannotator import Config
 from .finder import Finder, YOLOFinder, KnownFinder
 from .compareboxes import CompareBoxes
-from BKGlycanExtractor import MonosCompare, DebugMode, FilterAlternativeMonos, Mono
+from .semantics import MonoSemantics
+from BKGlycanExtractor import MonosCompare, DebugMode, FilterAlternativeMonos
 
 # We are inheriting YOLOFinder in the heruristic finders are well - might not be a good approach
 # the Heuristic finders have their own find_object and find_boxes (they shouldnt use the base class methods) 
@@ -203,7 +204,8 @@ class HeuristicMonos(MonoID):
                     classid = self.get_label_index(mono)
                     box.set('classid',classid)
                     # box.set('symbol',mono)
-                    obj.add_mono(classid=classid,symbol=mono,box=box)
+                    mono_obj = MonoSemantics(classid=classid,classlabel=mono,symbol=mono,box=box)
+                    obj.add_mono(mono_obj)
 
         return obj.monosaccharides()
         
@@ -264,8 +266,7 @@ class HeuristicMonos(MonoID):
 class YOLOMonos(YOLOFinder,MonoID):
 
     filters = [FilterAlternativeMonos()]
-    # filters = []
-
+   
     defaults = {
         'conf_threshold': 0.5,
         'boxpadding': 0,
@@ -275,31 +276,17 @@ class YOLOMonos(YOLOFinder,MonoID):
 
     def __init__(self,**kwargs):
 
-        # you have all details from the .model file including the knownFinder class - use that to create an instance which has all 
-        # values and pass that to YOLO (someone could still go and change things during runtime if they wanted it - in the model file)
-        # so how to change args during runtime? edit .model file?
+        self.params = dict(
+            config = Config.get_param('config', Config.CONFIGFILE, kwargs, self.defaults),
+            weights = Config.get_param('weights', Config.CONFIGFILE, kwargs, self.defaults),
+            conf_threshold = Config.get_param('conf_threshold', Config.FLOAT, kwargs, self.defaults),
+            iou_threshold = Config.get_param('iou_threshold', Config.FLOAT, kwargs, self.defaults),
+            boxpadding = Config.get_param('boxpadding', Config.INT, kwargs, self.defaults),
+            expandimage = Config.get_param('expandimage', Config.INT, kwargs, self.defaults)
+        )   
 
-        # params = dict(
-        #     config = Config.get_param('config', Config.CONFIGFILE, kwargs, self.defaults),
-        #     weights = Config.get_param('weights', Config.CONFIGFILE, kwargs, self.defaults),
-        #     conf_threshold = Config.get_param('conf_threshold', Config.FLOAT, kwargs, self.defaults),
-        #     iou_threshold = Config.get_param('iou_threshold', Config.FLOAT, kwargs, self.defaults),
-        #     boxpadding = Config.get_param('boxpadding', Config.INT, kwargs, self.defaults),
-        #     expandimage = Config.get_param('expandimage', Config.INT, kwargs, self.defaults),
-        #     labels = self.labels
-        # )   
-
-        self.config = Config.get_param('config', Config.CONFIGFILE, kwargs, self.defaults)
-        self.training_config = self.config.split('.')[0] + '.model'
-        self.weights = Config.get_param('weights', Config.CONFIGFILE, kwargs, self.defaults) 
-
-        self.known_finder = self.get_known_finder(self.training_config) 
-
-        # move this
-        # self.cb = CompareBoxes()
-        YOLOModel.__init__(self,self.defaults)
+        YOLOModel.__init__(self,self.params)
         MonoID.__init__(self)
-
 
     def find_objects(self, obj):
         obj_list = []
@@ -307,10 +294,9 @@ class YOLOMonos(YOLOFinder,MonoID):
         mono_boxes = self.find_boxes(obj)
         # maybe sort these boxes in find_boxes() itself - but depends...we had planned to keep find_boxes clean (but this is not a major change in my opinion and can be done in find_boxes)
         # detected_boxes = sorted(mono_boxes, key=lambda box: float(box.get('confidence', 0)),reverse=True)
-        obj.clear_monos()
-
-        for id, box in enumerate(mono_boxes):
-            obj_list.append(self.box_to_object(id+1,box)) 
+        
+        for box in mono_boxes:
+            obj_list.append(self.box_to_object(box)) 
 
         # what to do with the rejected monos after filtering?
         # Earlier the rejected mono with the highest conf was added as an alternative to the data structure...
@@ -329,22 +315,19 @@ class YOLOMonos(YOLOFinder,MonoID):
         # monos accepted dict -- semnatics
         # monos rejected dict - with reason  --> semantics
         # do the same for roots and undirected links seperately
-        obj.set_monosaccharides(accepted,rejected)
+        obj.set_monos(accepted,rejected)
 
         # print("MONOS",len(obj.monosaccharides()), obj.semantics)
-        return obj.monosaccharides()
+        return obj.monos()
 
-    def box_to_object(self, id, box):
-        box.set('id', id)
+    def box_to_object(self, box):
         classlabel = box.get('classlabel')
-        box.set('symbol', classlabel)
-
-        mono = Mono(
+        
+        mono = MonoSemantics(
             classlabel=classlabel,
             symbol=classlabel,
             box=box,
-            # id=id,
-            confidence=float(box.get('confidence'))
+            confidence=box.get('confidence')
         )
 
         return mono
@@ -368,11 +351,11 @@ class KnownMono(KnownFinder,MonoID):
     
     def find_objects(self, obj):
         mono_boxes = self.find_boxes(obj)
-        obj.clear_monos()
+        obj.reset_monos()
         for box in mono_boxes:
             box.set_image_dimensions(image_width=obj.width(),image_height=obj.height())
 
-            mono = Mono(
+            mono = MonoSemantics(
                 classlabel=box.get('classlabel'),
                 symbol=box.get('symbol'),
                 box=box,
@@ -381,7 +364,7 @@ class KnownMono(KnownFinder,MonoID):
 
             obj.add_mono(mono)
 
-        return obj.monosaccharides()
+        return obj.monos()
 
 
     def find_boxes(self, obj):
@@ -390,7 +373,7 @@ class KnownMono(KnownFinder,MonoID):
         boxes = []
 
         map_dict = self.get_known_data(image_path)
-        print("\nmap_dict",map_dict)
+        # print("\nmap_dict",map_dict)
 
         for mono_id, mono_details in map_dict['monos'].items():
             box = BoundingBox(x1=mono_details['x_min'],y1=mono_details['y_min'],

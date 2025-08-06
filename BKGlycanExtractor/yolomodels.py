@@ -22,32 +22,23 @@ from .debug_methods import DebugMode
 
 class YOLOModel:
     
-    def __init__(self, defaults ,multicore=False):
+    def __init__(self, config , multicore=False):
 
-        # need to remove the below and make changes to all the functions that are usign it
-        # all details are now stored in self (Note: I will make the transition after testing things out)
-        weights = self.weights
-        net = self.config
-        user_labels = self.labels
+        weights = config.get("weights",None)
+        net = config.get("config",None)
+        user_labels = config.get("labels",None)
         file_labels = net.replace(".cfg",".labels")
-        # weights = config.get("weights",None)
-        # net = config.get("config",None)
-        # user_labels = config.get("labels",None)
-        # file_labels = net.replace(".cfg",".labels")
-        # known_finder = net.replace(".cfg",".model")
-
-        print('\nknown_finder',self.known_finder)
-
-        self.conf_threshold = self.known_finder.get('conf_threshold',defaults['conf_threshold'])
-        self.iou_threshold = self.known_finder.get('iou_threshold',defaults['iou_threshold'])
-        self.expandimage = self.known_finder.get('expandimage',defaults['expandimage'])
-        self.boxpadding = self.known_finder.get('boxpadding',defaults['boxpadding'])
+        
+        self.conf_threshold = config.get('conf_threshold')
+        self.iou_threshold = config.get('iou_threshold')
+        self.expandimage = config.get('expandimage',0)
+        self.boxpadding = config.get('boxpadding',0)
         
         if not os.path.isfile(weights):
             raise FileNotFoundError()
         if not os.path.isfile(net):
             raise FileNotFoundError()
-        if not os.path.isfile(file_labels):   # maybe .labels file should exist irrespective of - if the user provides their own labels or not, so that there is some record of the the true labels used during during training 
+        if not os.path.isfile(file_labels):
             raise FileNotFoundError()
 
         if isinstance(user_labels, list) and len(user_labels) > 0:
@@ -165,67 +156,3 @@ class YOLOModel:
         bigwhite[expand:(height+expand), expand:(width+expand)] = image
 
         return bigwhite
-
-
-    # below method are use to make comparsions between boxes predicted by the YOLO model
-
-    @staticmethod
-    def euclidean_distance(box1,box2):
-        obj1_cen_x, obj1_cen_y = box1.center()
-        obj2_cen_x, obj2_cen_y = box2.center()
-        return math.sqrt((obj1_cen_x - obj2_cen_x)**2 + (obj1_cen_y - obj2_cen_y)**2) 
-
-    @staticmethod
-    def proximity(known_box,pred_box):
-        distance = CompareBoxes.euclidean_distance(known_box, pred_box)
-        x,y,w,h = known_box['bbox']
-        return distance/min(w, h)
-
-    @staticmethod    
-    def have_intersection(training, detected):
-        t_x, t_y, t_x2, t_y2 = training.corners()
-        d_x, d_y, d_x2, d_y2 = detected.corners()
-        assert t_x <= t_x2
-        assert d_x <= d_x2
-        assert t_y <= t_y2
-        assert d_y <= d_y2
-        
-        if d_x > t_x2:
-            return False
-        if d_x2 < t_x:
-            return False
-        if d_y > t_y2:
-            return False
-        if d_y2 < t_y:
-            return False
-        return True   
-
-    @staticmethod
-    def intersection_area(training, detected):
-        t_x, t_y, t_x2, t_y2 = training.corners()
-        d_x, d_y, d_x2, d_y2 = detected.corners()
-        xA = max(t_x, d_x)
-        yA = max(t_y, d_y)
-        xB = min(t_x2, d_x2)
-        yB = min(t_y2, d_y2)
-        return (xB - xA + 1)*(yB - yA + 1)
-    
-    @staticmethod
-    def iou(training, detected):
-        if CompareBoxes.have_intersection(training, detected):
-            i = CompareBoxes.intersection_area(training, detected)
-            u = CompareBoxes.union_area(training, detected)
-            iou = float(i/u)
-            # assert float('-inf') <= iou <= 1
-            return iou
-        return 0.0
-
-
-    @staticmethod   
-    def union_area(training, detected):
-        d_area = detected.area()
-        t_area = training.area()
-        intersection = CompareBoxes.intersection_area(training, detected)
-        return float(d_area + t_area - intersection)
-
-

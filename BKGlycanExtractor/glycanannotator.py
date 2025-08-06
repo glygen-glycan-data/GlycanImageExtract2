@@ -15,7 +15,7 @@ import copy
 
 import importlib
 
-from . semantics import Figure_Semantics, Glycan_Semantics
+from . semantics import FigureSemantics
 from . distproc import DistributedProcessing as dp
 
 class GlycanExtractorPipeline():
@@ -63,7 +63,7 @@ class GlycanExtractorPipeline():
     
     def run(self,image,progress_callback=None):
         # empty figure semantics
-        figure_semantics = Figure_Semantics(image)
+        figure_semantics = FigureSemantics(image_path=image)
         
         if progress_callback:
             progress_callback(stage="PIPELINE",checkpoint="START")
@@ -98,7 +98,7 @@ class GlycanExtractorPipeline():
 
     def run_evaluation(self,image,boxesonly=False):
 
-        figure_semantics = Figure_Semantics(image)
+        figure_semantics = FigureSemantics(image)
         
         if len(self.steps['glycan']) == 0:
 
@@ -250,7 +250,6 @@ class Config(object):
     INT = 'get_int'
     FLOAT = 'get_float'
     STEPS = 'get_steps'
-    IMAGE_STEPS = 'get_image_steps'
 
     @staticmethod
     def get_param(key,datatype,kwargs={},defaults={}):

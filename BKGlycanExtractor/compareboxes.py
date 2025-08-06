@@ -6,6 +6,8 @@ assess ovelap, intersection over union value, class comparison, etc
 
 import math
 
+from . bbox import BoundingBox
+
 class CompareBoxes:
 
     def __init__(self, **kw):
@@ -24,16 +26,22 @@ class CompareBoxes:
         else:
             return False
 
-    @staticmethod
-    def euclidean_distance(box1,box2):
-        obj1_cen_x, obj1_cen_y = box1.center()
-        obj2_cen_x, obj2_cen_y = box2.center()
-        return math.sqrt((obj1_cen_x - obj2_cen_x)**2 + (obj1_cen_y - obj2_cen_y)**2) 
+    @staticmethod                                                                                                            
+    def euclidean_distance_points(p1,p2):                                                                                    
+        return math.sqrt((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2)                                                            
+                                                                                                                             
+    @staticmethod                                                                                                            
+    def euclidean_distance(x,y):                                                                                             
+        if isinstance(x,BoundingBox):                                                                                        
+            x = x.center()                                                                                                  
+        if isinstance(y,BoundingBox):                                                                                        
+            y = y.center()                                                                                                  
+        return CompareBoxes.euclidean_distance_points(x,y)
 
     @staticmethod
     def proximity(known_box,pred_box):
         distance = CompareBoxes.euclidean_distance(known_box, pred_box)
-        x,y,w,h = known_box['bbox']
+        x,y,w,h = known_box.bbox()
         return distance/min(w, h)
 
     @staticmethod    

@@ -81,7 +81,7 @@ class OverlapFilterBase(ObjectFilter):
                     rejected.append(self.rejected_metadata(m1, m2))
                     removed.add(i2)
 
-        print("\nrejected",rejected)
+        # print("\nrejected",rejected)
         return accepted, rejected
 
 

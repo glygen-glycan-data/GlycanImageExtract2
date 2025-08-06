@@ -20,7 +20,6 @@ import importlib
 from functools import partial
 
 from . import Image_Manager
-from .semantics import Figure_Semantics, Glycan_Semantics
 from .bbox import BoundingBox
 from .compareboxes import CompareBoxes
 from .debug_methods import DebugMode

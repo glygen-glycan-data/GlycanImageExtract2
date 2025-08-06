@@ -4,152 +4,231 @@ import numpy as np
 import json
 import copy
 import random
-import math
 from collections import defaultdict, deque
-from . lineno import callsig
-import importlib
-import shutil
+try:
+    from . lineno import callsig
+except ImportError:
+    pass
 
-from . finder_semantics import Mono, Root, Link
-
-
-class Semantics:
-    def __init__(self):
-        self.semantics = {}
+class Semantics(object):
+    def __init__(self,kvdict=None,**kwargs):
+        self._semantics = {}
+        if kvdict is not None:
+            self.update(kvdict)
+        self.update(**kwargs)
 
     def set(self,key,value):
-        self.semantics[key] = value
+        self._semantics[key] = value
+    
+    def unset(self,key):
+        if key in self._semantics:
+            del self._semantics[key]
+
+    def append(self,key,value):
+        if not key in self._semantics:
+            self._semantics[key] = []
+        self._semantics[key].append(value)
 
     def has(self,key):
-        return key in self.semantics
+        return key in self._semantics
 
     def get(self,key,default=None):
-        return self.semantics.get(key,default)
+        return self._semantics.get(key,default)
+
+    def update(self,kvdict=None,**kwargs):
+        if kvdict is not None:
+            for k,v in kvdict:
+                self.set(k,v)
+        for k,v in kwargs.items():
+            self.set(k,v)
 
     def items(self):
-        return self.semantics.items()
+        return self._semantics.items()
 
     def keys(self):
-        return self.semantics.keys()
+        return self._semantics.keys()
+
+    # make semantics objects behave like dictionaries
+    def __getitem__(self,key):
+        if not self.has(key):
+            raise KeyError(key)
+        return self.get(key)
+
+    def __contains__(self,key):
+        return self.has(key)
+
+    def __iter__(self):
+        return self.keys()
 
     def log(self,message):
-        if 'log' not in self.semantics:
-            self.semantics['log'] = []
-        self.semantics['log'].append("[%s] %s"%(callsig(1),message))
+        self.append('log',"[%s] %s"%(callsig(1),message))
+
+# We make the box optional so that even those semantics classes that
+# *might* have a box can be derived from it to handle their optional
+# box...
+class BoxPredictionSemantics(Semantics):
+    def __init__(self, *, classlabel=None, box=None, confidence=None, **kwargs):
+        super().__init__(**kwargs)
+        if box is not None:
+            self.set_box(box)
+        if confidence is not None:
+            self.set('confidence',float(confidence))
+        if classlabel is not None:
+            self.set('classlabel',classlabel)
+
+    def set_box(self,box):
+        self.set('box',box)
+        self.set('bbox',box.bbox())
+        self.set('center',box.center())
+
+    def box(self):
+        return self.get('box')
+
+    def bbox(self):
+        return self.get('bbox')
+
+    def center(self):
+        return self.get('center')
+
+    def confidence(self):
+        return self.get('confidence')
+
+    def classlabel(self):
+        return self.get('classlabel')
+
+class LinkSemantics(BoxPredictionSemantics):
+    def __init__(self, *, from_id, to_id, **kwargs):
+        super().__init__(from_id=int(from_id),to_id=int(to_id),**kwargs)
+
+    def from_id(self):
+        return self['from_id']
+
+    def to_id(self):
+        return self['to_id']
     
+    def parent_bond(self):
+        return self.get('parent_bond')
+    
+    def child_bond(self):
+        return self.get('child_bond')
 
-class Mono(Semantics):
-
-    '''
-    Note that these are named args (so you are not required to be concerned about positional args).
-    Requires all args after * to be passed by name - so compulsory args + flexibility with **kwargs.
-    '''
-    def __init__(self, *, classlabel, symbol, box, confidence=None, **kwargs):
-        super().__init__()
-        self.semantics['classlabel'] = classlabel
-        self.semantics['symbol'] = symbol
-        self.semantics['box'] = box
-        self.semantics['bbox'] = box.bbox()
-        self.semantics['center'] = box.center()
-        self.semantics['links'] = []         # List[Link(s)]
-        # self.semantics['alternative'] = []  # List[Mono]
-
-        id = kwargs.get('id')
+# Mono
+# Required parameters: symbol: str, box: BoundingBox
+# Optional parameters: id: int, confidence: float, classlabel: str
+class MonoSemantics(BoxPredictionSemantics):
+    def __init__(self, *, symbol, box, id=None, **kwargs):
+        super().__init__(symbol=symbol,box=box,**kwargs)
         if id is not None:
-            self.semantics['id'] = int(id) 
-        
-        if confidence:
-            self.semantics['confidence'] = float(confidence)
+            self.set('id',int(id))
+        self.reset_links()
 
-        self.semantics.update({k:v for k,v in kwargs.items() if k not in ['id']})
+    def reset_links(self):
+        self.set('links',[])
 
+    def add_link(self, link: LinkSemantics):
+        if link.from_id() != self.id():
+            raise ValueError(f"Bad from_id for link: {link.from_id()}")
+        self.append('links',link)
+
+    def links(self):
+        return self['links']
+
+    def remove_link(self, to_id):
+        links = list(self.links())
+        retval = None
+        self.reset_links()
+        for l in links:
+            if l.to_id() != to_id:
+                self.add_link(l)
+            else:
+                retval = l
+        if retval is None:
+            raise ValueError(f"Cannot remove link with id: {to_id}")
+        return retval                
+
+    def symbol(self):
+        return self['symbol']
+
+    def id(self):
+        return self.get('id')
+
+    def has_id(self):
+        return (self.get('id') is not None)
+
+    def confidence(self):
+        return self.get('confidence')
+
+    def anomer(self):
+        return self.get('anomer')
 
     def __str__(self):
-        res = f"[ type: mono, classlabel: {self.semantics.get('classlabel')}, id: {self.semantics.get('id')}, confidence:  {self.semantics.get('confidence')}]"
+        if self.has_id():
+            res = f"[Mono:{self.id()}: classlabel: {self['classlabel']}, symbol: {self['symbol']}, box: {self['box']}, confidence: {self['confidence']}]"
+        else:
+            res = f"[Mono: classlabel: {self['classlabel']}, symbol: {self['symbol']}, box: {self['box']}, confidence: {self['confidence']}]"
         return res
 
+# Root
+# Required parameters: mono_id: int
+# Optional parameters: box: BoundingBox, confidence: float, classlabel: str
+class RootSemantics(BoxPredictionSemantics):
+    def __init__(self, *, mono_id, **kwargs):
+        super().__init__(mono_id=int(mono_id),**kwargs)
 
-class Root(Semantics):
-    def __init__(self, *, mono_id, classlabel, confidence=None, **kwargs):
-        super().__init__()
+    def mono_id(self):
+        return self['mono_id']
 
-        self.semantics['mono_id'] = int(mono_id)    
-        self.semantics['classlabel'] = classlabel
-        # self.semantics['alternatives'] = [],
-        self.semantics.update({k:v for k,v in kwargs.items()})
+# UndirectedLink
+# Required parameters: mono_id1: int, mono_id2: int, 
+# Optional parameters: box: BoundingBox, confidence: float, classlabel: str
+class UndirectedLinkSemantics(BoxPredictionSemantics):
+    def __init__(self, *, mono_id1, mono_id2, **kwargs):
+        super().__init__(**kwargs)
+        self.set_mono_ids(mono_id1,mono_id2)
 
-        if confidence:
-            self.semantics['confidence'] = float(confidence)
+    def set_mono_ids(self,mono_id1,mono_id2):
+        if mono_id1 == mono_id2:
+            raise ValueError(f"Bad monosaccharide ids for undirected link: {(mono_id1,mono_id2)}")
+        self.set('mono_ids',tuple(sorted(map(int, [mono_id1,mono_id2]))))
 
-
-# UndirectedLinks
-class Link(Semantics):
-    def __init__(self, *, id1, id2, classlabel='links', confidence=None, **kwargs):
-        super().__init__()
-        self.semantics['mono_ids'] = sorted(map(int, [id1,id2]))     # sort the list - check if it exists in monos (check in def add())
-        self.semantics['classlabel'] = classlabel
-
-        if confidence:
-            self.semantics['confidence'] = float(confidence)
-
-        self.semantics.update({k:v for k,v in kwargs.items()})
-
+    def mono_ids(self):
+        return self['mono_ids']
+    
+    def parent_bond(self):
+        return self.get('parent_bond')
+    
+    def anomer(self):
+        return self.get('anomer')
 
 
 # Base class for any thing (figure, glycan) which has an image with width and height
-class Image_Semantics(Semantics):
-    '''
-    image can be any of the following formats: img_path, png, cv2, pdf
-    '''
-
-    def __init__(self,image):
-        super().__init__()
-        # self.semantics = {}
-        self.semantics['image'] = image
-        height, width, _ = image.shape
-        self.semantics['height'] = height
-        self.semantics['width'] = width
-
-    def image(self):
-        return self.semantics['image']
+class ImageSemantics(BoxPredictionSemantics):
+    def __init__(self,image_path=None,image=None,**kwargs):
+        super().__init__(**kwargs)
+        if image_path:
+            self.set_image_path(image_path)
+        elif image:
+            self.set_image(image)
 
     def set_image(self, image):
-        self.semantics['image'] = image
+        height, width, _ = image.shape
+        self.set('image',image)
+        self.set('width',width)
+        self.set('height',height)
 
-    def width(self):
-        return self.semantics['width']
+    def set_image_path(self,image_path):
+        assert os.path.exists(image_path)
+        image = self.read_image(image_path)
+        self.set_image(image)
+        abs_image_path = os.path.abspath(image_path)
+        if abs_image_path.startswith(os.getcwd()):
+            self.set('image_path',abs_image_path[len(os.getcwd())+1:])
+        else:
+            self.set('image_path',abs_image_path)
+        self.set('file_name',os.path.basename(image_path))
 
-    def height(self):
-        return self.semantics['height']
-
-
-# Class for whole figure/image containing glycans
-class Figure_Semantics(Image_Semantics):
-    def __init__(self,image_path,**kwargs):
-        image = self.format_image(image_path)
-        super().__init__(image)
-        self.semantics['image_path'] = os.path.abspath(image_path)
-        if self.semantics['image_path'].startswith(os.getcwd()):
-            self.semantics['image_path'] = self.semantics['image_path'][len(os.getcwd())+1:]
-        self.semantics['file_name'] = os.path.basename(image_path) 
-        self.semantics['glycans'] = []
-        self.semantics.update(copy.deepcopy(kwargs))
-
-
-    def tojson(self):
-        data = {}
-        
-        for k, v in self.semantics.items():
-            if k in ('image', 'processed_image', 'box', 'glycans'):
-                continue
-            data[k] = v
-
-        # Recursively convert glycans to dicts
-        data['glycans'] = [json.loads(gly.tojson()) for gly in self.glycans()]
-        
-        return json.dumps(data, sort_keys=True)
-
-    def format_image(self,image):
+    # Do we need to handle the numpy array stuff here?
+    def read_image(self,image):
         if isinstance(image, str):
             if (image.endswith('.png') or image.endswith('.jpg') or image.endswith('.jpeg')):
                 glycan_image = cv2.imread(image)
@@ -161,27 +240,48 @@ class Figure_Semantics(Image_Semantics):
             return image
         raise ValueError("Can't handle image format: ",image)
 
+    def image(self):
+        return self.get('image')
+
     def image_path(self):
-        return self.semantics['image_path']
+        return self.get('image_path')
+    
+    def filename(self):
+        return self.get('file_name')
+
+    def width(self):
+        return self.get('width')
+
+    def height(self):
+        return self.get('height')
+
+# Class for whole figure/image containing glycans
+class FigureSemantics(ImageSemantics):
+    def __init__(self,**kwargs):
+        super().__init__(**kwargs)
+        self.reset_glycans()
+
+    def tojson(self):
+        data = {}
+        
+        for k, v in self._semantics.items():
+            if k in ('image', 'processed_image', 'box', 'glycans'):
+                continue
+            data[k] = v
+
+        # Recursively convert glycans to dicts
+        data['glycans'] = [json.loads(gly.tojson()) for gly in self.glycans()]
+        
+        return json.dumps(data, indent=2, sort_keys=True)
+
+    def reset_glycans(self):
+        self.set('glycans',[])
+
+    def add_glycan(self,glycan):
+        self.append('glycans',glycan)
 
     def glycans(self):
-        return self.semantics['glycans']
-
-    def clear_glycans(self):
-        self.semantics['glycans'] = []
-
-    def add_glycan(self,box,**kwargs):
-        if kwargs.get('id') is None:
-            if len(self.glycans()) == 0:
-                kwargs['id'] = 1
-            else:
-                kwargs['id'] = max(gly.semantics['id'] for gly in self.glycans())+1
-        box.set_image_dimensions(image_width=self.width(),image_height=self.height())
-
-        # Note: Both image and extracted_image stores the same image,
-        # but if we apply the CleanImage filter - image will be updated by the filter.
-        gly = Glycan_Semantics(image=box.crop(self.image()), extracted_image = box.crop(self.image()), box=box,**kwargs)
-        self.semantics['glycans'].append(gly)
+        return self['glycans']
 
     def random_color(self):
         return tuple(random.randint(0, 255) for _ in range(3))
@@ -225,7 +325,7 @@ class Figure_Semantics(Image_Semantics):
             if filename is None:
                 filename = filename_template%dict(basename=basename,extension=extension)
         if not overwrite and self.image_path() == os.path.join(outdir,filename):
-            raise IOError("Will not overwrite image file %s, use overwrite=True to override."%(self.image_path(),))
+            raise IOError("Will not overwrite file %s, use overwrite=True to override."%(self.image_path(),))
         return os.path.join(outdir,filename)
 
     def write_json(self,**kwargs):
@@ -234,21 +334,20 @@ class Figure_Semantics(Image_Semantics):
         wh.close()
 
     def annotate_glycans(self,color=(0,255,0)):
-        for glycan in self.semantics['glycans']:
-            # glycan annotation
-            x1,y1,x2,y2 = glycan.glycan_box().corners()
+        for glycan in self.glycans():
+            x1,y1,x2,y2 = glycan.box().corners()
             self.annotate(x1,y1,x2,y2,color=color) # green for glycan
 
     def annotate_monos(self,color=(128, 0, 128),root_color=(0, 100, 0),alternative_color=(0, 165, 255)):
-        for glycan in self.semantics['glycans']:
+        for glycan in self.glycans():
             # monosaccharides and root labelling
             root_id = None
-            if glycan.root():
-                root_id = glycan.root().get('mono_id')
+            if glycan.has_root():
+                root_id = glycan.root().mono_id()
             # print("root_id",root_id)
             for mono in glycan.monosaccharides():
-                x1,y1,x2,y2 = mono.get('box').corners()
-                text = mono.get('classlabel','') + ":" + str(mono.get('id'))
+                x1,y1,x2,y2 = mono.box().corners()
+                text = mono.classlabel() + ":" + str(mono.id())
                 # color = (128, 0, 128) # purple for monos
                 # if mono['id'] == root_id:
                 #     color = (0, 100, 0) # dark green for root
@@ -256,233 +355,181 @@ class Figure_Semantics(Image_Semantics):
                 #     color = (0, 165, 255) # orange for alternatives
                 self.annotate(x1,y1,x2,y2,text=text,xtoff=2,ytoff=-2,color=color,thickness=1)   
                 color1 = color
-                if mono.get('id') == root_id:
+                if mono.id() == root_id:
                     color1 = root_color if root_color else color # dark green for root
-                if mono.get('alternative') is not None:
-                    color1 = alternative_color if alternative_color else color # orange for alternatives
+                # if mono.get('alternative') is not None:
+                #     color1 = alternative_color if alternative_color else color # orange for alternatives
                 self.annotate(x1,y1,x2,y2,text=text,xtoff=2,ytoff=-2,color=color1,thickness=1)   
 
     def annotate_links(self,color=(255, 255, 0),labels=False):
-        for glycan in self.semantics['glycans']:
-            # monosaccharides and root labelling
+        for glycan in self.glycans():
             for link in glycan.undirected_links():
-                box = link.get('box')
+                box = link.box()
                 x_min,y_min,x_max,y_max = box.corners()
-
                 text=''
                 if labels:
-                    text = link.get('classlabel','')
+                    text = str(link.classlabel())
                 self.annotate(x_min,y_min,x_max,y_max,color=color,text=text,thickness=1)
 
     def write_image(self,**kwargs):
         cv2.imwrite(self.make_filename(**kwargs), self.image())
 
-class Glycan_Semantics(Image_Semantics):
+class GlycanSemantics(ImageSemantics):
 
-    def __init__(self,image,box,**kwargs):
-        super().__init__(image)  
-        self.semantics['box'] = box
-        self.semantics['bbox'] = box.bbox()
-        self.semantics['monos'] = {}
-        self.semantics['root'] = []
-        self.semantics['undirected_links'] = []
-        self.semantics['non_tree_links'] = []
-        self.semantics['glycan_errors'] = []
-        self.semantics.update(kwargs)
+    def __init__(self,*,figure,box,**kwargs):
+        super().__init__(box=box,**kwargs)  
+        self.set_image(box.crop(figure.image()))
+        self.reset_monos()
+        self.reset_root()
+        self.reset_undirected_links()
 
-    def glycan_box(self):
-        return self.semantics['box']
+    def reset_monos(self):
+        self.set('monos',{})
+        self.unset('rejected_monos')
 
-    def glycan(self):
-        return [self.semantics]
+    def monos(self):
+        return self['monos'].values()
 
-    # to log links which either create a cycle or are extra w.r.t number of monos
-    def link_cycle(self,data):
-        self.semantics['non_tree_links'].append(data)
+    def monoids(self):
+        return self['monos'].keys()
 
-    def glycan_error(self,error_msg):
-        self.semantics['glycan_errors'].append(error_msg)
+    def has_mono(self,id):
+        return (id in self['monos'])
 
-    def get_glycan_errors(self):
-        return self.semantics['glycan_errors']
-        
-    def image(self):
-        return self.semantics['image']
+    def mono(self,id):
+        return self['monos'][id]
 
-    def clear_monos(self):
-        self.semantics['monos'] = {}
-
-    def clear_undirected_links(self):
-        self.semantics['undirected_links'] = []
-
-    def add_mono(self, mono: Mono):
-        """
-        mono is a mono object - which helps enforce a standardized structure 
-        (type hinting for args is missing in other methods - just added it here for clarity that a Mono class object is required)
-        """
-        
-        if mono.get('id') is None:
-            if len(self.monosaccharides()) == 0:
-                mono.set('id', 1)
+    def add_mono(self, mono: MonoSemantics):
+        # if mono has an id, it cannot already be in the dictionary
+        # if it doesn't have an id, we must give it a unique one
+        if mono.get('id') is not None:
+            if mono.get('id') in self['monos']:
+                raise ValueError("Repeated monosaccharide id %s"%(mono.get('id'),))
+        else:
+            if len(self['monos']) == 0:
+                mono.set('id',1)
             else:
-                mono.set('id', max(self.semantics['monos'])+1)
-        
-        self.semantics['monos'][mono.get('id')] = mono
+                mono.set('id',max(self['monos'])+1)
+        self['monos'][mono.get('id')] = mono
 
-
-    # CHECK
-    # check the rejection logic in filter objects and here
-    # need to make sure that alternative monos are also taken care of - if they exist
-    def set_monosaccharides(self,monos_list,rejected_monos_list=[]):
-        # monos_list contains all the acceptable monos - this method adds each mono to the semantics
-        for mono in monos_list:
-            self.add_mono(mono)
-
-        # now check for alternative monos and accordingly set it in the obj semnatics
-        # for mono in monos_list:
-        #     alt_id = mono.get('alternate_mono_id')
-        #     mono_id = mono.get('id')
-        #     if alt_id:
-        #         self.make_alternative_mono(mono_id, alt_id)
-        
-
-
-    def monosaccharides(self):
-        return list(self.semantics['monos'].values())
-
-    def monosaccharideids(self):
-        return list(self.semantics['monos'].keys())
-
-    def monosaccharide(self,id):
-        assert id is not None
-        return self.semantics['monos'][id]
-
-    def delete_mono(self,id):
-        assert id is not None
-        m = self.semantics['monos'][id]
-        del self.semantics['monos'][id]
+    def remove_mono(self,id):
+        m = self.mono(id)
+        del self['monos'][id]
         return m
 
-    def add_alternative_mono(self,id,altm):
-        m = self.monosaccharide(id)
-        if 'alternative' not in m:
-            m['alternative'] = []
-        m['alternative'].append(altm)
+    def set_monos(self, accepted, rejected=[]):
+        self.reset_monos()
+        for m in accepted:
+            self.add_mono(m)
+        for m in rejected:
+            self.append('rejected_monos',m)
 
-    def make_alternative_mono(self,id,altid):
-        alt = self.delete_mono(altid)
-        self.add_alternative_mono(id,alt)
+    def rejected_monos(self):
+        return self.get('rejected_monos',[])
 
-    def mono_boxes(self):
-        boxes = []
-        for id,mono in self.semantics['monos'].items():
-            boxes.append(mono['box'])
-            for alt in m.get('alternative',[]):
-                boxes.append(alt['box'])
-        return boxes
+    def mono_boxes(self,include_rejected=False):
+        for m in self.monos():
+            yield m.box()
+        if include_rejected:
+            for m in self.rejected_monos():
+                yield m.box()
+    
+    def mono_count(self):
+        return len(self.monoids())
 
-    def set_root(self,root_list,rejected_root_list=[],**kwargs):
-        root = root_list[0]
-
-        # checks if provided root id is a valid mono_id
-        if root.get('mono_id') in self.semantics['monos'].keys():
-            self.semantics['root'] = root
-        else:
-            raise ValueError(f"The root id: {root.get('mono_id')} doesn't match with any existing monosaccharides: {self.semantics['monos'].keys()}")
-
-
-    def no_root(self):
-        if 'root' in self.semantics:
-            del self.semantics['root']
+    def reset_root(self):
+        self.set('root',None)
+        self.unset('rejected_roots')
 
     def root(self):
-        return self.semantics.get('root',None)
+        return self.get('root')
 
-    def add_alternative_root(self,altr):
-        r = self.root()
-        if 'alternative' not in r:
-            r['alternative'] = []
-        r['alternative'].append(altr)
+    def has_root(self):
+        return self.get('root') is not None
+
+    def set_root(self,root):
+        if not self.has_mono(root.mono_id()):
+            raise ValueError("Invalid monosaccharide id for root: {root.get('mono_id')}")
+        self.set('root',root)
+
+    def set_roots(self,accepted,rejected=[]):
+        self.reset_root()
+        if accepted is not None:
+            self.set_root(accepted)
+        for r in rejected:
+            self.append('rejected_roots',r)
+
+    def reset_undirected_links(self):
+        self.set('undirected_links',[])
+
+    def undirected_links(self):
+        return self['undirected_links']
+
+    def add_undirected_link(self,link: LinkSemantics):
+        mono_ids = link.mono_ids()
+        if not self.has_mono(mono_ids[0]) or not self.has_mono(mono_ids[1]):
+            raise ValueError("Invalid monosaccharide ids for link: {link.get('mono_ids')}")
+        self.append('undirected_links',link)
+
+    def set_undirected_links(self, accepted, rejected=[]):
+        self.reset_undirected_links()
+        for link in accepted:
+            self.add_undirected_link(link)
+        for link in rejected:
+            self.append('rejected_undirected_links',link)
+
+    def add_glycan_error(self,error_msg):
+        self.append('glycan_errors',error_msg)
+
+    def glycan_errors(self):
+        return self.get('glycan_errors',[])
 
     def build_adjacency_list(self):
         adj = defaultdict(list)
 
         for link in self.undirected_links():
             id1, id2 = link.get("mono_ids")
-            print("\nlink items", link.items())
+            # print("\nlink items", link.items())
             link_without_ids = {k: v for k, v in link.items() if k != "mono_ids"}
             adj[id1].append((id2, link_without_ids))
             adj[id2].append((id1, link_without_ids))
 
         return adj
                     
-    def clear_links(self,mono_id):
-        self.semantics['monos'][mono_id]['links'] = []
+    # to log links which either create a cycle or are extra w.r.t number of monos
+    def link_cycle(self,data):
+        self.append('non_tree_links',data)
 
-    def clear_all_links(self):
-        for mono_id in self.monosaccharideids():
-            self.clear_links(mono_id)
+    def reset_all_links(self):
+        for mono_id in self.monoids():
+            self.mono(id).reset_links()
 
     def all_links(self):
-        # a mono could have multiple links
-        return [link for item in self.monosaccharides() if item.get('links') for link in item['links']]  
+        return [ link for m in self.monos() for link in m.links() ]
 
-    def links(self,id):
-        return self.semantics['monos'].get(id).get('links')
+    def mono_links(self,id):
+        return self.mono(id).links()
 
-    def delete_link(self,fromid,toid):
-        new_links = [
-            # link for link in self.semantics['monos'][fromid]['links']
-            link for link in self.semantics['monos'].get(fromid).get('links')
-            if [link.get('fromid'), link.get('toid')] != [fromid, toid]
-        ]
-        # self.semantics['monos'].get(fromid).get('links') = new_links  
-
-        mono = self.semantics['monos'].get(fromid)
-        if mono:
-            mono.set('links', new_links)
-
-    def undirected_links(self):
-        return self.semantics['undirected_links']
-
-    def set_undirected_links(self, links_list, rejected_links_list=[]):
-        for link in links_list:
-            self.add_undirected_link(link)
-
-    def add_undirected_link(self, link: Link):
-        '''
-        link is a mono object - which helps enforce a standardized structure 
-        (type hinting for args is missing in other methods - just added it here for clarity that a Link class object is required)
-        '''
-        mono_ids = link.get('mono_ids')
-
-        # Validate structure
-        if not isinstance(mono_ids, list) or len(mono_ids) != 2:
-            raise ValueError(f"Expected exactly 2 mono_ids, got: {mono_ids}")
-
-        # check if the mono_ids are valid
-        for m_id in mono_ids:
-            if m_id not in self.semantics['monos'].keys():
-                raise KeyError(f"Mono ID not found in monos: {m_id}")
-
-        self.semantics['undirected_links'].append(link)
-        
-    def add_link(self,id1,id2,**kwargs):
-        mono = self.monosaccharide(id1)
-
-        # if 'links' not in mono:
-        #     mono['links'] = []
-        
-        if not mono.has('links'):
-            mono.set('links',[])
-
-        # mono['links'].append({"fromid":id1,"toid":id2, **kwargs})
-        mono.get('links').append({"fromid":id1,"toid":id2, **kwargs})
-
+    def remove_link(self,from_id,to_id):
+        mono=self.mono(from_id)
+        return mono.remove_link(to_id)
+       
+    def add_link(self,from_id,to_id,**kwargs):
+        mono = self.mono(from_id)
+        link = LinkSemantics(from_id=from_id,to_id=to_id,**kwargs)
+        tomono = self.mono(to_id)
+        if link.get('anomer'): #copied over in kwargs
+            tomono.set('anomer',link.get('anomer'))
+            link.unset('anomer')
+        if tomono.symbol() in ("NeuAc","NeuGc"):
+            link.set('child_bond',2)
+        else:
+            link.set('child_bond',1)
+        mono.add_link(link)
 
     def create_links(self):
         adj = self.build_adjacency_list()
-        root_id = self.root().get("mono_id")
+        root_id = self.root().mono_id()
 
         visited = set()
         queue = deque([root_id])
@@ -500,7 +547,7 @@ class Glycan_Semantics(Image_Semantics):
                
 
     def tojson(self):
-        data = self.remove_binary_values(copy.deepcopy(self.semantics))
+        data = self.remove_binary_values(copy.deepcopy(self._semantics))
         data['monos'] = sorted(data['monos'].values(),key=lambda m: m['id'])  
         return json.dumps(data, sort_keys=True)
 
@@ -513,8 +560,8 @@ class Glycan_Semantics(Image_Semantics):
             except (TypeError, ValueError):
                 return False
 
-        if isinstance(data, (Mono, Root, Link)):
-            return self.remove_binary_values(data.semantics)
+        if isinstance(data, (MonoSemantics, RootSemantics, LinkSemantics, UndirectedLinkSemantics)):
+            return self.remove_binary_values(data._semantics)
 
         if isinstance(data, dict):
             result = {}
@@ -530,22 +577,18 @@ class Glycan_Semantics(Image_Semantics):
         else:
             return data  # return as-is, will be checked for serializability in parent
 
-
     def image_path(self):
         # for single glycan images, the glycan image "has" a path
-        return self.semantics.get('image_path',None)
+        return self.get('image_path',None)
 
     def composition(self):
         count = defaultdict(int)
-        for m in self.monosaccharides():
-            count[m.get('classlabel')] += 1
+        for m in self.monos():
+            count[m.get('symbol')] += 1
         return count
     
     def compstr(self):
-        # circular import issue for monosaccharideid
-        #  need the same labels from the Monosaccideid class - so that any updates to the class varibale labels
-        # will also persist here 
-        # Mono = importlib.import_module('.monosaccharideid', package='BKGlycanExtractor')
+        # labels here must be a superset of all supported symbols!!!!!
         labels = ["GlcNAc","NeuAc","Fuc","Man","GalNAc","Gal","Glc","NeuGc","Xyl"]
         mono_syms = labels
 
@@ -564,7 +607,7 @@ class Glycan_Semantics(Image_Semantics):
         # adds directed links in semantics
         self.create_links()
 
-        root_id = root.get('mono_id')
+        root_id = root.mono_id()
         iupac = []
         adj = self.build_adjacency_list()
         visited = set()
@@ -575,8 +618,8 @@ class Glycan_Semantics(Image_Semantics):
         return ''.join(iupac)
 
     def find_link_info(self, parent_id, child_id): # Helper function for IUPAC generation with YOLO linkages
-        for link in self.undirected_links():
-            if set(link.get('mono_ids')) == {parent_id, child_id}:
+        for link in self.mono_links(parent_id):
+            if link.to_id() == child_id:
                 return link
         return None
     
@@ -584,17 +627,17 @@ class Glycan_Semantics(Image_Semantics):
         visited.add(u)
 
         # Get the current node's data
-        symbol = self.monosaccharide(u).get('symbol')
+        symbol = self.mono(u).symbol()
         #extension = '?1-?' if symbol not in ['NeuAc', 'NeuGc'] else '?2-?' #Old line before YOLO linkage detection
         
         # determine the extension based on the link class label 
         if parent != -1: 
             link_info = self.find_link_info(parent, u)
-            if link_info and link_info.get('classlabel') and link_info.get('classlabel') != 'link':
-                label = link_info.get('classlabel')
-                a = label[0] # anomer
-                c = label[1] # carbon number
-                extension = f'{a}1-{c}' if symbol not in ['NeuAc', 'NeuGc'] else f'{a}2-{c}'
+            if link_info:
+                a = self.mono(u).get('anomer','?')
+                pb = link_info.get('parent_bond','?')
+                cb = link_info.get('child_bond','?')
+                extension = f'{a}{cb}-{pb}'
             else:
                 # Fallback to generic linkages
                 extension = '?1-?' if symbol not in ['NeuAc', 'NeuGc'] else '?2-?'
@@ -608,7 +651,7 @@ class Glycan_Semantics(Image_Semantics):
         filtered_adj = [v[0] for v in adj[u] if v[0] not in visited]
 
         # Sort the children (branches) lexicographically by their symbol for consistency
-        filtered_adj = sorted(filtered_adj, key=lambda x: self.monosaccharide(x).get('symbol'))
+        filtered_adj = sorted(filtered_adj, key=lambda x: self.mono(x).symbol())
 
         branch_strings = []
         for v in filtered_adj:
@@ -681,4 +724,56 @@ class Glycan_Semantics(Image_Semantics):
                 else:
                     # print("orientation","BT")
                     return "BT"  # Moving upward
+
+
+if __name__ == "__main__":
+
+    # simple testing code...
+
+    import sys
+    from bbox import BoundingBox
+
+    figure = FigureSemantics(sys.argv[1])
+    box = BoundingBox(x=20,y=20,w=figure.width()-40,h=figure.height()-40)
+    glycan = GlycanSemantics(figure=figure,box=box)
+    
+    pos = (5,3); m1box = BoundingBox(x=pos[0]*20,y=pos[1]*20,w=20,h=20)
+    pos = (4,3); m2box = BoundingBox(x=pos[0]*20,y=pos[1]*20,w=20,h=20)
+    pos = (3,3); m3box = BoundingBox(x=pos[0]*20,y=pos[1]*20,w=20,h=20)
+    pos = (2,2); m4box = BoundingBox(x=pos[0]*20,y=pos[1]*20,w=20,h=20)
+    pos = (2,4); m5box = BoundingBox(x=pos[0]*20,y=pos[1]*20,w=20,h=20)
+
+    m1 = MonoSemantics(symbol="GlcNAc",classlabel="GlcNAc",confidence=0.99,box=m1box)
+    m2 = MonoSemantics(symbol="GlcNAc",classlabel="GlcNAc",confidence=0.99,box=m2box)
+    m3 = MonoSemantics(symbol="Man",classlabel="Man",confidence=0.99,box=m3box)
+    m4 = MonoSemantics(symbol="Man",classlabel="Man",confidence=0.99,box=m4box)
+    m5 = MonoSemantics(symbol="Man",classlabel="Man",confidence=0.99,box=m5box)
+
+    glycan.add_mono(m1)
+    glycan.add_mono(m2)
+    glycan.add_mono(m3)
+    glycan.add_mono(m4)
+    glycan.add_mono(m5)
+
+    # ids will be from order added...
+    l1 = UndirectedLinkSemantics(mono_id1=1,mono_id2=2,parent_bond=4,anomer='b',classlabel="link",confidence=0.99)
+    l2 = UndirectedLinkSemantics(mono_id1=2,mono_id2=3,parent_bond=4,anomer='b',classlabel="link",confidence=0.99)
+    l3 = UndirectedLinkSemantics(mono_id1=3,mono_id2=4,parent_bond=3,anomer='a',classlabel="link",confidence=0.99)
+    l4 = UndirectedLinkSemantics(mono_id1=3,mono_id2=5,parent_bond=6,anomer='a',classlabel="link",confidence=0.99)
+
+    glycan.add_undirected_link(l1)
+    glycan.add_undirected_link(l2)
+    glycan.add_undirected_link(l3)
+    glycan.add_undirected_link(l4)
+
+    r = RootSemantics(mono_id=1,classlabel="redend",confidence=0.99)
+    
+    glycan.set_root(r)
+    glycan.create_links()
+
+    figure.add_glycan(glycan)
+
+    print(figure.tojson())
+
+    print(glycan.IUPAC())
 

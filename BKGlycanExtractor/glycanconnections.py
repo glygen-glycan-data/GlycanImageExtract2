@@ -18,7 +18,8 @@ from .yolomodels import YOLOModel
 from .glycanannotator import Config 
 from .bbox import BoundingBox
 from .finder import Finder,YOLOFinder, KnownFinder
-from BKGlycanExtractor import LinksCompare, DebugMode, CompareBoxes, FilterTreeLinks, FilterRepeatedLinks, Link
+from BKGlycanExtractor import LinksCompare, DebugMode, CompareBoxes, FilterTreeLinks, FilterRepeatedLinks
+from .semantics import UndirectedLinkSemantics
 
 
 class GlycanConnector(Finder):
@@ -224,7 +225,7 @@ class HeuristicConnector(GlycanConnector):
 
         id_link_map = defaultdict(set)
 
-        for mono in obj.monosaccharides():            
+        for mono in obj.monos():            
             x, y, w, h = mono.get('box').tolist()
             cir_radius = int((((h ** 2 + w ** 2) ** 0.5) / 2) * self.cropfactor)
             centerX, centerY = mono['center']
@@ -293,7 +294,8 @@ class HeuristicConnector(GlycanConnector):
 
         for id in id_link_map:
             for toid in id_link_map[id]:
-                obj.add_undirected_link(id,toid)
+                ulink_obj = UndirectedLinkSemantics(mono_id1=id,mono_id2=toid)
+                obj.add_undirected_link(ulink_obj)
         
         return obj, v_count, h_count
 
@@ -342,22 +344,16 @@ class ConnectYOLO(YOLOFinder,GlycanConnector):
 
     def __init__(self,**kwargs):
 
-        # params = dict(
-        #     config = Config.get_param('config', Config.CONFIGFILE, kwargs, self.defaults),
-        #     weights = Config.get_param('weights', Config.CONFIGFILE, kwargs, self.defaults),
-        #     conf_threshold = Config.get_param('conf_threshold', Config.FLOAT, kwargs, self.defaults),
-        #     iou_threshold = Config.get_param('iou_threshold', Config.FLOAT, kwargs, self.defaults),
-        #     boxpadding = Config.get_param('boxpadding', Config.INT, kwargs, self.defaults),
-        #     expandimage = Config.get_param('expandimage', Config.INT, kwargs, self.defaults)
-        # )
+        self.params = dict(
+            config = Config.get_param('config', Config.CONFIGFILE, kwargs, self.defaults),
+            weights = Config.get_param('weights', Config.CONFIGFILE, kwargs, self.defaults),
+            conf_threshold = Config.get_param('conf_threshold', Config.FLOAT, kwargs, self.defaults),
+            iou_threshold = Config.get_param('iou_threshold', Config.FLOAT, kwargs, self.defaults),
+            boxpadding = Config.get_param('boxpadding', Config.INT, kwargs, self.defaults),
+            expandimage = Config.get_param('expandimage', Config.INT, kwargs, self.defaults)
+        )
 
-        self.config = Config.get_param('config', Config.CONFIGFILE, kwargs, self.defaults)
-        self.training_config = self.config.split('.')[0] + '.model'
-        self.weights = Config.get_param('weights', Config.CONFIGFILE, kwargs, self.defaults)
-
-        self.known_finder = self.get_known_finder(self.training_config)
-
-        YOLOModel.__init__(self,self.defaults)
+        YOLOModel.__init__(self,self.params)
         GlycanConnector.__init__(self)
 
 
@@ -371,26 +367,23 @@ class ConnectYOLO(YOLOFinder,GlycanConnector):
         # monos will be mapped to the detected boxes using greedy technique - so it is good to have the boxes sorted before 
         # and then have unique mono_ids mapped to the detected boxes
 
-        monos = obj.monosaccharides()
+        monos = obj.monos()
         for box in boxes:
-            box_obj = self.box_to_object(box,monos)
+            box_obj = self.box_to_object(box,obj)
             if box_obj:
                 obj_list.append(box_obj)        
         
         accepted, rejected = self.filter_objects(obj_list)
 
-        # add a step to process the rejected monos?
-        
         # obj.set_undirected_links(obj_list)
         obj.set_undirected_links(accepted,rejected)
-
 
         # adding a final check after all filtering steps are done
         # expected_edges = num_nodes - 1
         actual_edges = len(accepted)
-        expected_edges = len(obj.monosaccharides()) - 1
+        expected_edges = obj.mono_count() - 1
         if expected_edges != actual_edges:
-            obj.glycan_error(
+            obj.add_glycan_error(
                 f"Unable to build the structure. "
                 f"Expected {expected_edges} edges, got {actual_edges} edges"
             )
@@ -398,7 +391,7 @@ class ConnectYOLO(YOLOFinder,GlycanConnector):
         return accepted
 
 
-    def box_to_object(self,box,monos):
+    def box_to_object(self,box,obj):
         ''' Process a single detected box: find the linked monos in the box, 
         return link info if valid. 
         
@@ -410,8 +403,8 @@ class ConnectYOLO(YOLOFinder,GlycanConnector):
         linked_monos = []
         x1, y1, x2, y2 = box.corners()
 
-        for mono in monos: 
-            x_cen, y_cen = mono.get('center')
+        for mono in obj.monos(): 
+            x_cen, y_cen = mono.center()
 
             if x_cen > x1 and x_cen < x2 and y_cen > y1 and y_cen < y2:
                 linked_monos.append(mono)
@@ -435,8 +428,8 @@ class ConnectYOLO(YOLOFinder,GlycanConnector):
 
         for i in range(len(monos)):
             for j in range(i + 1, len(monos)):
-                if monos[i].get('symbol') != 'Fuc' and monos[j].get('symbol') != 'Fuc':
-                    dist = CompareBoxes().euclidean_distance(monos[i].get('box'), monos[j].get('box'))
+                if monos[i].symbol() != 'Fuc' and monos[j].symbol() != 'Fuc':
+                    dist = self.dist(monos[i], monos[j])
                     if dist > max_distance:
                         max_distance = dist
                         farthest_pair = (monos[i], monos[j])
@@ -444,15 +437,20 @@ class ConnectYOLO(YOLOFinder,GlycanConnector):
         return farthest_pair
 
 
-    def make_link(self, mono_pair, dbox):
-        link = Link(
-            classid=dbox.get('classid'),
-            classlabel=dbox.get('classlabel'),
-            confidence=float(dbox.get('confidence')),
-            id1=mono_pair[0].get('id',None),
-            id2=mono_pair[1].get('id',None),
-            box=dbox
+    def make_link(self, mono_pair, box):
+        link = UndirectedLinkSemantics(
+            classlabel=self.box_label(box),
+            confidence=box.get('confidence'),
+            mono_id1=mono_pair[0].id(),
+            mono_id2=mono_pair[1].id(),
+            box=box
         )
+        if len(link.classlabel()) == 2:
+            cl = link.classlabel()
+            if cl[0] != "x":
+                link.set('anomer',cl[0])
+            if cl[1] != "x":
+                link.set('parent_bond',int(cl[1]))
         return link
 
     
@@ -484,8 +482,8 @@ class KnownLink(KnownFinder,GlycanConnector):
         for (mono_id1, mono_id2), link_details in map_dict['links'].items():
             box = BoundingBox(x1=link_details['x_min'], y1=link_details['y_min'], 
                                 x2=link_details['x_max'], y2=link_details['y_max'], 
-                                id=box_id, image=obj.image(),
-                                classid=0, classlabel=self.get_label(0), 
+                                image=obj.image(),
+                                classid=0,classlabel=self.get_label(0),
                                 parent=mono_id1, child=mono_id2)
 
             box.pad(self.params['boxpadding']) # known data is absolute
@@ -495,13 +493,19 @@ class KnownLink(KnownFinder,GlycanConnector):
 
         return boxes
 
-
     def find_objects(self,obj):
         boxes = self.find_boxes(obj)
-        obj.clear_undirected_links()
         for box in boxes:
-            
-            link = Link(id1=box.get('parent'),id2=box.get('child'),classid=box.get('classid'),classlabel=box.get('classlabel'),box=box)
+            classlabel = box.get('classlabel')
+            link = UndirectedLinkSemantics(mono_id1=box.get('parent'),
+                                           mono_id2=box.get('child'),
+                                           classlabel=classlabel,box=box)
+            # Really should be in KnownLinkWithInfo class below
+            if len(classlabel) == 2:
+                if classlabel[0] in ('a','b'):
+                    link.set('anomer',classlabel[0])
+                if classlabel[1] != "x":
+                    link.set('parent_bond',int(classlabel[1]))
             obj.add_undirected_link(link)
         return obj.undirected_links()
 

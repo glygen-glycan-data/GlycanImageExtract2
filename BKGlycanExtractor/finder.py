@@ -3,8 +3,12 @@ Subclasses inheriting from Finder must define labels
 '''
 
 import importlib
+import os.path
 
-from .yolomodels import YOLOModel
+from . yolomodels import YOLOModel
+from . compareboxes import CompareBoxes
+from . semantics import BoxPredictionSemantics
+
 class Finder(object):
     labels = None
 
@@ -32,6 +36,9 @@ class Finder(object):
         if index < 0 or index >= len(self._labels):
             raise IndexError("Bad label index %s."%(index,))
         return self._labels[index]
+    
+    def box_label(self, box):
+        return self.get_label(box.get('classid'))
 
     def get_label_index(self, label):
         if label not in self._labels:
@@ -149,10 +156,19 @@ class KnownFinder(Finder):
         return map_dict
 
 
+def toboxes(func):
+    def wrapper(self,x,y):
+        if isinstance(x,BoxPredictionSemantics):
+            x = x.box()
+        if isinstance(y,BoxPredictionSemantics):
+            y = y.box()
+        result = func(self,x,y)
+        return result
+    return wrapper
+
 class YOLOFinder(YOLOModel,Finder):
 
     filters = []
-
 
     def get_known_finder(self, training_file):
 
@@ -183,7 +199,6 @@ class YOLOFinder(YOLOModel,Finder):
         boxes = self.get_YOLO_output(image)
         return sorted(boxes, key=lambda box: float(box.get('confidence',0.0)), reverse=True)
 
-
     # since this is the method in the parent class - no filters are inherited, so we fallback to [] + current defined filters
     # or if you need to completely change the order of the filters execution - you can override the method in the child class
     def filter_objects(self,object_list):
@@ -202,3 +217,23 @@ class YOLOFinder(YOLOModel,Finder):
             # print("\naccepeted",accepted)
 
         return accepted, rejected_total
+    
+    @toboxes
+    def dist(self,x,y):
+        return CompareBoxes.euclidean_distance(x,y)
+
+    @toboxes
+    def proximity(self,x,y):
+        return CompareBoxes.proximity(x,y)
+
+    @toboxes
+    def iou(self,x,y):
+        return CompareBoxes.iou(x,y)
+
+    @toboxes
+    def intersect(self,x,y):
+        return CompareBoxes.have_intersection(x,y)
+    
+    @toboxes
+    def intersection_area(self,x,y):
+        return CompareBoxes.intersection_area(x,y)

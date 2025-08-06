@@ -22,6 +22,7 @@ from . bbox import BoundingBox
 from . yolomodels import YOLOModel 
 from . glycanannotator import Config
 from . finder import Finder
+from . semantics import GlycanSemantics
 from collections import Counter
 from BKGlycanExtractor import DebugMode
 
@@ -64,11 +65,12 @@ class YOLOGlycanFinder(YOLOModel,GlycanFinder):
     def find_boxes(self, obj):
         return sorted(self.get_YOLO_output(obj.image()),key=lambda b: b.bbox())
 
-    def find_objects(self, obj):
-        obj.clear_glycans()
-        for box in self.find_boxes(obj):
-            obj.add_glycan(box=box,classid=box.get('classid'),classlabel=box.get('classlabel'))
-        return obj.glycans()
+    def find_objects(self, figure_obj):
+        figure_obj.reset_glycans()
+        for box in self.find_boxes(figure_obj):
+            glyobj = GlycanSemantics(figure=figure_obj,box=box,classlabel=self.boxlabel(box))
+            figure_obj.add_glycan(glyobj)
+        return figure_obj.glycans()
     
 class SingleGlycanImage(GlycanFinder):
     
@@ -84,16 +86,18 @@ class SingleGlycanImage(GlycanFinder):
        super().__init__()
 
     def find_objects(self, obj):
-        obj.clear_glycans()
+        obj.reset_glycans()
         boxes = self.find_boxes(obj)
-        obj.add_glycan(box=boxes[0],image_path=obj.image_path(),classlabel=boxes[0].get('classlabel'))
+        box = boxes[0]
+        glyobj = GlycanSemantics(figure=obj,box=box,image_path=obj.image_path(),classlabel=self.get_label(0))
+        obj.add_glycan(glyobj)
         return obj.glycans()
 
     def find_boxes(self, obj):
         #implement crop and padding?
         image = obj.image()
         height, width, _ = image.shape
-        return [ BoundingBox(image=image, x=0, y=0, width=width, height=height,classlabel=self.labels[0],classid=0) ]
+        return [ BoundingBox(image=image,x=0,y=0,width=width,height=height,classlabel=self.get_label(0)) ]
 
 class KnownGlycanBoxes(GlycanFinder):
 
@@ -129,7 +133,8 @@ class KnownGlycanBoxes(GlycanFinder):
         boxes = self.find_boxes(obj)
         obj.clear_glycans()
         for box in boxes:
-            obj.add_glycan(box=box)
+            glyobj = GlycanSemantics(figure=obj,box=box,classlabel=self.getlabel(0))
+            obj.add_glycan(glyobj)
         return obj.glycans()
         
 # handles one/many glycans 
