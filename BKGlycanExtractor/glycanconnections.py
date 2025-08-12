@@ -789,3 +789,89 @@ class ConnectYOLOInfo(ConnectYOLO):
             obj.glycan_error("Count of the monosaccharides do not match w.r.t count of the links")
         
         return obj.undirected_links()
+
+
+class ConnectYOLOInfoToplogy(ConnectYOLO):
+    finder_class = "InfoLinksTopology"
+
+    # returns a list of connected monosaccharide objects 
+    def find_objects(self, obj):
+        ''' returns list of undirected links'''
+        detected_boxes = self.find_boxes(obj)
+
+        obj.semantics['undirected_links'] = []
+
+        links = []
+
+        id_link_map = defaultdict(list)
+        id_added = defaultdict(set)  # Track already added IDs for each key
+
+        for dbox in detected_boxes:
+            # print(dbox)
+            linked_monos = []
+            x1, y1, x2, y2 = dbox.corners()
+
+            for mono in obj.monosaccharides(): 
+                x_cen, y_cen = mono['center']
+
+                if x_cen > x1 and x_cen < x2 and y_cen > y1 and y_cen < y2:
+                    linked_monos.append(mono)
+
+            if len(linked_monos) == 2:
+                links.append([linked_monos, dbox])
+
+            elif len(linked_monos) > 2 and len(linked_monos) <= 4:
+
+                max_distance = 0
+
+                farthest_pair = (None, None)
+        
+                for i in range(len(linked_monos)):
+                    for j in range(i+1, len(linked_monos)):
+                        if linked_monos[i].get('symbol') != 'Fuc' and linked_monos[j].get('symbol') != 'Fuc':
+                            dist = CompareBoxes().euclidean_distance(linked_monos[i]['box'], linked_monos[j]['box'])
+
+                            if dist > max_distance:
+                                max_distance = dist
+                                farthest_pair = [linked_monos[i], linked_monos[j]]
+
+                if farthest_pair != (None, None):
+                    links.append([farthest_pair, dbox])
+
+
+        id_added = defaultdict(set)  # Track already added IDs for each key
+        for (mono1, mono2), dbox in links:
+        
+            id1, id2 = mono1.get('id'), mono2.get('id')
+
+            if id2 not in id_added[id1]:
+
+                classlabel = dbox.get('classlabel', 'xx')
+                obj.add_undirected_link(int(id1), int(id2), 
+                                        confidence=float(dbox.get('confidence')), 
+                                        classid=dbox.get('classid'),
+                                        classlabel='link', box=dbox)
+
+                id_added[id1].add(id2)
+                id_added[id2].add(id1)
+
+        # undirected links - sorted by confidence in descending order
+        obj.semantics['undirected_links'].sort(key=lambda link: link.get('confidence', 0.0), reverse=True)
+
+        # HOOK METHOD
+        # at this point we have all the undirected links,
+        # so hook methods can be added here for post_processing
+        self.links_post_processing(obj)
+
+        # check if no. of links are sufficient for the no. of monos detected
+        # no.of monos-1 == no. of links
+        links_count = len(obj.undirected_links())
+        monos_count = len(obj.monosaccharides())
+
+        obj.semantics["links_count"] = links_count
+        obj.semantics["monos_count"] = monos_count
+
+        if monos_count - 1 != links_count:
+            obj.glycan_error("Count of the monosaccharides do not match w.r.t count of the links")
+        
+        return obj.undirected_links()
