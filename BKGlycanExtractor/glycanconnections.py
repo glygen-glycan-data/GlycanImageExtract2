@@ -791,7 +791,7 @@ class ConnectYOLOInfo(ConnectYOLO):
         return obj.undirected_links()
 
 
-class ConnectYOLOInfoToplogy(ConnectYOLO):
+class ConnectYOLOInfoTopology(ConnectYOLO):
     finder_class = "InfoLinksTopology"
 
     # returns a list of connected monosaccharide objects 
