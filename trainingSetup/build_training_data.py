@@ -82,7 +82,7 @@ if args.finder:
     finder = config.get_finder(step,**kwargs)
     pipeline.add_step(stage,finder)
 
-    model_configs_path = os.path.join(folder_name, filename + ".model")
+    model_configs_path = os.path.join(folder_name, filename + ".model.ini")
     # cfg file should have the same filename as this file with different extensions
     with open(model_configs_path, 'a') as f:
         f.write(f"[Finder:{args.finder}]\n")
