@@ -42,14 +42,9 @@ class YOLOModel:
             raise FileNotFoundError()
 
         if isinstance(user_labels, list) and len(user_labels) > 0:
-            self.labels = user_labels
+            self.set_labels(user_labels)
         else:
-            self.labels = [ l.strip() for l in open(file_labels).read().split() ]
-
-        # get known_finder + other args - but notice that other args might be obtained
-        # from the config file as well - so which one should get higher priority
-        # with open(known_finder, 'r') as f:
-        #     self.known_finder = f.read().strip()
+            self.set_labels([ l.strip() for l in open(file_labels).read().split() ])
 
         if not multicore:
             cv2.setNumThreads(1)
@@ -92,7 +87,9 @@ class YOLOModel:
                         box = BoundingBox(image=image,
                             rcx=detection[0], rcy=detection[1], 
                             rw=detection[2], rh=detection[3],
-                            classid=class_id, confidence=confidence, classlabel=self.get_label(class_id))
+                            classid=class_id, confidence=confidence)
+                            # , classlabel=self.get_label(class_id))
+                            # YoloFinder - find_boxes should set the classlabel
 
                         if self.expandimage != 0:
                             box.set_image_dimensions(image=original_image)

@@ -81,6 +81,16 @@ class BoxPredictionSemantics(Semantics):
         self.set('bbox',box.bbox())
         self.set('center',box.center())
 
+        # # add confidence and classlabel - for box_to_object))
+        # confidence = box.get('confidence')
+        # classlabel = box.get('classlabel')
+
+        # if confidence is not None:
+        #     self.set('confidence', float(confidence))
+
+        # if classlabel is not None:
+        #     self.set('classlabel', classlabel)
+
     def box(self):
         return self.get('box')
 
@@ -256,6 +266,8 @@ class ImageSemantics(BoxPredictionSemantics):
         return self.get('height')
 
 # Class for whole figure/image containing glycans
+# add pdf data - like xref, page_no, etc
+# find_glycans in processjob() - can then get all these details (webApplication)
 class FigureSemantics(ImageSemantics):
     def __init__(self,**kwargs):
         super().__init__(**kwargs)
@@ -345,7 +357,7 @@ class FigureSemantics(ImageSemantics):
             if glycan.has_root():
                 root_id = glycan.root().mono_id()
             # print("root_id",root_id)
-            for mono in glycan.monosaccharides():
+            for mono in glycan.monos():
                 x1,y1,x2,y2 = mono.box().corners()
                 text = mono.classlabel() + ":" + str(mono.id())
                 # color = (128, 0, 128) # purple for monos

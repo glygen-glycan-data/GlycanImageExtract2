@@ -8,9 +8,12 @@ import os.path
 from . yolomodels import YOLOModel
 from . compareboxes import CompareBoxes
 from . semantics import BoxPredictionSemantics
+from . bbox import BoundingBox
 
 class Finder(object):
     labels = None
+
+    filters = []
 
     def __init__(self):
         # self._labels = []
@@ -29,8 +32,31 @@ class Finder(object):
     def find_boxes(self, obj):
         raise NotImplementedError
 
+    # same for KnownFinder and YOLOFinder
     def find_objects(self, obj):
-        raise NotImplementedError
+        obj_list = []
+
+        boxes = self.find_boxes(obj)
+
+        for box in boxes:
+            new_obj = self.box_to_object(box,obj)
+
+            if new_obj is not None:
+                obj_list.append(new_obj)
+             
+        accepted, rejected = self.filter_objects(obj_list)
+        self.set_results(obj, accepted, rejected)
+        return accepted
+
+    # same for KnownFinder and YOLOFinder
+    def filter_objects(self,object_list):
+        accepted = object_list
+        rejected_total = []
+        for f in self.filters:
+            accepted, rejected = f.filter(accepted)
+            rejected_total.extend(rejected)
+        return accepted, rejected_total
+
 
     def get_label(self, index):
         if index < 0 or index >= len(self._labels):
@@ -48,14 +74,11 @@ class Finder(object):
     def get_labels(self):
         return self._labels
 
- 
+    def set_labels(self, labels):
+        self._labels = labels
 
 
 class KnownFinder(Finder):
-
-    def get(self, key, default=None):
-        return getattr(self, key, default)
-
     
     def get_known_data(self, image_path):
         '''
@@ -67,14 +90,19 @@ class KnownFinder(Finder):
                 2: {'symbol': Man, 'anomer': 'a', 'x_min': 1, 'x_max': 5, 'y_min': 2, 'y_max':6}
             },
             'links': {
-                (id1,id2): {'carbon_bond': 1, ...},
-                (id1,id2): {'carbon_bond': 4, ...},
+                (id1,id2): {'carbon_number': 1, ...},
+                (id1,id2): {'carbon_number': 4, ...},
             }
-            'root': lowest_mono_id,
+            'root': {
+                'mono_id': mono_id
+            },
             'squiggle': {'symbol': '~', 'x_min': 1, 'x_max': 5, 'y_min': 2, 'y_max':6},
             
             'iupac': '',
             'composition': '',
+            .
+            .
+            .
         }
         '''
         
@@ -125,7 +153,8 @@ class KnownFinder(Finder):
                     y_min, y_max = min(y1_min, y1_max, y2_min, y2_max), max(y1_min, y1_max, y2_min, y2_max)
 
                     link_data = {
-                        (mono_id1, mono_id2): {'carbon_bond': data_points[2], 'x_min': x_min, 'x_max': x_max, 'y_min': y_min, 'y_max': y_max}
+                        (mono_id1, mono_id2): {'carbon_number': data_points[2],'x_min': x_min, 'x_max': x_max, 'y_min': y_min, 'y_max': y_max}
+                        # (mono_id1, mono_id2): {'carbon_number': data_points[2], 'anomer': map_dict['monos'][mono_id2]['anomer'] ,'x_min': x_min, 'x_max': x_max, 'y_min': y_min, 'y_max': y_max}
                     }
 
                     map_dict['links'].update(link_data)
@@ -151,9 +180,18 @@ class KnownFinder(Finder):
 
                     map_dict[key] = value
 
-            map_dict['root'] = root_id if root_id == float("inf") else root_id
+            # map_dict['root'] = {root_id: map_dict['monos'][root_id]}
+            map_dict['root'] = root_id
 
         return map_dict
+
+    def find_boxes(self, obj):
+        image_path = obj.image_path()
+        assert image_path, f"{self.__class__.__name__} can only run on SingleGlycanImage objects"
+
+        boxes = []
+        map_dict = self.get_known_data(image_path)
+        return self.create_boxes(map_dict)
 
 
 def toboxes(func):
@@ -168,56 +206,17 @@ def toboxes(func):
 
 class YOLOFinder(YOLOModel,Finder):
 
-    filters = []
-
-    def get_known_finder(self, training_file):
-
-        if not os.path.isfile(training_file):
-            raise FileNotFoundError()
-
-        model_info = {}
-
-        with open(training_file, 'r') as f:
-            for line in f:
-                line = line.strip()
-                if line.startswith('[') and line.endswith(']'):
-                    model_info['finder'] = line[1:-1].split(":")[1].strip()
-                elif line.startswith('class='):
-                    model_info['class'] = line.split('=')[1].strip()
-                else:
-                    print('line',line)
-                    key, value = line.split('=')
-                    model_info[key.strip()] = float(value.strip())
-        
-        # Loads class dynamically
-        module = importlib.import_module(".pipeline",package="BKGlycanExtractor")
-        findercls = getattr(module,model_info.get('class'))
-        return findercls(**model_info)
-
     def find_boxes(self, obj):
         image = obj.image()
         boxes = self.get_YOLO_output(image)
+        # add classlabel here instead of YoloModel
+        for box in boxes:
+            classid = box.get('classid')
+            classlabel = self.get_label(classid)
+            box.set('classlabel',classlabel)
+
         return sorted(boxes, key=lambda box: float(box.get('confidence',0.0)), reverse=True)
 
-    # since this is the method in the parent class - no filters are inherited, so we fallback to [] + current defined filters
-    # or if you need to completely change the order of the filters execution - you can override the method in the child class
-    def filter_objects(self,object_list):
-        accepted = object_list
-        rejected_total = []
-
-        # the filter function returns accepted, rejected but does not have any side effects/mutations on object_list.
-        # we dont want data in object_list to get updated.
-        # Idea is to let all filters make updates (elsewhere) without 
-        # changing the raw object_list - so that we do not muddy up the object_list using filters whose working we are not aware about....
-        # but we are aware about which filters are used because of the declarative style of defining the filter names before executing the program.
-        for f in getattr(super(), "filters", []) + self.filters:
-            # filter - returns two new lists: accepted, rejected - so object_list is not mutated
-            accepted, rejected = f.filter(accepted)
-            rejected_total.extend(rejected)
-            # print("\naccepeted",accepted)
-
-        return accepted, rejected_total
-    
     @toboxes
     def dist(self,x,y):
         return CompareBoxes.euclidean_distance(x,y)

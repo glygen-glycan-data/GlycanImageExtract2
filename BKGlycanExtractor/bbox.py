@@ -96,6 +96,11 @@ class BoundingBox:
     def get(self,key,default=None):
         return self.data.get(key,default)
 
+    # method to return a dict of items that the box object contains except the dimensions
+    def items(self):
+        # return self.data    # any changes made will to the data passed from here will reflect back to the object.....users can utilize getters/setters to make changes instead
+        return {**self.data}
+
     def clone(self):
         return BoundingBox(image_width=self.imwidth, image_height=self.imheight,
                            x=self.x, y=self.y, w=self.w, h=self.h, **self.data)

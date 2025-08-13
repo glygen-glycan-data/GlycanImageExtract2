@@ -134,15 +134,17 @@ class Config_Manager(object):
     default_config_folder = os.path.join(os.path.split(__file__)[0],"config")
     config_filename = "configs.ini"
 
-    def __init__(self, config_folder=default_config_folder):
-        self.config_folder = config_folder
+    # init can accept a different config_filename and if it located outside the default folder - the custom folder can also be specified
+    def __init__(self, config_folder=None, config_filename=None):
+        self.config_folder = config_folder or self.default_config_folder
+        self.config_filename = config_filename or self.config_filename
         self.config = configparser.ConfigParser()
         self.config.read(os.path.join(self.config_folder,self.config_filename))
 
     def has(self, section, key):
         return key in self.config[section]
     
-    def get(self, section, key, default):
+    def get(self, section, key, default=None):
         return self.config[section].get(key,default)
     
     def get_config(self, instance_name):
@@ -251,17 +253,42 @@ class Config(object):
     FLOAT = 'get_float'
     STEPS = 'get_steps'
 
+    # @staticmethod
+    # def get_param(key,datatype,kwargs={},defaults={}):
+    #     # if kwrags were provided by a user - it takes precedence over the parameters in the config file
+    #     if key in kwargs:
+    #         return kwargs[key]
+    #     value = copy.copy(defaults.get(key))
+    #     config = kwargs.get('__config__')
+    #     if config:
+    #         # print("key",key,value,datatype)
+    #         value = getattr(config,datatype)(key,value)
+    #     # return kwargs.get(key,value)
+    #     return value
+
     @staticmethod
-    def get_param(key,datatype,kwargs={},defaults={}):
-        # if kwrags were provided by a user - it takes precedence over the parameters in the config file
+    def get_param(key, datatype, kwargs=None, defaults=None):
+        kwargs = kwargs or {}
+        defaults = defaults or {}
+
+        # Step 1: kwargs takes highest precedence
         if key in kwargs:
             return kwargs[key]
+
+        # Step 2: start with default
         value = copy.copy(defaults.get(key))
+
+        # Step 3: check primary config (__config__)
         config = kwargs.get('__config__')
-        if config:
-            # print("key",key,value,datatype)
-            value = getattr(config,datatype)(key,value)
-        # return kwargs.get(key,value)
+        if config and config.has(key):
+            value = getattr(config, datatype)(key, value)
+            return value  # primary config wins over secondary
+
+        # Step 4: check secondary config if present
+        secondary_config = kwargs.get('__secondary_config__')
+        if secondary_config and secondary_config.has(key):
+            value = getattr(secondary_config, datatype)(key, value)
+
         return value
 
     @staticmethod
