@@ -96,22 +96,18 @@ pipeline_descriptions = '''
 [Monosaccharide]
 figure_steps=SingleGlycanImage
 glycan_steps=
-known_step=KnownMono
 
 [Root]
 figure_steps=SingleGlycanImage
 glycan_steps=KnownMono
-known_step=KnownRoot
 
 [Links]
 figure_steps=SingleGlycanImage
 glycan_steps=KnownMono
-known_step=KnownLink
 
 [Glycan]
 figure_steps=
 glycan_steps=
-known_step=KnownGlycanBoxes
 '''
 
 
@@ -151,6 +147,12 @@ for i,finder_name in enumerate(args.finders):
     # Build prediction pipeline
     # ------------------------------
     f = cm.get_finder(finder_name)
+
+    # steps to get the known finder name
+    known_ini = cm.get(f'Finder:{finder_name}','config').split('.')[0] + '.model.ini'
+    known_cm = Config_Manager(config_filename=known_ini)
+    known_step_name = known_cm.list_finders()[0]
+    
     comparator = f.semantic_compare
 
     finder_section = config[f.finder_class]
@@ -174,9 +176,9 @@ for i,finder_name in enumerate(args.finders):
     known_pipeline.set_steps('figure', cm.get_finders(figure_steps))
     known_pipeline.set_steps('glycan', cm.get_finders(glycan_steps))
 
-    known_step_name = finder_section.get('known_step')
+    # known_step_name = finder_section.get('known_step')
     kf = cm.get_finder(known_step_name, **known_kwargs.get(finder_name,{}))
-    assert set(kf.labels) >=  set(f.labels), "%s != %s"%(kf.labels,f.labels)
+    assert set(kf.get_labels()) >=  set(f.get_labels()), "%s != %s"%(kf.get_labels(),f.get_labels())
     if f.finder_class == "Glycan":
         known_pipeline.add_step('figure', kf)
     else:
@@ -230,7 +232,7 @@ elif len(args.finders) > 1 and compare_count == 1:
 # print("evaluators",evaluators)
 Evaluator.plotprecisionrecall(
     evaluators,
-    dir="presentation",
+    dir="tester_semantics",
     filename="semantics",
     figsize=(10, 8),
     xlim=(0, 1),
