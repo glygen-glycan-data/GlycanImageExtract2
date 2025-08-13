@@ -10,6 +10,14 @@ class ObjectFilter:
     - Return (accepted, rejected) where rejected items can contain reasons for rejection.
     '''
 
+
+    def make_rejection(self, obj, reason, **metadata):
+        return {
+            'object': obj,
+            'reason': reason,
+            **metadata
+        }
+
     def filter(self, objlist):
         '''
         objlist is always sorted according to confidence scores of detected boxes 
@@ -22,213 +30,147 @@ class ObjectFilter:
 # Only difference is how the nested for loop is handled - for monos --> all the detected items can be considered as the primary mono (unless we find a overlap).
 # --> for root: only the first detected item (highest confidece) will eb the primary root....and if they are other overlapping items - they will be considered as alternatives/rejected.
 # Concern: def is_primary() - is this method clear and easy to understand/logical?
-class OverlapFilterBase(ObjectFilter):
+class FilterOverlaps(ObjectFilter):
     '''
-    Base Class meant for monos and root.
-    Filters boxes and adds them to the rejected list if they overlap with the primary detected(selected) items
+    Base class to check overlapping boxes and filter them into accepted and rejected lists.
+    Filter can be used for Mono
     '''
-
 
     def __init__(self):
         self.cb = CompareBoxes()
 
 
-    def rejected_metadata(self, primary, alternative):
+    def filter(self, objlist):
         '''
-        Used to format metadata for items which overlap with the primary mono/root 
-        (basically these overlapping items will be added to the rejected list)
+        Considers objects with the highest confidence (stored in accepeted list). 
+        Any other objects which intersect (based on IOU) with the chosen highest confidence object is stored in the rejected list.
         '''
-        raise NotImplementedError
-
-    
-    def is_primary(self,accepeted):
-        '''
-        used to check if the detected box could be a potential primary mono/root or not
-        '''
-        raise NotImplementedError
-
-
-    def filter(self,objlist):
         accepted = []
         rejected = []
-
         removed = set()
 
-
-        for i1 in range(0,len(objlist)):
-            if i1 in removed or not self.is_primary(i1):
+        # sort the object list based on confidence in reverse order
+        for i1 in range(len(objlist)):
+            if i1 in removed:
                 continue
             m1 = objlist[i1]
             accepted.append(m1)
-
-            for i2 in range(i1+1,len(objlist)):
+            for i2 in range(i1 + 1, len(objlist)):
                 if i2 in removed:
                     continue
                 m2 = objlist[i2]
-
-                # SOLVE ERROR: AttributeError: 'NoneType' object has no attribute 'get'
-                # 127.0.0.1 - - [25/Jul/2025 11:44:33] "GET /get_job_status/nkvtypuo3i HTTP/1.1" 200 -
-                # 127.0.0.1 - - [25/Jul/2025 11:44:34] "GET /retrieve?list_ids=["nkvtypuo3i"] HTTP/1.1" 200 -
-                if self.cb.have_intersection(m1.get('box'),m2.get('box')):
-                    # obj.monosaccharide(m2['id'])['iou'] = self.cb.iou(m1.get('box'),m2.get('box'))
-                    # obj.make_alternative_mono(m1['id'],m2['id'])
-
-                    # add m2 as an alternative to m1
-                    # and add m2 to rejected
-                    # m2['iou'] = self.cb.iou(m1.get('box'),m2.get('box'))
-                    # m1['alternative_mono'] = m2 
-
-                    rejected.append(self.rejected_metadata(m1, m2))
+                if self.cb.have_intersection(m1.box(), m2.box()):
+                    # add confidence for both the boxes and add box for reference isnetad of primary_id
+                    rejected.append(
+                        self.make_rejection(
+                            m2,
+                            confidece=m2.get['confidence'],
+                            reason="This object overlaps with the primary selected object",
+                            primary=box,
+                            iou=self.cb.iou(m1.box(), m2.box())
+                        )
+                    )
                     removed.add(i2)
 
-        # print("\nrejected",rejected)
         return accepted, rejected
 
 
-
-class FilterAlternativeMonos(OverlapFilterBase):
+# make this a seperate class
+class RootFilter(ObjectFilter):
     '''
-    check for overlaps, necessarily with different classes, keep
-    highest confidence as primary - do not expect bad
-    cases, predictions are not expected to partially overlap
-    '''
+    Specialized filter for root objects.
+    Keeps only one root with highest confidence, rest go to rejected.
+    (rejected includes both root and non-root objects).
 
-    def is_primary(self, mono_count):
-        # all the monos in the list of detected monos can be primary unless overlapping.
-        return True
-
-
-
-    def rejected_metadata(self, primary, alterative):
-
-        # print("\nalterative",alterative)
-        return {
-            'alternative': alterative, 
-            'primary_mono_id': primary.get('id'),
-            'iou': self.cb.iou(primary.get('box'),alterative.get('box')), 
-            'reason': 'This mono overlaps with the primary selected mono'
-        }
-    
-            
-
-class FilterAlternativeRoots(OverlapFilterBase):
-    '''
-    This class is meant for root.
-    We might receive one or multiple potential roots in the objlist.
-    Aim is to the select the best highest confidence prediction as the root (added to the accepted list)
-    For the rest of the predictions (if they exist), we will check if those boxes overlap with the primary root and
-    if true - they will be added to the rejected list
+    Considers objects with the highest confidence (stored in accepeted list). 
+    Any other objects which intersect (based on IOU) with the chosen highest confidence object is stored in the rejected list.
+        
     '''
 
-    def is_primary(self, mono_count):
-        # for root - the first detected item is always considered the primary root
-        return mono_count == 0
+    def filter(self, objlist):
+
+        # Uses ParentClass for the below filtering logic:
+        # Considers objects with the highest confidence (stored in accepeted list). 
+        # Any other objects which intersect (based on IOU) with the chosen highest confidence object is stored in the rejected list.
+        accepted, rejected = super().filter(objlist)
+
+        # Filter accepted roots (classid == 0)
+        roots = [obj for obj in accepted if obj.get('classlabel') == 0]
+        non_roots = [obj for obj in accepted if obj.get('classlabel') != 0]
+
+        if roots:
+            # Keep only highest confidence root in accepted
+            roots = sorted(roots, key=lambda x: x.get('confidence', 0), reverse=True)
+            accepted_root = roots[0]
+
+            # Move all other root objects to rejected list with reason
+            for r in roots[1:]:
+                rejected.append(
+                    self.make_rejection(
+                        r,
+                        reason="Multiple roots found; this root rejected",
+                        primary_id=accepted_root.get('id')
+                    )
+                )
+            accepted = [accepted_root]
+        else:
+            accepted = []
+
+        # If no roots at all, accepted could be empty; that's fine.
+        # Return a single root object or None
+      
+        return accepted, rejected
 
 
-    def rejected_metadata(self, primary, alterative):
+class RemoveNonRootsFilter(FilterOverlaps):
+    '''
+    Specialized filter for root objects.
 
-        return {
-            'alternative': alterative, 
-            'primary_root_id': primary.get('id'),
-            'iou': self.cb.iou(primary.get('box'),alterative.get('box')), 
-            'reason': 'This mono overlaps with the primary selected root'
-        }
+    Inherits FilterOverlaps to get accepted/rejected after overlap filtering.
+    Then ensures accepted contains only one root (highest confidence),
+    and rejected gets all other root objects that were accepted but not chosen.
+    Non-root objects remain untouched in accepted and not moved to rejected here.
+    '''
 
+    def filter(self, objlist):
 
+        # Uses ParentClass for the below filtering logic:
+        # Considers objects with the highest confidence (stored in accepeted list). 
+        # Any other objects which intersect (based on IOU) with the chosen highest confidence object is stored in the rejected list.
+        accepted, rejected = super().filter(objlist)
 
-# # make generic for root and links
-# # iou in __init__
-# class FilterAlternativeMonos(ObjectFilter):
-#     '''
-#     check for overlaps, necessarily with different classes, keep
-#     highest confidence as primary - do not expect bad
-#     cases, predictions are not expected to partially overlap
-#     '''
-#     def __init__(self):
-#         self.cb = CompareBoxes()
+        # clear the rejected list
+        rejected = []
 
-#     def filter(self,objlist):
+        # Extract roots and non-roots from accepted
+        roots = [obj for obj in accepted if obj.get('classid') == 0]
+        non_roots = [obj for obj in accepted if obj.get('classid') != 0]
 
-#         accepted = []
-#         rejected = []
+        if roots:
+            # Keep only highest confidence root in accepted
+            roots = sorted(roots, key=lambda x: x.get('confidence', 0), reverse=True)
+            accepted_root = roots[0]
 
-#         # accepted should contain everything from objlist - and if anything from the objlist is supposed
-#         # to be an alternative - it should be removed from the accepeted and added to the rejected?
-#         # and at the same time be added as an alterative to the accepted - what is a good way to do this?
-#         # if theres an overlap with m2 - then add that as alt in accepted and add it to rejected
-#         # add it to removed also - so that we dont have to deal with it again
+            # Move all other root objects to rejected list with reason
+            for r in roots[1:]:
+                rejected.append(
+                    self.make_rejection(
+                        r,
+                        reason="Multiple roots found; this root rejected",
+                        primary_id=accepted_root.get('id')
+                    )
+                )
+            accepted = [accepted_root]
+        else:
+            accepted = []
 
-#         # accepted should contain all those monos which are the primary monos
-#         # rejected should contain all the alterative monos - if true
-
-#         removed = set()
-#         for i1 in range(0,len(objlist)):
-#             if i1 in removed:
-#                 continue
-#             m1 = objlist[i1]
-#             accepted.append(m1)
-
-#             for i2 in range(i1+1,len(objlist)):
-#                 if i2 in removed:
-#                     continue
-#                 m2 = objlist[i2]
-#                 if self.cb.have_intersection(m1.get('box'),m2.get('box')):
-#                     # obj.monosaccharide(m2['id'])['iou'] = self.cb.iou(m1.get('box'),m2.get('box'))
-#                     # obj.make_alternative_mono(m1['id'],m2['id'])
-
-#                     # add m2 as an alternative to m1
-#                     # and add m2 to rejected
-#                     # m2['iou'] = self.cb.iou(m1.get('box'),m2.get('box'))
-#                     # m1['alternative_mono'] = m2 
-
-#                     iou = self.cb.iou(m1.get('box'),m2.get('box'))
-#                     rejected.append({
-#                         **m2, 
-#                         'primary_mono_id': m1['id'],
-#                         'iou': iou, 
-#                         'reason': 'This mono overlaps with the primary selected mono'
-#                     })
-#                     removed.add(i2)
-
-#         return accepted, rejected
-
-
-# class FilterAlternativeRoots(ObjectFilter):
-#     '''
-#     This class is meant for root.
-#     We might receive one or multiple potential roots in the objlist.
-#     Aim is to the select the best highest confidence prediction as the root (added to the accepted list)
-#     The rest of the predictions will be the alternative roots which will be added to the rejected list
-#     '''
-    
-#     def filter(self, objlist):
-#         '''
-#         objlist is always sorted based on confidence in descending order
-#         '''
-
-#         accepted = []
-#         rejected = []
-
-#         if objlist:
-#             accepted.append(objlist[0])     # first item has highest confidence - so most likely to be the root
-#             m1 = objlist[0]
-
-#             for i in range(1,len(objlist)):
-#                 m2 = objlist[i]
-#                 if self.cb.have_intersection(m1.get('box'),m2.get('box')):
-                    
-#                     iou = self.cb.iou(m1.get('box'),m2.get('box'))
-
-#                     rejected.append({
-#                         **m2, 
-#                         'primary_root_id': m1['id'],
-#                         'iou': iou, 
-#                         'reason': 'This mono overlaps with the primary selected root'
-#                     })
-
-
-#         return accepted, rejected
-
+        # If no roots at all, accepted could be empty; that's fine.
+        # Return a single root object or None
+        if accepted:
+            # Return single root object instead of list
+            return accepted, rejected
+        else:
+            return None, rejected
             
 # should take data lists and return data lists
 # not pull things out, make changes and then add changes back to it
