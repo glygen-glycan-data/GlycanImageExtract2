@@ -20,6 +20,7 @@ parser.add_argument("-n", "--nimages", type=int, help="Number of images. Default
 # parser.add_argument("-f", "--format", type=str, help="Image format. One of \"png\" or \"svg\". Default: png.", default='png')
 parser.add_argument("-o", "--outdir", type=str, help="Ouput directory. Default: current directory.", default=None)
 parser.add_argument("-c", "--clear", action='store_true', help="Clear output directory first.", default=False)
+parser.add_argument("-k", "--keepsvg", action='store_true', help="Keep SVG file - useful for debugging.", default=False)
 parser.add_argument("-F", "--force", action='store_true', help="Force re-download of GlyTouCan accessions and sequences", default=False)
 parser.add_argument("-s", "--skip", type=str, help="File of accessions to skip. Default: None.", default=None)
 parser.add_argument("-r", "--random", type=str, help="Randomization mode. One of uniform accessions (uniform), biased accessions (biased), random monosaccharides (mono), random monosaccharides + baised accessions (biasmono), random linkages (linkinfo). Default: uniform.", default="uniform")
@@ -62,14 +63,16 @@ print("Start randimg...")
 
 batch = args.batchsize
 iterations = imagenum//batch
-scale_options = [ 0.5, 1.0, 2.0, 4.0, ]
+scale_options = [ 0.25, 0.5, 1.0, 2.0, 4.0, ]
 redend_options = [ True, False ]
+redend_blank = [ True, False ]
+unknown_blank = [ True, False ]
 orient_options = [ "RL", "LR", "TB", "BT" ]
 notation_options = [ "snfg", "cfg", "snfglink", "cfglink" ]
-display_options = [ "normal", "normalinfo", "compact" ]
+display_options = [ "normal", "normalinfo", "compact", "tight" ]
 if args.linkage:
     display_options = [ "normal", "compact" ] + 18*[ "normalinfo" ]
-    # display_options = [ "normalinfo" ]
+    display_options = [ "normalinfo" ]
     notation_options = [ "snfg", "cfg" ]
 if args.nolinkage:
     display_options = [ "normal", "compact" ]
@@ -179,6 +182,7 @@ for j in range(iterations):
                 continue
             bad = True
             break
+        unknowns = 0
         for l in gly.all_links():
             pp = l.parent_pos() 
             if pp != None and len(pp) > 1:
@@ -187,8 +191,13 @@ for j in range(iterations):
             if pp != None and list(pp)[0] not in (2,3,4,6,8):
                 bad = True
                 break
+            if pp == None:
+                unknowns += 1
         if bad:
             continue
+        for m in gly.all_nodes():
+            if m.anomer() is None:
+                unknowns += 1
         if randmode in ("mono","biasmono"):
             gly_iupac = ip.toStr(gly)
             gly1 = ip.toGlycan(gly_iupac)
@@ -231,10 +240,16 @@ for j in range(iterations):
 
         imageWriter.writeImage(seq,outfile)
 
-        if randmode == "linkinfo" and imageWriter.get('display') == 'normalinfo':
-            # shutil.copy(outfile,outfile+".orig") # Make a copy for debugging...
-            # this will re-write the SVG file...
-            imageData.randomize_linkinfo(outfile,anomers=anomer_options,carbon_bonds=bond_options)
+        #manipulate the SVG file...
+        if imageWriter.get('display') == 'normalinfo':
+            if randmode == "linkinfo":
+                # shutil.copy(outfile,outfile+".orig") # Make a copy for debugging...
+                # this will re-write the SVG file...
+                imageData.randomize_linkinfo(outfile,anomers=anomer_options,carbon_bonds=bond_options)
+            else:
+                imageData.randomize_blanks(outfile,
+                                           unknown_blank if unknowns > 0 else [False],
+                                           redend_blank if imageWriter.get('reducing_end') else [False])
 
         mapfile = None
         try:
@@ -301,7 +316,8 @@ for j in range(iterations):
         wh.close()
         print(outputcount+1,acc1,file=sys.stderr)
         monofreq.add(comp)
-        os.unlink(outfile)
+        if not args.keepsvg:
+            os.unlink(outfile)
         count += 1
         outputcount += 1
 

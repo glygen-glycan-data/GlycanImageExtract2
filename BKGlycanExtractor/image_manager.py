@@ -93,7 +93,8 @@ class Image_Data:
         self.random_colors(png_image)
         return txt_file
 
-    def parse_clippaths(self,svg):
+    def parse_clippaths(self,svgdoc):
+        svg = svgdoc.getElementsByTagName('svg')[0]
         cppoints = {}
         for cp in svg.getElementsByTagName('clipPath'):
             clipPathID = cp.getAttribute('id')
@@ -140,7 +141,8 @@ class Image_Data:
             return None
         return dict(center=(cx,cy),diameter=length)
 
-    def parse_elements(self,svg):
+    def parse_elements(self,svgdoc):
+        svg = svgdoc.getElementsByTagName('svg')[0]
         elements = {}
         for e in svg.getElementsByTagName('g'):
 
@@ -153,7 +155,7 @@ class Image_Data:
             data_type = e.getAttribute("data.type")
             
             if data_type == "Monosaccharide":           
-                id = int(gid.split(':')[1])
+                id = int(e.getAttribute("data.residueIndex"))
 
                 name = e.getAttribute("data.residueName") 
                 if name not in self.valid_monos:
@@ -169,15 +171,17 @@ class Image_Data:
                 elements[gid] = dict(id=id,datatype=data_type,name=name,anomer=anomer,clippath=clippath,**dims)
 
             elif data_type == "Linkage":
-                fromid,toid = map(int,gid.split(":")[1].split(','))
+                fromsvgid,tosvgid = map(lambda i: ("r-1:"+i),gid.split(':')[1].split(','))
+                fromid=int(e.getAttribute("data.parentResidueIndex"))
+                toid=int(e.getAttribute("data.childResidueIndex"))
                 parent_bond = e.getAttribute("data.parentPositions")
                 child_bond = e.getAttribute("data.childPositions")
 
-                elements[gid] = dict(fromid=fromid,toid=toid,datatype=data_type,parent_bond=parent_bond,child_bond=child_bond)
+                elements[gid] = dict(fromid=fromid,toid=toid,fromsvgid=fromsvgid,tosvgid=tosvgid,datatype=data_type,parent_bond=parent_bond,child_bond=child_bond)
 
             elif gid == "r-1:1":
                 # Not a monosaccharide, must be the redend squiggle
-                id = int(gid.split(':')[1])
+                id = 0
 
                 points = self.get_path(e)
                 assert points is not None
@@ -186,18 +190,19 @@ class Image_Data:
 
             elif gid == "l-1:1,2":
                 # Not a linkage, must be the redend link
-                fromid,toid = map(int,gid.split(":")[1].split(','))
+                fromsvgid,tosvgid = map(lambda i: ("r-1:"+i),gid.split(':')[1].split(','))
+                fromid = 0
+                toid = 1
 
-                elements[gid] = dict(fromid=fromid,toid=toid,datatype="RedEndLink")
+                elements[gid] = dict(fromid=fromid,toid=toid,fromsvgid=fromsvgid,tosvgid=tosvgid,datatype="RedEndLink")
                 
         return elements
 
-    def make_semantics_file(self,infile,outfile):
-        svg_file = xml.dom.minidom.parse(infile)
-        svg = svg_file.getElementsByTagName('svg')[0]
+    def make_semantics_file(self,svgfile,outfile):
+        svgdoc = xml.dom.minidom.parse(svgfile)
         
-        clippaths = self.parse_clippaths(svg)
-        elements = self.parse_elements(svg)
+        clippaths = self.parse_clippaths(svgdoc)
+        elements = self.parse_elements(svgdoc)
 
         rows = []
 
@@ -223,6 +228,44 @@ class Image_Data:
 
         return
 
+    def blank_redend_marker(self,svgdoc,elements):
+        for gid,e in elements.items():
+            if e['datatype'] not in ('RedEndLink','RedEndMarker'):
+                continue
+            ele = svgdoc.getElementById(gid)
+            ele.parentNode.removeChild(ele)
+        return 
+
+    def blank_unknown_linkinfo(self,svgdoc,elements):
+        for lgid,e in elements.items():
+            if e['datatype'] not in ('Linkage','RedEndLink'):
+                continue
+
+            blank_anomer = False 
+            blank_parent_bond = False
+            tm = elements[e['tosvgid']]
+            if tm['anomer'] == "?":
+                blank_anomer = True
+            if e['datatype'] == "Linkage" and e['parent_bond'] == "?":
+                blank_parent_bond = True
+
+            if not blank_anomer and not blank_parent_bond:
+                continue
+
+            ligid = lgid.replace('l-1:','li-1:')
+            liele = svgdoc.getElementById(ligid)
+
+            if not liele:
+                continue
+
+            teeles = [ te for te in liele.getElementsByTagName('text') if te.firstChild.nodeValue ]
+            if blank_parent_bond:
+                teeles[0].firstChild.nodeValue = " " # blank
+            if blank_anomer:
+                teeles[-1].firstChild.nodeValue = " " # blank
+
+        return 
+
     def randomize_anomers(self,svgdoc,elements,anomers):
 
         assert all([ (a in ('a','b',' ','?')) for a in anomers ])
@@ -234,7 +277,7 @@ class Image_Data:
             newanomer = random.choice(anomers)
             assert newanomer in ('a','b',' ','?')
 
-            togid = "r-1:%d"%(e['toid'],)
+            togid = e['tosvgid']
             toele = svgdoc.getElementById(togid)
             toele.setAttribute("data.residueAnomericState",newanomer if newanomer in ('a','b') else "?")
 
@@ -262,9 +305,8 @@ class Image_Data:
             newcarbon = random.choice(carbon_bonds)
             assert newcarbon in ('2','3','4','6','8',' ','?')
 
-            togid = "l-1:%d,%d"%(e['fromid'],e['toid'])
-            toele = svgdoc.getElementById(togid)
-            toele.setAttribute("data.parentPositions",newcarbon if newcarbon in ('2','3','4','6','8') else "?")
+            lele = svgdoc.getElementById(togid)
+            lele.setAttribute("data.parentPositions",newcarbon if newcarbon in ('2','3','4','6','8') else "?")
 
             ligid = lgid.replace('l-1:','li-1:')
             liele = svgdoc.getElementById(ligid)
@@ -273,7 +315,6 @@ class Image_Data:
             # first one is carbon bond
             teeles[0].firstChild.nodeValue = newcarbon
         return 
-
 
     def randomize_anomercarbon_pairs(self,svgdoc,elements,anomers,a_carbons=['8'], b_carbons=[' ','?'], x_carbons=['2','3','4','6','?',' ']):
         assert all([ (a in ('a','b',' ','?')) for a in anomers ])
@@ -321,35 +362,48 @@ class Image_Data:
 
         return 
 
-    
-    def randomize_linkinfo(self,infile,anomers=None,carbon_bonds=None):
+    def randomize_linkinfo(self,svgfile,anomers=None,carbon_bonds=None):
 
         if anomers is None:
             anomers = ['?',' ','a','a','b','b']
         if carbon_bonds is None:
             carbon_bonds = ['?',' ','2','2','3','3','4','4','6','6','8','8']
 
-        svg_file = xml.dom.minidom.parse(infile)
-        svg = svg_file.getElementsByTagName('svg')[0]
+        svgdoc = xml.dom.minidom.parse(svgfile)
         
-        elements = self.parse_elements(svg)
-        self.randomize_anomers(svg_file,elements,anomers)
-        self.randomize_parent_carbon_bonds(svg_file,elements,carbon_bonds)
-        # self.randomize_anomercarbon_pairs(svg_file,elements,anomers)
+        elements = self.parse_elements(svgdoc)
+        self.randomize_anomers(svgdoc,elements,anomers)
+        self.randomize_parent_carbon_bonds(svgdoc,elements,carbon_bonds)
+        # self.randomize_anomercarbon_pairs(svgdoc,elements,anomers)
 
-        with open(infile, 'w') as f:
-            svg_file.writexml(f, encoding='UTF-8')
+        with open(svgfile, 'w') as f:
+            svgdoc.writexml(f, encoding='UTF-8')
 
         return
 
-    def svg_parser(self,infile,outfile,**kwargs):
+    def randomize_blanks(self,svgfile,unknown,redend):
+
+        svgdoc = xml.dom.minidom.parse(svgfile)
+        
+        elements = self.parse_elements(svgdoc)
+        if random.choice(unknown):
+            self.blank_unknown_linkinfo(svgdoc,elements)
+        if random.choice(redend):
+            self.blank_redend_marker(svgdoc,elements)
+
+        with open(svgfile, 'w') as f:
+            svgdoc.writexml(f, encoding='UTF-8')
+
+        return
+
+    def svg_parser(self,svgfile,outfile,**kwargs):
 
         x = kwargs.get('x',None)
         y = kwargs.get('y',None)
         groups = kwargs.get('groups',None)
 
-        svg_file = xml.dom.minidom.parse(infile)
-        svg = svg_file.getElementsByTagName('svg')[0]
+        svgdoc = xml.dom.minidom.parse(svgfile)
+        svg = svgdoc.getElementsByTagName('svg')[0]
         svg_viewbox = svg.getAttribute('viewBox').split()
         svg_width = svg_viewbox[2]
         svg_height = svg_viewbox[3] 
@@ -507,12 +561,12 @@ class Image_Data:
         #campbell
         if kwargs.get('change_all_links'):
             # Save the modified SVG back to the original file
-            with open(infile, 'w') as f:
-                svg_file.writexml(f, encoding='UTF-8')
-            print(f"Modified SVG saved to {infile}")
+            with open(svgfile, 'w') as f:
+                svgdoc.writexml(f, encoding='UTF-8')
+            print(f"Modified SVG saved to {svgfile}")
 
-    def svg_to_png(self,infile,outfile):
-        svg2png(file_obj=open(infile, "rb"), write_to=outfile)
+    def svg_to_png(self,svgfile,outfile):
+        svg2png(file_obj=open(svgfile, "rb"), write_to=outfile)
     
     def random_colors(self,image_file):
         # use heuristic mono finding colour ranges to make ranges of blue/green/red/etc
