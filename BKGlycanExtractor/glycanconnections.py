@@ -789,3 +789,203 @@ class ConnectYOLOInfo(ConnectYOLO):
             obj.glycan_error("Count of the monosaccharides do not match w.r.t count of the links")
         
         return obj.undirected_links()
+
+
+
+class KnownLinkTopology(KnownLink):
+    
+    labels = ['a1', 'a2','a3','a4', 'a5', 'a6', 'a7', 'a8', 'a9', 'b1', 'b2', 'b3', 'b4', 'b5', 'b6', 'b7', 'b8', 'b9', 'x1', 'x2', 'x3', 'x4', 'x5', 'x6', 'x7', 'x8', 'x9', 'ax', 'bx', 'xx'] 
+    # labels = ['a2','a3','a4', 'a6', 'a8', 'b2', 'b3', 'b4', 'b6', 'x2', 'x3', 'x4', 'x6', 'ax', 'bx', 'xx'] 
+
+    defaults = {
+        'boxpadding': 0,
+    }
+
+    def __init__(self,**kwargs):
+        self.params = dict(
+            boxpadding = Config.get_param('boxpadding', Config.INT, kwargs, self.defaults),
+        )
+        GlycanConnector.__init__(self)
+
+    def find_boxes(self,obj):
+        image_path = obj.image_path()
+        # print(image_path) 
+
+        assert image_path, "KnownLinkWithInfo can only run on SingleGlycanImage glycan finder semantics objects"
+
+        box_id = 0
+
+        box_coords = {}
+        links = collections.defaultdict(list)
+        boxes = []
+        image_data = image_path.rsplit('.',1)[0] + "_map.txt"
+        
+        mono_anomers = {}
+        carbon_numbers = {}
+        with open(image_data, 'r') as file:
+            for line in file:
+                data_points = line.split()
+                if data_points[0] == 'l':
+                    links[data_points[1]].append(data_points[4])
+                    if data_points[2] != '?': 
+                        carbon_numbers[data_points[4]] = data_points[2] # associate parent carbon with child
+                    else:
+                        carbon_numbers[data_points[4]] = '?' 
+
+                if data_points[0] == 'm':
+                    mono_id = data_points[1]
+                    name = data_points[2]
+                    if data_points[3] != '?':
+                        mono_anomers[mono_id] = data_points[3]
+                    else:
+                        mono_anomers[mono_id] = '?'
+                    x_coords = []
+                    y_coords = []
+
+                    for coords in data_points[4:-1]:
+                        x,y = map(int,coords.split(','))
+                        x_coords.append(x)
+                        y_coords.append(y)
+
+                    box_coords[mono_id] = dict(x_coords=[min(x_coords), max(x_coords)], y_coords=[min(y_coords), max(y_coords)])
+        
+        for mono1, mono2 in links.items():
+            for link in mono2:
+                x_coords = box_coords[mono1]['x_coords'] + box_coords[link]['x_coords']
+                y_coords = box_coords[mono1]['y_coords'] + box_coords[link]['y_coords']
+
+                x_min, x_max = min(x_coords), max(x_coords)
+                y_min, y_max = min(y_coords), max(y_coords) 
+                
+                width = x_max - x_min 
+                height = y_max - y_min
+
+                label = 'xx' # campbell
+                label_index = self.get_label_index(label) 
+                anomer = 'x' # campbell
+                parent_carbon_bond = 'x' # campbell
+
+                box = BoundingBox(x1=x_min, y1=y_min, x2=x_max, y2=y_max, 
+                                  id=box_id, image=obj.image(),
+                                  classid=label_index, classlabel=label,
+                                  parent=int(mono1), child=int(link), anomer=anomer,
+                                  parent_carbon_bond=parent_carbon_bond)
+
+                box.pad(self.params['boxpadding']) # known data is absolute
+                boxes.append(box)
+                
+                box_id += 1
+        
+        if DebugMode.debug:
+            DebugMode.log_data(
+                identifier = DebugMode.curr_image,
+                data = {'links_known':len(boxes)},
+                image_data = DebugMode.image_data
+            )
+
+        return boxes
+    
+    def find_objects(self,obj):
+        boxes = self.find_boxes(obj)
+        obj.clear_undirected_links()
+        for box in boxes:
+            obj.add_undirected_link(box.get('parent'),box.get('child'),classid=box.get('classid'),classlabel=box.get('classlabel'),box=box, anomer=box.get('anomer'), parent_carbon_bond=box.get('parent_carbon_bond'))
+        return obj.undirected_links()
+
+
+
+
+class ConnectYOLOInfoTopology(ConnectYOLO):
+    finder_class = "InfoLinksTopology"
+
+
+    def find_boxes(self, obj):
+        image = obj.image()
+        boxes = self.get_YOLO_output(image)
+        for box in boxes:
+            box.set('classlabel', 'xx')  # campbell
+            box.set('classid', self.get_label_index('xx'))  # campbell
+
+        return boxes
+
+    # returns a list of connected monosaccharide objects 
+    def find_objects(self, obj):
+        ''' returns list of undirected links'''
+        detected_boxes = self.find_boxes(obj)
+
+        obj.semantics['undirected_links'] = []
+
+        links = []
+
+        id_link_map = defaultdict(list)
+        id_added = defaultdict(set)  # Track already added IDs for each key
+
+        for dbox in detected_boxes:
+            # print(dbox)
+            linked_monos = []
+            x1, y1, x2, y2 = dbox.corners()
+
+            for mono in obj.monosaccharides(): 
+                x_cen, y_cen = mono['center']
+
+                if x_cen > x1 and x_cen < x2 and y_cen > y1 and y_cen < y2:
+                    linked_monos.append(mono)
+
+            if len(linked_monos) == 2:
+                links.append([linked_monos, dbox])
+
+            elif len(linked_monos) > 2 and len(linked_monos) <= 4:
+
+                max_distance = 0
+
+                farthest_pair = (None, None)
+        
+                for i in range(len(linked_monos)):
+                    for j in range(i+1, len(linked_monos)):
+                        if linked_monos[i].get('symbol') != 'Fuc' and linked_monos[j].get('symbol') != 'Fuc':
+                            dist = CompareBoxes().euclidean_distance(linked_monos[i]['box'], linked_monos[j]['box'])
+
+                            if dist > max_distance:
+                                max_distance = dist
+                                farthest_pair = [linked_monos[i], linked_monos[j]]
+
+                if farthest_pair != (None, None):
+                    links.append([farthest_pair, dbox])
+
+
+        id_added = defaultdict(set)  # Track already added IDs for each key
+        for (mono1, mono2), dbox in links:
+        
+            id1, id2 = mono1.get('id'), mono2.get('id')
+
+            if id2 not in id_added[id1]:
+
+                classlabel = dbox.get('classlabel', 'xx')
+                obj.add_undirected_link(int(id1), int(id2), 
+                                        confidence=float(dbox.get('confidence')), 
+                                        classid=dbox.get('classid'),
+                                        classlabel=classlabel, box=dbox, anomer='x', parent_carbon_bond='x')
+
+                id_added[id1].add(id2)
+                id_added[id2].add(id1)
+
+        # undirected links - sorted by confidence in descending order
+        obj.semantics['undirected_links'].sort(key=lambda link: link.get('confidence', 0.0), reverse=True)
+
+        # HOOK METHOD
+        # at this point we have all the undirected links,
+        # so hook methods can be added here for post_processing
+        self.links_post_processing(obj)
+
+        # check if no. of links are sufficient for the no. of monos detected
+        # no.of monos-1 == no. of links
+        links_count = len(obj.undirected_links())
+        monos_count = len(obj.monosaccharides())
+
+        obj.semantics["links_count"] = links_count
+        obj.semantics["monos_count"] = monos_count
+
+        if monos_count - 1 != links_count:
+            obj.glycan_error("Count of the monosaccharides do not match w.r.t count of the links")
+        
+        return obj.undirected_links()

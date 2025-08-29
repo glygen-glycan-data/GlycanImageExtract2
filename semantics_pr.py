@@ -113,6 +113,11 @@ figure_steps=SingleGlycanImage
 glycan_steps=KnownMono
 known_step=KnownLinkWithInfo
 
+[InfoLinksTopology]
+figure_steps=SingleGlycanImage
+glycan_steps=KnownMono
+known_step=KnownLinkTopology
+
 [Glycan]
 figure_steps=
 glycan_steps=
