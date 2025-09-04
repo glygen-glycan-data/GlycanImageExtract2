@@ -7,7 +7,7 @@ from BKGlycanExtractor import Image_Manager, Evaluator, Config_Manager, DebugMod
 from BKGlycanExtractor import runall_evaluators
 from BKGlycanExtractor import DistributedProcessing as dp
 
-parser = argparse.ArgumentParser(description="Start")
+parser = argparse.ArgumentParser(description="Compute Precision-Recall")
 
 # required argument
 parser.add_argument(
@@ -56,8 +56,8 @@ parser.add_argument(
 parser.add_argument(
     '--precision',
     type = int,
-    default = 8,
-    help = "Precision for confidence values. Default: 8."
+    default = 4,
+    help = "Precision for confidence values. Default: 4."
 )
 
 dp.add_arguments(parser)
@@ -69,6 +69,15 @@ parser.add_argument(
     action = 'store_true',
     default = False,
     help = 'Verbose logging.'
+)
+
+# optional argument
+parser.add_argument(
+    '-q',
+    '--quiet',
+    action = 'store_true',
+    default = False,
+    help = 'No logging.'
 )
 
 # optional argument
@@ -92,38 +101,13 @@ for clsres in args.class_restriction:
     else:
         class_restriction.append(clsres)
 
-pipeline_descriptions = '''
-[Monosaccharide]
-figure_steps=SingleGlycanImage
-glycan_steps=
-
-[Root]
-figure_steps=SingleGlycanImage
-glycan_steps=KnownMono
-
-[Links]
-figure_steps=SingleGlycanImage
-glycan_steps=KnownMono
-
-[Glycan]
-figure_steps=
-glycan_steps=
-'''
-
-
-config = configparser.ConfigParser()
-config.read_string(pipeline_descriptions)
+verbose = 'TQDM'
+if args.verbose:
+    verbose = True
+elif args.quiet:
+    verbose = False
 
 cm = Config_Manager()
-
-# add if required
-# pred_kwargs = {
-#     "YOLOMonosRandom": {"boxpadding":0},
-#     "YOLOMonosBiased": {"boxpadding":0}
-# }
-
-known_kwargs = {}
-
 
 for finder_name in args.finders:
     try:
@@ -146,44 +130,13 @@ for i,finder_name in enumerate(args.finders):
     # ------------------------------
     # Build prediction pipeline
     # ------------------------------
+
     f = cm.get_finder(finder_name)
+    pred_pipeline = f.finder_pipeline(cm)
 
-    # steps to get the known finder name
-    known_ini = cm.get(f'Finder:{finder_name}','config').split('.')[0] + '.model.ini'
-    known_cm = Config_Manager(config_filename=known_ini)
-    known_step_name = known_cm.list_finders()[0]
-    
-    comparator = f.semantic_compare
+    kf = f.known_finder()
+    known_pipeline = kf.finder_pipeline(cm)
 
-    finder_section = config[f.finder_class]
-    figure_steps = finder_section.get('figure_steps')
-    glycan_steps = finder_section.get('glycan_steps')
-
-    pred_pipeline = GlycanExtractorPipeline()
-    pred_pipeline.set_steps('figure', cm.get_finders(figure_steps))
-    pred_pipeline.set_steps('glycan', cm.get_finders(glycan_steps))
-
-    # Add the main finder to the right stage
-    if f.finder_class == "Glycan":
-        pred_pipeline.add_step('figure', f)
-    else:
-        pred_pipeline.add_step('glycan', f)
-
-    # ------------------------------
-    # Build known pipeline
-    # ------------------------------
-    known_pipeline = GlycanExtractorPipeline()
-    known_pipeline.set_steps('figure', cm.get_finders(figure_steps))
-    known_pipeline.set_steps('glycan', cm.get_finders(glycan_steps))
-
-    # known_step_name = finder_section.get('known_step')
-    kf = cm.get_finder(known_step_name, **known_kwargs.get(finder_name,{}))
-    assert set(kf.get_labels()) >=  set(f.get_labels()), "%s != %s"%(kf.get_labels(),f.get_labels())
-    if f.finder_class == "Glycan":
-        known_pipeline.add_step('figure', kf)
-    else:
-        known_pipeline.add_step('glycan', kf)
-    
     pipelines = {}
     pipelines[finder_name] = (pred_pipeline,known_pipeline)
 
@@ -192,14 +145,13 @@ for i,finder_name in enumerate(args.finders):
     for j, cls in enumerate(class_restriction):
         for i, proximity in enumerate(args.proximity):
             cmp_key = f"class={cls}" if cls else f"proximity={proximity}"
-            compares[cmp_key] = comparator(
+            compares[cmp_key] = f.semantic_compare(
                 proximity=proximity,
                 whole_image=args.wholeimage,
                 precision=args.precision,
                 verbose=args.verbose,
                 restrict_class=[cls] if cls else None
             )
-
             compare_count += 1
 
     # Build the evaluator...
@@ -207,17 +159,11 @@ for i,finder_name in enumerate(args.finders):
         pipelines=pipelines,
         compares=compares,
         boxeval=False,
-        verbose=args.verbose
+        verbose=(verbose==True)
     )
     evaluators.append(evaluator)
 
-if args.verbose:
-    runall_evaluators(evaluators,images,workers=distproc,verbose=True)
-else:
-    runall_evaluators(evaluators,images,workers=distproc)
-
-for eval in evaluators:
-    print("---->>>>",eval.final_structure)
+runall_evaluators(evaluators,images,workers=distproc,verbose=verbose)
 
 extra_args = {}
 if compare_count > 1 and len(args.finders) == 1:
@@ -232,9 +178,9 @@ elif len(args.finders) > 1 and compare_count == 1:
 # print("evaluators",evaluators)
 Evaluator.plotprecisionrecall(
     evaluators,
-    dir="tester_semantics",
+    dir="presentation",
     filename="semantics",
-    figsize=(10, 8),
+    figsize=(8, 6),
     xlim=(0, 1),
     ylim=(0, 1),
     grid=True,
