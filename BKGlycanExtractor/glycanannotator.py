@@ -199,9 +199,8 @@ class Config_Manager(object):
 
         return finders
 
-
-
-
+    def get_one_finder(self):
+        return self.get_finder(self.list_finders()[0])
 
 class Config(object):
     def __init__(self,config_manager,section_name):
