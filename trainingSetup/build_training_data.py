@@ -91,6 +91,8 @@ for image_path in images:
 
     with open(training_file_path, 'w') as f:
         for b in result:
+            b.set_image_dimensions(image_width=glycan_semantics.width(),
+                                   image_height=glycan_semantics.height())
             classid = b.get('classid')
             x,y,w,h = b.center_relative()
 
