@@ -12,7 +12,7 @@ from . svg_parse_path import get_points
 
 class Image_Manager:
     def __init__(self,glycan_folder,pattern='*.png,*.jpg'):
-        self.glob = [pattern_type.strip()[1:] if pattern_type.strip().startswith('*') else pattern_type.strip() for pattern_type in pattern.split(',')]
+        self.globs = pattern.split(',')
         self.images = self.get_images(glycan_folder)
 
     def __iter__(self):
@@ -35,7 +35,7 @@ class Image_Manager:
         return sorted(images)
 
     def match_glob(self,image_file):
-        return any(image_file.name.endswith(ext) for ext in self.glob)
+        return any(fnmatch(image_file.name,ext) for ext in self.globs)
 
 
 
