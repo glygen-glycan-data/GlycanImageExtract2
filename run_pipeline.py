@@ -58,17 +58,9 @@ else:
     results = pipeline.runall(images,workers=workers)
 
 for result in results:
-    # result.annotate_monos(sem.semantics['glycans'][0].semantics)
-    # print("\nMono semnatics",sem.semantics['glycans'][0].semantics)
-    # result.write_json()
-    # sem.annotate_glycans(color=(0,0,255))
     result.write_json()
-    #result.annotate_monos() 
-    result.annotate_links(labels=True) 
-    # kgb.find_objects(sem)
-    # sem.annotate_glycans(color=(0,255,0))
-    # sem.write_image(extension="annotated.png")
-    #result.annotate_monos() 
-    result.write_image(extension="annotated.png")
+    # result.annotate_glycans(color=(0,0,255))
+    # result.annotate_monos() 
+    # result.annotate_links(labels=True) 
     # result.write_image(extension="annotated.png")
-    # print(result.glycans()[0].IUPAC())
+
