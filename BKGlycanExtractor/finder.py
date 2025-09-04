@@ -5,6 +5,7 @@ Subclasses inheriting from Finder must define labels
 import importlib
 import os.path
 
+from . glycanannotator import Config_Manager
 from . yolomodels import YOLOModel
 from . compareboxes import CompareBoxes
 from . semantics import BoxPredictionSemantics
@@ -224,6 +225,30 @@ def toboxes(func):
 
 class YOLOFinder(YOLOModel,Finder):
 
+    def __init__(self):
+        weights_file = self.params.get("weights",None)
+        labels_file = weights_file.replace("weights","labels")
+        labels = [ s.strip() for s in open(labels_file).read().split() ]
+        Finder.__init__(self,labels)
+        YOLOModel.__init__(self,self.params)
+
+    def known_finder(self):
+        weights_file = self.params.get("weights",None)
+        model_file = weights_file.replace("weights","model")
+        labels_file = weights_file.replace("weights","labels")
+        if not os.path.isfile(model_file):
+            raise FileNotFoundError(model_file)
+        if not os.path.isfile(labels_file):
+            raise FileNotFoundError(labels_file)
+        cm = Config_Manager(config_fullpath=model_file)
+        f = cm.get_one_finder()
+        for label in open(labels_file).read().split():
+            f.get_label_index(label)
+        return f
+
+    def box_compare(self,**kwargs):
+        return BoxCompare(**kwargs)
+
     def find_boxes(self, obj):
         image = obj.image()
         boxes = self.get_YOLO_output(image)
@@ -232,7 +257,6 @@ class YOLOFinder(YOLOModel,Finder):
             classid = box.get('classid')
             classlabel = self.get_label(classid)
             box.set('classlabel',classlabel)
-
         return sorted(boxes, key=lambda box: float(box.get('confidence',0.0)), reverse=True)
 
     @toboxes
