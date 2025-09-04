@@ -20,8 +20,8 @@ import cv2
 import numpy as np
 from . bbox import BoundingBox
 from . yolomodels import YOLOModel 
-from . glycanannotator import Config
-from . finder import Finder
+from . glycanannotator import Config, GlycanExtractorPipeline
+from . finder import YOLOFinder, KnownFinder, Finder
 from . semantics import GlycanSemantics
 from collections import Counter
 from BKGlycanExtractor import DebugMode
@@ -32,6 +32,10 @@ class GlycanFinder:
     def set_logger(self, logger_name=''):
         self.logger = logging.getLogger(logger_name+'.glycanfinding')
 
+    def finder_pipeline(self,config_manager):
+        pipeline = GlycanExtractorPipeline()
+        pipeline.set_steps('figure', [self])
+        return pipeline
 
 # YOLO based glycan finder
 # allows minimum confidence thresholding, to restrict returns
