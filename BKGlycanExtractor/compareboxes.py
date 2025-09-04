@@ -44,7 +44,22 @@ class CompareBoxes:
         x,y,w,h = known_box.bbox()
         return distance/min(w, h)
 
-    @staticmethod    
+    @staticmethod
+    def is_contained_in(b1,b2):                                                                           
+        b1x1,b1y1,b1x2,b1y2 = b1.corners()                                                                
+        b2x1,b2y1,b2x2,b2y2 = b2.corners()                                                                
+        if b1x1 < b2x1:                                                                                   
+            return False                                                                                  
+        if b1x2 > b2x2:                                                                                   
+            return False                                                                                  
+        if b1y1 < b2y1:                                                                                   
+            return False                                                                                  
+        if b1y2 > b2y2:                                                                                   
+            return False                                                                                  
+        assert CompareBoxes.intersection_area(b1,b2) == b1.area()                                                      
+        return True
+
+    @staticmethod
     def have_intersection(training, detected):
         t_x, t_y, t_x2, t_y2 = training.corners()
         d_x, d_y, d_x2, d_y2 = detected.corners()
