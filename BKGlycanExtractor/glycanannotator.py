@@ -219,19 +219,6 @@ class Config(object):
             return val.strip()
         return val
 
-    def step_names(self,key,default=None):
-        if self.has(key):
-            steps = [ s.strip() for s in self.get(key).split(',') if s.strip() ]
-            return steps
-        return default
-
-    # def get_steps(self,key,default=None):
-    #     if self.has(key):
-    #         steps = [ s.strip() for s in self.get(key).split(',') ]
-    #         other_steps = [ self.config_manager.get_finder(name) for name in steps ]
-    #         return [ self.config_manager.get_finder(name) for name in steps ]
-    #     return default
-
     def get_steps(self, key, default=None):
         if self.has(key):
             steps = [s.strip() for s in self.get(key).split(',') if s.strip() ]
@@ -254,7 +241,7 @@ class Config(object):
         return default
 
     def get_config_filename(self,key,default=None):
-        return os.path.join(self.config_manager.config_folder,self.get(key,default))
+        return self.config_manager.config_filename(self.get(key,default))
 
     # Implement a multi-stage strategy for getting parameters from
     # class defaults, then configuration, then keyword arguments
@@ -295,20 +282,7 @@ class Config(object):
         config = kwargs.get('__config__')
         if config and config.has(key):
             value = getattr(config, datatype)(key, value)
-            return value  # primary config wins over secondary
-
-        # Step 4: check secondary config if present
-        secondary_config = kwargs.get('__secondary_config__')
-        if secondary_config and secondary_config.has(key):
-            value = getattr(secondary_config, datatype)(key, value)
+            return value
 
         return value
 
-    @staticmethod
-    def get_finder_name(kwargs={}):
-        config = kwargs.get('__config__')
-        if config:
-            finderstring,name = config.section_name.split(":",1)
-            assert finderstring == "Finder"
-            return name
-        return None
