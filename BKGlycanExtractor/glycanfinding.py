@@ -102,15 +102,8 @@ class SingleGlycanImage(Finder,GlycanFinder):
 
 class KnownGlycanBoxes(KnownFinder,GlycanFinder):
 
-    defaults = {
-        'boxpadding': 0,
-    }
-
     def __init__(self,**kwargs):
-        self.params = dict(
-            boxpadding = Config.get_param('boxpadding', Config.FLOAT, kwargs, self.defaults),
-        )
-        KnownFinder.__init__(self)
+        KnownFinder.__init__(self,**kwargs)
         GlycanFinder.__init__(self)
 
     def find_boxes(self, obj):
@@ -123,10 +116,6 @@ class KnownGlycanBoxes(KnownFinder,GlycanFinder):
             classid = int(classid)
             box = BoundingBox(rcx=rcx,rcy=rcy,rw=rw,rh=rh,image=image,
                               classid=classid,classlabel=self.get_label(classid))
-            if 0 < self.params['boxpadding'] <= 1:
-                box.pad_relative(self.params['boxpadding'])
-            elif self.params['boxpadding'] > 1:
-                box.pad(self.params['boxpadding'])
             boxes.append(box)
         return boxes
 

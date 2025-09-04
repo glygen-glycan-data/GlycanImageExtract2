@@ -1,11 +1,12 @@
 import importlib
 import os.path
 
-from . glycanannotator import Config_Manager
+from . glycanannotator import Config_Manager, Config
 from . yolomodels import YOLOModel
 from . compareboxes import CompareBoxes
 from . semantics import BoxPredictionSemantics
 from . bbox import BoundingBox
+from . model_evaluator import BoxCompare
 
 class Finder(object):
 
@@ -13,6 +14,7 @@ class Finder(object):
 
     def __init__(self,labels=[]):
         self._labels = list(labels)
+        self.params = {}
       
     def execute(self, obj, boxesonly=False):
         if boxesonly:
@@ -70,6 +72,16 @@ class Finder(object):
         self.params[key] = value
 
 class KnownFinder(Finder):
+
+    defaults = {
+        'boxpadding': 0.0,
+    }
+
+    def __init__(self,**kwargs):
+        super().__init__()
+        self.params.update(dict(
+            boxpadding = Config.get_param('boxpadding', Config.FLOAT, kwargs, self.defaults),
+        ))
 
     def write_model(self, finder_name, filename):
         with open(filename, 'w') as wh:
@@ -204,10 +216,17 @@ class KnownFinder(Finder):
         image_path = obj.image_path()
         assert image_path, f"{self.__class__.__name__} can only run on SingleGlycanImage objects"
 
-        boxes = []
         map_dict = self.get_known_data(image_path)
-        return self.create_boxes(map_dict)
 
+        boxes = []
+        for b in self.create_boxes(map_dict):
+            b.set_image_dimensions(image=obj.image())
+            if self.params['boxpadding'] > 1:
+                b.pad(self.params['boxpadding'])
+            elif self.params['boxpadding'] > 0:
+                b.pad_relative(self.params['boxpadding'])
+            boxes.append(b)
+        return boxes
 
 def toboxes(func):
     def wrapper(self,x,y):

@@ -127,21 +127,10 @@ class ConnectYOLO(YOLOFinder,LinkFinder):
 
 class KnownLink(LinkFinder,KnownFinder):
 
-    defaults = {
-        'boxpadding': 0,
-    }
-
     def __init__(self,**kwargs):
-        self.params = dict(
-            boxpadding = Config.get_param('boxpadding', Config.INT, kwargs, self.defaults),
-        )
-        KnownFinder.__init__(self)
+        KnownFinder.__init__(self,**kwargs)
         LinkFinder.__init__(self)
 
-    # map_dict structure is present in KnownFinder class
-    # TO DO: maybe Child classes can inherit this method and pass extra/different details (eg. classlabel) through another method?
-    # but the other class needs - map_dict, data (for loops link data), mono_id2 - so it might be diffcult to standardize the methods for the API
-    # So it might create repetative code - would that be ok?
     def create_boxes(self, map_dict):
         boxes = []
 
@@ -156,9 +145,6 @@ class KnownLink(LinkFinder,KnownFinder):
                 mono_id2=mono_id2,
             )
 
-            if self.params['boxpadding'] > 0:
-                box.pad(self.params['boxpadding']) # known data is absolute
-
             boxes.append(box)
 
         return boxes
@@ -168,7 +154,6 @@ class KnownLink(LinkFinder,KnownFinder):
 
 class KnownLinkWithInfo(KnownLink):
     
-    # map_dict structure is present in KnownFinder class
     def create_boxes(self, map_dict):
         boxes = []
 
@@ -187,10 +172,6 @@ class KnownLinkWithInfo(KnownLink):
                 carbon_number=data['carbon_number'],
                 anomer=map_dict['monos'][mono_id2]['anomer']
             )
-
-            if self.params['boxpadding'] > 0:
-                box.pad(self.params['boxpadding']) # known data is absolute
-
             boxes.append(box)
 
         return boxes

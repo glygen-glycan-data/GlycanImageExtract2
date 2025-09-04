@@ -79,18 +79,8 @@ class YOLOMonos(YOLOFinder,MonoFinder):
 
 class KnownMono(MonoFinder,KnownFinder):
 
-    # Need to be able to support any monosaccharide symbol in generated code
-    # maybe allow users to add their own known monos labels?
-    # maybe create a function in finder which accepts labels text file?
-    defaults = {
-        'boxpadding': 0,
-    }
-
     def __init__(self,**kwargs):
-        self.params = dict(
-            boxpadding = Config.get_param('boxpadding', Config.INT, kwargs, self.defaults),
-        )
-        KnownFinder.__init__(self)
+        KnownFinder.__init__(self,**kwargs)
         MonoFinder.__init__(self)
 
     # map_dict structure is present in KnownFinder class
@@ -101,16 +91,14 @@ class KnownMono(MonoFinder,KnownFinder):
 
             symbol = data['symbol']
 
-            box = BoundingBox(x1=data['x_min'], y1=data['y_min'], 
+            box = BoundingBox(
+                x1=data['x_min'], y1=data['y_min'], 
                 x2=data['x_max'], y2=data['y_max'], 
                 symbol=symbol,
                 classid=self.get_label_index(symbol),
                 classlabel=symbol,
                 id=id
             )
-
-            if self.params['boxpadding'] > 0:
-                box.pad(self.params['boxpadding']) # known data is absolute
             boxes.append(box)
 
         return boxes

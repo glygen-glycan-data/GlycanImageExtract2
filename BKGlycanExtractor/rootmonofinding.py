@@ -109,15 +109,8 @@ class KnownRoot(RootFinder,KnownFinder):
 
     filters = [ DiscardClass(todiscard=["not_redend"]) ]
 
-    defaults = {
-        'boxpadding': 0,
-    }
-
     def __init__(self,**kwargs):
-        self.params = dict(
-            boxpadding = Config.get_param('boxpadding', Config.INT, kwargs, self.defaults),
-        )
-        KnownFinder.__init__(self)
+        KnownFinder.__init__(self,**kwargs)
         RootFinder.__init__(self)
 
     # map_dict structure is present in KnownFinder class
@@ -138,9 +131,6 @@ class KnownRoot(RootFinder,KnownFinder):
                 classlabel=classlabel,
                 mono_id=id
             )
-
-            if self.params['boxpadding'] > 0:
-                box.pad(self.params['boxpadding']) # known data is absolute
 
             boxes.append(box)
 
@@ -185,10 +175,6 @@ class KnownRootPlusAnomer(KnownRoot):
                 mono_id=id,
                 anomer=anomer
             )
-
-            if self.params['boxpadding'] > 0:
-                box.pad(self.params['boxpadding']) # known data is absolute
-
             boxes.append(box)
 
         return boxes
