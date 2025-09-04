@@ -136,6 +136,7 @@ class KnownFinder(Finder):
                     root_id = min(root_id, mono_id)
                     name = data_points[2]
                     anomer = data_points[3]
+                    assert anomer in ('a','b','?')
                     x_coords = []
                     y_coords = []
 
@@ -162,8 +163,15 @@ class KnownFinder(Finder):
                     x_min, x_max = min(x1_min, x1_max,x2_min, x2_max), max(x1_min, x1_max,x2_min, x2_max)
                     y_min, y_max = min(y1_min, y1_max, y2_min, y2_max), max(y1_min, y1_max, y2_min, y2_max)
 
+                    carbon_number = data_points[2]
+                    try:
+                        carbon_number = int(carbon_number)
+                    except ValueError:
+                        pass
+                    assert carbon_number in (1,2,3,4,5,6,8,'?')
+
                     link_data = {
-                        (mono_id1, mono_id2): {'carbon_number': data_points[2],'x_min': x_min, 'x_max': x_max, 'y_min': y_min, 'y_max': y_max}
+                        (mono_id1, mono_id2): {'carbon_number': carbon_number,'x_min': x_min, 'x_max': x_max, 'y_min': y_min, 'y_max': y_max}
                         # (mono_id1, mono_id2): {'carbon_number': data_points[2], 'anomer': map_dict['monos'][mono_id2]['anomer'] ,'x_min': x_min, 'x_max': x_max, 'y_min': y_min, 'y_max': y_max}
                     }
 
