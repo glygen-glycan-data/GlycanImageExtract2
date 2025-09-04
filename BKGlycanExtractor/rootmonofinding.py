@@ -9,10 +9,11 @@ import math
 
 from .bbox import BoundingBox
 from .yolomodels import YOLOModel
-from .glycanannotator import Config, Config_Manager
+from .glycanannotator import Config, Config_Manager, GlycanExtractorPipeline
 from .finder import Finder,YOLOFinder,KnownFinder
 from BKGlycanExtractor import RootCompare, DebugMode, RootFilter
 from .semantics import RootSemantics
+from .object_filters import FilterOverlaps, SingleBest, DiscardClass
 
             
 class RootFinder:
@@ -25,10 +26,22 @@ class RootFinder:
             obj.set_roots(accepted[0],rejected)
         else:
             obj.set_roots(None,rejected)
-        
+
+    def finder_pipeline(self,config_manager):
+        pipeline = GlycanExtractorPipeline()
+        pipeline.set_steps('figure', config_manager.get_finders("SingleGlycanImage"))
+        pipeline.set_steps('glycan', config_manager.get_finders("KnownMono")+[self])
+        return pipeline
+
+    def semantic_compare(self,**kwargs):
+        return RootCompare(**kwargs)
+
 
 class YOLORootFinder(YOLOFinder, RootFinder):
-    # filters = [RootFilter()]
+
+    filters = [ FilterOverlaps(maxiou=0.2,discard=True),
+                DiscardClass(tokeep=["redend"]), 
+                SingleBest() ]
 
     defaults = {
         'conf_threshold': 0.5,
@@ -36,7 +49,6 @@ class YOLORootFinder(YOLOFinder, RootFinder):
         'expandimage': 0,
         'iou_threshold': 0.4
     }
-
 
     def __init__(self,**kwargs):
 
@@ -49,9 +61,8 @@ class YOLORootFinder(YOLOFinder, RootFinder):
             expandimage = Config.get_param('expandimage', Config.INT, kwargs, self.defaults)
         )
 
-        YOLOModel.__init__(self,self.params)
+        YOLOFinder.__init__(self)
         RootFinder.__init__(self)
-
 
     def box_to_object(self,box,obj):
         '''
@@ -62,7 +73,6 @@ class YOLORootFinder(YOLOFinder, RootFinder):
         normalized_dist, selected_mono = self.match_root_to_mono(monos,box)
 
         if normalized_dist <= 0.5: 
-            classlabel = box.get('classlabel')
             return RootSemantics(mono_id=selected_mono.get('id'), box=box, **box.items())
         return None
 
@@ -99,23 +109,13 @@ class YOLORootFinder(YOLOFinder, RootFinder):
 
 class KnownRoot(RootFinder,KnownFinder):
 
-    labels = ['redend','not_redend']
+    filters = [ DiscardClass(tokeep=["redend"]) ]
 
     defaults = {
         'boxpadding': 0,
     }
 
     def __init__(self,**kwargs):
-
-        # config file created from training data
-        # maybe make the first 4 lines a part of the class data member?
-        model_ini = Config.get_param('model', Config.CONFIGFILE, kwargs, self.defaults)
-        cm = Config_Manager(config_filename=model_ini)
-        finder = cm.list_finders()[0]
-        secondary_config = cm.get_config(f"Finder:{finder}")
-        kwargs['__secondary_config__'] = secondary_config
-
-
         self.params = dict(
             boxpadding = Config.get_param('boxpadding', Config.INT, kwargs, self.defaults),
         )
@@ -141,9 +141,12 @@ class KnownRoot(RootFinder,KnownFinder):
                 mono_id=id
             )
 
-        box.pad(self.params['boxpadding']) # known data is absolute
-        return [box]
+            if self.params['boxpadding'] > 0:
+                box.pad(self.params['boxpadding']) # known data is absolute
 
+            boxes.append(box)
+
+        return boxes
 
     def box_to_object(self, box, obj):
         return RootSemantics(box=box, **box.items())
