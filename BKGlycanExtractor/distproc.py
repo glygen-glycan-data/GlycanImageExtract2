@@ -369,6 +369,7 @@ class DistributedProcessing(object):
         self.taskattempts = defaultdict(int)
         self.failedtasks = set()
         self.task2worker = dict()
+        self.tasksemptytime = None
         while not self.tasksempty() or (len(self.donetasks) + len(self.failedtasks)) < len(self.alltasks):
  
             while not self.worker_messages_empty():
@@ -383,7 +384,10 @@ class DistributedProcessing(object):
                 elif msg[0] == "HEARTBEAT":
                     self.heartbeat[msg[1]] = time.time()
 
-            if self.tasksempty() and not self.incleanup:
+            if self.tasksempty() and self.tasksemptytime is None:
+                self.tasksemptytime = time.time()
+                
+            if self.tasksempty() and not self.incleanup and self.tasksemptytime is not None and (time.time() - self.tasksemptytime) > 30:
                 for i,task in enumerate(self.alltasks):
                     taskid = (i+1)
                     if taskid not in self.donetasks and taskid not in self.failedtasks:
