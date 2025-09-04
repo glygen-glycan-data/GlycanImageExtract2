@@ -376,6 +376,20 @@ class FigureSemantics(ImageSemantics):
                 #     color1 = alternative_color if alternative_color else color # orange for alternatives
                 self.annotate(x1,y1,x2,y2,text=text,xtoff=2,ytoff=-2,color=color1,thickness=1)   
 
+    def annotate_root(self,color=(0, 100, 0),labels=False):
+        for glycan in self.glycans():
+            # monosaccharides and root labelling
+            root = glycan.root()
+            if not root:
+                return
+            box = root.corners()
+            x_min,y_min,x_max,y_max = box.corners()
+
+            text=''                                                                                       
+            if labels:
+                text = root.get('classlabel','')
+            self.annotate(x_min,y_min,x_max,y_max,color=color,text=text,thickness=1)
+
     def annotate_links(self,color=(255, 255, 0),labels=False):
         for glycan in self.glycans():
             for link in glycan.undirected_links():
