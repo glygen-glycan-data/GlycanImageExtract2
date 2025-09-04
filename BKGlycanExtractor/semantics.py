@@ -59,6 +59,9 @@ class Semantics(object):
 
     def __iter__(self):
         return self.keys()
+    
+    def __repr__(self):
+        return str(self)
 
     def log(self,message):
         self.append('log',"[%s] %s"%(callsig(1),message))
@@ -173,9 +176,9 @@ class MonoSemantics(BoxPredictionSemantics):
 
     def __str__(self):
         if self.has_id():
-            res = f"[Mono:{self.id()}: classlabel: {self['classlabel']}, symbol: {self['symbol']}, box: {self['box']}, confidence: {self['confidence']}]"
+            res = f"[Mono:{self.id()}: classlabel: {self['classlabel']}, symbol: {self['symbol']}, box: {self['box']}, confidence: {self.get('confidence')}]"
         else:
-            res = f"[Mono: classlabel: {self['classlabel']}, symbol: {self['symbol']}, box: {self['box']}, confidence: {self['confidence']}]"
+            res = f"[Mono: classlabel: {self['classlabel']}, symbol: {self['symbol']}, box: {self['box']}, confidence: {self.get('confidence')}]"
         return res
 
 # Root
