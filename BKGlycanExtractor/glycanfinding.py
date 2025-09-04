@@ -43,6 +43,7 @@ class GlycanFinder:
 # confidences for YOLO detection are stored in the bounding box
 class YOLOGlycanFinder(YOLOFinder,GlycanFinder):
 
+    # must provide all these values...since we are overriding those in YOLOFinder
     defaults = {
         'conf_threshold': 0.5,
         'boxpadding': 0,
@@ -51,15 +52,7 @@ class YOLOGlycanFinder(YOLOFinder,GlycanFinder):
     }
 
     def __init__(self,**kwargs):
-        self.params = dict(
-           boxpadding = Config.get_param('boxpadding', Config.FLOAT, kwargs, self.defaults),
-           expandimage = Config.get_param('expandimage', Config.FLOAT, kwargs, self.defaults),
-           conf_threshold = Config.get_param('conf_threshold', Config.FLOAT, kwargs, self.defaults),
-           iou_threshold = Config.get_param('iou_threshold', Config.FLOAT, kwargs, self.defaults),
-           config = Config.get_param('config', Config.CONFIGFILE, kwargs, self.defaults),
-           weights = Config.get_param('weights', Config.CONFIGFILE, kwargs, self.defaults),
-        )
-        YOLOFinder.__init__(self)
+        YOLOFinder.__init__(self,**kwargs)
         GlycanFinder.__init__(self)
 
     def find_boxes(self, obj):

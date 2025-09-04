@@ -40,27 +40,11 @@ class LinkFinder:
         return LinksCompare(**kwargs)
 
 class ConnectYOLO(YOLOFinder,LinkFinder):
-    filters = [FilterRepeatedLinks(), FilterTreeLinks()]
-
-    defaults = {
-        'conf_threshold': 0.5,
-        'boxpadding': 0,
-        'expandimage': 0,
-        'iou_threshold': 0.4
-    }
+    filters = [ FilterRepeatedLinks(), 
+                FilterTreeLinks() ]
 
     def __init__(self,**kwargs):
-
-        self.params = dict(
-            config = Config.get_param('config', Config.CONFIGFILE, kwargs, self.defaults),
-            weights = Config.get_param('weights', Config.CONFIGFILE, kwargs, self.defaults),
-            conf_threshold = Config.get_param('conf_threshold', Config.FLOAT, kwargs, self.defaults),
-            iou_threshold = Config.get_param('iou_threshold', Config.FLOAT, kwargs, self.defaults),
-            boxpadding = Config.get_param('boxpadding', Config.INT, kwargs, self.defaults),
-            expandimage = Config.get_param('expandimage', Config.INT, kwargs, self.defaults)
-        )
-
-        YOLOFinder.__init__(self)
+        YOLOFinder.__init__(self,**kwargs)
         LinkFinder.__init__(self)
     
     def box_to_object(self, box, obj):

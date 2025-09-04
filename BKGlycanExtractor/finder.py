@@ -240,15 +240,32 @@ def toboxes(func):
 
 class YOLOFinder(YOLOModel,Finder):
 
-    def __init__(self):
-        weights_file = self.params.get("weights",None)
+    defaults = {
+        'conf_threshold': 0.5,
+        'boxpadding': 0,
+        'expandimage': 0,
+        'iou_threshold': 0.4
+    }
+
+    def __init__(self,**kwargs):
+        weights_file = Config.get_param('weights', Config.CONFIGFILE, kwargs, self.defaults)
+        assert weights_file is not None
         labels_file = weights_file.replace("weights","labels")
         labels = [ s.strip() for s in open(labels_file).read().split() ]
         Finder.__init__(self,labels)
+        self.params.update(dict(
+            config = Config.get_param('config', Config.CONFIGFILE, kwargs, self.defaults),
+            weights = weights_file,
+            conf_threshold = Config.get_param('conf_threshold', Config.FLOAT, kwargs, self.defaults),
+            iou_threshold = Config.get_param('iou_threshold', Config.FLOAT, kwargs, self.defaults),
+            boxpadding = Config.get_param('boxpadding', Config.FLOAT, kwargs, self.defaults),
+            expandimage = Config.get_param('expandimage', Config.INT, kwargs, self.defaults)
+        ))
         YOLOModel.__init__(self,self.params)
 
     def known_finder(self):
         weights_file = self.params.get("weights",None)
+        assert weights_file is not None
         model_file = weights_file.replace("weights","model")
         labels_file = weights_file.replace("weights","labels")
         if not os.path.isfile(model_file):
