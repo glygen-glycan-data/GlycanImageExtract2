@@ -78,7 +78,7 @@ class YOLORootFinder(YOLOFinder, RootFinder):
 
     def match_root_to_mono(self, monos, root_box):
         if monos == []:
-            return None
+            return 1e+20, None
         
         intersection_list = [0]*len(monos)
 
