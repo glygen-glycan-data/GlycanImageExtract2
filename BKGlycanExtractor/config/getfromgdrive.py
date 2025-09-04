@@ -1,9 +1,31 @@
 #!/bin/env python3
 #Reference: https://stackoverflow.com/questions/38511444/python-download-files-from-google-drive-using-url
 
-import requests, re, json, os
+import requests, re, json, os, glob, os.path
 
-def download_fileids_from_google_drive(fid, destination_dir, extns, level=0):
+def download_fileids_from_google_drive(fid, destination_dir, path, configs, extns, rmlocal=False, level=0):
+
+    if isinstance(configs,str):
+        configfiles = set()
+        with open(configs) as configfile:
+            for l in configfile:
+                if '=' not in l:
+                    continue
+                key,value = [ s.strip() for s in l.split('=',1) ]
+                if key in ("weights","config"):
+                     configfiles.add(value)
+                     base = value.rsplit('.',1)[0]
+                     if key == "weights":
+                         configfiles.add(base + ".labels")
+                         configfiles.add(base + ".model")
+        configs = configfiles
+
+    present = set()
+    for extn in extns:
+        for fn in glob.glob(os.path.join(destination_dir,path,"*."+extn)):
+            if os.path.isfile(fn):
+                present.add(os.path.join(path,os.path.split(fn)[1]))
+
     URL = "https://drive.google.com/drive/u/2/folders/"
     session = requests.Session()
 
@@ -28,22 +50,37 @@ def download_fileids_from_google_drive(fid, destination_dir, extns, level=0):
 
     for k in sorted(dirs):
         # print("%s%s/"%(" "*level*2,dirs[k]['name']))
-        download_fileids_from_google_drive(dirs[k]['id'],dirs[k]['name'],extns,level=level+1)
+        if path:
+            newpath = os.path.join(path,dirs[k]['name'])
+        else:
+            newpath = dirs[k]['name']
+        download_fileids_from_google_drive(dirs[k]['id'],destination_dir,newpath,configs,extns,rmlocal,level=level+1)
 
     for k in sorted(files):
         f = files[k]
         extn = f['name'].rsplit('.',1)[-1]
         if extn not in extns:
             continue
-        print("%s%s (%d bytes)..."%(" "*level*2,f['name'],f['size']),end=" ")
+        filepath = os.path.join(path,f['name'])
+        if filepath in present:
+            present.remove(filepath)
+        if filepath not in configs:
+            # print("not needed.")
+            continue
+        print("%s (%d bytes)..."%(filepath,f['size']),end=" ")
         sys.stdout.flush()
-        os.makedirs(destination_dir,exist_ok=True)
-        filepath = os.path.join(destination_dir,f['name'])
-        if os.path.exists(filepath) and os.path.getsize(filepath) == f['size']:
+        os.makedirs(os.path.join(destination_dir,path),exist_ok=True)
+        filepath1 = os.path.join(destination_dir,filepath)
+        if os.path.exists(filepath1) and os.path.getsize(filepath1) == f['size']:
             print("found.")
             continue
-        download_file_from_google_drive(f['id'],filepath)
+        download_file_from_google_drive(f['id'],filepath1)
         print("downloaded.")
+
+    if rmlocal:
+        for fn in present:
+            os.unlink(os.path.join(destination_dir,fn))
+            print("Local file",fn,"removed.")
 
 def download_file_from_google_drive(id, destination):
     URL = "https://drive.usercontent.google.com/download"
@@ -80,9 +117,17 @@ if __name__ == "__main__":
     import sys
     dest_dir = '.'
     folder_id = '1cK7xwAKl5jwezDBZRUDyYVltVHv1NsRf'
+    configs = 'configs.ini'
+    rmlocal = False
+    
+    if len(sys.argv) >= 2 and sys.argv[1] == "--clean":
+        rmlocal = True
+        sys.argv.pop(1)
     if len(sys.argv) >= 2:
         dest_dir = sys.argv[1]
     if len(sys.argv) >= 3:
         folder_id = sys.argv[2]
-    extensions = ("weights","labels","cfg")
-    download_fileids_from_google_drive(folder_id, dest_dir, extensions)
+    if len(sys.argv) >= 4:
+        configs = sys.argv[3]
+    extensions = ("weights","labels","cfg","model")
+    download_fileids_from_google_drive(folder_id, dest_dir, "", configs, extensions, rmlocal)

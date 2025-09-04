@@ -5,5 +5,6 @@ YOLO models can be downloaded from [Google Drive](https://drive.google.com/drive
 % cd BKGlycanExtractor/config
 % python3 getfromgdrive.py
 ```
+Use the `--clean` command-line arguement to remove extraneous local files.
 
-This google drive folder also has zip-files with image training data and the initial weights file for fine-tuning.
+The google drive folder also has zip-files with image training data and the initial weights file for fine-tuning.
