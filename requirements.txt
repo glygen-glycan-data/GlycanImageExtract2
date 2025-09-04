@@ -1,3 +1,4 @@
+numpy==2.0.1
 certifi>=2022.12.7
 configobj
 configparser
@@ -8,8 +9,10 @@ matplotlib
 numpy
 opencv-contrib-python
 pdfplumber
-PyMuPDF>=1.22.5
+PyMuPDF==1.24.9
 rdflib
 requests
 cairosvg
 tqdm
+setuptools<81
+psutil
