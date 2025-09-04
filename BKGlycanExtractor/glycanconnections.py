@@ -154,8 +154,6 @@ class KnownLink(LinkFinder,KnownFinder):
                 classid=self.get_label_index(classlabel),
                 mono_id1=mono_id1,
                 mono_id2=mono_id2,
-                carbon_number=data['carbon_number'],
-                anomer=map_dict['monos'][mono_id2]['anomer']
             )
 
             if self.params['boxpadding'] > 0:
