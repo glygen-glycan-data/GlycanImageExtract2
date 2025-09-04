@@ -20,36 +20,41 @@ from collections import defaultdict
 from .bbox import BoundingBox
 from .debug_methods import DebugMode
 
-class YOLOModel:
-    
-    def __init__(self, config , multicore=False):
+class YOLOModelCache(object):
+    def __init__(self):
+        self.cache = dict()
 
-        weights = config.get("weights",None)
-        net = config.get("config",None)
-        user_labels = config.get("labels",None)
-        file_labels = net.replace(".cfg",".labels")
-        
+    def get(self,weights,netfile):
+        if (weights,netfile) in self.cache:
+            return self.cache[(weights,netfile)]
+        net = cv2.dnn.readNet(weights,netfile)
+        self.cache[(weights,netfile)] = net
+        return net
+
+class YOLOModel(object):
+
+    modelcache = YOLOModelCache()
+    
+    def __init__(self, config, multicore=False):
+        self.weights = config.get("weights",None)
+        self.netfile = config.get("config",None)
+
         self.conf_threshold = config.get('conf_threshold')
         self.iou_threshold = config.get('iou_threshold')
         self.expandimage = config.get('expandimage',0)
         self.boxpadding = config.get('boxpadding',0)
         
-        if not os.path.isfile(weights):
-            raise FileNotFoundError()
-        if not os.path.isfile(net):
-            raise FileNotFoundError()
-        if not os.path.isfile(file_labels):
-            raise FileNotFoundError()
-
-        if isinstance(user_labels, list) and len(user_labels) > 0:
-            self.set_labels(user_labels)
-        else:
-            self.set_labels([ l.strip() for l in open(file_labels).read().split() ])
+        if not os.path.isfile(self.weights):
+            raise FileNotFoundError(self.weights)
+        if not os.path.isfile(self.netfile):
+            raise FileNotFoundError(self.netfile)
 
         if not multicore:
             cv2.setNumThreads(1)
 
-        self.net = cv2.dnn.readNet(weights,net)
+    def init_model(self):
+
+        self.net = self.modelcache.get(self.weights,self.netfile)
         
         layer_names = self.net.getLayerNames()
         #compatibility with new opencv versions
@@ -60,12 +65,19 @@ class YOLOModel:
             self.output_layers = [layer_names[i - 1] 
                                   for i in self.net.getUnconnectedOutLayers()]
 
+    def clear_model(self):
+        if hasattr(self,'net'):
+            del self.net
+
     def get_YOLO_output(self, image):
         original_image = image.copy()
         if self.expandimage > 0:
             image = self.expand_image(image,self.expandimage)
         blob = self.format_image(image)
                 
+        if not hasattr(self,'net'):
+            self.init_model()
+
         self.net.setInput(blob)
         outs = self.net.forward(self.output_layers)
         
