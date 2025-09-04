@@ -15,7 +15,7 @@ import math
 import numpy as np
 from collections import defaultdict
 from .yolomodels import YOLOModel
-from .glycanannotator import Config, Config_Manager
+from .glycanannotator import Config, Config_Manager, GlycanExtractorPipeline
 from .bbox import BoundingBox
 from .finder import Finder,YOLOFinder, KnownFinder
 from BKGlycanExtractor import LinksCompare, DebugMode, FilterTreeLinks, FilterRepeatedLinks
@@ -24,17 +24,20 @@ from .semantics import UndirectedLinkSemantics
 
 class LinkFinder:
 
-    labels = [ 'link' ]
-    finder_class = 'Links'
-
-    semantic_compare = LinksCompare
-
     def set_logger(self, logger_name=''):
         self.logger = logging.getLogger(logger_name+'.glycanconnections')
 
     def set_results(self, obj, accepted, rejected):
         obj.set_undirected_links(accepted,rejected)
+    
+    def finder_pipeline(self,config_manager):
+        pipeline = GlycanExtractorPipeline()
+        pipeline.set_steps('figure', config_manager.get_finders("SingleGlycanImage"))
+        pipeline.set_steps('glycan', config_manager.get_finders("KnownMono")+[self])
+        return pipeline
 
+    def semantic_compare(self,**kwargs):
+        return LinksCompare(**kwargs)
 
 class ConnectYOLO(YOLOFinder,LinkFinder):
     filters = [FilterRepeatedLinks(), FilterTreeLinks()]
@@ -57,7 +60,7 @@ class ConnectYOLO(YOLOFinder,LinkFinder):
             expandimage = Config.get_param('expandimage', Config.INT, kwargs, self.defaults)
         )
 
-        YOLOModel.__init__(self,self.params)
+        YOLOFinder.__init__(self)
         LinkFinder.__init__(self)
     
     def box_to_object(self, box, obj):
@@ -129,15 +132,6 @@ class KnownLink(LinkFinder,KnownFinder):
     }
 
     def __init__(self,**kwargs):
-
-        # config file created from training data
-        # maybe make the first 4 lines a part of the class data member?
-        model_ini = Config.get_param('model', Config.CONFIGFILE, kwargs, self.defaults)
-        cm = Config_Manager(config_filename=model_ini)
-        finder = cm.list_finders()[0]
-        secondary_config = cm.get_config(f"Finder:{finder}")
-        kwargs['__secondary_config__'] = secondary_config
-
         self.params = dict(
             boxpadding = Config.get_param('boxpadding', Config.INT, kwargs, self.defaults),
         )
@@ -164,16 +158,15 @@ class KnownLink(LinkFinder,KnownFinder):
                 anomer=map_dict['monos'][mono_id2]['anomer']
             )
 
-            box.pad(self.params['boxpadding']) # known data is absolute
+            if self.params['boxpadding'] > 0:
+                box.pad(self.params['boxpadding']) # known data is absolute
+
             boxes.append(box)
 
         return boxes
 
-
     def box_to_object(self, box, obj):
         return UndirectedLinkSemantics(box=box, **box.items())
-
-
 
 class KnownLinkWithInfo(KnownLink):
     
@@ -197,11 +190,12 @@ class KnownLinkWithInfo(KnownLink):
                 anomer=map_dict['monos'][mono_id2]['anomer']
             )
 
-            box.pad(self.params['boxpadding']) # known data is absolute
+            if self.params['boxpadding'] > 0:
+                box.pad(self.params['boxpadding']) # known data is absolute
+
             boxes.append(box)
 
         return boxes
-
 
     def box_to_object(self, box, obj):
         link = UndirectedLinkSemantics(box=box, **box.items())
@@ -217,9 +211,4 @@ class ConnectYOLOInfo(ConnectYOLO):
             if classlabel[1] not in ('?', 'x'):
                 link.set('parent_bond',int(classlabel[1]))
         return link
-
-
-
-class ConnectYOLOInfo(ConnectYOLO):
-    finder_class = "InfoLinks"
 
