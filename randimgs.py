@@ -20,11 +20,13 @@ parser.add_argument("-n", "--nimages", type=int, help="Number of images. Default
 # parser.add_argument("-f", "--format", type=str, help="Image format. One of \"png\" or \"svg\". Default: png.", default='png')
 parser.add_argument("-o", "--outdir", type=str, help="Ouput directory. Default: current directory.", default=None)
 parser.add_argument("-c", "--clear", action='store_true', help="Clear output directory first.", default=False)
+parser.add_argument("-k", "--keepsvg", action='store_true', help="Keep SVG file - useful for debugging.", default=False)
 parser.add_argument("-F", "--force", action='store_true', help="Force re-download of GlyTouCan accessions and sequences", default=False)
 parser.add_argument("-s", "--skip", type=str, help="File of accessions to skip. Default: None.", default=None)
-parser.add_argument("-r", "--random", type=str, help="Randomization mode. One of uniform accessions (uniform), biased accessions (biased), random monosaccharides (mono), random monosaccharides + baised accessions (biasmono). Default: uniform.", default="uniform")
+parser.add_argument("-r", "--random", type=str, help="Randomization mode. One of uniform accessions (uniform), biased accessions (biased), random monosaccharides (mono), random monosaccharides + baised accessions (biasmono), random linkages (linkinfo). Default: uniform.", default="uniform")
 parser.add_argument("-A", "--accessions", type=str, help="Limit to specific accessions by regular expression or prefix. Default: No restriction.", default=None)
-parser.add_argument("-L", "--linkage", action='store_true', help="Require glycosydic linkage information (display: normalinfo). Default: compact, normal, normainfo. ", default=False)
+parser.add_argument("-L", "--linkage", action='store_true', help="Require glycosidic linkage information (display: normalinfo). Default: compact, normal, normainfo. ", default=False)
+parser.add_argument("-N", "--nolinkage", action='store_true', help="Do not display glycosidic linkage information (display: normal, compact). Default: compact, normal, normainfo.", default=False)
 
 args = parser.parse_args()
 imagenum = args.nimages
@@ -55,22 +57,31 @@ badaccfile = args.skip
 if badaccfile:
     assert os.path.isfile(badaccfile)
 randmode = args.random
-assert randmode in ("uniform","biased","mono","biasmono")
+assert randmode in ("uniform","biased","mono","biasmono","linkinfo")
 
 print("Start randimg...")
 
 batch = args.batchsize
 iterations = imagenum//batch
-scale_options = [ 0.5, 1.0, 2.0, 4.0, ]
+scale_options = [ 0.25, 0.5, 1.0, 2.0, 4.0, ]
 redend_options = [ True, False ]
+redend_blank = [ True, False ]
+unknown_blank = [ True, False ]
 orient_options = [ "RL", "LR", "TB", "BT" ]
 notation_options = [ "snfg", "cfg", "snfglink", "cfglink" ]
-display_options = [ "normal", "normalinfo", "compact" ]
+display_options = [ "normal", "normalinfo", "compact", "tight" ]
 if args.linkage:
-    display_options = [ "normal", "compact" ] + 18*[ "normalinfo" ]
-    # display_options = [ "normalinfo" ]
+    # display_options = [ "normal", "compact", "tight" ] + 17*[ "normalinfo" ]
+    display_options = [ "normalinfo" ]
     notation_options = [ "snfg", "cfg" ]
+if args.nolinkage:
+    display_options = [ "normal", "compact", "tight" ]
+    # notation_options = [ "snfg", "cfg", "" ]
 opaque_options = [ True, False ]
+
+# used by linkinfo randomization
+anomer_options = [ " ", "?", "a", "a", "b", "b" ]
+bond_options = [ " ", "?", "2", "2", "3", "3", "4", "4", "6", "6", "8", "8" ]
 
 valid_monos_str = """
 Glc Gal Man
@@ -109,11 +120,9 @@ if accregex:
     imagenum = min(imagenum,len(accs))
 
 # accessions your model was trained on, to avoid testing on them
+trained_accessions = set()
 if badaccfile is not None:
-    trained_accessions = set()
-    with open(badaccfile) as f:
-        for l in f:
-            trained_accessions.add(l.rstrip())
+    trained_accessions = set(open(badaccfile).read().split())
 
 monofreq = Composition()
 monofreq.set(*valid_monos,value=1)
@@ -122,7 +131,7 @@ monofreq['Count'] = len(valid_monos)
 imageData = Image_Data(valid_monos)
 
 outputcount = 0
-seen = set()
+seen = trained_accessions
 for j in range(iterations):
     imageWriter = GlycanImage()
     imageWriter.set('scale',random.choice(scale_options))
@@ -143,11 +152,11 @@ for j in range(iterations):
         # print("random choice:",acc,file=sys.stderr)
         seen.add(acc)
         acc1 = acc
-        if 'mono' in randmode:
+        if randmode in ("mono","biasmono","linkinfo"):
             acc1 = "R%07d"%(outputcount + 1,)
         outfile = os.path.join(output_folder, acc1 + "." + mode)
         pngfile = os.path.join(output_folder, acc1 + ".png")
-        if os.path.exists(outfile) or os.path.exists(pngfile):
+        if os.path.exists(outfile) or os.path.exists(pngfile): 
             continue
         seq = gtc.getseq(acc,format='wurcs')
         if not seq:
@@ -173,13 +182,22 @@ for j in range(iterations):
                 continue
             bad = True
             break
+        unknowns = 0
         for l in gly.all_links():
             pp = l.parent_pos() 
             if pp != None and len(pp) > 1:
                 bad = True
                 break
+            if pp != None and list(pp)[0] not in (2,3,4,6,8):
+                bad = True
+                break
+            if pp == None:
+                unknowns += 1
         if bad:
             continue
+        for m in gly.all_nodes():
+            if m.anomer() is None:
+                unknowns += 1
         if randmode in ("mono","biasmono"):
             gly_iupac = ip.toStr(gly)
             gly1 = ip.toGlycan(gly_iupac)
@@ -201,7 +219,7 @@ for j in range(iterations):
                                          aggregate_basecomposition=False)
             seq = gly.glycoct()
             
-        if randmode in("biased","biasmono"):
+        if randmode in ("biased","biasmono"):
             orig_freq = [ monofreq[m]/monofreq['Count'] for m in valid_monos ]
             new_freq = [ (monofreq[m]+comp[m])/(monofreq['Count']+comp['Count']) for m in valid_monos ]
             minf = 1e+20
@@ -221,6 +239,18 @@ for j in range(iterations):
                 continue
 
         imageWriter.writeImage(seq,outfile)
+
+        #manipulate the SVG file...
+        if imageWriter.get('display') == 'normalinfo':
+            if randmode == "linkinfo":
+                # shutil.copy(outfile,outfile+".orig") # Make a copy for debugging...
+                # this will re-write the SVG file...
+                imageData.randomize_linkinfo(outfile,anomers=anomer_options,carbon_bonds=bond_options)
+            else:
+                imageData.randomize_blanks(outfile,
+                                           unknown_blank if unknowns > 0 else [False],
+                                           redend_blank if imageWriter.get('reducing_end') else [False])
+
         mapfile = None
         try:
             mapfile = imageData.generate_image(outfile)
@@ -273,20 +303,21 @@ for j in range(iterations):
                    mapfiledata[i] = "\t".join(sl)
                    break
         wh = open(mapfile,'w')
-        if acc1 != acc:
-            print("# orig_accession:",acc,file=wh)
         for k in ('scale','reducing_end','orientation','notation','display','opaque'):
             print("# "+k+":",imageWriter.get(k),file=wh)
-        print("# composition:",comp,file=wh)
+        print("# orig_accession:",acc,file=wh)
+        print("# orig_composition:",comp,file=wh)
         gly_iupac = ip.toStr(gly)
-        print("# iupac:",gly_iupac,file=wh)
+        print("# orig_iupac:",gly_iupac,file=wh)
         topo_iupac = ip.toStr(topo(gly))
-        print("# topo:",topo_iupac,file=wh)
+        print("# orig_topo:",topo_iupac,file=wh)
+        print("# randmode:",randmode,file=wh)
         wh.write("\n".join(mapfiledata))
         wh.close()
-        print(outputcount,acc1,file=sys.stderr)
+        print(outputcount+1,acc1,file=sys.stderr)
         monofreq.add(comp)
-        os.unlink(outfile)
+        if not args.keepsvg:
+            os.unlink(outfile)
         count += 1
         outputcount += 1
 
