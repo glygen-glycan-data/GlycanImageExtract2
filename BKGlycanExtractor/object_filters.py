@@ -36,9 +36,10 @@ class FilterOverlaps(ObjectFilter):
     Filter can be used for Mono
     '''
 
-    def __init__(self):
+    def __init__(self,maxiou=0,discard=False):
+        self.maxiou = maxiou
+        self.discard = discard
         self.cb = CompareBoxes()
-
 
     def filter(self, objlist):
         '''
@@ -59,17 +60,20 @@ class FilterOverlaps(ObjectFilter):
                 if i2 in removed:
                     continue
                 m2 = objlist[i2]
-                if self.cb.have_intersection(m1.box(), m2.box()):
-                    # add confidence for both the boxes and add box for reference isnetad of primary_id
-                    rejected.append(
-                        self.make_rejection(
-                            m2,
-                            confidece=m2.get['confidence'],
-                            reason="This object overlaps with the primary selected object",
-                            primary=box,
-                            iou=self.cb.iou(m1.box(), m2.box())
+                if self.cb.have_intersection(m1.box(), m2.box()) and \
+                    self.cb.iou(m1.box(), m2.box()) > self.maxiou:
+
+                    # add confidence for both the boxes and add box for reference instead of primary_id
+                    if not self.discard:
+                        rejected.append(
+                            self.make_rejection(
+                                m2,
+                                confidence=m2.get('confidence'),
+                                reason="This object overlaps with the primary selected object",
+                                primary=m1,
+                                iou=self.cb.iou(m1.box(), m2.box())
+                            )
                         )
-                    )
                     removed.add(i2)
 
         return accepted, rejected
