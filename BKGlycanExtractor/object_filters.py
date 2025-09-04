@@ -74,6 +74,28 @@ class FilterOverlaps(ObjectFilter):
 
         return accepted, rejected
 
+class DiscardClass(ObjectFilter):
+    def __init__(self,tokeep=None,todiscard=None):
+        self.tokeep = tokeep
+        self.todiscard = todiscard
+        assert self.tokeep is None or self.todiscard is None
+
+    def filter(self, objlist):
+
+        accepted,rejected = [],[]
+        for obj in objlist:
+            if self.tokeep is not None and obj.classlabel() in self.tokeep:
+                accepted.append(obj)
+            if self.todiscard is not None and obj.classlabel() not in self.todiscard:
+                accepted.append(obj)
+
+        return accepted,rejected
+
+class SingleBest(ObjectFilter):
+    def filter(self, objlist):
+        if len(objlist) == 0:
+            return [],[]
+        return objlist[0:1],objlist[1:]
 
 # make this a seperate class
 class RootFilter(ObjectFilter):
