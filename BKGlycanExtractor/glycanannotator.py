@@ -138,14 +138,23 @@ class GlycanExtractorPipeline():
 class Config_Manager(object):
 
     default_config_folder = os.path.join(os.path.split(__file__)[0],"config")
-    config_filename = "configs.ini"
+    default_config_filename = "configs.ini"
 
     # init can accept a different config_filename and if it located outside the default folder - the custom folder can also be specified
-    def __init__(self, config_folder=None, config_filename=None):
+    def __init__(self, config_filename=None, config_folder=None, config_fullpath=None):
         self.config_folder = config_folder or self.default_config_folder
-        self.config_filename = config_filename or self.config_filename
+        config_filename = config_filename or self.default_config_filename
+
+        if config_fullpath is None:
+            config_fullpath = os.path.join(self.config_folder,config_filename)
+        else:
+            config_fullpath = config_fullpath
+
         self.config = configparser.ConfigParser()
-        self.config.read(os.path.join(self.config_folder,self.config_filename))
+        self.config.read(config_fullpath)
+
+    def config_filename(self,filename):
+        return os.path.join(self.config_folder,filename)
 
     def has(self, section, key):
         return key in self.config[section]
