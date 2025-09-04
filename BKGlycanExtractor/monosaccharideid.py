@@ -13,7 +13,7 @@ from PIL import Image
 
 from .bbox import BoundingBox
 from .yolomodels import YOLOModel
-from .glycanannotator import Config, Config_Manager
+from .glycanannotator import Config, Config_Manager, GlycanExtractorPipeline
 from .finder import Finder, YOLOFinder, KnownFinder
 from .compareboxes import CompareBoxes
 from .semantics import MonoSemantics
@@ -35,23 +35,24 @@ class MonoFinder:
     required to refer to the .labels file if using a specific training model.
     '''
 
-    labels = None
-    # labels = ["GlcNAc","NeuAc","Fuc","Man","GalNAc","Gal","Glc","NeuGc"]
-    finder_class = 'Monosaccharide'
-
-    semantic_compare = MonosCompare
-
     def set_results(self, obj, accepted, rejected):
         obj.set_monos(accepted, rejected)
-    
+
+    def finder_pipeline(self,config_manager):
+        pipeline = GlycanExtractorPipeline()
+        pipeline.set_steps('figure', config_manager.get_finders("SingleGlycanImage"))
+        pipeline.set_steps('glycan', [self])
+        return pipeline
+
+    def semantic_compare(self,**kwargs):
+        return MonosCompare(**kwargs)
+
     def set_logger(self, logger_name=''):
         self.logger = logging.getLogger(logger_name+'.monosaccharideid')
     
-
-
 class YOLOMonos(YOLOFinder,MonoFinder):
 
-    filters = [FilterOverlaps()]
+    filters = [ FilterOverlaps() ]
    
     defaults = {
         'conf_threshold': 0.5,
@@ -61,7 +62,6 @@ class YOLOMonos(YOLOFinder,MonoFinder):
     }
 
     def __init__(self,**kwargs):
-
         self.params = dict(
             config = Config.get_param('config', Config.CONFIGFILE, kwargs, self.defaults),
             weights = Config.get_param('weights', Config.CONFIGFILE, kwargs, self.defaults),
@@ -70,15 +70,12 @@ class YOLOMonos(YOLOFinder,MonoFinder):
             boxpadding = Config.get_param('boxpadding', Config.INT, kwargs, self.defaults),
             expandimage = Config.get_param('expandimage', Config.INT, kwargs, self.defaults)
         )   
-
-        YOLOModel.__init__(self,self.params)
+        YOLOFinder.__init__(self)
         MonoFinder.__init__(self)
-
 
     def box_to_object(self,box,obj):
         symbol = box.get('classlabel')
         return MonoSemantics(symbol=symbol,box=box,**box.items())
-
 
 class KnownMono(MonoFinder,KnownFinder):
 
@@ -90,15 +87,6 @@ class KnownMono(MonoFinder,KnownFinder):
     }
 
     def __init__(self,**kwargs):
-
-        # config file created from training data
-        # maybe make the first 4 lines a part of the class data member?
-        model_ini = Config.get_param('model', Config.CONFIGFILE, kwargs, self.defaults)
-        cm = Config_Manager(config_filename=model_ini)
-        finder = cm.list_finders()[0]
-        secondary_config = cm.get_config(f"Finder:{finder}")
-        kwargs['__secondary_config__'] = secondary_config
-
         self.params = dict(
             boxpadding = Config.get_param('boxpadding', Config.INT, kwargs, self.defaults),
         )
@@ -121,7 +109,8 @@ class KnownMono(MonoFinder,KnownFinder):
                 id=id
             )
 
-            box.pad(self.params['boxpadding']) # known data is absolute
+            if self.params['boxpadding'] > 0:
+                box.pad(self.params['boxpadding']) # known data is absolute
             boxes.append(box)
 
         return boxes
