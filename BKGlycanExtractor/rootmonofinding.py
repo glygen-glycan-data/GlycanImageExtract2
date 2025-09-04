@@ -40,7 +40,7 @@ class RootFinder:
 class YOLORootFinder(YOLOFinder, RootFinder):
 
     filters = [ FilterOverlaps(maxiou=0.2,discard=True),
-                DiscardClass(tokeep=["redend"]), 
+                DiscardClass(todiscard=["not_redend"]), 
                 SingleBest() ]
 
     defaults = {
@@ -105,11 +105,9 @@ class YOLORootFinder(YOLOFinder, RootFinder):
 
         return normalized_dist, selected_mono
 
-
-
 class KnownRoot(RootFinder,KnownFinder):
 
-    filters = [ DiscardClass(tokeep=["redend"]) ]
+    filters = [ DiscardClass(todiscard=["not_redend"]) ]
 
     defaults = {
         'boxpadding': 0,
@@ -151,4 +149,47 @@ class KnownRoot(RootFinder,KnownFinder):
     def box_to_object(self, box, obj):
         return RootSemantics(box=box, **box.items())
         
+
+class YOLORootPlusAnomerFinder(YOLORootFinder):
+    def box_to_object(self,box,obj):
+        rootobj = super().box_to_object(box,obj)
+        if rootobj is None:
+            return rootobj
+        classlabel = self.box_label(box)
+        if classlabel == "redenda":
+            rootobj.set("anomer","a")
+        if classlabel == "redendb":
+            rootobj.set("anomer","b")
+        return rootobj
+
+class KnownRootPlusAnomer(KnownRoot):
+    
+    def create_boxes(self, map_dict):
+        boxes = []
+
+        root_mono_id = map_dict['root']
+        for id, data in map_dict['monos'].items():
+            anomer = data.get('anomer','?')
+            if anomer == "?":
+                anomer = "x"
+            if id == root_mono_id:
+                classlabel = "redend"+anomer
+            else:
+                classlabel = "not_redend"
+            classid = self.get_label_index(classlabel)
+
+            box = BoundingBox(x1=data['x_min'], y1=data['y_min'],
+                x2=data['x_max'], y2=data['y_max'],
+                classid=classid,
+                classlabel=classlabel,
+                mono_id=id,
+                anomer=anomer
+            )
+
+            if self.params['boxpadding'] > 0:
+                box.pad(self.params['boxpadding']) # known data is absolute
+
+            boxes.append(box)
+
+        return boxes
 
