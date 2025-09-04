@@ -183,14 +183,13 @@ class Config_Manager(object):
         return self.list("Pipeline")
 
     # added kwargs here
-    def get_finder(self, finder_name, **kwargs):
+    def get_finder(self, finder_name):
         module = importlib.import_module(".pipeline",package="BKGlycanExtractor")
         conf = self.get_config("Finder:" + finder_name)
         assert conf.has("class"), "Finder %s: class not specified"
         findercls = getattr(module,conf.get("class"))
         new_conf = copy.deepcopy(conf)
-
-        return findercls(__config__=new_conf, **kwargs)
+        return findercls(__config__=new_conf)
 
     # add get_finders - for comma seperated finders
     def get_finders(self,finder_names):
