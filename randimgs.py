@@ -23,10 +23,10 @@ parser.add_argument("-c", "--clear", action='store_true', help="Clear output dir
 parser.add_argument("-k", "--keepsvg", action='store_true', help="Keep SVG file - useful for debugging.", default=False)
 parser.add_argument("-F", "--force", action='store_true', help="Force re-download of GlyTouCan accessions and sequences", default=False)
 parser.add_argument("-s", "--skip", type=str, help="File of accessions to skip. Default: None.", default=None)
-parser.add_argument("-r", "--random", type=str, help="Randomization mode. One of uniform accessions (uniform), biased accessions (biased), random monosaccharides (mono), random monosaccharides + baised accessions (biasmono), random linkages (linkinfo). Default: uniform.", default="uniform")
+parser.add_argument("-r", "--random", type=str, help="Randomization mode. One of uniform accessions (uniform), biased sampling (biased), random monosaccharides (mono), random monosaccharides + baised sampling (biasmono), random linkages (linkinfo). Default: uniform.", default="uniform")
 parser.add_argument("-A", "--accessions", type=str, help="Limit to specific accessions by regular expression or prefix. Default: No restriction.", default=None)
-parser.add_argument("-L", "--linkage", action='store_true', help="Require glycosidic linkage information (display: normalinfo). Default: compact, normal, normainfo. ", default=False)
-parser.add_argument("-N", "--nolinkage", action='store_true', help="Do not display glycosidic linkage information (display: normal, compact). Default: compact, normal, normainfo.", default=False)
+parser.add_argument("-L", "--linkage", action='store_true', help="Require glycosidic linkage information (display: normalinfo). Default: tight, compact, normal, normalinfo. ", default=False)
+parser.add_argument("-N", "--nolinkage", action='store_true', help="Do not display glycosidic linkage information (display: normal, compact). Default: tight, compact, normal, normalinfo.", default=False)
 
 args = parser.parse_args()
 imagenum = args.nimages

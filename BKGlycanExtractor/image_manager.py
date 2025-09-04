@@ -1,12 +1,15 @@
 import os
 import re
 import sys
+import math
 import xml.dom.minidom
 from cairosvg import svg2png
 import cv2
 import numpy as np
 import random
 import traceback
+import colour
+import shutil
 from fnmatch import fnmatch
 from . svg_parse_path import get_points
 
@@ -63,6 +66,26 @@ class Image_Data:
         "light_blue_upper": np.array([108,121,255]),
     }
 
+    snfg_colors_rgb = {
+        "blue":   (0,114,188),   #Glc, GlcNAc
+        "red":    (237,28,36),   #Fuc
+        "yellow": (255,212,0),   #Gal, GalNAc
+        "green":  (0,166,81),    #Man
+        "purple": (165,67,153),  #NeuAc
+        "ltblue": (143,204,233), #NeuGc
+        "orange": (244,121,32),  #Xyl
+    }
+
+    cfg_colors_rgb = {
+        "blue":   (0,0,250),     #Glc, GlcNAc
+        "red":    (250,0,0),     #Fuc
+        "yellow": (255,255,0),   #Gal, GalNAc
+        "green":  (0,200,50),    #Man
+        "purple": (200,0,200),   #NeuAc
+        "ltblue": (233,255,255), #NeuGc
+        "orange": (250,100,0),   #Xyl
+    }
+
     def generate(self,glycan_folder):
         # use the random SVG image's folder and create data
         img_manager = Image_Manager(glycan_folder,pattern='*.svg')
@@ -89,8 +112,9 @@ class Image_Data:
             return
         
         self.make_semantics_file(image_file,txt_file)
+        self.randomize_colors(image_file)
         self.svg_to_png(image_file,png_image)
-        self.random_colors(png_image)
+        # self.random_colors(png_image)
         return txt_file
 
     def parse_clippaths(self,svgdoc):
@@ -227,6 +251,26 @@ class Image_Data:
                 print("\t".join(map(str,row)),file=of)
 
         return
+
+    @staticmethod
+    def coldist(col,ref):
+        collab = cv2.cvtColor(np.float32([[col]]) / 255, cv2.COLOR_RGB2Lab)
+        reflab = cv2.cvtColor(np.float32([[ref]]) / 255, cv2.COLOR_RGB2Lab)
+        return colour.delta_E(collab,reflab)
+
+    @staticmethod
+    def random_near_color(ref,dist,r=150):
+        low = [ max(0,ref[i]-r) for i in range(3) ]
+        high = [ min(ref[i]+r,255) for i in range(3) ]
+        trials = 0
+        while True:
+            trials += 1
+            randcol = [ random.randint(low[i],high[i]) for i in range(3) ]
+            # print(trials,randcol,Image_Data.coldist(randcol,ref))
+            if Image_Data.coldist(randcol,ref) < dist:
+                break
+        return randcol
+
 
     def blank_redend_marker(self,svgdoc,elements):
         for gid,e in elements.items():
@@ -399,7 +443,33 @@ class Image_Data:
 
     def svg_to_png(self,svgfile,outfile):
         svg2png(file_obj=open(svgfile, "rb"), write_to=outfile)
+
+
     
+    def randomize_colors(self,svgfile):
+        colorlookup = dict()
+        for k,v in self.snfg_colors_rgb.items():
+            colorlookup[v] = ('snfg',k)
+        for k,v in self.cfg_colors_rgb.items():
+            colorlookup[v] = ('cfg',k)
+        # shutil.copy(svgfile,svgfile+".orig")
+        svgdata = open(svgfile).read()
+        svgcmap = dict()
+        for m in re.finditer(r'fill:rgb\((\d+),(\d+),(\d+)\);',svgdata):
+            col = tuple(map(int,(m.group(1),m.group(2),m.group(3))))
+            if col in svgcmap:
+                continue
+            assert col in colorlookup
+            # colorname=colorlookup[col][1]
+            svgcmap[col] = self.random_near_color(col,10,50)
+        for col,newcol in svgcmap.items():
+            colstr = "fill:rgb(%s);"%(",".join(map(str,col)))
+            newcolstr = "fill:rgb(%s);"%(",".join(map(str,newcol)))
+            svgdata = svgdata.replace(colstr,newcolstr)
+        wh = open(svgfile,'w') 
+        wh.write(svgdata)
+        wh.close()
+
     def random_colors(self,image_file):
         # use heuristic mono finding colour ranges to make ranges of blue/green/red/etc
 
