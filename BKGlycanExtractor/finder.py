@@ -28,6 +28,9 @@ class Finder(object):
         if boxesonly:
             return self.find_boxes(obj)
         return self.find_objects(obj)
+    
+    def clear(self):
+        return
 
     def find_boxes(self, obj):
         raise NotImplementedError
@@ -236,3 +239,8 @@ class YOLOFinder(YOLOModel,Finder):
     @toboxes
     def intersection_area(self,x,y):
         return CompareBoxes.intersection_area(x,y)
+
+    def clear(self):
+        if isinstance(self,YOLOModel):
+            self.clear_model()
+ 

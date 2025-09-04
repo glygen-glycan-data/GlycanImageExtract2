@@ -275,6 +275,11 @@ class Evaluator:
         self.boxeval = boxeval
         self.verbose = verbose
 
+    def clear_pipelines(self):
+        for name,pls in self.pipelines.items():
+            for pl in pls:
+                pl.clear()
+
     @staticmethod
     def check_data_monotonicity(predict, **kwargs):
         for pred_name, data in predict.items():

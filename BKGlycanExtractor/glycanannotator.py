@@ -60,6 +60,12 @@ class GlycanExtractorPipeline():
         for stage in self.pipeline_stages:
             gep.set_steps(stage,self.get_steps(stage))
         return gep
+
+    def clear(self):
+        for figstep in self.steps['figure']:
+            figstep.clear()
+        for glystep in self.steps['glycan']:
+            glystep.clear()
     
     def run(self,image,progress_callback=None):
         # empty figure semantics
