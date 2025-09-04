@@ -11,18 +11,11 @@ from . semantics import BoxPredictionSemantics
 from . bbox import BoundingBox
 
 class Finder(object):
-    labels = None
 
     filters = []
 
-    def __init__(self):
-        # self._labels = []
-        # if hasattr(self,'labels'):
-        #     self._labels = list(self.labels)
-
-        if self.labels is None:
-            raise NotImplementedError(f"Class '{self.__class__.__name__}' must define a 'labels' attribute before calling Finder.__init__()")
-        self._labels = list(self.labels)
+    def __init__(self,labels=[]):
+        self._labels = list(labels)
       
     def execute(self, obj, boxesonly=False):
         if boxesonly:
@@ -60,7 +53,6 @@ class Finder(object):
             rejected_total.extend(rejected)
         return accepted, rejected_total
 
-
     def get_label(self, index):
         if index < 0 or index >= len(self._labels):
             raise IndexError("Bad label index %s."%(index,))
@@ -71,15 +63,14 @@ class Finder(object):
 
     def get_label_index(self, label):
         if label not in self._labels:
-            raise LookupError("Label %s not found."%(label,))
+            self._labels.append(label)
         return self._labels.index(label)
 
-    def get_labels(self):
-        return self._labels
+    def get_param(self, key, default=None):
+        return self.params.get(key,default)
 
-    def set_labels(self, labels):
-        self._labels = labels
-
+    def set_param(self, key, value):
+        self.params[key] = value
 
 class KnownFinder(Finder):
     

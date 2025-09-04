@@ -85,7 +85,6 @@ class KnownMono(MonoFinder,KnownFinder):
     # Need to be able to support any monosaccharide symbol in generated code
     # maybe allow users to add their own known monos labels?
     # maybe create a function in finder which accepts labels text file?
-    labels = ["GlcNAc","NeuAc","Fuc","Man","GalNAc","Gal","Glc","NeuGc","Xyl"]
     defaults = {
         'boxpadding': 0,
     }
@@ -103,9 +102,8 @@ class KnownMono(MonoFinder,KnownFinder):
         self.params = dict(
             boxpadding = Config.get_param('boxpadding', Config.INT, kwargs, self.defaults),
         )
+        KnownFinder.__init__(self)
         MonoFinder.__init__(self)
-        self.set_labels(self.labels)
-
 
     # map_dict structure is present in KnownFinder class
     def create_boxes(self, map_dict):

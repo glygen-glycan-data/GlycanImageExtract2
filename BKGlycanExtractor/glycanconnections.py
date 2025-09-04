@@ -124,8 +124,6 @@ class ConnectYOLO(YOLOFinder,LinkFinder):
 
 class KnownLink(LinkFinder,KnownFinder):
 
-    labels = [ 'link' ]
-
     defaults = {
         'boxpadding': 0,
     }
@@ -143,9 +141,8 @@ class KnownLink(LinkFinder,KnownFinder):
         self.params = dict(
             boxpadding = Config.get_param('boxpadding', Config.INT, kwargs, self.defaults),
         )
+        KnownFinder.__init__(self)
         LinkFinder.__init__(self)
-        self.set_labels(self.labels)
-
 
     # map_dict structure is present in KnownFinder class
     # TO DO: maybe Child classes can inherit this method and pass extra/different details (eg. classlabel) through another method?
@@ -156,9 +153,7 @@ class KnownLink(LinkFinder,KnownFinder):
 
         for (mono_id1, mono_id2), data in map_dict['links'].items():
 
-            classlabel = self.get_label(0)
-            classid = 0
-
+            classlabel = "link"
             box = BoundingBox(x1=data['x_min'], y1=data['y_min'], 
                 x2=data['x_max'], y2=data['y_max'], 
                 classlabel=classlabel,
@@ -182,42 +177,20 @@ class KnownLink(LinkFinder,KnownFinder):
 
 class KnownLinkWithInfo(KnownLink):
     
-    labels = ['a1', 'a2','a3','a4', 'a5', 'a6', 'a7', 'a8', 'a9', 'b1', 'b2', 'b3', 'b4', 'b5', 'b6', 'b8', 'x1', 'x2', 'x3', 'x4', 'x5', 'x6', 'x8', 'ax', 'bx', 'xx'] 
-
-    defaults = {
-        'boxpadding': 0,
-    }
-
-    def __init__(self,**kwargs):
-
-        # config file created from training data
-        # maybe make the first 4 lines a part of the class data member?
-        model_ini = Config.get_param('model', Config.CONFIGFILE, kwargs, self.defaults)
-        cm = Config_Manager(config_filename=model_ini)
-        finder = cm.list_finders()[0]
-        secondary_config = cm.get_config(f"Finder:{finder}")
-        kwargs['__secondary_config__'] = secondary_config
-        
-        self.params = dict(
-            boxpadding = Config.get_param('boxpadding', Config.INT, kwargs, self.defaults),
-        )
-        LinkFinder.__init__(self)
-        self.set_labels(self.labels)
-
-   
     # map_dict structure is present in KnownFinder class
     def create_boxes(self, map_dict):
         boxes = []
 
         for (mono_id1, mono_id2), data in map_dict['links'].items():
 
-            classlabel = f'{map_dict['monos'][mono_id2]['anomer']}{data['carbon_number']}'
+            classlabel = f"{map_dict['monos'][mono_id2]['anomer']}{data['carbon_number']}"
+            classlabel = classlabel.replace("?","x")
             classid = self.get_label_index(classlabel)
 
             box = BoundingBox(x1=data['x_min'], y1=data['y_min'], 
                 x2=data['x_max'], y2=data['y_max'], 
                 classlabel=classlabel,
-                classid=self.get_label_index(symbol),
+                classid=classid,
                 mono_id1=mono_id1,
                 mono_id2=mono_id2,
                 carbon_number=data['carbon_number'],
@@ -231,16 +204,18 @@ class KnownLinkWithInfo(KnownLink):
 
 
     def box_to_object(self, box, obj):
-        
-        classlabel = box.get('classlabel')
         link = UndirectedLinkSemantics(box=box, **box.items())
 
+class ConnectYOLOInfo(ConnectYOLO):
+
+    def box_to_object(self, box, obj):
+        link = super().box_to_object(box,obj)
+        classlabel = box.get('classlabel')
         if len(classlabel) == 2:
             if classlabel[0] in ('a','b'):
                 link.set('anomer',classlabel[0])
             if classlabel[1] not in ('?', 'x'):
                 link.set('parent_bond',int(classlabel[1]))
-
         return link
 
 

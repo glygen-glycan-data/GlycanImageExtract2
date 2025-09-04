@@ -17,11 +17,6 @@ from .semantics import RootSemantics
             
 class RootFinder:
 
-    labels = ['redend','not_redend']
-    finder_class = 'Root'
-
-    semantic_compare = RootCompare
-    
     def set_logger(self, logger_name=''):
         self.logger = logging.getLogger(logger_name+'.rootmonofinding')
 
@@ -124,19 +119,26 @@ class KnownRoot(RootFinder,KnownFinder):
         self.params = dict(
             boxpadding = Config.get_param('boxpadding', Config.INT, kwargs, self.defaults),
         )
-
+        KnownFinder.__init__(self)
         RootFinder.__init__(self)
-        self.set_labels(self.labels)
 
     # map_dict structure is present in KnownFinder class
     def create_boxes(self, map_dict):
+        boxes = []
+
         root_mono_id = map_dict['root']
-        mono_details = map_dict['monos'][root_mono_id]
-        
-        box = BoundingBox(x1=mono_details['x_min'], y1=mono_details['y_min'], 
-                x2=mono_details['x_max'], y2=mono_details['y_max'], 
-                mono_id=root_mono_id,
-                classlabel=self.get_label(0)
+        for id, data in map_dict['monos'].items():
+            if id == root_mono_id:
+                classlabel = "redend"
+            else:
+                classlabel = "not_redend"
+            classid = self.get_label_index(classlabel)
+
+            box = BoundingBox(x1=data['x_min'], y1=data['y_min'],
+                x2=data['x_max'], y2=data['y_max'],
+                classid=classid,
+                classlabel=classlabel,
+                mono_id=id
             )
 
         box.pad(self.params['boxpadding']) # known data is absolute

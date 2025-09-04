@@ -27,10 +27,7 @@ from collections import Counter
 from BKGlycanExtractor import DebugMode
 
 # Base class
-class GlycanFinder(Finder):  
-
-    finder_class = 'Glycan'
-    labels = ['glycan']
+class GlycanFinder:  
 
     def set_logger(self, logger_name=''):
         self.logger = logging.getLogger(logger_name+'.glycanfinding')
@@ -40,7 +37,7 @@ class GlycanFinder(Finder):
 # allows minimum confidence thresholding, to restrict returns
 # also allows requesting padding of glycan borders (off by default)
 # confidences for YOLO detection are stored in the bounding box
-class YOLOGlycanFinder(YOLOModel,GlycanFinder):
+class YOLOGlycanFinder(YOLOFinder,GlycanFinder):
 
     defaults = {
         'conf_threshold': 0.5,
@@ -48,10 +45,9 @@ class YOLOGlycanFinder(YOLOModel,GlycanFinder):
         'expandimage': 200,
         'iou_threshold': 0.5
     }
-    labels = [ 'glycan' ]
 
     def __init__(self,**kwargs):
-        params = dict(
+        self.params = dict(
            boxpadding = Config.get_param('boxpadding', Config.FLOAT, kwargs, self.defaults),
            expandimage = Config.get_param('expandimage', Config.FLOAT, kwargs, self.defaults),
            conf_threshold = Config.get_param('conf_threshold', Config.FLOAT, kwargs, self.defaults),
@@ -59,8 +55,8 @@ class YOLOGlycanFinder(YOLOModel,GlycanFinder):
            config = Config.get_param('config', Config.CONFIGFILE, kwargs, self.defaults),
            weights = Config.get_param('weights', Config.CONFIGFILE, kwargs, self.defaults),
         )
+        YOLOFinder.__init__(self)
         GlycanFinder.__init__(self)
-        YOLOModel.__init__(self,params)
 
     def find_boxes(self, obj):
         return sorted(self.get_YOLO_output(obj.image()),key=lambda b: b.bbox())
@@ -68,22 +64,22 @@ class YOLOGlycanFinder(YOLOModel,GlycanFinder):
     def find_objects(self, figure_obj):
         figure_obj.reset_glycans()
         for box in self.find_boxes(figure_obj):
-            glyobj = GlycanSemantics(figure=figure_obj,box=box,classlabel=self.boxlabel(box))
+            glyobj = GlycanSemantics(figure=figure_obj,box=box,classlabel=self.get_label(box.get('classid')))
             figure_obj.add_glycan(glyobj)
         return figure_obj.glycans()
     
-class SingleGlycanImage(GlycanFinder):
+class SingleGlycanImage(Finder,GlycanFinder):
     
-    labels = ["glycan"]
     defaults = {
         'crop': False,
         'padding': 0
     }
 
     def __init__(self,**kwargs):
-       self.crop = Config.get_param('crop', Config.BOOL, kwargs, self.defaults)
-       self.padding = Config.get_param('padding', Config.FLOAT, kwargs, self.defaults)
-       super().__init__()
+        self.crop = Config.get_param('crop', Config.BOOL, kwargs, self.defaults)
+        self.padding = Config.get_param('padding', Config.FLOAT, kwargs, self.defaults)
+        GlycanFinder.__init__(self)
+        Finder.__init__(self)
 
     def find_objects(self, obj):
         obj.reset_glycans()
@@ -97,11 +93,11 @@ class SingleGlycanImage(GlycanFinder):
         #implement crop and padding?
         image = obj.image()
         height, width, _ = image.shape
-        return [ BoundingBox(image=image,x=0,y=0,width=width,height=height,classlabel=self.get_label(0)) ]
+        classid=self.get_label_index("glycan")
+        return [ BoundingBox(image=image,x=0,y=0,width=width,height=height,classid=classid,classlabel="glycan") ]
 
-class KnownGlycanBoxes(GlycanFinder):
+class KnownGlycanBoxes(KnownFinder,GlycanFinder):
 
-    labels = ["glycan"]
     defaults = {
         'boxpadding': 0,
     }
@@ -110,22 +106,23 @@ class KnownGlycanBoxes(GlycanFinder):
         self.params = dict(
             boxpadding = Config.get_param('boxpadding', Config.FLOAT, kwargs, self.defaults),
         )
-        self.boxpadding = self.params['boxpadding']
-        super().__init__()
+        KnownFinder.__init__(self)
+        GlycanFinder.__init__(self)
 
     def find_boxes(self, obj):
         yoloannot = obj.image_path().rsplit('.',1)[0] + ".txt"
         image = obj.image()
         boxes = []
+        self.get_label_index("glycan")
         for l in open(yoloannot):
             classid,rcx,rcy,rw,rh = map(float,l.split())
             classid = int(classid)
             box = BoundingBox(rcx=rcx,rcy=rcy,rw=rw,rh=rh,image=image,
                               classid=classid,classlabel=self.get_label(classid))
-            if 0 < self.boxpadding <= 1:
-                box.pad_relative(self.boxpadding)
-            elif 1 < self.boxpadding:
-                box.pad(self.boxpadding)
+            if 0 < self.params['boxpadding'] <= 1:
+                box.pad_relative(self.params['boxpadding'])
+            elif self.params['boxpadding'] > 1:
+                box.pad(self.params['boxpadding'])
             boxes.append(box)
         return boxes
 
@@ -138,10 +135,11 @@ class KnownGlycanBoxes(GlycanFinder):
         return obj.glycans()
         
 # handles one/many glycans 
-class CleanGlycanImage(GlycanFinder):
+class CleanGlycanImage(Finder,GlycanFinder):
 
     def __init__(self,**kwargs):
-        super().__init__()
+        Finder.__init__(self)
+        GlycanFinder.__init__(self)
 
     def find_boxes(self, obj):
         # print("\nCLEAN IMAGE")
