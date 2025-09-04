@@ -73,7 +73,23 @@ class Finder(object):
         self.params[key] = value
 
 class KnownFinder(Finder):
-    
+
+    def write_model(self, finder_name, filename):
+        with open(filename, 'w') as wh:
+            print(f"[Finder:{finder_name}]",file=wh)
+            print(f"class={self.__class__.__name__}",file=wh)
+            # might need something more sophistocated if we have
+            # params that are not easily output as strings...
+            for k,v in self.params.items():
+                print(f"{k}={v}",file=wh)
+        return
+
+    def write_labels(self, filename):
+        with open(filename, 'w') as wh:
+            for label in self._labels:
+                print(f"{label}",file=wh)
+        return
+        
     def get_known_data(self, image_path):
         '''
         DATA STRUCTURE to store _map.txt file details
