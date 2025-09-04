@@ -675,7 +675,7 @@ class GlycanSemantics(ImageSemantics):
             branch_strings.append(branch_str)
 
         # Sort branches lexicographically after recursion
-        branch_strings.sort()
+        branch_strings.sort(key=lambda bs: (bs[-1],bs))
 
         # Handle parentheses for branches based on the rule
         for idx, branch in enumerate(branch_strings):
