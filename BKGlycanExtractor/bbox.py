@@ -101,6 +101,9 @@ class BoundingBox:
         # return self.data    # any changes made will to the data passed from here will reflect back to the object.....users can utilize getters/setters to make changes instead
         return {**self.data}
 
+    def update(self,**kwargs):
+        self.data.update(kwargs)
+
     def clone(self):
         return BoundingBox(image_width=self.imwidth, image_height=self.imheight,
                            x=self.x, y=self.y, w=self.w, h=self.h, **self.data)
@@ -157,6 +160,9 @@ class BoundingBox:
             retval += ", " + k + ": " + str(v)
         retval += " ]"
         return retval
+    
+    def __repr__(self):
+        return str(self)
 
     def crop(self,image):
         (x1, y1, x2, y2) = self.corners()
@@ -175,7 +181,7 @@ class BoundingBox:
         self.normalize()
 
     def pad_relative(self, padding):
-        assert 0 <= padding <= 1
+        # assert 0 <= padding <= 1 # permit larger relative padding
         self.x -= int(round(padding*self.w))
         self.y -= int(round(padding*self.h))
         self.w += int(round(2*padding*self.w))
@@ -183,12 +189,14 @@ class BoundingBox:
         self.normalize()
 
     def normalize(self):
-        self.x = max(self.x,0)
-        self.y = max(self.y,0)
-        if self.imwidth is not None:
-            self.w = min(self.w,self.imwidth-self.x)
-        if self.imheight is not None:
-            self.h = min(self.h,self.imheight-self.y)
+        if self.imwidth is None or self.imheight is None:                                                                          
+            raise RuntimeError("Image dimensions not provided.")                                          
+        x1,y1,x2,y2 = self.corners()                                                                      
+        x1 = max(x1,0)                                                                                    
+        y1 = max(y1,0)                                                                                    
+        x2 = min(x2,self.imwidth-1)                                                                       
+        y2 = min(y2,self.imheight-1)                                                                      
+        self.update_bbox(x=x1,y=y1,w=(x2-x1+1),h=(y2-y1+1))
 
     # below here needs to be fixed, commenting for now 
     #
