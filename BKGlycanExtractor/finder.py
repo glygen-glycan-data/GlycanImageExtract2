@@ -1,7 +1,3 @@
-'''
-Subclasses inheriting from Finder must define labels
-'''
-
 import importlib
 import os.path
 

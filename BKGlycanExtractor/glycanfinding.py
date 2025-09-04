@@ -64,7 +64,7 @@ class YOLOGlycanFinder(YOLOFinder,GlycanFinder):
     def find_objects(self, figure_obj):
         figure_obj.reset_glycans()
         for box in self.find_boxes(figure_obj):
-            glyobj = GlycanSemantics(figure=figure_obj,box=box,classlabel=self.get_label(box.get('classid')))
+            glyobj = GlycanSemantics(figure=figure_obj,box=box,classlabel=self.box_label(box))
             figure_obj.add_glycan(glyobj)
         return figure_obj.glycans()
     
