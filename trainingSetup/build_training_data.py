@@ -15,18 +15,27 @@ import os
 import sys
 import argparse
 import shutil
+import tempfile
+import atexit
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from BKGlycanExtractor import Image_Manager, Config_Manager, GlycanExtractorPipeline
 
-parser = argparse.ArgumentParser(description="Start")
+parser = argparse.ArgumentParser(description="Build training data")
 
 parser.add_argument(
     '--finder',
     type = str,
-    # required = True,
-    help = 'Pipeline to execute on images. Optional. KnownMono, KnownRoot, KnownLink.'
+    required = True,
+    help = 'Finder for known boxes on images. Usually, one of KnownGlycanBoxes, KnownMono, KnownRoot, KnownLink, or KnownLinkWithInfo.'
+)
+
+parser.add_argument(
+    '--boxpadding',
+    type=int,
+    required=False,
+    help='Box padding on known boxes. Default: from named known finder\'s config.'
 )
 
 parser.add_argument(
@@ -37,34 +46,27 @@ parser.add_argument(
 )
 
 parser.add_argument(
-    '--zip',
+    '--out',
     type = str,
-    help = 'File name to save training data in a zip file. Default: images.zip'
+    default = 'images.zip',
+    help = 'Filename for training data zip file, must end in .zip. Default: images.zip'
 )
-
-parser.add_argument(
-    '--finder_file',
-    type = str,
-    help = 'File name, used to save known finder details in the zip file. Default: known_finder.model'
-)
-
 
 args = parser.parse_args()
 
 config = Config_Manager()
 
+if not args.out.endswith('.zip'):
+    raise ValueError("Zip file filename must have .zip extension")
 
-# CREATE FOLDER FOR ALL TRAINING IMAGES
-folder_name = args.zip if args.zip else "images"
-# If the folder exists, delete it
-if os.path.exists(folder_name):
-    shutil.rmtree(folder_name)
-# Create a fresh new folder
-os.makedirs(folder_name,exist_ok=True)
+assert not os.path.exists(args.out), "zip file %s exists"%(args.out,)
 
+def remove_tempdir(tempdir):
+    if os.path.exists(tempdir):
+        shutil.rmtree(tempdir)
 
-# create file to add: Known finder name and related details that were used to build training data
-filename = args.finder_file if args.finder_file else "known_finder"
+folder_name = tempfile.mkdtemp(prefix=".tmpdir",dir=os.getcwd())
+atexit.register(remove_tempdir,folder_name)
 
 images = Image_Manager(args.images)
 images.exclude("*.annotated.*")
@@ -74,22 +76,11 @@ pipeline = GlycanExtractorPipeline()
 finder = config.get_finder('SingleGlycanImage')
 pipeline.add_step('figure',finder)
 
-# if a known finder is specified
-if args.finder:
-    step = args.finder
-    stage = 'glycan' 
-    kwargs = {'boxpadding': 5}   # option to make boxes larger is required
-    finder = config.get_finder(step,**kwargs)
-    pipeline.add_step(stage,finder)
+finder = config.get_finder(args.finder)
+pipeline = finder.finder_pipeline(config)
 
-    model_configs_path = os.path.join(folder_name, filename + ".model.ini")
-    # cfg file should have the same filename as this file with different extensions
-    with open(model_configs_path, 'a') as f:
-        f.write(f"[Finder:{args.finder}]\n")
-        f.write(f"class={args.finder}\n")
-        for k,v in kwargs.items():
-            f.write(f"{k}={v}\n")
-
+if args.boxpadding != None:
+    finder.set_param('boxpadding',args.boxpadding)
 
 for image_path in images:
     image_filename = os.path.basename(image_path)
@@ -110,15 +101,14 @@ for image_path in images:
 
 # create labels file
 labels_file = os.path.join(folder_name, 'classes.txt')
-with open(labels_file, 'w') as f:
-    # print("finder",finder)
-    for label in finder.get_labels():
-        f.write(f"{label}\n")
+finder.write_labels(labels_file)
+model_file = os.path.join(folder_name, 'model.ini')
+finder.write_model(args.finder,model_file)
 
 # Zipping the folder
-shutil.make_archive(folder_name, 'zip', folder_name)
+shutil.make_archive(args.out.rsplit('.',1)[0], 'zip', folder_name)
 print("Training data is ready...")
-print(f"{folder_name}.zip")
+print(args.out)
 
 # delete the images directory
 # if os.path.exists(folder_name):
