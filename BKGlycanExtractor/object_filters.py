@@ -25,11 +25,6 @@ class ObjectFilter:
         raise NotImplementedError
 
 
-# Not sure if this is a good design strategy to use?
-# I have created a Base class for Monos and Roots - because they share similar code and alternatives are handled based on iou (overlapping detections).
-# Only difference is how the nested for loop is handled - for monos --> all the detected items can be considered as the primary mono (unless we find a overlap).
-# --> for root: only the first detected item (highest confidece) will eb the primary root....and if they are other overlapping items - they will be considered as alternatives/rejected.
-# Concern: def is_primary() - is this method clear and easy to understand/logical?
 class FilterOverlaps(ObjectFilter):
     '''
     Base class to check overlapping boxes and filter them into accepted and rejected lists.
@@ -101,105 +96,57 @@ class SingleBest(ObjectFilter):
             return [],[]
         return objlist[0:1],objlist[1:]
 
-# make this a seperate class
-class RootFilter(ObjectFilter):
-    '''
-    Specialized filter for root objects.
-    Keeps only one root with highest confidence, rest go to rejected.
-    (rejected includes both root and non-root objects).
 
-    Considers objects with the highest confidence (stored in accepeted list). 
-    Any other objects which intersect (based on IOU) with the chosen highest confidence object is stored in the rejected list.
-        
-    '''
+# Similar to DiscardClass - but this only keeps one single
+# root incase multiple roots were detected - maybe we dont dont need 
+# this implementation of the class anymore?
+class RootFilter(ObjectFilter):
+    """
+    Specialized filter for root objects.
+
+    - Accepts only the highest confidence root.
+    - Rejects all other objects (root and non-root) that overlap with the selected root.
+    """
 
     def filter(self, objlist):
+        if not objlist:
+            return [], []
 
-        # Uses ParentClass for the below filtering logic:
-        # Considers objects with the highest confidence (stored in accepeted list). 
-        # Any other objects which intersect (based on IOU) with the chosen highest confidence object is stored in the rejected list.
-        accepted, rejected = super().filter(objlist)
+        accepted = []
+        rejected = []
 
-        # Filter accepted roots (classid == 0)
-        roots = [obj for obj in accepted if obj.get('classlabel') == 0]
-        non_roots = [obj for obj in accepted if obj.get('classlabel') != 0]
+        primary = None
 
-        if roots:
-            # Keep only highest confidence root in accepted
-            roots = sorted(roots, key=lambda x: x.get('confidence', 0), reverse=True)
-            accepted_root = roots[0]
+        # Identify the highest-confidence root
+        for obj in objlist:
+            if obj.get('classlabel') == 'redend':  
+                primary = obj
+                accepted.append(primary)
+                break
 
-            # Move all other root objects to rejected list with reason
-            for r in roots[1:]:
+        if not primary:
+            # No root object found
+            return [], []
+
+        # Reject all other objects that overlap with the accepted root
+        for obj in objlist:
+            if obj == primary:
+                continue
+
+            if self.cb.have_intersection(primary.box(), obj.box()):
                 rejected.append(
                     self.make_rejection(
-                        r,
-                        reason="Multiple roots found; this root rejected",
-                        primary_id=accepted_root.get('id')
+                        obj,
+                        reason="Overlaps with primary root",
+                        iou=self.cb.iou(primary.box(), obj.box()),
+                        primary=primary
                     )
                 )
-            accepted = [accepted_root]
-        else:
-            accepted = []
 
-        # If no roots at all, accepted could be empty; that's fine.
-        # Return a single root object or None
-      
         return accepted, rejected
 
 
-class RemoveNonRootsFilter(FilterOverlaps):
-    '''
-    Specialized filter for root objects.
-
-    Inherits FilterOverlaps to get accepted/rejected after overlap filtering.
-    Then ensures accepted contains only one root (highest confidence),
-    and rejected gets all other root objects that were accepted but not chosen.
-    Non-root objects remain untouched in accepted and not moved to rejected here.
-    '''
-
-    def filter(self, objlist):
-
-        # Uses ParentClass for the below filtering logic:
-        # Considers objects with the highest confidence (stored in accepeted list). 
-        # Any other objects which intersect (based on IOU) with the chosen highest confidence object is stored in the rejected list.
-        accepted, rejected = super().filter(objlist)
-
-        # clear the rejected list
-        rejected = []
-
-        # Extract roots and non-roots from accepted
-        roots = [obj for obj in accepted if obj.get('classid') == 0]
-        non_roots = [obj for obj in accepted if obj.get('classid') != 0]
-
-        if roots:
-            # Keep only highest confidence root in accepted
-            roots = sorted(roots, key=lambda x: x.get('confidence', 0), reverse=True)
-            accepted_root = roots[0]
-
-            # Move all other root objects to rejected list with reason
-            for r in roots[1:]:
-                rejected.append(
-                    self.make_rejection(
-                        r,
-                        reason="Multiple roots found; this root rejected",
-                        primary_id=accepted_root.get('id')
-                    )
-                )
-            accepted = [accepted_root]
-        else:
-            accepted = []
-
-        # If no roots at all, accepted could be empty; that's fine.
-        # Return a single root object or None
-        if accepted:
-            # Return single root object instead of list
-            return accepted, rejected
-        else:
-            return None, rejected
             
-# should take data lists and return data lists
-# not pull things out, make changes and then add changes back to it
 class FilterRepeatedLinks(ObjectFilter):
     '''
     This class is meant for link finders only.
@@ -294,6 +241,22 @@ class FilterTreeLinks(ObjectFilter):
                 # obj.link_cycle(link)
 
         return accepted, rejected
+
+
+class RemapLinkLabels(ObjectFilter):
+    '''
+    class to remap link labels
+    '''
+
+    def filter(self, objlist):
+        accepted = []
+        rejected = []
+
+        for obj in objlist:
+            obj.set('classlabel', 'link')
+
+        return objlist, rejected
+
 
         # ObjectFilters should not stash anything in the semantics data-object
         # (but you can mark (and keep)) the objects that are not accepted - mark them as rejected
