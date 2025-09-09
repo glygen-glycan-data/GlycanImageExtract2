@@ -8,6 +8,10 @@ from . json_logger import log_data
 from . distproc import DistributedProcessing
 from . bbox import BoundingBox
 from . object_filters import *
+from . monosaccharideid import MonoFinder
+from . glycanconnections import LinkFinder
+from . rootmonofinding import RootFinder
+from . glycanfinding import GlycanFinder
 # from . webapp_processjob import JobInstance
 # from .scripts import parse_path
 # from . yolomodels import YOLOModel
