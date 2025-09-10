@@ -286,9 +286,7 @@ class YOLOFinder(YOLOModel,Finder):
         boxes = self.get_YOLO_output(image)
         # add classlabel here instead of YoloModel
         for box in boxes:
-            classid = box.get('classid')
-            classlabel = self.get_label(classid)
-            box.set('classlabel',classlabel)
+            box.set('classlabel',self.box_label(box))
         return sorted(boxes, key=lambda box: float(box.get('confidence',0.0)), reverse=True)
 
     @toboxes
