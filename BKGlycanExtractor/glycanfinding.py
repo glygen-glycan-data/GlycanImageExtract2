@@ -24,7 +24,7 @@ from . glycanannotator import Config, GlycanExtractorPipeline
 from . finder import YOLOFinder, KnownFinder, Finder
 from . semantics import GlycanSemantics
 from collections import Counter
-from BKGlycanExtractor import DebugMode
+from BKGlycanExtractor import DebugMode, GlycanCompare
 
 # Base class
 class GlycanFinder:  
@@ -32,10 +32,16 @@ class GlycanFinder:
     def set_logger(self, logger_name=''):
         self.logger = logging.getLogger(logger_name+'.glycanfinding')
 
+    def set_results(self, obj, accepted, rejected):
+        obj.set_glycans(accepted, rejected)
+
     def finder_pipeline(self,config_manager):
         pipeline = GlycanExtractorPipeline()
         pipeline.set_steps('figure', [self])
         return pipeline
+
+    def semantic_compare(self,**kwargs):
+        return GlycanCompare(**kwargs)
 
 # YOLO based glycan finder
 # allows minimum confidence thresholding, to restrict returns
@@ -55,15 +61,10 @@ class YOLOGlycanFinder(YOLOFinder,GlycanFinder):
         YOLOFinder.__init__(self,**kwargs)
         GlycanFinder.__init__(self)
 
-    def find_boxes(self, obj):
-        return sorted(self.get_YOLO_output(obj.image()),key=lambda b: b.bbox())
 
-    def find_objects(self, figure_obj):
-        figure_obj.reset_glycans()
-        for box in self.find_boxes(figure_obj):
-            glyobj = GlycanSemantics(figure=figure_obj,box=box,classlabel=self.box_label(box))
-            figure_obj.add_glycan(glyobj)
-        return figure_obj.glycans()
+    def box_to_object(self,box,obj):
+        return GlycanSemantics(figure=obj.image(),box=box,**box.items())
+
     
 class SingleGlycanImage(Finder,GlycanFinder):
     
@@ -75,16 +76,12 @@ class SingleGlycanImage(Finder,GlycanFinder):
     def __init__(self,**kwargs):
         self.crop = Config.get_param('crop', Config.BOOL, kwargs, self.defaults)
         self.padding = Config.get_param('padding', Config.FLOAT, kwargs, self.defaults)
-        GlycanFinder.__init__(self)
+        
         Finder.__init__(self)
+        GlycanFinder.__init__(self)
 
-    def find_objects(self, obj):
-        obj.reset_glycans()
-        boxes = self.find_boxes(obj)
-        box = boxes[0]
-        glyobj = GlycanSemantics(figure=obj,box=box,image_path=obj.image_path(),classlabel=self.get_label(0))
-        obj.add_glycan(glyobj)
-        return obj.glycans()
+    def box_to_object(self,box,obj):
+        return GlycanSemantics(figure=obj.image(),box=box,**box.items())
 
     def find_boxes(self, obj):
         #implement crop and padding?
@@ -112,16 +109,12 @@ class KnownGlycanBoxes(KnownFinder,GlycanFinder):
             boxes.append(box)
         return boxes
 
-    def find_objects(self, obj):
-        boxes = self.find_boxes(obj)
-        obj.clear_glycans()
-        for box in boxes:
-            glyobj = GlycanSemantics(figure=obj,box=box,classlabel=self.getlabel(0))
-            obj.add_glycan(glyobj)
-        return obj.glycans()
+    def box_to_object(self,box,obj):
+        return GlycanSemantics(figure=obj.image(),box=box,**box.items())
         
-# handles one/many glycans 
-class CleanGlycanImage(Finder,GlycanFinder):
+# handles one/many glycans
+# Still need to work on this 
+class CleanGlycanImage(GlycanFinder):
 
     def __init__(self,**kwargs):
         Finder.__init__(self)

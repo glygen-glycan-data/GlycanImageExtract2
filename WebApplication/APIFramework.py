@@ -20,6 +20,8 @@ import base64
 import glob
 
 import os, ssl
+from datetime import datetime, timezone
+
 
 if (not os.environ.get('PYTHONHTTPSVERIFY', '') and getattr(ssl,'_create_unverified_context', None)):
     ssl._create_default_https_context = ssl._create_unverified_context
@@ -98,6 +100,7 @@ class APIFramework:
         self._examples_html = "examples.html"
         self._abstract_html = "abstract.html"
         self._result_html = "result.html"
+        self._recent_jobs = 'recent_jobs.html'
 
         self._file_upload_finished_html = None
 
@@ -319,15 +322,36 @@ class APIFramework:
             states[x["state"]] += 1
         return flask.jsonify(states)
 
-    def get_recent_jobs(self):
+
+    def get_recent_jobs_api(self):
+
         sid = self.get_session()
         recent_jobs = []
+
         with self.session_task_list_lock:
-            for tid in map(lambda t: t[0],sorted(self.session_task_list[sid],key=lambda t: -t[1])[:10]):
-                task1 = dict((k,v) for k,v in self.get_result(tid).items() if k != 'result')
+            # Refresh all results so get_result returns the latest data
+            self.update_results(getall=True)
+
+            for tid in map(lambda t: t[0], sorted(self.session_task_list[sid], key=lambda t: -t[1])[:10]):
+                task1 = dict((k, v) for k, v in self.get_result(tid).items() if k != 'result')
+
+
+                task1['job_status'] = "{{urlprefix}}/get_job_status/" + tid
+
+                # Convert timestamp to readable datetime
+                ts = task1.get("submit_time")
+                if ts:
+                    dt = datetime.fromtimestamp(ts).astimezone()
+                    task1["submit_time_local"] = dt.strftime("%B %d, %Y at %I:%M %p %Z")
+                else:
+                    task1["submit_time_local"] = "N/A"
                 recent_jobs.append(task1)
-        print(recent_jobs)
-        return recent_jobs
+        # print("recent jobs",recent_jobs)
+
+        print("--->>",flask.jsonify(recent_jobs))
+        return flask.jsonify(recent_jobs)
+
+
 
     def get_next_task_index(self):
         with self.task_index_lock:
@@ -627,7 +651,7 @@ class APIFramework:
         self._flask_app.add_url_rule("/get_job_counts", "get_job_counts", self.get_job_counts, methods=["GET", "POST"])
         self._flask_app.add_url_rule("/get_job_status", "get_job_status", self.get_job_status, methods=["GET", "POST"])
         self._flask_app.add_url_rule("/get_job_status/<tid>", "get_job_status", self.get_job_status, methods=["GET", "POST"])
-        self._flask_app.add_url_rule("/get_recent_jobs", "get_recent_jobs", self.get_recent_jobs, methods=["GET", "POST"])
+        self._flask_app.add_url_rule("/api/recent_jobs", "get_recent_jobs_api", self.get_recent_jobs_api, methods=["GET"])
 
         if self._file_based_job:
             print("Got the functions")
@@ -683,8 +707,8 @@ class APIFramework:
 
         self.cleanup()
 
-        self._flask_app.run(self.host(), self.port())
-        # self._flask_app.run(self.host(), self.port(), debug=True)
+        # self._flask_app.run(self.host(), self.port())
+        self._flask_app.run(self.host(), self.port(), debug=True)
 
     def cleanup(self):
         atexit.register(self.terminate_all)

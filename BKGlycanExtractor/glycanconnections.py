@@ -18,7 +18,7 @@ from .yolomodels import YOLOModel
 from .glycanannotator import Config, Config_Manager, GlycanExtractorPipeline
 from .bbox import BoundingBox
 from .finder import Finder,YOLOFinder, KnownFinder
-from BKGlycanExtractor import LinksCompare, DebugMode, FilterTreeLinks, FilterRepeatedLinks
+from BKGlycanExtractor import LinksCompare, DebugMode, FilterTreeLinks, FilterRepeatedLinks, RemapLinkLabels
 from .semantics import UndirectedLinkSemantics
 
 
@@ -175,3 +175,9 @@ class ConnectYOLOInfo(ConnectYOLO):
                 link.set('parent_bond',int(classlabel[1]))
         return link
 
+
+class ConnectYOLOInfoLabel(ConnectYOLO):
+    '''
+    class to mask all the different labels (eg. ax, bx, etc) to 'link'.
+    '''
+    filters = ConnectYOLO.filters + [RemapLinkLabels()]
