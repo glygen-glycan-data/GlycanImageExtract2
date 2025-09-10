@@ -11,7 +11,7 @@ from APIFramework import APIFramework
 
 
 
-from BKGlycanExtractor import Config_Manager, Glycan_Semantics, Figure_Semantics, GlycanExtractorPipeline
+from BKGlycanExtractor import Config_Manager
 # from . import glycanExtractor
 
 # from .glycanannotator import GlycanExtractorPipeline
@@ -215,7 +215,7 @@ class JobInstance:
             "orientation": "RL",
         }
 
-        if len(gly_semantics.get_glycan_errors()) == 0:
+        if len(gly_semantics.glycan_errors()) == 0:
             IUPAC_data["IUPAC"] = gly_semantics.IUPAC()
             # can get orienation only after the IUPAC is generated - because we access to directed links
             IUPAC_data["orientation"] = gly_semantics.glycan_orientation()
@@ -279,8 +279,8 @@ class JobInstance:
         basename = os.path.basename(figure_semantics.image_path()).split('.')[0]
 
         for i, gly_semantics in enumerate(figure_semantics.glycans()):
-            glycan_image = gly_semantics.semantics.get('image')
-            extracted_glycan_image = gly_semantics.semantics.get('extracted_image',glycan_image)
+            glycan_image = gly_semantics.get('image')
+            extracted_glycan_image = gly_semantics.get('extracted_image',glycan_image)
 
             if glycan_image is None or glycan_image.size == 0:
                 print(f"Skipping glycan {i}: Detected object is missing or empty")
