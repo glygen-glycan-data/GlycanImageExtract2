@@ -4,6 +4,7 @@ class for generating data for IUPAC.
 from .finder import Finder
 from .glycanannotator import Config
 
+# check if links == monos -1 , etc all the details for logging can be added here
 
 class Glycan_Base(Finder):
     finder_class = 'Glycan_Semantics'
