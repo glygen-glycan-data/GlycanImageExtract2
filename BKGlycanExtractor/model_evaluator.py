@@ -325,6 +325,8 @@ class Evaluator:
         cmpnames = list(self.compares)
         for j,prname in enumerate(prnames):
             prpl,knpl = self.pipelines[prname]
+            if self.verbose:
+                print(prname,os.path.split(image)[1])
             pred_items, pred_semantics = prpl.run_evaluation(image,self.isboxeval())
             known_items, known_semantics = knpl.run_evaluation(image,self.isboxeval())
             # sometimes no root is detected - so pred_items could be None
