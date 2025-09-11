@@ -43,8 +43,8 @@ class Semantics(object):
             self.set(k,v)
 
     def items(self):
-        # return self._semantics.items()
-        return dict((key, self[key]) for key in self.keys())
+        return self._semantics.items()
+        # return dict(self._semantics)
 
     def keys(self):
         return self._semantics.keys()
@@ -532,6 +532,7 @@ class GlycanSemantics(ImageSemantics):
 
         for link in self.undirected_links():
             id1, id2 = link.mono_ids()
+            print("--->>",link.items())
             link_without_ids = {k: v for k, v in link.items() if k != "mono_ids"}
             adj[id1].append((id2, link_without_ids))
             adj[id2].append((id1, link_without_ids))

@@ -86,7 +86,8 @@ class SingleGlycanImage(Finder,GlycanFinder):
     def find_boxes(self, obj):
         #implement crop and padding?
         classid=self.get_label_index("glycan")
-        return [ BoundingBox(classid=classid,classlabel="glycan",x=0,y=0,**obj.items()) ]
+        return [ BoundingBox(classid=classid,classlabel="glycan",x=0,y=0,**obj) ]
+
 
 
 class KnownGlycanBoxes(KnownFinder,GlycanFinder):
