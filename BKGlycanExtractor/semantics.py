@@ -43,10 +43,14 @@ class Semantics(object):
             self.set(k,v)
 
     def items(self):
-        return self._semantics.items()
+        # return self._semantics.items()
+        return dict((key, self[key]) for key in self.keys())
 
     def keys(self):
         return self._semantics.keys()
+
+    def values(self):
+        return self._semantics.values()
 
     # make semantics objects behave like dictionaries
     def __getitem__(self,key):
@@ -292,6 +296,16 @@ class FigureSemantics(ImageSemantics):
     def reset_glycans(self):
         self.set('glycans',[])
 
+    def set_glycans(self, accepted, rejected=[]):
+        self.reset_glycans()
+        for glycan in accepted:
+            self.add_glycan(glycan)
+        for glycan in rejected:
+            self.append('rejected_glycans',glycan)
+
+    def rejected_glycans(self):
+        return self.get('rejected_glycans',[])
+
     def add_glycan(self,glycan):
         self.append('glycans',glycan)
 
@@ -407,7 +421,7 @@ class GlycanSemantics(ImageSemantics):
 
     def __init__(self,*,figure,box,**kwargs):
         super().__init__(box=box,**kwargs)  
-        self.set_image(box.crop(figure.image()))
+        self.set_image(box.crop(figure))
         self.reset_monos()
         self.reset_root()
         self.reset_undirected_links()
@@ -517,8 +531,7 @@ class GlycanSemantics(ImageSemantics):
         adj = defaultdict(list)
 
         for link in self.undirected_links():
-            id1, id2 = link.get("mono_ids")
-            # print("\nlink items", link.items())
+            id1, id2 = link.mono_ids()
             link_without_ids = {k: v for k, v in link.items() if k != "mono_ids"}
             adj[id1].append((id2, link_without_ids))
             adj[id2].append((id1, link_without_ids))
@@ -716,17 +729,16 @@ class GlycanSemantics(ImageSemantics):
         # do not take fucose into account
         # depending on which side the the next element is - that will be the orientation
 
-        root_mono = self.monosaccharide(root_id)
+        root_mono = self.mono(root_id)
         root_box = root_mono.get('box')
-        root_links = self.links(root_id)
+        root_links = self.mono_links(root_id)
 
         if not root_links:
             return "BT"
 
         for link in root_links:
-            fromid, toid = link.get('fromid'), link.get('toid')
-            linked_mono = self.monosaccharide(toid)
-            sym = linked_mono.get('symbol')
+            linked_mono = self.mono(link.to_id())
+            sym = linked_mono.symbol()
 
             if sym == 'Fuc':
                 continue
