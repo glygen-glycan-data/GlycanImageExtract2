@@ -105,7 +105,7 @@ class JobInstance:
         Converts absolute path to relative path based on the base directory
         """
         # Debugging: Print the absolute path before conversion
-        print(f"Converting absolute path: {abs_path}")
+        # print(f"Converting absolute path: {abs_path}")
         
         # Calculate the relative path using the base directory
         rel_path = os.path.relpath(abs_path, self.workdir)
@@ -154,7 +154,7 @@ class JobInstance:
             with open(self.json_filepath, 'w') as f:
                 json.dump(data, f, indent=2)
             self.log_file.close()
-            print("-------->>>JOB COMPLETED", state)
+            # print("-------->>>JOB COMPLETED", state)
 
         return True
 
@@ -193,7 +193,7 @@ class JobInstance:
         self.create_directories(annotated_figures_path)
 
         for i, _ in enumerate(figure_semantics.glycans()):
-            print(f"Annotating glycan {i}")
+            # print(f"Annotating glycan {i}")
             figure_semantics.annotate_glycans()
 
         # Save the annotated figure

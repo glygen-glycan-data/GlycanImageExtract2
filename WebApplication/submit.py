@@ -63,7 +63,7 @@ def searchGlyImage(*seqs, orientation='RL',display='normal', image_format='svg',
     nretries = 0
     while True:
         data = request_api(baseurl,"retrieve",task_ids=json.dumps(jobids))
-        print("glyimage task ids",json.dumps(jobids))
+        # print("glyimage task ids",json.dumps(jobids))
         done = True
         for job in data:
             if not job.get('finished'):
