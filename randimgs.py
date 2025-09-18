@@ -17,7 +17,7 @@ import argparse
 parser = argparse.ArgumentParser(description="Randomized glycan image generation")
 parser.add_argument("-n", "--nimages", type=int, help="Number of images. Default: 100.", default=100)
 # parser.add_argument("-B", "--batchsize", type=int, help="Number of images with each randomly selected set of options. Default: 10.", default=10)
-# parser.add_argument("-f", "--format", type=str, help="Image format. One of \"png\" or \"svg\". Default: png.", default='png')
+parser.add_argument("-f", "--format", type=str, help="Image format. One of \"png\" or \"svg\". Default: svg.", default='svg')
 parser.add_argument("-o", "--outdir", type=str, help="Ouput directory. Default: current directory.", default=None)
 parser.add_argument("-c", "--clear", action='store_true', help="Clear output directory first.", default=False)
 parser.add_argument("-k", "--keepsvg", action='store_true', help="Keep SVG file - useful for debugging.", default=False)
@@ -25,12 +25,13 @@ parser.add_argument("-F", "--force", action='store_true', help="Force re-downloa
 parser.add_argument("-s", "--skip", type=str, help="File of accessions to skip. Default: None.", default=None)
 parser.add_argument("-r", "--random", type=str, help="Randomization mode. One of uniform accessions (uniform), biased sampling (biased), random monosaccharides (mono), random monosaccharides + baised sampling (biasmono), random linkages (linkinfo). Default: uniform.", default="uniform")
 parser.add_argument("-A", "--accessions", type=str, help="Limit to specific accessions by regular expression or prefix. Default: No restriction.", default=None)
+parser.add_argument("-P","--program", type=str, help="Program to use to make images. One of GlycanBuilder2, Glycowork. Default: GlycanBuilder2.", default="GlycanBuilder2")
 parser.add_argument("-L", "--linkage", action='store_true', help="Require glycosidic linkage information (display: normalinfo). Default: tight, compact, normal, normalinfo. ", default=False)
 parser.add_argument("-N", "--nolinkage", action='store_true', help="Do not display glycosidic linkage information (display: normal, compact). Default: tight, compact, normal, normalinfo.", default=False)
 
 args = parser.parse_args()
 imagenum = args.nimages
-mode = "svg"
+mode = args.format
 args.batchsize = 1
 cachemode = 'c'
 if args.force:
@@ -58,6 +59,10 @@ if badaccfile:
     assert os.path.isfile(badaccfile)
 randmode = args.random
 assert randmode in ("uniform","biased","mono","biasmono","linkinfo")
+assert args.program in ("GlycanBuilder2","Glycowork")
+
+if args.program == "Glycowork":
+    assert mode != "svg"
 
 print("Start randimg...")
 
@@ -70,14 +75,24 @@ unknown_blank = [ True, False ]
 orient_options = [ "RL", "LR", "TB", "BT" ]
 notation_options = [ "snfg", "cfg", "snfglink", "cfglink" ]
 display_options = [ "normal", "normalinfo", "compact", "tight" ]
+opaque_options = [ True, False ]
+
+if args.program == "Glycowork":
+    display_options = [ "normal", "normalinfo", "compact" ]
+    orient_options = [ "RL", "BT" ]
+    notation_options = [ "snfg" ]
+    redend_options = [ False ]
+    scale_options = [ 1.0 ]
 if args.linkage:
     # display_options = [ "normal", "compact", "tight" ] + 17*[ "normalinfo" ]
     display_options = [ "normalinfo" ]
     notation_options = [ "snfg", "cfg" ]
 if args.nolinkage:
-    display_options = [ "normal", "compact", "tight" ]
+    if args.program == "Glycowork":
+        display_options = [ "normal", "compact" ]
+    else:
+        display_options = [ "normal", "compact", "tight" ]
     # notation_options = [ "snfg", "cfg", "" ]
-opaque_options = [ True, False ]
 
 # used by linkinfo randomization
 anomer_options = [ " ", "?", "a", "a", "b", "b" ]
@@ -141,6 +156,7 @@ for j in range(iterations):
     imageWriter.set('display',random.choice(display_options))
     #imageWriter.set('opaque',random.choice(opaque_options))
     imageWriter.set('format',mode)
+    imageWriter.set('program',args.program)
     imageWriter.force(True)
     # imageWriter.verbose(True)
 
@@ -240,6 +256,24 @@ for j in range(iterations):
 
         imageWriter.writeImage(seq,outfile)
 
+        if mode == "png":
+            # dummy out the imageWriter aspects of the semantics file...
+            with open(outfile.rsplit('.',1)[0]+"_map.txt",'w') as wh:
+                 for k in ('scale','reducing_end','orientation','notation','display','opaque','program'):
+                     print("# "+k+":",imageWriter.get(k),file=wh)
+                 print("# orig_accession:",acc,file=wh)
+                 print("# orig_composition:",comp,file=wh)
+                 gly_iupac = ip.toStr(gly)
+                 print("# orig_iupac:",gly_iupac,file=wh)
+                 topo_iupac = ip.toStr(topo(gly))
+                 print("# orig_topo:",topo_iupac,file=wh)
+                 print("# randmode:",randmode,file=wh)
+            print(outputcount+1,acc1,file=sys.stderr)
+            monofreq.add(comp)
+            count += 1
+            outputcount += 1
+            continue
+
         #manipulate the SVG file...
         if imageWriter.get('display') == 'normalinfo':
             if randmode == "linkinfo":
@@ -303,7 +337,7 @@ for j in range(iterations):
                    mapfiledata[i] = "\t".join(sl)
                    break
         wh = open(mapfile,'w')
-        for k in ('scale','reducing_end','orientation','notation','display','opaque'):
+        for k in ('scale','reducing_end','orientation','notation','display','opaque','program'):
             print("# "+k+":",imageWriter.get(k),file=wh)
         print("# orig_accession:",acc,file=wh)
         print("# orig_composition:",comp,file=wh)
