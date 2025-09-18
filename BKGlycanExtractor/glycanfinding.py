@@ -114,13 +114,14 @@ class KnownGlycanBoxes(KnownFinder,GlycanFinder):
         
 # handles one/many glycans
 # Still need to work on this 
-class CleanGlycanImage(GlycanFinder):
+class CleanGlycanImage(Finder,GlycanFinder):
 
     def __init__(self,**kwargs):
         Finder.__init__(self)
         GlycanFinder.__init__(self)
 
     def find_boxes(self, obj):
+        raise NotImplementedError
         # print("\nCLEAN IMAGE")
         boxes = []
         for gly in obj.glycans():
@@ -143,16 +144,11 @@ class CleanGlycanImage(GlycanFinder):
         return boxes
 
     def find_objects(self, obj):
-        boxes = self.find_boxes(obj)
         for gly in obj.glycans():
-            gly_id = gly.get('id')
-
-            for box_details in boxes:
-                if box_details['id'] == gly_id:
-                    gly.set_image(box_details['image'])
-                    gly.set('extracted_image', box_details['extracted_image'])
-                    # gly.set("cleaned_image_dimensions",box_details['cleaned_image_dimensions'])
-                    # gly.set("box", box_details['box'])
+            img = gly.image()
+            cropped_img, cleaned_img = self.process_image(img)
+            gly.set_image(cleaned_img)
+            gly.set('extracted_image',img)
                     
         return obj.glycans()
 
