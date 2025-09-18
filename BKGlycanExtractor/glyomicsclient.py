@@ -1,10 +1,13 @@
 
-__all__ = [ "ExtractorClient", "ExtractorDevClient", "BadTaskIDError" ]
+__all__ = [ "ExtractorClient", "ExtractorDevClient", "BadTaskIDError", "GlyLookupClient" ]
 
 import sys, os, glob, json
 import requests, time
 
 class APISubmitError(RuntimeError):
+    pass
+
+class APINoResponse(RuntimeError):
     pass
 
 class APIUnfinishedError(RuntimeError):
@@ -17,7 +20,7 @@ class APIFrameworkClient:
 
     apiurl = 'http://localhost:10980'
     port = None
-    developer_email = None
+    developer_email="nje5+glyomicsclient_module@georgetown.edu"
     max_retrieve_wait = 300
     nocache = False
     status_callback = None
@@ -61,19 +64,24 @@ class APIFrameworkClient:
             if response is not None:
                 return response
             time.sleep(self._interval)
+        raise APINoResponse
 
     def retrieve(self, task_id):
         for i in range(self._max_retry_for_unfinished_task):
             time.sleep(self._interval)
             try:
-                res = self.get_job_status(task_id)
+                res = self.status(task_id)
                 return res
             except APIUnfinishedError as e:
                 if self._statusfn is not None:
                     self._statusfn(*e.args) 
                 continue
+            except APINoResponse:
+                continue
             except KeyError:
                 raise BadTaskIDError(task_id) from None
+            except ValueError:
+                continue
                 
         raise APIUnfinishedError("The task %s is not finished yet" % task_id)
 
@@ -101,37 +109,94 @@ class APIFrameworkClient:
             raise APIUnfinishedError(task_id,res["state"],res["status"])
         return self.retrieve_once(task_id)
 
-    def retrieve_once(self, task_id):
+    def retrieve_once(self, task_id, asis=False):
         param = {"task_id": task_id }
         try:
             res2 = self.request("retrieve", param)
+            if res2 is None:
+                raise ValueError("No response")
             res2json = res2.json()[0]
         except:
             raise
-        if not res2json[u"finished"]:
-            raise APIUnfinishedError("The task %s is not finished yet" % task_id)
+        if not res2json[u"finished"] and not asis:
+            raise APIUnfinishedError(task_id,"NotComplete","The task %s is not finished yet" % task_id)
         return res2json
+    
+    def status(task_id):
+        return self.retreive_once(task_id)
+
+class GlyLookupClient(APIFrameworkClient):
+    apiurl="http://glylookup.glyomics.org"
+    request_interval=1
+
+    def get_accession_for_sequence(self,seq):
+        data = self.get(task=dict(seq=seq))
+        if len(data['result']) == 0:
+            return None
+        return data['result'][0]['accession']
 
 class ExtractorClient(APIFrameworkClient):
-    developer_email="nje5@georgetown.edu"
     request_interval=5
     max_retrieve_wait = 1200
     apiurl="https://extractor.glyomics.org"
 
-    def submit_manuscript_url(self,url):
-        task = dict(fileType="multi_figure_pdf",fileURL=url)
+    def status(self,taskid):
+        return self.get_job_status(taskid)
+
+    def submit_url(self,mode,url):
+        assert mode in ("multi_figure_pdf",
+                        "multi_figure_img",
+                        "single_figure_img")
+        task = dict(fileType=mode,fileURL=url)
         return self.submit(task=task,request="file_upload")
+    
+    def submit_file(self,mode,filename):
+        assert mode in ("multi_figure_pdf",
+                        "multi_figure_img",
+                        "single_figure_img")
+        task = dict(fileType=mode)
+        return self.submit(task=task,request="file_upload",files=dict(file=filename))
+
+    def submit_manuscript_url(self,url):
+        return self.submit_url("multi_figure_pdf",url)
 
     def analyze_manuscript_url(self,url):
         taskid = self.submit_manuscript_url(url)
         return self.retrieve(taskid)
-
+    
     def submit_manuscript_file(self,filename):
-        task = dict(fileType="multi_figure_pdf")
-        return self.submit(task=task,request="file_upload",files=dict(file=filename))
-
+        return self.submit_file("multi_figure_pdf",filename)
+    
     def analyze_manuscript_file(self,filename):
         taskid = self.submit_manuscript_file(filename)
+        return self.retrieve(taskid)
+    
+    def submit_multiglycanimg_url(self,url):
+        return self.submit_url("multi_figure_img",url)
+
+    def analyze_multiglycanimg_url(self,url):
+        taskid = self.submit_multiglycanimg_url(url)
+        return self.retrieve(taskid)
+    
+    def submit_multiglycanimg_file(self,filename):
+        return self.submit_file("multi_figure_img",filename)
+    
+    def analyze_multiglycanimg_file(self,filename):
+        taskid = self.submit_multiglycanimg_file(filename)
+        return self.retrieve(taskid)
+    
+    def submit_singleglycanimg_url(self,url):
+        return self.submit_url("single_figure_img",url)
+
+    def analyze_singleglycanimg_url(self,url):
+        taskid = self.submit_singleglycanimg_url(url)
+        return self.retrieve(taskid)
+    
+    def submit_singleglycanimg_file(self,filename):
+        return self.submit_file("single_figure_img",filename)
+    
+    def analyze_singleglycanimg_file(self,filename):
+        taskid = self.submit_singleglycanimg_file(filename)
         return self.retrieve(taskid)
     
     @staticmethod
