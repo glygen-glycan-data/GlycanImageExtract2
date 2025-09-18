@@ -1,7 +1,7 @@
 
 from . glycanannotator import Config_Manager, GlycanExtractorPipeline, Config
 from . image_manager import Image_Manager, Image_Data
-from . semantics import GlycanSemantics, MonoSemantics, RootSemantics, UndirectedLinkSemantics
+from . semantics import GlycanSemantics, FigureSemantics, MonoSemantics, RootSemantics, UndirectedLinkSemantics
 from . model_evaluator import *
 from . debug_methods import DebugMode
 from . json_logger import log_data
