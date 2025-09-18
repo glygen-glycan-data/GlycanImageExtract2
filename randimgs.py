@@ -1,7 +1,7 @@
 #!.venv/bin/python
 from __future__ import print_function
 
-import sys, os, random, time, re, shutil, traceback
+import sys, os, random, time, re, shutil, traceback, cv2
 from collections import defaultdict
 import findpygly
 from pygly.GlycanImage import GlycanImage
@@ -258,7 +258,11 @@ for j in range(iterations):
 
         if mode == "png":
             # dummy out the imageWriter aspects of the semantics file...
+            image = cv2.imread(outfile)
+            height, width, _ = image.shape
             with open(outfile.rsplit('.',1)[0]+"_map.txt",'w') as wh:
+                 print("##### WHOLEIMAGE: %s x %s (height x width)"%(height,width),file=wh)
+                 print("### GLYCAN: %s %s %s %s (bbox: x y w h)"%(0,0,width,height),file=wh)
                  for k in ('scale','reducing_end','orientation','notation','display','opaque','program'):
                      print("# "+k+":",imageWriter.get(k),file=wh)
                  print("# orig_accession:",acc,file=wh)
@@ -336,7 +340,11 @@ for j in range(iterations):
                    sl[3] = "?"
                    mapfiledata[i] = "\t".join(sl)
                    break
+        image = cv2.imread(pngfile)
+        height, width, _ = image.shape
         wh = open(mapfile,'w')
+        print("##### WHOLEIMAGE: %s x %s (height x width)"%(height,width),file=wh)
+        print("### GLYCAN: %s %s %s %s (bbox: x y w h)"%(0,0,width,height),file=wh)
         for k in ('scale','reducing_end','orientation','notation','display','opaque','program'):
             print("# "+k+":",imageWriter.get(k),file=wh)
         print("# orig_accession:",acc,file=wh)
