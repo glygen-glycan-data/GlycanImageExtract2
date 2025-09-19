@@ -23,7 +23,8 @@ from shutil import copyfile
 class JobInstance:
 
     pipeline_mapping = {
-        'Single-Glycan Image': 'SingleGlycanImage-YOLOFinders',
+        'Simple Glycan Image': 'SingleGlycanImage-YOLOFinders',
+        # 'Single-Glycan Image': 'SingleGlycanImage-YOLOFinders',
         'Multi-Glycan Image': 'MultipleGlycanImage-YOLOFinders',
         'Manuscript': 'MultipleGlycanImage-YOLOFinders'
     }
