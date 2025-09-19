@@ -1,0 +1,99 @@
+<!-- example_cards are obtained from flask-->
+
+{% extends "base.html" %}
+
+{% block head %}
+<style>
+.table-container {
+    overflow-x: auto;
+    width: 100%;
+    max-width: 100%;
+    border: 1px solid #dee2e6;
+    border-radius: 0.25rem;
+}
+
+.job-table {
+    table-layout: fixed;
+    width: 100%;
+    min-width: 900px; /* Only minimum width, not fixed width */
+    margin: 0;
+}
+
+.job-table th:nth-child(1) { width: 15%; min-width: 180px; }
+.job-table th:nth-child(2) { width: 30%; min-width: 450px; }
+.job-table th:nth-child(3) { width: 20%; min-width: 180px; }
+.job-table th:nth-child(4) { width: 35%; min-width: 90px; }
+
+.job-table td {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding: 8px;
+}
+
+.job-table td:nth-child(2) {
+    white-space: normal;
+}
+
+</style>
+<script>
+    async function loadJobs() {
+        try {
+    const response = await fetch("{{urlprefix}}/api/recent_jobs");;
+    const jobs = await response.json();
+
+    const container = document.getElementById('jobs-container');
+    
+    container.innerHTML = `
+    <button id="refreshBtn" class="btn btn-secondary float-right" 
+    onclick="loadJobs()" style="margin-bottom:10px">
+        Refresh
+    </button>
+
+    <div class="table-container">
+        <table class="job-table" border="1" style="border-collapse: collapse;">
+            <thead>
+                <tr>
+                <th>Timestamp</th>
+                <th>Results</th>
+                <th>Type</th>
+                <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${jobs.map((job, index) => `<tr>
+                <td>${job.submit_time_local}</td>
+                <td><a href="{{urlprefix}}/result/${job.id}" target="_blank">${job.submission_detail.original_file_name}</a></td>
+                <td>${job.submission_type}</td>
+                <td class="text-truncate" title="${job.status || job.state}">${job.status || job.state}</td>
+                </tr>`).join('')}
+            </tbody>
+        </table>
+    </div>
+    `;
+        } catch (err) {
+            console.log("No jobs were submitted recently...", err)
+            document.getElementById('jobs-container').innerHTML = 'No jobs were submitted recently...'
+        }
+    }
+
+    document.addEventListener("DOMContentLoaded", loadJobs);
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid d-flex flex-column">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{urlprefix}}/">Home</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Recent Submissions</li>
+        </ol>
+
+        <div id="jobs-container"></div>
+        
+      </nav>
+</div>
+{% endblock %}
+

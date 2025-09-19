@@ -1,0 +1,162 @@
+header.navbar .navbar-title {
+  display: flex !important;
+  align-items: center !important;
+  gap: 1rem !important;
+  position: relative !important; /* Reset positioning */
+  padding: 0px !important;
+}
+
+header.navbar .navbar-title h1 {
+  margin: 0 !important;
+  flex: 1 !important;
+  position: relative !important; /* Reset positioning */
+  z-index: 1 !important; /* Lower than hamburger */
+}
+
+header.navbar #sidebarToggle {
+  font-size: 1.5rem !important;
+  padding: 0.5rem !important;
+  z-index: 2 !important; /* Higher than title */
+  flex-shrink: 0 !important;
+  border: none !important;
+  background: none !important;
+  color: white !important;
+  cursor: pointer !important;
+  margin-right: 0 !important;
+  position: relative !important; /* Reset positioning */
+  float: none !important; /* Remove any float */
+  display: inline-block !important;
+}
+
+.navbar-title {
+  display: flex;
+  align-items: center;
+  gap: 1rem; /* Consistent distance between hamburger and title */
+}
+
+.navbar-title h1 {
+  margin: 0; /* Remove default margin from h1 */
+  flex: 1; /* Allow title to take remaining space */
+}
+
+#sidebarToggle {
+  font-size: 1.5rem;
+  padding: 0.5rem;
+  z-index: 1060;
+  flex-shrink: 0; /* Prevent hamburger from shrinking */
+  border: none;
+  background: none;
+  color: white;
+  cursor: pointer;
+}
+
+#sidebarToggle:hover {
+  color: #adb5bd;
+}
+
+.site-name {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+}
+
+.site-name:hover {
+  /* color: #007bff; */
+  transform: scale(1.01);
+  color: white !important;
+}
+
+.breadcrumb {
+    background-color: rgba(255, 254, 254, 0);
+    margin-top: 5px;
+    font-size: 18px;
+}
+
+/* .breadcrumb {
+    background-color: white;
+    width: fit-content;
+    align-self: flex-start; 
+} */
+
+.card {
+    border: none;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+    background-color: rgb(243 245 245);
+}
+
+.card:hover {
+    background-color: rgb(230, 232, 232);
+    cursor: pointer;
+}
+
+
+  /* Grid holding the cards */
+.card-grid {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+}
+
+  /* Clickable card */
+.card-redirect {
+    width: 15rem;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    border: 1px solid #dee2e6;
+}
+
+.card-redirect:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 18px rgba(0,0,0,0.12);
+    border-color: #007bff;
+}
+
+  /* Card body + icon styling */
+.card-redirect .card-body {
+    text-align: center;
+    padding: 1.25rem 1rem;
+}
+
+/* .card-redirect .card-body i {
+    font-size: 2rem;
+    color: #6c757d;
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+.card-redirect:hover .card-body i {
+    color: #007bff;
+} */
+
+
+.card-redirect .card-body .card-icon {
+  width: 2rem;
+  height: 2rem;
+  margin-bottom: 0.5rem;
+  display: block;
+  margin: auto;
+  /* color: #6c757d; */
+}
+
+
+.sidebar-icon {
+  width: 1.5rem;
+  height: 2rem;
+  margin-top: 0.5rem;
+  /* display: block; */
+  /* margin: auto; */
+}
+
+/* .sidebar-icon {
+  margin-right: 0.5rem;
+  vertical-align: middle;
+  width: 20px;
+  height: 20px;
+} */
+
+
+
+
+
+
+

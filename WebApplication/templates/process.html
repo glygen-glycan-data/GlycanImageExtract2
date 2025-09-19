@@ -1,0 +1,392 @@
+<!-- submission_type is receieved from the url param -->
+{% extends "base.html" %}
+
+{% block head %}
+<style>
+  #fileType label.btn {
+      flex: 1 1 0; /* Force equal growth */
+      cursor: pointer;
+  }
+  
+  .upload-card {
+      border: none;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      border-radius: 10px;
+      min-height: 60vh; /* Make card taller for better centering */
+  }
+  
+  /* .card-body {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      min-height: 50vh; 
+  } */
+  
+  .upload-area {
+      border: 2px dashed #dee2e6;
+      border-radius: 10px;
+      padding: 40px 20px;
+      text-align: center;
+      transition: all 0.3s ease;
+      background: #f8f9fa;
+      /* margin: 20px auto;  */
+      /* max-width: 500px;  */
+      width: 70%;
+  }
+  
+  .upload-area:hover {
+      border-color: #007bff;
+      background-color: #e3f2fd;
+  }
+  
+  .upload-area.dragover {
+      border-color: #007bff;
+      background-color: #e3f2fd;
+      transform: scale(1.02);
+  }
+  
+  .file-input-wrapper {
+      position: relative;
+      display: inline-block;
+      width: auto; /* Remove full width */
+      margin: 0 auto; /* Center the wrapper */
+  }
+  
+  .file-input-wrapper input[type=file] {
+      position: absolute;
+      left: -9999px;
+  }
+  
+  .file-input-label {
+      display: inline-block;
+      padding: 8px 20px; /* Smaller padding */
+      background: #007bff;
+      color: white;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      width: auto; /* Remove full width */
+      text-align: center;
+      font-size: 14px; /* Smaller font */
+  }
+  
+  .file-input-label:hover {
+      background: #0056b3;
+      transform: translateY(-2px);
+  }
+  
+  .form-group {
+      margin-bottom: 20px;
+      max-width: 500px; /* Limit width for centering */
+      margin-left: auto;
+      margin-right: auto;
+  }
+  
+  .form-control {
+      border-radius: 6px;
+      border: 1px solid #ced4da;
+      padding: 12px 16px;
+      transition: all 0.3s ease;
+  }
+  
+  .form-control:focus {
+      border-color: #007bff;
+      box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+  }
+  
+  .btn-secondary {
+      /* background: linear-gradient(135deg, #28a745 0%, #20c997 100%); */
+      border: none;
+      padding: 8px 24px; /* Smaller padding */
+      font-size: 14px; /* Smaller font */
+      font-weight: 600;
+      border-radius: 6px;
+      transition: all 0.3s ease;
+      width: auto; /* Remove full width */
+      margin: 20px auto 0; /* Center horizontally */
+      display: block; /* Make it a block element for centering */
+  }
+  
+  .btn-submit:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+  }
+  
+  .file-info {
+      background: #e9ecef;
+      border-radius: 6px;
+      padding: 10px;
+      margin: 10px auto 0; /* Center horizontally */
+      display: none;
+      max-width: 500px; /* Limit width */
+  }
+  
+  .file-info.show {
+      display: block;
+  }
+  
+  .method-tabs {
+      max-width: 600px; /* Limit width for centering */
+      margin: 0 auto 20px; /* Center the tabs */
+  }
+  
+  .method-tabs .btn {
+      border-radius: 6px 6px 0 0;
+      margin-right: 2px;
+  }
+  
+  .method-tabs .btn.active {
+      background: #007bff;
+      color: white;
+      border-color: #007bff;
+  }
+  
+  /* Center all form content */
+  #fileUploadField,
+  #urlInputField,
+  #photoField {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+  }
+  
+  #urlInputField,
+  #photoField {
+      display: none;
+  }
+  
+  #urlInputField.show,
+  #photoField.show {
+      display: flex;
+  }
+
+  #urlInputField h5 {
+    margin-top: 0;
+    margin-bottom: 0.5rem;
+}
+</style>
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const labels = document.querySelectorAll('#fileType label');
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('file');
+        const fileInfo = document.getElementById('fileInfo');
+
+        function switchField(value) {
+            // Hide all fields first
+            document.getElementById("fileUploadField").style.display = "none";
+            document.getElementById("urlInputField").style.display = "none";
+            // document.getElementById("photoField").style.display = "none";
+
+            // Show only the selected field
+            if (value === "file") {
+                document.getElementById("fileUploadField").style.display = "flex";
+            } else if (value === "url") {
+                document.getElementById("urlInputField").style.display = "flex";
+            } 
+            // else if (value === "photo") {
+            //   document.getElementById("photoField").style.display = "flex";
+            // }
+        }
+
+        labels.forEach(label => {
+        label.addEventListener("click", () => {
+            labels.forEach(l => l.classList.remove("active"));
+            label.classList.add("active");
+            const input = label.querySelector('input[name="fileType"]');
+            if (input) {
+                input.checked = true;
+                switchField(input.value);
+                }
+            });
+        });
+
+
+        const checked = document.querySelector('input[name="fileType"]:checked');
+        if (checked) switchField(checked.value);
+
+        // Drag and drop functionality
+        if (uploadArea) {
+            uploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadArea.classList.add('dragover');
+            });
+
+            uploadArea.addEventListener('dragleave', () => {
+                uploadArea.classList.remove('dragover');
+            });
+
+            uploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadArea.classList.remove('dragover');
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    fileInput.files = files;
+                    updateFileInfo(files[0]);
+                }
+            });
+
+            // uploadArea.addEventListener('click', () => {
+            //     fileInput.click();
+            // });
+        }
+
+        // File input change handler
+        if (fileInput) {
+            fileInput.addEventListener('change', (e) => {
+                if (e.target.files.length > 0) {
+                    updateFileInfo(e.target.files[0]);
+                }
+            });
+        }
+
+        function updateFileInfo(file) {
+                const fileInfo = document.getElementById('fileInfo');
+                if (fileInfo) {
+                    fileInfo.innerHTML = `
+                        <strong>Selected file:</strong> ${file.name}<br>
+                    `;
+                    fileInfo.classList.add('show');
+                }
+            }
+        });
+    
+        // Form validation and submit via AJAX
+        function validateForm() {
+            const submission_type = "{{ submission_type }}".trim();
+            const uploadOption = document.querySelector('input[name="fileType"]:checked').value;
+            const allowedFormats = {
+                'Manuscript': ['pdf'],
+                'Multi-Glycan Image': ['png', 'jpg', 'jpeg'],
+                'Single-Glycan Image': ['png', 'jpg', 'jpeg']
+            };
+        
+            if (!allowedFormats.hasOwnProperty(submission_type)) {
+                alert("Invalid submission type: " + submission_type);
+                return false;
+            }
+        
+            if (uploadOption === 'file') {
+                const fileInput = document.getElementById('file');
+                if (!fileInput.files.length) { alert('Please upload a file.'); return false; }
+                const ext = fileInput.files[0].name.split('.').pop().toLowerCase();
+                if (!allowedFormats[submission_type].includes(ext)) {
+                alert(`Invalid file format. Allowed: ${allowedFormats[submission_type].join(', ')}`); return false;
+                }
+            } else {
+                const urlInput = document.getElementById('fileURL').value.trim();
+                if (!urlInput) { alert('Please enter a URL.'); return false; }
+                const ext = urlInput.split('?')[0].split('.').pop().toLowerCase();
+                if (!allowedFormats[submission_type].includes(ext)) {
+                alert(`Invalid URL format. Allowed: ${allowedFormats[submission_type].join(', ')}`); return false;
+                }
+            }
+        
+            const formData = new FormData(document.getElementById('inputform'));
+            formData.append('submission_type', submission_type);
+            
+            jQuery.ajax({
+                type: 'POST',
+                url: '{{urlprefix}}/file_upload',
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function(response) {
+                if (response) window.location = '{{urlprefix}}/result/' + response[0]['id'];
+                },
+                error: function(xhr, status, error) { console.error('AJAX error:', status, error); }
+            });
+            return false;
+        }
+        
+  </script>
+
+{% endblock %}
+
+
+{% block content %}
+<div class="container-fluid d-flex flex-column">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb bg-white">
+            <li class="breadcrumb-item"><a href="{{urlprefix}}/">Home</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{submission_type}}</li>
+        </ol>
+    </nav>
+
+    <div class="upload-container">
+        <div class="card upload-card">
+            <div class="card-body">
+                <form id="inputform" onsubmit="return validateForm()">
+                    <!-- Upload Method Selection -->
+                    <div id="fileType" class="method-tabs d-flex w-100 mb-4" data-toggle="buttons">
+                        <label class="btn btn-outline-secondary flex-fill text-center active">
+                          <input type="radio" name="fileType" value="file" autocomplete="off" checked> 
+                          <!-- <i class="fas fa-upload mr-2"></i> -->
+                          Upload File
+                        </label>
+                        <label class="btn btn-outline-secondary flex-fill text-center">
+                          <input type="radio" name="fileType" value="url" autocomplete="off"> 
+                          <!-- <i class="fas fa-link mr-2"></i> -->
+                          Paste URL
+                        </label>
+                        <!-- <label class="btn btn-outline-secondary flex-fill text-center">
+                          <input type="radio" name="fileType" value="photo" autocomplete="off"> 
+                          <i class="fas fa-camera mr-2"></i>Take Photo
+                        </label> -->
+                    </div>
+
+                    <!-- File Upload Field -->
+                    <div id="fileUploadField">
+                        <div class="upload-area" id="uploadArea">
+                            <!-- <i class="fas fa-cloud-upload-alt fa-3x text-muted mb-3"></i> -->
+                            <img src="{{urlprefix}}/static/images/upload.svg">
+                            <h5>Drag & Drop your file here</h5>
+                            <p class="text-muted">or</p>
+                            <div class="file-input-wrapper">
+                                <label for="file" class="file-input-label">
+                                    <!-- <i class="fas fa-folder-open mr-2"></i> -->
+                                    <img src="{{urlprefix}}/static/images/folder.svg">
+                                    Browse Files
+                                </label>
+                                <input type="file" name="file" id="file"/>
+                            </div>
+
+                            <div id="fileInfo" class="file-info"></div>
+                        </div>
+                    </div>
+
+                    <!-- URL Input Field -->
+                    <div id="urlInputField" style="display: none;">
+                      <div class="upload-area">
+                        <div class="form-group">
+                          <!-- <label for="fileURL" class="form-label">Document URL</label> -->
+                          <!-- <i class="fas fa-link fa-3x text-muted mb-3"></i> -->
+                          <img src="{{urlprefix}}/static/images/link.svg">
+                          <h5>URL</h5>
+                          <input type="url" name="fileURL" id="fileURL" class="form-control" 
+                                 placeholder="https://example.com/document.pdf" />
+                        </div>
+                      </div>
+            
+                    </div>
+
+                    <!-- Photo Field -->
+                    <!-- <div id="photoField" style="display: none;">
+                        <div class="form-group">
+                            <label for="photoInput" class="form-label">Take Photo</label>
+                            <input type="file" name="photo" id="photoInput" class="form-control" 
+                                   accept="image/*" capture="camera" />
+                        </div>
+                    </div> -->
+
+                    <button type="submit" class="btn btn-secondary">
+                        <!-- <i class="fas fa-paper-plane mr-2"></i> -->
+                        Submit
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

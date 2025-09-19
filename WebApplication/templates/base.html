@@ -10,7 +10,12 @@
         <div id="site-wrapper">
             <div id="site-canvas">
                 {% include 'banner.html' %}
-                <div id="main-content" style="margin-top: 60px;">
+
+                <!-- Left Sidebar -->
+                {% include 'sidebar.html' %}
+
+
+                <div id="main-content" style="margin-top: 20px;">
                     <main>
                       <section class="container" aria-label="Primary content">
                         {% block content %}{% endblock %}

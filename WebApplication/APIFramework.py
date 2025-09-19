@@ -98,9 +98,11 @@ class APIFramework:
         self._home_html = None
 
         self._examples_html = "examples.html"
-        self._abstract_html = "abstract.html"
+        # self._abstract_html = "abstract.html"
         self._result_html = "result.html"
-        self._recent_jobs = 'recent_jobs.html'
+        self._jobs_html = 'jobs.html'
+        self._process_html = 'process.html'      # page which lets you submit your file/url
+
 
         self._file_upload_finished_html = None
 
@@ -282,6 +284,33 @@ class APIFramework:
         else:
             return flask.render_template(self._home_html, urlprefix=self._prefix, **kwargs)
 
+    def process(self):
+        submission_type = flask.request.args.get("type")
+        return flask.render_template(self._process_html, submission_type=submission_type, urlprefix=self._prefix)
+
+    def examples(self):
+
+        example_cards = [
+            {"title": "Atfa Sassi et al", "desc": "", "url": f"{self._prefix}/result/mgp1", "icon": f"{self._prefix}/static/images/pdf.svg" },
+            {"title": "Elizabeth Mcleod", "desc": "", "url": f"{self._prefix}/result/mgp3", "icon": f"{self._prefix}/static/images/pdf.svg"},
+            {"title": "Simple PDF", "desc": "", "url": f"{self._prefix}/result/mgp2", "icon": f"{self._prefix}/static/images/pdf.svg" },
+            {"title": "Multi Glycan Figure", "desc": "", "url": f"{self._prefix}/result/mgi1", "icon": f"{self._prefix}/static/images/multi-image.svg" },
+            {"title": "Multi Glycan Example", "desc": "", "url": f"{self._prefix}/result/mgi2", "icon": f"{self._prefix}/static/images/multi-image.svg" },
+            {"title": "Multiple Glycans", "desc": "", "url": f"{self._prefix}/result/mgi3", "icon": f"{self._prefix}/static/images/multi-image.svg" },
+            {"title": "Simple Glycan Image", "desc": "", "url": f"{self._prefix}/result/sgi1", "icon": f"{self._prefix}/static/images/single-image.svg"},
+            {"title": "Simple Glycan Page", "desc": "", "url": f"{self._prefix}/result/sgi2", "icon": f"{self._prefix}/static/images/single-image.svg" },
+            {"title": "Simple Glycan", "desc": "", "url": f"{self._prefix}/result/sgi3", "icon": f"{self._prefix}/static/images/single-image.svg" },
+        ]
+        
+        return flask.render_template(self._examples_html, example_cards=example_cards, urlprefix=self._prefix)
+
+
+    def jobs(self):
+        return flask.render_template(self._jobs_html, urlprefix=self._prefix)
+
+    # def about(self):
+    #     return flask.render_template("about.html", urlprefix=self._prefix)
+
     def file_upload_finished_page(self, **kwargs):
         if self._file_upload_finished_html is None:
             return flask.jsonify("Not Implemented")
@@ -335,14 +364,13 @@ class APIFramework:
             for tid in map(lambda t: t[0], sorted(self.session_task_list[sid], key=lambda t: -t[1])[:10]):
                 task1 = dict((k, v) for k, v in self.get_result(tid).items() if k != 'result')
 
-
-                task1['job_status'] = "{{urlprefix}}/get_job_status/" + tid
+                task1['job_status'] = f"{self._prefix}/get_job_status/{tid}"
 
                 # Convert timestamp to readable datetime
                 ts = task1.get("submit_time")
                 if ts:
                     dt = datetime.fromtimestamp(ts).astimezone()
-                    task1["submit_time_local"] = dt.strftime("%B %d, %Y at %I:%M %p %Z")
+                    task1["submit_time_local"] = dt.strftime("%m/%d/%Y %H:%M")
                 else:
                     task1["submit_time_local"] = "N/A"
                 recent_jobs.append(task1)
@@ -464,10 +492,10 @@ class APIFramework:
             if 'task' in flask.request.form:
                 task = json.loads(flask.request.form.get('task'))
                 file_url = task.get('fileURL')
-                file_type = task.get('fileType')
+                submission_type = task.get('submission_type')
             else:
                 file_url = flask.request.form.get('fileURL')
-                file_type = flask.request.form.get('fileType')
+                submission_type = flask.request.form.get('submission_type')
             # pipeline_name = flask.request.form.get('fileType')
             
             # print("FILE", file, file_type)
@@ -495,7 +523,7 @@ class APIFramework:
             sessionid = self.get_session()
 
             # Create task details
-            task_detail = self.form_task({"original_file_name": filename, "file_type": file_type})
+            task_detail = self.form_task({"original_file_name": filename, "submission_type": submission_type})
             list_id = task_detail["id"]
             file_dir = os.path.join(self.input_file_folder(), list_id)
             os.makedirs(file_dir, exist_ok=True)
@@ -533,7 +561,7 @@ class APIFramework:
                 "state": self.QUEUED,
                 "status": "",
                 "finished": False,
-                "file_type": file_type,
+                "submission_type": submission_type,
                 "submit_time": time.time(),
                 "sessionid": sessionid,
                 "result": {}
@@ -652,9 +680,11 @@ class APIFramework:
         self._flask_app.add_url_rule("/get_job_status", "get_job_status", self.get_job_status, methods=["GET", "POST"])
         self._flask_app.add_url_rule("/get_job_status/<tid>", "get_job_status", self.get_job_status, methods=["GET", "POST"])
         self._flask_app.add_url_rule("/api/recent_jobs", "get_recent_jobs_api", self.get_recent_jobs_api, methods=["GET"])
+        self._flask_app.add_url_rule("/process", "process", self.process, methods=["GET"])
+        self._flask_app.add_url_rule("/examples", "examples", self.examples, methods=["GET"])
+        self._flask_app.add_url_rule("/jobs", "jobs", self.jobs, methods=["GET"])
 
         if self._file_based_job:
-            print("Got the functions")
             self._flask_app.add_url_rule("/file_upload", "upload_file", self.upload_file, methods=["GET", "POST"])
             self._flask_app.add_url_rule("/file_download", "download_file", self.download_file, methods=["GET", "POST"])
         else:

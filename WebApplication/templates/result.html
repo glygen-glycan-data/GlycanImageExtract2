@@ -1,5 +1,143 @@
 {% extends "base.html" %}
 {% block head %}
+
+<style>
+    /* Containers */
+    .result-list { 
+        display: flex; 
+        flex-wrap: wrap; 
+        /* width: 90%;  */
+        /* margin: 0 auto;  */
+    }
+
+    .table-container {
+        overflow-x: auto;
+        width: 100%;
+        max-width: 100%;
+        border: 1px solid #dee2e6;
+        border-radius: 0.25rem;
+    }
+
+    /* Heading + “pill” links */
+    .result-heading { 
+        font-size: 1.3rem; 
+        margin-top: 0; 
+    }
+
+    .pill-link {
+        background: #e8e3e3; 
+        font-weight: 400; 
+        border-radius: 20px;
+        padding: 1px 5px; 
+        /* text-decoration: none;  */
+        color: #007bff;
+    }
+
+    /* Figures */
+    .figure-wrap { 
+        position: relative; 
+        display: inline-block; 
+        max-width: 550px; 
+    }
+
+
+    .figure-img { 
+        max-width: 550px; 
+        width: auto; 
+        height: auto; 
+        display: block; 
+    }
+
+
+    /* Number badge over images */
+    .figure-badge {
+        position: absolute; 
+        top: 0; 
+        left: 0;
+        background: rgba(255, 0, 0, 0.8); 
+        color: #fff;
+        font-size: 8px; 
+        padding: 1px 2px; 
+        border-bottom-right-radius: 4px;
+    }
+
+    /* Table */
+    .result-table { 
+        border-collapse: collapse; 
+        text-align: center; 
+        background: #fff; 
+    }
+
+    .result-table th { 
+        color: #ffffff; 
+        background: #7c7d7d; 
+    }
+
+    .result-table td { 
+        vertical-align: middle; 
+    }
+
+    .result-table td:nth-child(1) { 
+        vertical-align: top; 
+    }
+
+    .result-table tr > td:nth-child(1) > .figure-badge {
+        padding: 2px 25px;
+        font-weight: bold;
+        font-size: 16px
+    }
+
+    /* Small buttons */
+    .small-btn { 
+        border: none; 
+        border-radius: 5px; 
+        cursor: pointer; 
+        padding: 2px 4px; 
+    }
+
+    .small-btn--dark { 
+        background: #7c7d7d; 
+        color: #fff; 
+    }
+
+    /* Copied toast */
+    .copied-toast { 
+        color: green; 
+        font-size: 12px; 
+        margin-top: 5px; 
+        text-align: center; 
+    }
+
+    /* Highlight on scroll */
+    .row-highlight { 
+        background-color: #f4f1e5; 
+        transition: background-color 0.3s; 
+    }
+
+    /* Vote area */
+    .vote-box { 
+        display: block; 
+        font-weight: 1000; 
+        /* vertical-align: middle;  */
+    }
+
+    .vote-updown { 
+        cursor: pointer; 
+        padding-bottom: 4px; 
+    }
+
+    /* Hide/show extracted panel */
+    #extracted { 
+        display: none; 
+    }
+
+    #extracted.show { 
+        display: block; 
+    }
+
+</style>
+
+
 <script>
     "use strict";
     let list_id = null;
@@ -89,296 +227,260 @@
         }
     }
 
-    function mark(figid,glyid,note) {
-       let markurl = "{{prefixurl}}/mark?resultid="+list_id+"&glycanid="+figid+"."+glyid+"&note="+note;
-       console.log(figid,glyid,note,markurl);
-       jQuery.getJSON(markurl, function (d) {
-         console.log(d);
-         if (d.status == "OK") {
-           let elt = document.getElementById("votes-"+figid+"-"+glyid);
-           let elt1 = document.getElementById("note-"+figid+"-"+glyid);
-           elt.innerHTML = d.upvotes + d.downvotes;
-           if (d.upvotes > 0) {
-               elt.style.color = "green";
-               elt1.innerHTML = "GOOD";
-           } else if (d.downvotes > 0) {
-               elt.style.color = "#ff3333";
-               elt1.innerHTML = "&nbsp;BAD&nbsp;";
-           } else {
-               elt.style.color = "black";
-               elt1.innerHTML = "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;";
-           }
-         }
-       });
+    function mark(figid, glyid, note) {
+        const markurl = "{{urlprefix}}/mark?resultid=" + list_id + "&glycanid=" + figid + "." + glyid + "&note=" + note;
+        jQuery.getJSON(markurl, function (d) {
+            if (d.status === "OK") {
+                const votesEl = document.getElementById("votes-" + figid + "-" + glyid);
+                const noteEl = document.getElementById("note-" + figid + "-" + glyid);
+                votesEl.innerHTML = d.upvotes + d.downvotes;
+                if (d.upvotes > 0) {
+                    votesEl.style.color = "green"; noteEl.innerHTML = "GOOD";
+                } else if (d.downvotes > 0) {
+                    votesEl.style.color = "#ff3333"; noteEl.innerHTML = "&nbsp;BAD&nbsp;";
+                } else {
+                    votesEl.style.color = "black"; noteEl.innerHTML = "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;";
+                }
+            }
+        });
     }
 
     function addDownloadButton(result) {
-        let alert_data = document.getElementById("alert_data");
-        let reselt = document.getElementById("result");
-        let div = document.getElementById("list_id");
+        const alert_data = document.getElementById("alert_data");
+        const reselt = document.getElementById("result");
+        const div = document.getElementById("list_id");
         div.style.backgroundColor = "#FFFFFF";
 
-        let location = result['location'] || "files";
-        var figures = result['result']['figure_result'];
-        var file_extension = result['submission_detail']['original_file_name'].split('.').pop();
+        const location = result['location'] || "files";
+        const figures = result['result']['figure_result'];
+        const file_extension = result['submission_detail']['original_file_name'].split('.').pop();
 
-        var alert_str = ""
-        var resstr = ""
+        let alert_str = "";
+        let resstr = "";
 
-        alert_data.innerHTML = alert_str
+        alert_data.innerHTML = alert_str;
 
-        // resstr += "<h3>Analysis complete. ("+calculation_time+" sec)<h3>\n<ul>";
-        resstr += "<h3 style='font-size:1.3rem;margin-top:0rem;'>Results: ";
-        // if (result.result.inputtype == "pdf") {
-        //     resstr += "<A target=\"_blank\" href=\"file_download?list_id="+list_id+"\">Annotated PDF</A>, "
-        //     }
-        resstr += "<span> <a style='background-color:#e8e3e3; font-weight:400; border-radius:20px; padding:1px 5px 1px 5px;' href=\"{{urlprefix}}/static/" + location + "/" + list_id + "/results.json" + "\" target=\"_blank\">JSON data</a> | </span> ";
-        if (file_extension == "pdf") {
-            // console.log("PDF",result.submission_detail)
-            resstr += "<span><a style='background-color:#e8e3e3; font-weight:400; border-radius:20px;padding:1px 5px 1px 5px;' target=\"_blank\" href=\"{{urlprefix}}/static/" + location + "/" + list_id + "/input/" + encodeURIComponent(result.submission_detail.original_file_name) + "\">Original PDF</a>"
+        // Heading + pill links
+        resstr += "<h3 class='result-heading'>Results: ";
+        resstr += "<span><a class='pill-link' href='{{urlprefix}}/static/" + location + "/" + list_id + "/results.json' target='_blank'>JSON data</a> | </span> ";
+        const originalHref = "{{urlprefix}}/static/" + location + "/" + list_id + "/input/" + encodeURIComponent(result.submission_detail.original_file_name);
+        if (file_extension === "pdf") {
+            resstr += "<span><a class='pill-link' target='_blank' href='" + originalHref + "'>Original PDF</a></span>";
         } else {
-            // console.log("result",result)
-            resstr += "<span><a style='background-color:#e8e3e3; font-weight:400; border-radius:20px;padding:1px 5px 1px 5px;' target=\"_blank\" href=\"{{urlprefix}}/static/" + location + "/" + list_id + "/input/" + encodeURIComponent(result.submission_detail.original_file_name) + "\">Original Image</a></span>"
+            resstr += "<span><a class='pill-link' target='_blank' href='" + originalHref + "'>Original Image</a></span>";
         }
-        // resstr += "<a style='background-color:#e8e3e3; font-weight:400; border-radius:20px;padding:1px 5px 1px 5px;' href=\"" + "{{urlprefix}}/result/" + list_id + "\">Bookmark</a></h3>";
-        if (result['state'] == "Error") {
+
+        resstr += "</h3>";
+        if (result['state'] === "Error") {
             resstr = "";
         }
+
         reselt.innerHTML = resstr;
 
-        document.getElementById("extracted").style = "display: block;";
-
-
-        var innerdiv = "<table style='border-collapse: collapse; text-align: center; background-color: #FFFFFF;'>";
-        innerdiv += "<tbody>"
+        // Show extracted panel
+        const extractedEl = document.getElementById("extracted");
+        if (extractedEl) {
+            extractedEl.style.display = "block";
+        }
+        
+        // <table class='result-table' style='border-collapse: collapse; text-align: center; background-color: #FFFFFF;'>
+        let innerdiv = `
+            <table class="table-container job-table result-table" border="1" style="border-collapse: collapse;">
+            <tbody>`;
 
         figures.forEach(function (figure, fig_id) {
-            var figure_image = figure['annotated_image_path']
-            var figure_width = figure['width']
-            var figure_height = figure['height']
-            
-            // 550: because max-width is set to 550px for each figure below
-            var scale = 1;
-            if (figure_width > 550) {
+        const figure_width = figure['width'];
+        // 550: because max-width is set to 550px for each figure below
+        let scale = 1;
+        if (figure_width > 550) {
             scale = 550 / figure_width;
-            }
-            // console.log("Figure", figure, "at index", fig_id);
+        }
 
-            // code to add the page_num, annotated figure
-            innerdiv += "<tr style='background-color:#7c7d7d;'>";
-            innerdiv += `<th colspan='3' style='color:#ffffff'; text-align: center;'> </th>`;
-            innerdiv += "</tr>";
+        // Header row (kept minimal)
+        innerdiv += "<tr style='background-color:#7c7d7d;'>";
+        innerdiv += "<th colspan='3' style='color:#ffffff; text-align:center;'></th>";
+        innerdiv += "</tr>";
 
-            innerdiv += `<tr>
+        // Annotated figure block
+        innerdiv += `
+            <tr>
             <td colspan='3' style='padding: 20px; text-align: center;'>
-                <div id="figure-${fig_id}" style="position: relative; display: inline-block; max-width: 550px;">
-                    <img 
-                        style="max-width: 550px; width: auto; height: auto; display: block;" 
-                        src='{{urlprefix}}/static/${location}/${list_id}/${figure.annotated_image_path}' />
+                <div id="figure-${fig_id}" class="figure-wrap">
+                <img class="figure-img" src='{{urlprefix}}/static/${location}/${list_id}/${figure.annotated_image_path}' />
+        `;
+
+        // Glycan overlays
+        const glycans = figure['glycans'] || [];
+        glycans.forEach(function (glycan, gly_idx) {
+            const [x, y, w, h] = glycan['bbox'];
+            const sx = x * scale, sy = y * scale, sw = w * scale, sh = h * scale;
+
+            innerdiv += `
+            <a href="#glycan-${fig_id}-${gly_idx + 1}" 
+                onclick="scrollAndHighlight('glycan-${fig_id}-${gly_idx + 1}', event)"
+                style="position:absolute; left:${sx}px; top:${sy}px; width:${sw}px; height:${sh}px; pointer-events:auto; cursor:pointer; box-sizing:border-box; text-decoration:none;">
+                <div class="figure-badge">${gly_idx + 1}</div>
+            </a>
             `;
-            
-            // using CSS based image overlay to display index values on the image
-            // instead of HTML image map, because CSS based overlays are easier to style and control and its easier to add custom styling like tooltips, hover, etc
-            var glycans = figure['glycans'] || []
-            glycans.forEach(function (glycan, gly_idx) {
-                var [x, y, w, h] = glycan['bbox'];
-
-                // Apply same scale as image
-                var sx = x * scale;
-                var sy = y * scale;
-                var sw = w * scale;
-                var sh = h * scale;
-
-                innerdiv += `
-                    <a href="#glycan-${fig_id}-${gly_idx+1}" 
-                    onclick="scrollAndHighlight('glycan-${fig_id}-${gly_idx + 1}', event)"
-                    style="position: absolute;
-                            left: ${sx}px;
-                            top: ${sy}px;
-                            width: ${sw}px;
-                            height: ${sh}px;
-                            pointer-events: auto;
-                            cursor: pointer;
-                            box-sizing: border-box;
-                            text-decoration: none;
-                    ">
-
-                        <div style="
-                            position: absolute;
-                            top: 0;
-                            left: 0;
-                            background: rgba(255, 0, 0, 0.8);
-                            color: white;
-                            font-size: 8px;
-                            padding: 1px 2px;
-                            border-bottom-right-radius: 4px;">
-                            ${gly_idx+1}
-                        </div>
-                    
-                    </a>`;
-                });
-
-                innerdiv += `</div></td></tr>`;
-
-                // var glycans = figure['glycans'] || []
-
-                if (glycans.length > 0) {
-                    innerdiv += "<tr style='background-color: #7c7d7d;'>";
-                    innerdiv += "<th style='color: #ffffff;text-align: center;'>#</th>";
-                    innerdiv += "<th style='color: #ffffff;text-align: center;'>Glycan Image</th>";
-                    innerdiv += "<th style='color: #ffffff; text-align: center;'>Extracted Structure</th>";
-                    innerdiv += "</tr>";
-
-
-                    glycans.forEach(function (glycan, gly_idx) {
-                        
-                        let color="black";
-                        let note="&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;";
-                        if ((glycan.upvotes || 0) > 0) {
-                            color = "green";
-                            note = "GOOD"
-                        } else if ((glycan.downvotes || 0) > 0) {
-                            color = "#ff3333";
-                            note = "&nbsp;BAD&nbsp;"
-                        } 
-                        let value = (glycan.upvotes || 0)+(glycan.downvotes || 0);
-        
-                        innerdiv += `<tr id=glycan-${fig_id}-${gly_idx+1}>`;
-                        innerdiv += `
-                            <td width="200px">
-                                <div onclick="scrollAndHighlight('glycan-${fig_id}-${gly_idx + 1}', event);" style="font-weight:bold; background: rgba(255, 0, 0, 0.8); cursor: pointer;
-                                color: white;padding: 1px 2px; border-bottom-right-radius: 4px;">
-                                ${gly_idx+1}
-                                </div>
-                                <div style="display: block; font-weight: 1000; vertical-align: middle;"><img style="cursor: pointer; padding-bottom: 4px;" width="15px" src="/static/images/up-arrow.svg" onclick="mark(${fig_id},${gly_idx},'upvote');"><span id="votes-${fig_id}-${gly_idx}" style="color:${color};">${value}</span><img style="cursor: pointer; padding-bottom: 4px;" width="15px" src="/static/images/down-arrow.svg" onclick="mark(${fig_id},${gly_idx},'downvote');"></div>
-                                <div id="note-${fig_id}-${gly_idx}" style="font-weight: 1000;">${note}</div>
-                            </td>
-                            <td style="vertical-align:middle;" width="50%">
-                                <div style="position: relative; display: inline-block; max-width: 550px;">
-                                    <img style="max-width: 300px; min-width: 90px; display: block; margin: auto;" 
-                                        src="{{urlprefix}}/static/${location}/${list_id}/${glycan.extracted_image_path}" 
-                                        alt="Glycan Image" />
-                            </td>`;
-
-                        innerdiv += `<td style='text-align: center;' width="50%">`
-                            if (glycan.glyImage) {
-                                innerdiv += `
-                                    <figure style='margin: 0;'>
-                                    <img style='max-width: 300px; min-width: 90px; width: auto; height: auto; display: block; margin: auto;' 
-                                        src="${glycan.glyImage}"
-                                        alt='Glycan Image' />
-                                    </figure>
-                                `
-                            } else {
-                                innerdiv += `<div style="font-size: 16px; color: #555; margin-top: 10px;">Couldn't extract structure</div>`
-                            }
-
-                            innerdiv += `<figcaption style="font-size: 14px; color: #555; margin-top: 5px; display: flex; align-items: center; justify-content: center;">`
-                                if (glycan.accession) {
-                                    innerdiv += `GlyTouCan: ${glycan.accession}`
-                                } 
-
-                                if (false && glycan.errors.length > 0 ) {
-                                    innerdiv += `
-                                        <span style="margin-left: 10px; background: #eb7676; color: white; border-radius: 50%; padding: 2px 6px; font-size: 12px; cursor: pointer; position: relative; 
-                                            transition: box-shadow 0.3s ease; box-shadow: 0 0 10px rgba(255, 0, 0, 0.8);"
-                                            onmouseover="errorMessage(this)" 
-                                            onmouseout="errorMessage(this)">
-                                            ⚠️
-                                            <span class="tooltip" style="visibility: hidden; width: 180px; background-color: #373b3b;; color: white; text-align: left; border-radius: 5px; padding: 8px;
-                                                                        position: absolute; z-index: 1; bottom: 125%; left: 50%; transform: translateX(-50%);
-                                                                        opacity: 0; transition: opacity 0.3s;">
-                                                ${glycan.errors.map(e => `<div>• ${e} </div>`).join('')}
-                                            </span>
-                                        </span>`
-                                }
-
-                            innerdiv += `</figcaption>`
-
-                            innerdiv += `<div style="margin-top: 20px; text-align: center;">`
-                                if (glycan.IUPAC && glycan.IUPAC.length > 0) {
-                                    innerdiv += `
-                                        <div style="display: inline-block; margin: 10px;">
-                                            <button onclick="toggleIUPAC('iupac-${fig_id}-${gly_idx}', 'iupac-text-${fig_id}-${gly_idx}')" 
-                                                    style="background-color:#7c7d7d; color:white; border:none; border-radius:5px; cursor:pointer;">
-                                                IUPAC&nbsp;<img style="padding-bottom: 3px;" src="/static/images/copypaste.svg" width="15px">
-                                            </button>
-
-                                        </div>
-                                    `
-                                }
-
-                                if (glycan.WURCS && glycan.WURCS.length > 0) {
-                                    innerdiv += `
-                                        <div style="display: inline-block; margin: 10px;">
-                                            <button onclick="toggleIUPAC('wurcs-${fig_id}-${gly_idx}', 'wurcs-text-${fig_id}-${gly_idx}')" 
-                                                    style="background-color:#7c7d7d; color:white; border:none; border-radius:5px; cursor:pointer;">
-                                                WURCS&nbsp;<img style="padding-bottom: 3px;" src="/static/images/copypaste.svg" width="15px">
-                                            </button>
-                                        </div>
-                                    `
-                                }
-
-                                if (glycan.composition_str && glycan.composition_str.length > 0) {
-                                    innerdiv += `
-                                        <div style="display: inline-block; margin: 10px;">
-                                            <button onclick="toggleIUPAC('composition-${fig_id}-${gly_idx}', 'composition-text-${fig_id}-${gly_idx}')" 
-                                                    style="background-color:#7c7d7d; color:white; border:none; border-radius:5px; cursor:pointer;">
-                                                Composition&nbsp;<img style="padding-bottom: 3px;" src="/static/images/copypaste.svg" width="15px">
-                                            </button>
-                                        </div>
-                                    `
-                                }
-
-                                if (glycan.gnomeurl && glycan.gnomeurl.length > 0) {
-                                    innerdiv += `
-                                        <div style="display: inline-block; margin: 10px;">
-                                            <A href="${glycan.gnomeurl}" target="_gnome_"
-                                                    style="background-color:#7c7d7d; color:white; border:none; border-radius:5px; cursor:pointer; appearance: button; text-decoration: none; font-weight: 300; padding: 1px 4px 1px 4px;">GNOme&nbsp;<img src="/static/images/externallink.svg" width="15px" style="padding-bottom: 2px;"></A>
-                                        </div>
-                                    `
-                                }
-                            innerdiv += `</div>`
-
-                            innerdiv += `
-                                <div>
-                                        <div id="iupac-${fig_id}-${gly_idx}" style="display: none; max-width: 300px; overflow-x: auto; margin: 10px auto 0; padding: 10px; border: 1px solid #ccc; background: #f8f8f8; font-family: monospace; white-space: nowrap;">
-                                            <div id="iupac-text-${fig_id}-${gly_idx}">
-                                                ${glycan.IUPAC}
-                                            </div>
-                                        </div>
-                                        <div id="wurcs-${fig_id}-${gly_idx}" style="display: none; max-width: 300px; overflow-x: auto; margin: 10px auto 0; padding: 10px; border: 1px solid #ccc; background: #f8f8f8; font-family: monospace; white-space: nowrap;">
-                                            <div id="wurcs-text-${fig_id}-${gly_idx}">
-                                                ${glycan.WURCS}
-                                            </div>
-                                        </div>
-                                        <div id="composition-${fig_id}-${gly_idx}" style="display: none; max-width: 300px; overflow-x: auto; margin: 10px auto 0; padding: 10px; border: 1px solid #ccc; background: #f8f8f8; font-family: monospace; white-space: nowrap;">
-                                            <div id="composition-text-${fig_id}-${gly_idx}">
-                                                ${glycan.composition_str}
-                                            </div>
-                                        </div>
-                                </div>
-                            `  
-                        innerdiv += `</td>`
-                        innerdiv += `</tr>`
-                    })
-                };
         });
 
-        innerdiv += "</tbody>"
-        innerdiv += "</table>";
+        innerdiv += `</div></td></tr>`;
 
-        if (result['state'] == "Error") {
-            if (result['status'] == "") {
-              innerdiv = "<h3>Unexpected Error! Please notify <A href=\"mailto:nje5+extractor@georgetown.edu?Subject=Glycan Image Extractor error...&Body=%0AJob ID: " + list_id + "%0A\">Nathan Edwards</A><P/><b>Job&nbsp;ID:&nbsp;"+list_id+".</b></h3>";
+        if (glycans.length > 0) {
+            innerdiv += "<tr style='background-color:#7c7d7d;'>";
+            innerdiv += "<th style='color:#ffffff; text-align:center;'>#</th>";
+            innerdiv += "<th style='color:#ffffff; text-align:center;'>Glycan Image</th>";
+            innerdiv += "<th style='color:#ffffff; text-align:center;'>Extracted Structure</th>";
+            innerdiv += "</tr>";
+
+            glycans.forEach(function (glycan, gly_idx) {
+            let color = "black";
+            let note = "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;";
+            if ((glycan.upvotes || 0) > 0) { 
+                color = "green"; 
+                note = "GOOD"; 
+            } else if ((glycan.downvotes || 0) > 0) { 
+                color = "#ff3333"; 
+                note = "&nbsp;BAD&nbsp;"; 
+            }
+            const value = (glycan.upvotes || 0) + (glycan.downvotes || 0);
+
+            innerdiv += `<tr id="glycan-${fig_id}-${gly_idx + 1}">`;
+
+            // Left column: index + votes
+            innerdiv += `
+                <td width="200">
+                <div onclick="scrollAndHighlight('glycan-${fig_id}-${gly_idx + 1}', event);" class="figure-badge" style="position:static; display:inline-block; cursor:pointer;">
+                    ${gly_idx + 1}
+                </div>
+                <div class="vote-box">
+                    <img class="vote-updown" width="15" src="{{urlprefix}}/static/images/up-arrow.svg" onclick="mark(${fig_id},${gly_idx},'upvote');">
+                    <span id="votes-${fig_id}-${gly_idx}" style="color:${color};">${value}</span>
+                    <img class="vote-updown" width="15" src="{{urlprefix}}/static/images/down-arrow.svg" onclick="mark(${fig_id},${gly_idx},'downvote');">
+                </div>
+                <div id="note-${fig_id}-${gly_idx}" style="font-weight: 1000;">${note}</div>
+                </td>
+            `;
+
+            // Middle column: extracted glycan image
+            innerdiv += `
+                <td style="vertical-align:middle;" width="50%">
+                <div class="figure-wrap" style="max-width:550px;">
+                    <img style="max-width:300px; min-width:90px; display:block; margin:auto;"
+                        src="{{urlprefix}}/static/${location}/${list_id}/${glycan.extracted_image_path}"
+                        alt="Glycan Image" />
+                </div>
+                </td>
+            `;
+
+            // Right column: rendered structure or fallback + metadata and actions
+            innerdiv += `<td style="text-align:center;" width="50%">`;
+
+            if (glycan.glyImage) {
+                innerdiv += `
+                <figure style="margin:0;">
+                    <img style="max-width:300px; min-width:90px; width:auto; height:auto; display:block; margin:auto;"
+                        src="${glycan.glyImage}"
+                        alt="Glycan Image" />
+                </figure>
+                `;
             } else {
-              innerdiv = "<h3>Error: "+result['status']+"<P/><b>Job&nbsp;ID:&nbsp;"+list_id+".</b></h3>";
+                innerdiv += `<div style="font-size:16px; color:#555; margin-top:10px;">Couldn't extract structure</div>`;
+            }
+
+            // Figcaption with accession, optional errors (kept disabled)
+            innerdiv += `<figcaption style="font-size:14px; color:#555; margin-top:5px; display:flex; align-items:center; justify-content:center;">`;
+            if (glycan.accession) {
+                innerdiv += `GlyTouCan: ${glycan.accession}`;
+            }
+
+            innerdiv += `</figcaption>`;
+
+            // Action buttons
+            innerdiv += `<div style="margin-top:20px; text-align:center;">`;
+
+            if (glycan.IUPAC && glycan.IUPAC.length > 0) {
+                innerdiv += `
+                <div style="display:inline-block; margin:10px;">
+                    <button class="small-btn small-btn--dark"
+                            onclick="toggleIUPAC('iupac-${fig_id}-${gly_idx}', 'iupac-text-${fig_id}-${gly_idx}')">
+                    IUPAC&nbsp;<img style="padding-bottom:3px;" src="{{urlprefix}}/static/images/copypaste.svg" width="15">
+                    </button>
+                </div>
+                `;
+            }
+
+            if (glycan.WURCS && glycan.WURCS.length > 0) {
+                innerdiv += `
+                <div style="display:inline-block; margin:10px;">
+                    <button class="small-btn small-btn--dark"
+                            onclick="toggleIUPAC('wurcs-${fig_id}-${gly_idx}', 'wurcs-text-${fig_id}-${gly_idx}')">
+                    WURCS&nbsp;<img style="padding-bottom:3px;" src="{{urlprefix}}/static/images/copypaste.svg" width="15">
+                    </button>
+                </div>
+                `;
+            }
+
+            if (glycan.composition_str && glycan.composition_str.length > 0) {
+                innerdiv += `
+                <div style="display:inline-block; margin:10px;">
+                    <button class="small-btn small-btn--dark"
+                            onclick="toggleIUPAC('composition-${fig_id}-${gly_idx}', 'composition-text-${fig_id}-${gly_idx}')">
+                    Composition&nbsp;<img style="padding-bottom:3px;" src="{{urlprefix}}/static/images/copypaste.svg" width="15">
+                    </button>
+                </div>
+                `;
+            }
+
+            if (glycan.gnomeurl && glycan.gnomeurl.length > 0) {
+                innerdiv += `
+                <div style="display:inline-block; margin:10px;">
+                    <a href="${glycan.gnomeurl}" target="_gnome_"
+                    class="small-btn small-btn--dark" style="appearance:button; text-decoration:none; font-weight:300;">
+                    GNOme&nbsp;<img src="{{urlprefix}}/static/images/externallink.svg" width="15" style="padding-bottom:2px;">
+                    </a>
+                </div>
+                `;
+            }
+
+            innerdiv += `</div>`;
+
+            // Collapsible content blocks (kept minimal inline for layout)
+            innerdiv += `
+                <div>
+                <div id="iupac-${fig_id}-${gly_idx}" style="display:none; max-width:300px; overflow-x:auto; margin:10px auto 0; padding:10px; border:1px solid #ccc; background:#f8f8f8; font-family:monospace; white-space:nowrap;">
+                    <div id="iupac-text-${fig_id}-${gly_idx}">${glycan.IUPAC || ""}</div>
+                </div>
+                <div id="wurcs-${fig_id}-${gly_idx}" style="display:none; max-width:300px; overflow-x:auto; margin:10px auto 0; padding:10px; border:1px solid #ccc; background:#f8f8f8; font-family:monospace; white-space:nowrap;">
+                    <div id="wurcs-text-${fig_id}-${gly_idx}">${glycan.WURCS || ""}</div>
+                </div>
+                <div id="composition-${fig_id}-${gly_idx}" style="display:none; max-width:300px; overflow-x:auto; margin:10px auto 0; padding:10px; border:1px solid #ccc; background:#f8f8f8; font-family:monospace; white-space:nowrap;">
+                    <div id="composition-text-${fig_id}-${gly_idx}">${glycan.composition_str || ""}</div>
+                </div>
+                </div>
+            `;
+
+            innerdiv += `</td>`;
+            innerdiv += `</tr>`;
+            });
+        }
+        });
+
+        innerdiv += `</tbody>
+                </table>
+                `;
+
+        if (result['state'] === "Error") {
+            if (result['status'] === "") {
+                innerdiv = "<h3>Unexpected Error! Please notify <A href=\"mailto:nje5+extractor@georgetown.edu?Subject=Glycan Image Extractor error...&Body=%0AJob ID: " + list_id + "%0A\">Nathan Edwards</A><P/><b>Job&nbsp;ID:&nbsp;" + list_id + ".</b></h3>";
+            } else {
+                innerdiv = "<h3>Error: " + result['status'] + "<P/><b>Job&nbsp;ID:&nbsp;" + list_id + ".</b></h3>";
             }
         }
 
         div.innerHTML = innerdiv;
-
     }
+
 
     function scrollAndHighlight(rowId, event) {
         if (event) event.preventDefault();  // Prevent default jump
@@ -422,12 +524,15 @@
 </script>
 {% endblock %}
 
+
+<!-- HTML Content -->
 {% block content %}
-<div id="alert_data">
+<div class="container-fluid d-flex flex-column">
+    <div id="alert_data"></div>
+
+    <div id="result" class="result-container"></div>
+    <div id="extracted"></div>
+    <div id="list_id" class="result-list" data-list_id="{{list_id}}"></div>
 </div>
 
-<div style="width:90%;margin:0 auto;" id="result">
-</div>
-<div id="extracted" style="display: none"></div>
-<div style="display: flex; flex-wrap: wrap; width:90%;margin:0 auto;" id="list_id" data-list_id="{{list_id}}"></div>
 {% endblock %}

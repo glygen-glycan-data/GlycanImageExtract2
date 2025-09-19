@@ -1,251 +1,87 @@
 {% extends "base.html" %}
 
 {% block head %}
-<style>
-  .tooltip {
-    visibility: hidden;
-    width: 180px;
-    background-color: #373b3b;
-    color: white;
-    text-align: left;
-    border-radius: 5px;
-    padding: 8px;
-    position: absolute;
-    z-index: 1;
-    bottom: 125%;
-    left: 50%;
-    transform: translateX(-50%);
-    opacity: 0;
-    transition: opacity 0.3s;
-    pointer-events: none;
-  }
-
-  .badge-custom {
-    background-color: #e6f0ff;  /* your custom background */
-    color: #358dec;             /* your custom text color */
-    border: 1px solid #b3d1ff;
-  }
-
-  #mainContent {
-    width: 80%;
-    /* display: flex; */
-  }
-
-  #fileType {
-    display: flex !important;  /* flex container for labels */
-    width: 100%;
-  }
-
-  #fileType .btn {
-    flex: 1;            /* each button takes equal space */
-    min-width: 0;       /* prevents shrinking */
-    text-align: center; 
-  }
-
-  .job-table th {
-    background-color: rgb(108, 117, 125);
-    color: white;
-  }
-</style>
-
 <script>
-  let showingRecentJobs = false;
-  let formHTML;
+  document.addEventListener("DOMContentLoaded", () => {
+    document.querySelectorAll('.card-redirect').forEach(card => {
+      card.addEventListener("click", () => {
+        const url = card.getAttribute("data-url");
+        const type = card.getAttribute("data-type");
 
-  // Display examples for the selected file type
-  function displayExamples(input) {
-    const examples = {
-      single_figure_img: ['sgi1', 'sgi2', 'sgi3'],
-      multi_figure_img: ['mgi1', 'mgi2', 'mgi3'],
-      multi_figure_pdf: ['mgp1', 'mgp2', 'mgp3']
-    };
-
-    let selected_file_type = examples[input.value] || [];
-    const display_examples = selected_file_type.map((example, id) =>
-      `<a href="{{urlprefix}}/result/${example}" class="badge badge-custom"> Example ${id + 1}</a>`
-    ).join(' ');
-
-    document.getElementById("exampleOutput").innerHTML = display_examples;
-  }
-
-  // Toggle upload fields
-  function toggleInputFields() {
-    const uploadOption = document.querySelector('input[name="uploadOption"]:checked').value;
-    document.getElementById('fileUploadField').style.display = (uploadOption === 'file') ? 'flex' : 'none';
-    document.getElementById('urlInputField').style.display = (uploadOption === 'url') ? 'flex' : 'none';
-    document.getElementById('uploadLabel').textContent = (uploadOption === 'file') ? 'Choose a file or enter a URL:' : 'Enter URL:';
-  }
-
-  // Form validation and submit via AJAX
-  function validateForm() {
-    const fileType = document.querySelector('input[name="fileType"]:checked').id;
-    const uploadOption = document.querySelector('input[name="uploadOption"]:checked').value;
-    const allowedFormats = {
-      manuscript: ['pdf'],
-      multi_figure: ['png', 'jpg', 'jpeg'],
-      single_figure: ['png', 'jpg', 'jpeg']
-    };
-
-    if (uploadOption === 'file') {
-      const fileInput = document.getElementById('file');
-      if (!fileInput.files.length) { alert('Please upload a file.'); return false; }
-      const ext = fileInput.files[0].name.split('.').pop().toLowerCase();
-      if (!allowedFormats[fileType].includes(ext)) {
-        alert(`Invalid file format. Allowed: ${allowedFormats[fileType].join(', ')}`); return false;
-      }
-    } else {
-      const urlInput = document.getElementById('fileURL').value.trim();
-      if (!urlInput) { alert('Please enter a URL.'); return false; }
-      const ext = urlInput.split('?')[0].split('.').pop().toLowerCase();
-      if (!allowedFormats[fileType].includes(ext)) {
-        alert(`Invalid URL format. Allowed: ${allowedFormats[fileType].join(', ')}`); return false;
-      }
-    }
-
-    const formData = new FormData(document.getElementById('inputform'));
-    jQuery.ajax({
-      type: 'POST',
-      url: '{{urlprefix}}file_upload',
-      data: formData,
-      processData: false,
-      contentType: false,
-      success: function(response) {
-        if (response) window.location = '{{urlprefix}}/result/' + response[0]['id'];
-      },
-      error: function(xhr, status, error) { console.error('AJAX error:', status, error); }
+        if (type) {
+          window.location = `${url}?type=${type}`;
+        } else {
+          window.location = url;
+        }
+      });
     });
-    return false;
-  }
-
-  // Toggle recent jobs view
-  async function toggleRecentJobs() {
-    const mainContent = document.getElementById("mainContent");
-    const toggleLink = document.getElementById("toggleLink");
-    const refreshBtn = document.getElementById("refreshBtn");
-
-    if (showingRecentJobs) {
-      mainContent.innerHTML = formHTML;
-      toggleLink.textContent = "View recent jobs";
-      refreshBtn.style.display = "none";
-      showingRecentJobs = false;
-
-      // Re-initialize the form elements
-      const selectedRadio = document.querySelector('input[name="fileType"]:checked');
-      if (selectedRadio) displayExamples(selectedRadio);
-      toggleInputFields();
-      return;
-    }
-
-    try {
-      const response = await fetch("/api/recent_jobs");
-      const jobs = await response.json();
-
-      toggleLink.textContent = "Back to Form";
-      refreshBtn.style.display = "inline-block";
-
-      let html = jobs.length ? `<table class="job-table" border="1" style="border-collapse: collapse; width: 100%;">
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Timestamp</th>
-              <th>Status</th>
-              <th>Results</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${jobs.map((job, index) => `<tr>
-              <td>${index + 1}</td>
-              <td>${job.submit_time_local}</td>
-              <td>${job.state}</td>
-              <td><a href="/result/${job.id}" target="_blank">${job.submission_detail.original_file_name}</a></td>
-            </tr>`).join('')}
-          </tbody>
-        </table>` : `<p>No recent jobs found.</p>`;
-
-      mainContent.innerHTML = html;
-      showingRecentJobs = true;
-    } catch (err) {
-      console.error("Failed to fetch recent jobs:", err);
-      mainContent.innerHTML = `<p>Error loading recent jobs.</p>`;
-    }
-  }
-
-  function refreshRecentJobs() {
-    showingRecentJobs = false;
-    toggleRecentJobs();
-  }
-
-  window.addEventListener("DOMContentLoaded", () => {
-    formHTML = document.getElementById("mainContent").innerHTML;
-    const defaultSelected = document.querySelector('input[name="fileType"]:checked');
-    if (defaultSelected) displayExamples(defaultSelected);
-    toggleInputFields();
   });
 </script>
+
 {% endblock %}
 
 {% block content %}
-<div class="container d-flex flex-column align-items-center">
-  <div style="width: 80%; text-align: left; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
-    <button id="toggleLink" onclick="toggleRecentJobs()" class="btn btn-sm" style="background-color: rgb(108, 117, 125); color: white">
-      View recent jobs
-    </button>
-    <button id="refreshBtn" onclick="refreshRecentJobs()" class="btn btn-sm" style="display:none;background-color: rgb(108, 117, 125); color: white">Refresh</button>
+<div class="container-fluid d-flex flex-column">
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item active" aria-current="page">Home</li>
+    </ol>
+  </nav>
+
+  <div class="card-grid">
+    <div class="card m-3 card-redirect" data-url="{{urlprefix}}/process" data-type="Manuscript">
+      <div class="card-body">
+        <!-- <i class="fa-regular fa-file-pdf"></i> -->
+        <img src="{{urlprefix}}/static/images/pdf.svg" alt="PDF" class="card-icon">
+        
+        <h5 class="card-title">Manuscript</h5>
+        <p class="card-text">Extract Glycan Structures from research papers</p>
+      </div>
+    </div>
+
+    <div class="card m-3 card-redirect" data-url="{{urlprefix}}/process" data-type="Multi-Glycan Image">
+      <div class="card-body">
+        <!-- <i class="fa-regular fa-images"></i> -->
+        <img src="{{urlprefix}}/static/images/multi-image.svg" alt="Multi-Image" class="card-icon">
+        <h5 class="card-title">Multi-Glycan Image</h5>
+        <p class="card-text">Process Images containing multiple glycans</p>
+      </div>
+    </div>
+
+    <div class="card m-3 card-redirect" data-url="{{urlprefix}}/process" data-type="Single-Glycan Image">
+      <div class="card-body">
+        <!-- <i class="fa-regular fa-image"></i> -->
+        <img src="{{urlprefix}}/static/images/single-image.svg" alt="Single-Image" class="card-icon">
+        <h5 class="card-title">Single-Glycan Image</h5>
+        <p class="card-text">Analyze individual glycan structure images</p>
+      </div>
+    </div>
   </div>
 
-  <div id="mainContent">
-    <!-- Default form wrapped in a <form> -->
-    <form id="inputform" onsubmit="return validateForm()">
-      <div style="border: 1px solid #ccc; border-radius: 4px; width: 100%;" id="mainBox">
-        <div id="fileType" class="btn-group btn-group-toggle d-flex w-100" data-toggle="buttons">
-          <label class="btn btn-secondary flex-fill text-center active">
-            <input type="radio" name="fileType" id="manuscript" value="multi_figure_pdf" autocomplete="off" checked onchange="displayExamples(this)"> Manuscript
-          </label>
-          <label class="btn btn-secondary flex-fill text-center">
-            <input type="radio" name="fileType" id="multi_figure" value="multi_figure_img" autocomplete="off" onchange="displayExamples(this)"> Multi-Glycan Image
-          </label>
-          <label class="btn btn-secondary flex-fill text-center">
-            <input type="radio" name="fileType" id="single_figure" value="single_figure_img" autocomplete="off" onchange="displayExamples(this)"> Single-Glycan Image
-          </label>
-        </div>
+  <!-- <nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item active" aria-current="page">Other</li>
+    </ol>
+  </nav> -->
+
+  <div class="card-grid">
+    <div class="card m-3 card-redirect" data-url="{{urlprefix}}/jobs">
+      <div class="card-body">
+        <!-- <i class="fas fa-tasks"></i> -->
+        <img src="{{urlprefix}}/static/images/results.svg" alt="Results" class="card-icon">
+        <h5 class="card-title">Results</h5>
+        <p class="card-text">View submitted jobs</p>
       </div>
+    </div>
 
-      <div style="border: 1px solid #ccc; border-radius: 4px;">
-        <div style="display: flex; flex-direction: column; align-items: center; margin: 25px 0;">
-          <div style="display: flex; gap: 25px">
-            <label><input type="radio" name="uploadOption" value="file" checked onclick="toggleInputFields()"> Upload File</label>
-            <label><input type="radio" name="uploadOption" value="url" onclick="toggleInputFields()"> Provide Link</label>
-          </div>
-
-          <div style="display: flex; flex-direction: column; align-items: center; width: 70%; margin: auto; gap: 10px;">
-            <div style="display: flex; align-items: center; gap: 8px; margin-top:2rem;">
-              <label style="margin-bottom:0rem" id='uploadLabel'>Choose a file or enter a URL:</label>
-              <span style="background: rgb(78, 78, 79); color: white; border-radius: 50%; padding: 2px 8px; font-size: 12px; cursor: pointer; position: relative; font-weight:bold; 
-                  transition: box-shadow 0.3s ease;"
-                  onmouseover="fileToolTip(event, this)" 
-                  onmouseout="fileToolTip(event, this)"
-                  aria-label="Tooltip for allowed formats">
-                  ?
-                  <span class="tooltip"><div id="tooltip-content"></div></span>
-              </span>
-            </div>
-
-            <div style="display: flex; flex-direction: column; gap: 10px; max-width: 400px; width: 70%;">
-              <div id="fileUploadField" style="flex: 1; padding: 6px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;">
-                <input type="file" name="file" id="file"/>
-              </div>
-              <div id="urlInputField" style="display: none; align-items: center; gap: 10px; margin:5px;">
-                <input type="text" name="fileURL" id="fileURL" placeholder="https://example.com" 
-                  style="height: 39px; flex: 1; padding: 6px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;" />
-              </div>
-            </div>
-          </div>
-
-          <input style="background-color:#4e555b; color:white; margin:15px" type="submit" value="Submit" class="btn">
-          <div id="exampleOutput" style="margin-top:10px;"></div>
-        </div>
+    <div class="card m-3 card-redirect" data-url="{{urlprefix}}/examples">
+      <div class="card-body">
+        <!-- <i class="fa-solid fa-check"></i> -->
+        <img src="{{urlprefix}}/static/images/examples.svg" alt="Examples" class="card-icon">
+        <h5 class="card-title">Examples</h5>
+        <p class="card-text"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></p>
       </div>
-    </form>
+    </div>
   </div>
 </div>
 {% endblock %}
