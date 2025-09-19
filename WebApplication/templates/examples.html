@@ -1,0 +1,51 @@
+<!-- example_cards are obtained from flask-->
+
+{% extends "base.html" %}
+
+{% block head %}
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        document.querySelectorAll(".card-redirect").forEach(card => {
+            card.addEventListener("click", () => {
+                const targetUrl = card.getAttribute("data-url");
+
+                if (targetUrl) {
+                    window.location.href = targetUrl;
+                } else {
+                    console.warn("Card has no data-url: ", card)
+                }
+            });
+        });
+    });
+
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid d-flex flex-column">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{urlprefix}}/">Home</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Examples</li>
+        </ol>
+      
+        <div class="d-flex flex-wrap justify-content-center align-items-center">
+            {% for card in example_cards %}
+                <div class="card m-3 card-redirect" data-url="{{card.url}}">
+                    <div class="card-body text-center">
+                        <!-- <i class="{{card.icon}}"></i> -->
+                        <img src="{{card.icon}}" class="card-icon">
+                        <h5 class="card-title">{{card.title}}</h5>
+                        <!-- <h6 class="card-subtitle mb-2 text-muted">Card subtitle</h6> -->
+                        <!-- <p class="card-text">Extract Glycan Structures from research papers</p> -->
+                        <!-- <a href="#" class="card-link">Card link</a>
+                        <a href="#" class="card-link">Another link</a> -->
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    
+      </nav>
+</div>
+{% endblock %}
+
