@@ -144,56 +144,56 @@ class ExtractorClient(APIFrameworkClient):
         return self.get_job_status(taskid)
 
     def submit_url(self,mode,url):
-        assert mode in ("multi_figure_pdf",
-                        "multi_figure_img",
+        assert mode in ("Manuscript",
+                        "Multi-Glycan Image",
                         "single_figure_img")
-        task = dict(fileType=mode,fileURL=url)
+        task = dict(submission_type=mode,fileURL=url)
         return self.submit(task=task,request="file_upload")
     
     def submit_file(self,mode,filename):
-        assert mode in ("multi_figure_pdf",
-                        "multi_figure_img",
+        assert mode in ("Manuscript",
+                        "Multi-Glycan Image",
                         "single_figure_img")
-        task = dict(fileType=mode)
+        task = dict(submission_type=mode)
         return self.submit(task=task,request="file_upload",files=dict(file=filename))
 
     def submit_manuscript_url(self,url):
-        return self.submit_url("multi_figure_pdf",url)
+        return self.submit_url("Manuscript",url)
 
     def analyze_manuscript_url(self,url):
         taskid = self.submit_manuscript_url(url)
         return self.retrieve(taskid)
     
     def submit_manuscript_file(self,filename):
-        return self.submit_file("multi_figure_pdf",filename)
+        return self.submit_file("Manuscript",filename)
     
     def analyze_manuscript_file(self,filename):
         taskid = self.submit_manuscript_file(filename)
         return self.retrieve(taskid)
     
     def submit_multiglycanimg_url(self,url):
-        return self.submit_url("multi_figure_img",url)
+        return self.submit_url("Multi-Glycan Image",url)
 
     def analyze_multiglycanimg_url(self,url):
         taskid = self.submit_multiglycanimg_url(url)
         return self.retrieve(taskid)
     
     def submit_multiglycanimg_file(self,filename):
-        return self.submit_file("multi_figure_img",filename)
+        return self.submit_file("Multi-Glycan Image",filename)
     
     def analyze_multiglycanimg_file(self,filename):
         taskid = self.submit_multiglycanimg_file(filename)
         return self.retrieve(taskid)
     
     def submit_singleglycanimg_url(self,url):
-        return self.submit_url("single_figure_img",url)
+        return self.submit_url("Single-Glycan Imag",url)
 
     def analyze_singleglycanimg_url(self,url):
         taskid = self.submit_singleglycanimg_url(url)
         return self.retrieve(taskid)
     
     def submit_singleglycanimg_file(self,filename):
-        return self.submit_file("single_figure_img",filename)
+        return self.submit_file("Single-Glycan Imag",filename)
     
     def analyze_singleglycanimg_file(self,filename):
         taskid = self.submit_singleglycanimg_file(filename)

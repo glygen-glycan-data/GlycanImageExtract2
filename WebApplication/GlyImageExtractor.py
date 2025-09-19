@@ -48,8 +48,8 @@ class ReferenceAPIFileBased(APIFramework):
 
         # Prevent name collision
         res["original_file_name"] = p["original_file_name"]
-        res['file_type'] = p['file_type']
-        res["id"] = self.makeid(p["original_file_name"],p["file_type"],random=True,length=10)
+        res['submission_type'] = p['submission_type']
+        res["id"] = self.makeid(p["original_file_name"],p["submission_type"],random=True,length=10)
 
         return res
 

@@ -37,8 +37,7 @@ parser.add_argument(
 parser.add_argument(
     '--extractorurl',
     type = str,
-    # default = 'https://extractor.glyomics.org/',
-    default = 'http://127.0.0.1:10983',
+    default = 'https://extractor.glyomics.org/',
     help = 'Extractor URL.'
 )
 
