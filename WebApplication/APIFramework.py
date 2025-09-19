@@ -375,6 +375,8 @@ class APIFramework:
                 task1 = dict((k, v) for k, v in self.get_result(tid).items() if k != 'result')
 
                 task1['job_status'] = f"{self._prefix}/get_job_status/{tid}"
+                if task1['state'] == self.QUEUED:
+                    task1['status'] = "Position %d in queue"%(self.get_jobs_ahead(tid)+1,)
 
                 # Convert timestamp to readable datetime
                 ts = task1.get("submit_time")
