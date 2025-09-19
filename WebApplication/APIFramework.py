@@ -65,6 +65,7 @@ class APIFramework:
 
         self._host = "localhost"
         self._port = 10980
+        self._debug = True
 
         self._worker_num = 1
         self._clean_start = True
@@ -122,6 +123,12 @@ class APIFramework:
             self._port = p
         else:
             raise APIParameterError("Port number requires integer, %s is not acceptable")
+
+    def debug(self):
+        return self._debug
+
+    def set_debug(self, debug):
+        self._debug = (debug.lower() in ("true","t","1","yes","y"))
 
     def worker_num(self):
         return self._worker_num
@@ -211,6 +218,9 @@ class APIFramework:
 
             if "port" in res["basic"]:
                 self.set_port(int(res["basic"]["port"]))
+
+            if "debug" in res["basic"]:
+                self.set_debug(res["basic"]["debug"])
 
             if "cpu_core" in res["basic"]:
                 self.set_worker_num(int(res["basic"]["cpu_core"]))
@@ -737,8 +747,7 @@ class APIFramework:
 
         self.cleanup()
 
-        # self._flask_app.run(self.host(), self.port())
-        self._flask_app.run(self.host(), self.port(), debug=True)
+        self._flask_app.run(self.host(), self.port(), debug=self.debug())
 
     def cleanup(self):
         atexit.register(self.terminate_all)
