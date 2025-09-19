@@ -60,7 +60,7 @@ header.navbar #sidebarToggle {
 
 .site-name:hover {
   /* color: #007bff; */
-  transform: scale(1.01);
+  /* transform: scale(1.01); */
   color: white !important;
 }
 
