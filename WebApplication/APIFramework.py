@@ -299,7 +299,7 @@ class APIFramework:
             {"title": "Multiple Glycans", "desc": "", "url": f"{self._prefix}/result/mgi3", "icon": f"{self._prefix}/static/images/multi-image.svg" },
             {"title": "Simple Glycan Image", "desc": "", "url": f"{self._prefix}/result/sgi1", "icon": f"{self._prefix}/static/images/single-image.svg"},
             {"title": "Simple Glycan Page", "desc": "", "url": f"{self._prefix}/result/sgi2", "icon": f"{self._prefix}/static/images/single-image.svg" },
-            {"title": "Simple Glycan", "desc": "", "url": f"{self._prefix}/result/sgi3", "icon": f"{self._prefix}/static/images/single-image.svg" },
+            {"title": "Simple Glycan Image", "desc": "", "url": f"{self._prefix}/result/sgi3", "icon": f"{self._prefix}/static/images/single-image.svg" },
         ]
         
         return flask.render_template(self._examples_html, example_cards=example_cards, urlprefix=self._prefix)
