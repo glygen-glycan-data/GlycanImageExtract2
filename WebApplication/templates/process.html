@@ -297,7 +297,10 @@
                 // redirect to submitted jobs table
                 if (response) window.location = '{{urlprefix}}/jobs';
                 },
-                error: function(xhr, status, error) { console.error('AJAX error:', status, error); }
+                error: function(xhr, status, error) { 
+                    console.error('AJAX error:', status, error); 
+                    alert("Upload failed: Either url is under a paywall or url format is not supported" );
+                }
             });
             return false;
         }
