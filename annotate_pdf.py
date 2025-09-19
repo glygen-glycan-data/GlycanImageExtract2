@@ -71,129 +71,87 @@ doc = fitz.open(args.pdf)
 image_data = []
 
 anyvotes = False
-glycan_idx = 1
-page_idx = 0
-image_counter = 0
-good_image_counter = 0
-for page_num, page in enumerate(doc):
-    images = page.get_images(full=True)
-    # print(page_num+1,images)
-    if not images:
+
+for figure in figure_results:
+    page_num = figure['image_page']
+    page = doc[page_num]
+
+
+    info = page.get_image_info(xrefs=True)
+    # ensures that we get the correct figure bbox wrt to the entire pdf page
+    bbox = next(i["bbox"] for i in info if i["xref"] == figure["xref"])
+    fig_bbox = fitz.Rect(bbox)
+    # page.add_rect_annot(fig_bbox).update()    # draw rect around entire figure for sanity check
+
+
+    # figure pixel size used in semantics
+    fig_px_w = figure["width"] 
+    fig_px_h = figure["height"]   
+
+
+    if (fig_bbox.height <= 60 or fig_bbox.width <= 60) and (fig_bbox.height*fig_bbox.width <= 360):
         continue
-    for img in images:
-        xref = img[0]
-        image_name = img[7]
 
-        # Get bounding box of the image on the page
-        # Need another way to do this, we get an error if image_name is not unique...
-        try:
-            fig_bbox = page.get_image_bbox(image_name) 
-        except:
-            image_counter += 1
-            continue
+    # scales from figure image pixels -> displayed figure on page
+    x_scale = fig_bbox.width  / float(fig_px_w)
+    y_scale = fig_bbox.height / float(fig_px_h)
 
-        # page.draw_rect(fig_bbox, color=(1, 0, 0), width=1)  # red border around image
-        # fig_rect = fitz.Rect(fig_bbox.x0, fig_bbox.y0, 
-        #                      fig_bbox.x0 + fig_bbox.width - 1, 
-        #                      fig_bbox.y0 + fig_bbox.height -1)
-        # annot = page.add_rect_annot(fig_rect)
-        # annot.set_info(content=str(image_counter))
-        # annot.update()
+    
+    for glycan in figure['glycans']:
+        glycan_box = BoundingBox(bbox=glycan['bbox'])
+        x0, y0, x1, y1 = glycan_box.corners()
+        x,y,w,h = glycan_box.bbox()
 
-        # print(page_num+1,image_counter,img,fig_bbox.height,fig_bbox.width,fig_bbox.height * fig_bbox.width)
-        
-        # immitate the image counting in processjob - we need a more formal way to track each figure...
-        if (fig_bbox.height <= 60 or fig_bbox.width <= 60) and (fig_bbox.height*fig_bbox.width <= 360):
-            # image_counter += 1
-            continue
+        # normalize bbox ordering just in case
+        x0, x1 = sorted((x0, x1))
+        y0, y1 = sorted((y0, y1))
 
-        # Extract image info
-        img_info = doc.extract_image(xref)
-        # img_bytes = img_info["image"]
+        # map top-left-origin pixels -> page
+        pdf_x0 = fig_bbox.x0 + x0 * x_scale
+        pdf_x1 = fig_bbox.x0 + x1 * x_scale
+        pdf_y0 = fig_bbox.y0 + y0 * y_scale
+        pdf_y1 = fig_bbox.y0 + y1 * y_scale
 
-        img_width = img_info["width"]
-        img_height = img_info["height"]
+        glycan_rect = fitz.Rect(pdf_x0, pdf_y0, pdf_x1, pdf_y1)
 
-        # image_filename = f"page_{page_num+1}_img_{image_counter+1}.png"
+        annot = page.add_rect_annot(glycan_rect)
 
-        x_scale = fig_bbox.width / img_width
-        y_scale = fig_bbox.height / img_height
+        gid = f"G{figure['figure_count']}.{glycan['fig_glycan_count']}"
+        url = client.url() + f"/result/{taskid}#glycan-{figure['figure_count']}-{glycan['fig_glycan_count']}"
+        content = (
+            f"id: {gid}\n"
+            f"url: {url}\n"
+        )
 
-        image_glycan_idx = 1
-        if image_counter >= len(figure_results):
-            image_counter += 1
-            continue
+        annot.set_info(content=content)
 
-        results = figure_results[image_counter]
-        json_glycans = results['glycans']
+        annot.update()
 
-        if len(json_glycans) == 0:
-            image_counter += 1
-            continue
+        votes = glycan.get('upvotes',0)-glycan.get('downvotes',0)
+        if votes != 0:
+            anyvotes = True
 
-        for g_id, glycan in enumerate(json_glycans):
-            x0, y0, x1, y1 = BoundingBox(bbox=glycan['bbox']).corners()
-
-            pdf_x0 = fig_bbox.x0 + x0 * x_scale
-            pdf_x1 = fig_bbox.x0 + x1 * x_scale
-            pdf_y0 = fig_bbox.y0 + y0 * y_scale
-            pdf_y1 = fig_bbox.y0 + y1 * y_scale
-
-            glycan_rect = fitz.Rect(pdf_x0, pdf_y0, pdf_x1, pdf_y1)
-            # page.draw_rect(glycan_rect, color=(0, 0, 1), width=1)  # blue box
-
-            url = client.url() + f"/result/{taskid}#glycan-{image_counter}-{g_id+1}"
-           
-            annot = page.add_rect_annot(glycan_rect)
-
-            gid = f"G{good_image_counter+1}.{image_glycan_idx}"
-            content = (
-                f"id: {gid}\n"
-                f"url: {url}\n"
-            )
-
-            annot.set_info(content=content)
-
-            annot.update()
-
-            glycan_result = json_glycans[g_id]
-
-            iupac = glycan_result.get('IUPAC','')
-            composition = glycan_result.get('composition_str','')
-            accession = glycan_result.get('accession','')
-            wurcs = glycan_result.get('WURCS','')
-            x,y,w,h = glycan_result.get('bbox','')
-            votes = glycan_result.get('upvotes',0)-glycan_result.get('downvotes',0)
-            if votes != 0:
-                anyvotes = True
-
-            image_data.append({
-                "ID": gid,
-                "image_index": image_counter,
-                "page_number": page_num+1,
-                "accession": accession,
-                "iupac": iupac,
-                "composition": composition,
-                'wurcs': wurcs,
-                'votes': votes,
-                "url": url,
-                "image_width": img_width,
-                "image_height": img_height,
-                "x": x,
-                "y": y,
-                "w": w,
-                "h": h 
-            })
-
-            glycan_idx += 1
-            image_glycan_idx += 1
-
-        image_counter += 1
-        good_image_counter += 1
+        image_data.append({
+            "ID": gid,
+            "image_index": figure['figure_count'],
+            "page_number": page_num,
+            "accession": glycan.get('accession', ''),
+            "iupac": glycan.get('iupac', ''),
+            "composition": glycan.get('composition_str', ''),
+            'wurcs': glycan.get('wurcs', ''),
+            'votes': votes,
+            "url": url,
+            "image_width": fig_bbox.width,
+            "image_height": fig_bbox.height,
+            "x": x,
+            "y": y,
+            "w": w,
+            "h": h,
+        })
 
 doc.save(basename + ".annotated.pdf")
 doc.close()
-print("Wrote annotated PDF:",basename + ".annotated.pdf")
+print("Wrote annotated PDF:",basename + ".annotated.pdf")   
 
 wh = open(os.path.join(basename + ".annotated.tsv"),'w')
 headers = "ID page_number composition iupac wurcs accession votes url image_index image_width image_height x y w h".split()

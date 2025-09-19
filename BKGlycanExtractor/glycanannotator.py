@@ -67,9 +67,9 @@ class GlycanExtractorPipeline():
         for glystep in self.steps['glycan']:
             glystep.clear()
     
-    def run(self,image,progress_callback=None):
+    def run(self,image,progress_callback=None, **kwargs):
         # empty figure semantics
-        figure_semantics = FigureSemantics(image_path=image)
+        figure_semantics = FigureSemantics(image_path=image, **kwargs)
         
         if progress_callback:
             progress_callback(stage="PIPELINE",checkpoint="START")
