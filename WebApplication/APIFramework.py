@@ -289,10 +289,10 @@ class APIFramework:
         return flask.render_template(self._process_html, submission_type=submission_type, urlprefix=self._prefix)
 
     def examples(self):
-
+        # Mcleod - https://www.neb.com/en-us/-/media/nebus/files/application-notes/appnote_characterization_of_glycans_from_erbitux_rituxan_and_enbrel_using_recombinant_pngase_f.pdf?rev=581a874aebbc4351bec05e10c07f96ea&hash=C8D5EB5AF1B7D5C331DFAB13BB87F649
         example_cards = [
-            {"title": "Atfa Sassi et al", "desc": "", "url": f"{self._prefix}/result/mgp1", "icon": f"{self._prefix}/static/images/pdf.svg" },
-            {"title": "Elizabeth Mcleod", "desc": "", "url": f"{self._prefix}/result/mgp3", "icon": f"{self._prefix}/static/images/pdf.svg"},
+            {"title": "Sassi et al., 2014", "desc": "", "url": f"{self._prefix}/result/mgp1", "icon": f"{self._prefix}/static/images/pdf.svg" },
+            {"title": "Mcleod, 2024", "desc": "", "url": f"{self._prefix}/result/mgp3", "icon": f"{self._prefix}/static/images/pdf.svg"},
             {"title": "Simple PDF", "desc": "", "url": f"{self._prefix}/result/mgp2", "icon": f"{self._prefix}/static/images/pdf.svg" },
             {"title": "Multi Glycan Figure", "desc": "", "url": f"{self._prefix}/result/mgi1", "icon": f"{self._prefix}/static/images/multi-image.svg" },
             {"title": "Multi Glycan Example", "desc": "", "url": f"{self._prefix}/result/mgi2", "icon": f"{self._prefix}/static/images/multi-image.svg" },
@@ -376,7 +376,7 @@ class APIFramework:
                 recent_jobs.append(task1)
         # print("recent jobs",recent_jobs)
 
-        print("--->>",flask.jsonify(recent_jobs))
+        # print("--->>",flask.jsonify(recent_jobs))
         return flask.jsonify(recent_jobs)
 
 
@@ -720,7 +720,7 @@ class APIFramework:
                 sid = data['sessionid']
                 stime = data['submit_time']
                 self.session_task_list[sid].append((tid,stime))
-        print(self.session_task_list)
+        # print(self.session_task_list)
 
     def start(self):
         self.load_route()
