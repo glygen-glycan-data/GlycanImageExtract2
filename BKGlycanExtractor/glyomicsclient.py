@@ -146,14 +146,14 @@ class ExtractorClient(APIFrameworkClient):
     def submit_url(self,mode,url):
         assert mode in ("Manuscript",
                         "Multi-Glycan Image",
-                        "single_figure_img")
+                        "Single-Glycan Image")
         task = dict(submission_type=mode,fileURL=url)
         return self.submit(task=task,request="file_upload")
     
     def submit_file(self,mode,filename):
         assert mode in ("Manuscript",
                         "Multi-Glycan Image",
-                        "single_figure_img")
+                        "Single-Glycan Image")
         task = dict(submission_type=mode)
         return self.submit(task=task,request="file_upload",files=dict(file=filename))
 
@@ -186,14 +186,14 @@ class ExtractorClient(APIFrameworkClient):
         return self.retrieve(taskid)
     
     def submit_singleglycanimg_url(self,url):
-        return self.submit_url("Single-Glycan Imag",url)
+        return self.submit_url("Single-Glycan Image",url)
 
     def analyze_singleglycanimg_url(self,url):
         taskid = self.submit_singleglycanimg_url(url)
         return self.retrieve(taskid)
     
     def submit_singleglycanimg_file(self,filename):
-        return self.submit_file("Single-Glycan Imag",filename)
+        return self.submit_file("Single-Glycan Image",filename)
     
     def analyze_singleglycanimg_file(self,filename):
         taskid = self.submit_singleglycanimg_file(filename)
