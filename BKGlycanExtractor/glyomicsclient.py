@@ -122,7 +122,7 @@ class APIFrameworkClient:
             raise APIUnfinishedError(task_id,"NotComplete","The task %s is not finished yet" % task_id)
         return res2json
     
-    def status(task_id):
+    def status(self,task_id):
         return self.retreive_once(task_id)
 
 class GlyLookupClient(APIFrameworkClient):
