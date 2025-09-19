@@ -21,6 +21,10 @@ patterns = ["*"]
 if len(sys.argv) > 1:
     patterns = sys.argv[1:]
 
+modemap = dict(multi_figure_pdf="Manuscript",
+               multi_figure_img="Multi-Glycan Image",
+               single_figure_img="Single-Glycan Image")
+
 tasks = []
 for pat in patterns:
   for resultfile in sorted(glob.glob("static/examples/%s/results.json"%(pat,))):
@@ -28,7 +32,11 @@ for pat in patterns:
     result = json.loads(open(resultfile).read())
     inputfilename = result['submission_detail']['original_file_name']
     inputpath = basedir+"/input/"+inputfilename
-    mode = result['submission_detail']['file_type']
+    if 'file_type' in result['submission_detail']:
+        mode = result['submission_detail']['file_type']
+        mode = modemap[mode]
+    else:
+        mode = result['submission_detail']['submission_type']
     exampledir = os.path.split(basedir)[1]
     tasks.append((exampledir,extractor.submit_file(mode,inputpath)))
     print("Example %s submitted (%s). "%(exampledir,tasks[-1][1]))
