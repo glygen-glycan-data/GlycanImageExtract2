@@ -37,7 +37,8 @@ parser.add_argument(
 parser.add_argument(
     '--extractorurl',
     type = str,
-    default = 'https://extractor.glyomics.org/',
+    # default = 'https://extractor.glyomics.org/',
+    default = 'http://127.0.0.1:10983',
     help = 'Extractor URL.'
 )
 
@@ -136,9 +137,9 @@ for figure in figure_results:
             "image_index": figure['figure_count'],
             "page_number": page_num,
             "accession": glycan.get('accession', ''),
-            "iupac": glycan.get('iupac', ''),
+            "iupac": glycan.get('IUPAC', ''),
             "composition": glycan.get('composition_str', ''),
-            'wurcs': glycan.get('wurcs', ''),
+            'wurcs': glycan.get('WURCS', ''),
             'votes': votes,
             "url": url,
             "image_width": fig_bbox.width,
