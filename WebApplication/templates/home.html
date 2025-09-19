@@ -22,38 +22,39 @@
 
 {% block content %}
 <div class="container-fluid d-flex flex-column">
+  <!-- 
   <nav aria-label="breadcrumb">
     <ol class="breadcrumb">
       <li class="breadcrumb-item active" aria-current="page">Home</li>
     </ol>
   </nav>
+  -->
 
   <div class="card-grid">
     <div class="card m-3 card-redirect" data-url="{{urlprefix}}/process" data-type="Manuscript">
       <div class="card-body">
         <!-- <i class="fa-regular fa-file-pdf"></i> -->
-        <img src="{{urlprefix}}/static/images/pdf.svg" alt="PDF" class="card-icon">
-        
+        <img src="{{urlprefix}}/static/images/pdf.svg" alt="Manuscript" class="card-icon">
         <h5 class="card-title">Manuscript</h5>
-        <p class="card-text">Extract Glycan Structures from research papers</p>
+        <p class="card-text">Extract glycan structures from research papers</p>
       </div>
     </div>
 
     <div class="card m-3 card-redirect" data-url="{{urlprefix}}/process" data-type="Multi-Glycan Image">
       <div class="card-body">
         <!-- <i class="fa-regular fa-images"></i> -->
-        <img src="{{urlprefix}}/static/images/multi-image.svg" alt="Multi-Image" class="card-icon">
+        <img src="{{urlprefix}}/static/images/multi-image.svg" alt="Multi-Glycan Image" class="card-icon">
         <h5 class="card-title">Multi-Glycan Image</h5>
-        <p class="card-text">Process Images containing multiple glycans</p>
+        <p class="card-text">Process images containing multiple glycans</p>
       </div>
     </div>
 
-    <div class="card m-3 card-redirect" data-url="{{urlprefix}}/process" data-type="Single-Glycan Image">
+    <div class="card m-3 card-redirect" data-url="{{urlprefix}}/process" data-type="Simple Glycan Image">
       <div class="card-body">
         <!-- <i class="fa-regular fa-image"></i> -->
-        <img src="{{urlprefix}}/static/images/single-image.svg" alt="Single-Image" class="card-icon">
-        <h5 class="card-title">Single-Glycan Image</h5>
-        <p class="card-text">Analyze individual glycan structure images</p>
+        <img src="{{urlprefix}}/static/images/single-image.svg" alt="Simple Glycan Image" class="card-icon">
+        <h5 class="card-title">Simple Glycan Image</h5>
+        <p class="card-text">Analyze simple glycan images<br>&nbsp;</p>
       </div>
     </div>
   </div>
@@ -70,7 +71,7 @@
         <!-- <i class="fas fa-tasks"></i> -->
         <img src="{{urlprefix}}/static/images/results.svg" alt="Results" class="card-icon">
         <h5 class="card-title">Results</h5>
-        <p class="card-text">View submitted jobs</p>
+        <p class="card-text">Previously submitted jobs<br>&nbsp;</p>
       </div>
     </div>
 
@@ -79,7 +80,7 @@
         <!-- <i class="fa-solid fa-check"></i> -->
         <img src="{{urlprefix}}/static/images/examples.svg" alt="Examples" class="card-icon">
         <h5 class="card-title">Examples</h5>
-        <p class="card-text"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></p>
+        <p class="card-text"><span>&nbsp;<br>&nbsp;</span></p>
       </div>
     </div>
   </div>
