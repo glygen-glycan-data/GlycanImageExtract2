@@ -146,14 +146,14 @@ class ExtractorClient(APIFrameworkClient):
     def submit_url(self,mode,url):
         assert mode in ("Manuscript",
                         "Multi-Glycan Image",
-                        "Single-Glycan Image")
+                        "Simple Glycan Image")
         task = dict(submission_type=mode,fileURL=url)
         return self.submit(task=task,request="file_upload")
     
     def submit_file(self,mode,filename):
         assert mode in ("Manuscript",
                         "Multi-Glycan Image",
-                        "Single-Glycan Image")
+                        "Simple Glycan Image")
         task = dict(submission_type=mode)
         return self.submit(task=task,request="file_upload",files=dict(file=filename))
 
