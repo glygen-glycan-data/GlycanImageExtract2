@@ -454,7 +454,7 @@ class PDFJob(JobInstance):
             # and just need find_glycans() here with figure path?
             # self.find_glycans(figure_path,image_folders)
             page_metadata = [data for data in images_metadata if data['image_page'] == page_index]
-            self.pageno = (page_index)
+            self.pageno = page_index+1
             self.process_pdf_page(figure_path, page_metadata, image_folders)
 
         # self.log_file.close()
