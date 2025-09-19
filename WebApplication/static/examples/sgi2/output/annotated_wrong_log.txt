@@ -1,2 +1,2 @@
-tof5qwpyz3
-/data2/projects/GlyGen/GlycanImageExtract2-dev/WebApplication/static/files/tof5qwpyz3/output/annotated_wrong.png
+nifi33ldry
+/data2/projects/GlyGen/GlycanImageExtract2-dev/WebApplication/static/files/nifi33ldry/output/annotated_wrong.png
