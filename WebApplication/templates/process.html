@@ -293,7 +293,9 @@
                 processData: false,
                 contentType: false,
                 success: function(response) {
-                if (response) window.location = '{{urlprefix}}/result/' + response[0]['id'];
+                // if (response) window.location = '{{urlprefix}}/result/' + response[0]['id'];
+                // redirect to submitted jobs table
+                if (response) window.location = '{{urlprefix}}/jobs';
                 },
                 error: function(xhr, status, error) { console.error('AJAX error:', status, error); }
             });

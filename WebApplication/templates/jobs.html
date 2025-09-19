@@ -4,12 +4,9 @@
 
 {% block head %}
 <style>
-.table-container {
+
+.container-fluid {
     overflow-x: auto;
-    width: 100%;
-    max-width: 100%;
-    border: 1px solid #dee2e6;
-    border-radius: 0.25rem;
 }
 
 .job-table {
@@ -17,12 +14,14 @@
     width: 100%;
     min-width: 900px; /* Only minimum width, not fixed width */
     margin: 0;
+    max-width: 100%;
+    overflow-x: auto;
 }
 
-.job-table th:nth-child(1) { width: 15%; min-width: 180px; }
+.job-table th:nth-child(1) { width: 20%; min-width: 180px; }
 .job-table th:nth-child(2) { width: 30%; min-width: 450px; }
 .job-table th:nth-child(3) { width: 20%; min-width: 180px; }
-.job-table th:nth-child(4) { width: 35%; min-width: 90px; }
+.job-table th:nth-child(4) { width: 30%; min-width: 90px; }
 
 .job-table td {
     word-wrap: break-word;
@@ -52,26 +51,24 @@
         Refresh
     </button>
 
-    <div class="table-container">
-        <table class="job-table" border="1" style="border-collapse: collapse;">
-            <thead>
-                <tr>
-                <th>Timestamp</th>
-                <th>Results</th>
-                <th>Type</th>
-                <th>Status</th>
-                </tr>
-            </thead>
-            <tbody>
-                ${jobs.map((job, index) => `<tr>
-                <td>${job.submit_time_local}</td>
-                <td><a href="{{urlprefix}}/result/${job.id}" target="_blank">${job.submission_detail.original_file_name}</a></td>
-                <td>${job.submission_type}</td>
-                <td class="text-truncate" title="${job.status || job.state}">${job.status || job.state}</td>
-                </tr>`).join('')}
-            </tbody>
-        </table>
-    </div>
+    <table class="job-table" border="1" style="border-collapse: collapse;">
+        <thead>
+            <tr>
+            <th>Timestamp</th>
+            <th>Results</th>
+            <th>Type</th>
+            <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            ${jobs.map((job, index) => `<tr>
+            <td>${job.submit_time_local}</td>
+            <td><a href="{{urlprefix}}/result/${job.id}" target="_blank">${job.submission_detail.original_file_name}</a></td>
+            <td>${job.submission_type || job.file_type}</td>
+            <td class="text-truncate" title="${job.status || job.state}">${job.status || job.state}</td>
+            </tr>`).join('')}
+        </tbody>
+    </table>
     `;
         } catch (err) {
             console.log("No jobs were submitted recently...", err)
