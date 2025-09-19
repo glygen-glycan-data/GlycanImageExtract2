@@ -1,10 +1,10 @@
-mnfme3bxv3
-/data2/projects/GlyGen/GlycanImageExtract2-dev/WebApplication/static/files/mnfme3bxv3/output/annotated_Example4_use.pdf
+azhevkybaw
+/data2/projects/GlyGen/GlycanImageExtract2-dev/WebApplication/static/files/azhevkybaw/output/annotated_Example4_use.pdf
 
 Found 2 figures in the PDF.
-Image ID: iid_0, Coordinates: (45.59998, 177.59989999999993, 387.34908, 413.0372), Width: 341.7491, Height: 235.43730000000005, Area: 80460.48538143001
+Image ID: id_0, Coordinates: [ (45, 177), (387, 413) ], Width: 342, Height: 236, Area: 80712
 
-Saved image to /data2/projects/GlyGen/GlycanImageExtract2-dev/WebApplication/static/files/mnfme3bxv3/extracted_figures/figures/33.png
-Image ID: iid_1, Coordinates: (425.4078, 165.30010000000004, 570.4604, 383.2848), Width: 145.05260000000004, Height: 217.98469999999998, Area: 31619.247495220006
+Saved image to /data2/projects/GlyGen/GlycanImageExtract2-dev/WebApplication/static/files/azhevkybaw/extracted_figures/figures/33.png
+Image ID: id_1, Coordinates: [ (425, 165), (570, 383) ], Width: 145, Height: 218, Area: 31610
 
-Saved image to /data2/projects/GlyGen/GlycanImageExtract2-dev/WebApplication/static/files/mnfme3bxv3/extracted_figures/figures/34.png
+Saved image to /data2/projects/GlyGen/GlycanImageExtract2-dev/WebApplication/static/files/azhevkybaw/extracted_figures/figures/34.png

@@ -1,7 +1,7 @@
-k7cfeoyt6o
-/data2/projects/GlyGen/GlycanImageExtract2-dev/WebApplication/static/files/k7cfeoyt6o/output/annotated_Example0.pdf
+k3i2r2audj
+/data2/projects/GlyGen/GlycanImageExtract2-dev/WebApplication/static/files/k3i2r2audj/output/annotated_Example0.pdf
 
 Found 1 figures in the PDF.
-Image ID: iid_0, Coordinates: (72.0, 72.0, 539.7, 407.8), Width: 467.70000000000005, Height: 335.8, Area: 157053.66000000003
+Image ID: id_0, Coordinates: [ (72, 72), (539, 407) ], Width: 467, Height: 335, Area: 156445
 
-Saved image to /data2/projects/GlyGen/GlycanImageExtract2-dev/WebApplication/static/files/k7cfeoyt6o/extracted_figures/figures/9.png
+Saved image to /data2/projects/GlyGen/GlycanImageExtract2-dev/WebApplication/static/files/k3i2r2audj/extracted_figures/figures/9.png

@@ -1,2 +1,2 @@
-rf3sepvmka
-/data2/projects/GlyGen/GlycanImageExtract2-dev/WebApplication/static/files/rf3sepvmka/output/annotated_2_glycans.png
+r44f2n35mt
+/data2/projects/GlyGen/GlycanImageExtract2-dev/WebApplication/static/files/r44f2n35mt/output/annotated_2_glycans.png
