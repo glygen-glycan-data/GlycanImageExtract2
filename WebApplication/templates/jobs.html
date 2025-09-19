@@ -45,12 +45,14 @@
 
     const container = document.getElementById('jobs-container');
     
-    container.innerHTML = `
-    <button id="refreshBtn" class="btn btn-secondary float-right" 
-    onclick="loadJobs()" style="margin-bottom:10px">
-        Refresh
-    </button>
+    // We reload if necessary....
+    //
+    // <button id="refreshBtn" class="btn btn-secondary float-right" 
+    // onclick="loadJobs()" style="margin-bottom:10px">
+    //     Refresh
+    // </button>
 
+    container.innerHTML = `
     <table class="job-table" border="1" style="border-collapse: collapse;">
         <thead>
             <tr>
@@ -63,17 +65,25 @@
         <tbody>
             ${jobs.map((job, index) => `<tr>
             <td>${job.submit_time_local}</td>
-            <td><a href="{{urlprefix}}/result/${job.id}" target="_blank">${job.submission_detail.original_file_name}</a></td>
+            <td><a href="{{urlprefix}}/result/${job.id}">${job.submission_detail.original_file_name}</a></td>
             <td>${job.submission_type || job.file_type}</td>
             <td class="text-truncate" title="${job.status || job.state}">${job.status || job.state}</td>
             </tr>`).join('')}
         </tbody>
     </table>
     `;
+
+    // reload the jobs data after 15 seconds... if any jobs are queued or running
+    if (jobs.some(job => (["Running","Queued"].includes(job.state)))) {
+        setTimeout(loadJobs, 15000);
+    }
+
         } catch (err) {
             console.log("No jobs were submitted recently...", err)
-            document.getElementById('jobs-container').innerHTML = 'No jobs were submitted recently...'
+            document.getElementById('jobs-container').innerHTML = 'No recent jobs...'
         }
+
+        
     }
 
     document.addEventListener("DOMContentLoaded", loadJobs);
@@ -85,7 +95,7 @@
     <nav aria-label="breadcrumb">
         <ol class="breadcrumb">
             <li class="breadcrumb-item"><a href="{{urlprefix}}/">Home</a></li>
-            <li class="breadcrumb-item active" aria-current="page">Recent Submissions</li>
+            <li class="breadcrumb-item active" aria-current="page">Results</li>
         </ol>
 
         <div id="jobs-container"></div>
