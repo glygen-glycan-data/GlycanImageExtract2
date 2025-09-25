@@ -1,7 +1,7 @@
 '''
 This 
 '''
-import fitz, sys, os, cv2,shutil, pdfplumber, time, ntpath, json, base64, re
+import fitz, sys, os, cv2,shutil, time, ntpath, json, base64, re
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from submit import searchGlyLookup, searchGlyImage, sendToGNOme
 from PIL import Image
@@ -160,18 +160,6 @@ class JobInstance:
         return True
 
 
-    # def jobstate(self,state=False):
-    #     self.job_finished = state
-        
-    #     if state:
-    #         data = [json.loads(s) for s in self.results]
-
-    #         with open(self.json_filepath, 'w') as f:
-    #             json.dump(data,f,indent=2)
-    #         self.log_file.close()
-    #         print("-------->>>JOB COMPLETED", state)
-    #     return True
-
     def get_results(self):
         return [json.loads(s) for s in self.results]
 
@@ -194,7 +182,6 @@ class JobInstance:
         self.create_directories(annotated_figures_path)
 
         for i, _ in enumerate(figure_semantics.glycans()):
-            # print(f"Annotating glycan {i}")
             figure_semantics.annotate_glycans()
 
         # Save the annotated figure
@@ -202,7 +189,6 @@ class JobInstance:
         fig_basename = os.path.basename(semanatic_fig_path)
         annotated_image_path = os.path.join(annotated_figures_path, fig_basename)
         self.save_image(figure_semantics.image(), annotated_image_path)
-        # print(f"Annotated image saved at {annotated_image_path}")
         figure_semantics.set('annotated_image_path',annotated_image_path)
 
 
@@ -287,12 +273,6 @@ class JobInstance:
                 print(f"Skipping glycan {i}: Detected object is missing or empty")
                 continue
 
-            # image_folders = {'figures_path': figures_path, 'images_path': images_path, 'processed_images_path': processed_images_path}
-
-            # Create directories and save image
-            # glycan_dir = os.path.join(self.workdir, "test", f"{basename}-{i+1}")
-            # self.create_directories(glycan_dir)
-
             image_name = f"{basename}-{i+1}.png"
             # save processed/cleaned extracted image
             image_url = os.path.join(image_folders['images_dir'], image_name)
@@ -311,57 +291,69 @@ class JobInstance:
             for key, val in self.get_IUPAC_metadata(gly_semantics).items():
                 gly_semantics.set(key,val)
 
-            # gly_semantics.set("page_num",page_num)
 
     def progress_callback(self,**kwargs):
         if kwargs.get('stage') == "GLYCAN" and kwargs.get('checkpoint') == "DONE":
             nglycan = kwargs.get('nglycan')
             index = kwargs.get('index')
-            if self.pageno == 0:
+            figure_num = kwargs.get("figure_num",0)
+            page_num = kwargs.get("page_num",0)
+            if page_num == 0:
                 self.update_status("Processing image, analyzed %d/%d glycan(s)"%(index,nglycan))
             else:
-                self.update_status("Processing image %d from page %d, analyzed %d/%d glycan(s)"%(self.imageno,self.pageno,index,nglycan))
+                # self.update_status("Processing image %d from page %d, analyzed %d/%d glycan(s)"%(self.imageno,self.pageno,index,nglycan))
+                self.update_status("Processing image %d from page %d, analyzed %d/%d glycan(s)"%(figure_num,page_num,index,nglycan))
+
 
     def find_glycans(self, figure_path, image_folders, **kwargs):
-
-        # Run the pipeline
         config = Config_Manager()
-        # print("submission_type",self.submission_type)
         self.pipeline_name = self.pipeline_mapping[self.submission_type]
         pipeline = config.get_pipeline(self.pipeline_name)
-        # *****
-        # print("BEFORE",kwargs)
-        figure_semantics = pipeline.run(figure_path,self.progress_callback, **kwargs)
 
+        figure_semantics = pipeline.run(figure_path, self.progress_callback, **kwargs)
 
-        # by defauly glycans are sorted by confidence - but we need to sort them
-        # based on bbox so that they can be numbered sequentially from left to right
-        # purely for webpage present purpose
-        # sort glycans by bbox (left-to-right)
+        # Sort bbox L->R for UI
         sorted_glycans = sorted(
             figure_semantics.glycans(),
             key=lambda g: tuple(g.box().bbox())
         )
         figure_semantics.set_glycans(sorted_glycans)
 
+        fig_box_t = kwargs.get("pdf_fig_box")            # tuple (x0,y0,x1,y1)
+        x_scale = kwargs.get("x_scale")
+        y_scale = kwargs.get("y_scale")
+
+        # if case - special for PDF - so maybe this might need some re-org?
+        # Like a hook method for PDFJob class - leaving it for TO DO as of now
+        if fig_box_t is not None and x_scale is not None and y_scale is not None:
+            fig_box = fitz.Rect(fig_box_t)
+
+            for gly_semantics in figure_semantics.glycans():
+                x0, y0, x1, y1 = gly_semantics.box().corners()
+                x0, x1 = sorted((x0, x1))
+                y0, y1 = sorted((y0, y1))
+
+                pdf_x0 = fig_box.x0 + x0 * x_scale
+                pdf_x1 = fig_box.x0 + x1 * x_scale
+                pdf_y0 = fig_box.y0 + y0 * y_scale
+                pdf_y1 = fig_box.y0 + y1 * y_scale
+
+                gly_semantics.set("pdf_glycan_box", (pdf_x0, pdf_y0, pdf_x1, pdf_y1))
+
+
         nglycan = len(figure_semantics.glycans())
-        if self.pageno == 0:
-            self.update_status("Processing image, postprocessing %d glycan(s)"%(nglycan))
+        if kwargs.get("page_num",0) == 0:
+            self.update_status("Processing image, postprocessing %d glycan(s)" % (nglycan))
         else:
-            self.update_status("Processing image %d from page %d, postprocessing %d glycan(s)"%(self.imageno,self.pageno,nglycan))
+            # self.update_status("Processing image %d from page %d, postprocessing %d glycan(s)" % (self.imageno, kwargs["page_num"], nglycan))
+            self.update_status("Processing image %d from page %d, postprocessing %d glycan(s)" % (kwargs["figure_num"], kwargs["page_num"], nglycan))
 
-        # Annotate and save images
         self.annotate_image(figure_semantics)
-
-        # Other glycan info
-        self.process_glycans(figure_semantics,image_folders)
-       
+        self.process_glycans(figure_semantics, image_folders)
         self.results.append(figure_semantics.tojson())
 
 
 class ImageJob(JobInstance):
-    # def __init__(self, *args, **kwargs):
-    #     super().__init__(*args, **kwargs)
 
     def process_file(self):
         self.jobstate(False)
@@ -387,16 +379,13 @@ class ImageJob(JobInstance):
         self.create_directories(*image_folders.values())
 
         self.update_status("Processing image")
-        self.imageno = 1
-        self.pageno = 0
+        # self.imageno = 1
+        # self.pageno = 0
 
         # metadata = {}
 
         
-
-        
         self.find_glycans(self.input_filepath,image_folders)
-
         # self.glycan_obj['file_format_error'] = (
         #     f"No glycans were present/detected in the image; switched to {new_file_type} detection mode!"
         #     if glycan_data
@@ -410,8 +399,6 @@ class ImageJob(JobInstance):
 
 
 class PDFJob(JobInstance):
-    # def __init__(self, task_detail):
-    #     super().__init__(task_detail)
 
     def process_file(self):
         """
@@ -440,105 +427,224 @@ class PDFJob(JobInstance):
 
         self.create_directories(*image_folders.values())
 
-        images_metadata = self.extract_images_from_pdf()
-        self.log_file.write(f"\nFound {len(images_metadata)} figures in the PDF.")
+        # figures_metadata = self.extract_pdf_figure_metadata()
+        # self.log_file.write(f"\nFound {len(figures_metadata)} figures in the PDF.")
 
-        self.figure_count = 0
-        doc = fitz.open(self.input_filepath)
-        for page_index, page in enumerate(doc.pages()):
-            page_pix = doc.load_page(page_index).get_pixmap()
-            figure_path = os.path.join(image_folders['figures_dir'], f"{page_index}.png")
-            # page_pix.save(figure_path)
+        self.process_pdf_pages(image_folders)
 
-            # maybe we dont need the below two lines (and also dont need images_metadata) 
-            # and just need find_glycans() here with figure path?
-            # self.find_glycans(figure_path,image_folders)
-            page_metadata = [data for data in images_metadata if data['image_page'] == page_index]
-            self.pageno = page_index+1
-            self.process_pdf_page(figure_path, page_metadata, image_folders)
-
-        # self.log_file.close()
         self.jobstate(True) 
 
-
-
-    def extract_images_from_pdf(self):
-        """
-        Extract image metadata from the PDF file.
-        Returns an array of image metadata and page array.
-        """
-        pdf_file = pdfplumber.open(self.input_filepath)
-        image_metadata = []
-        # page_array = []
-        image_counter = 0
-
-        # xref - identifies the specific image object in the pdf
-        for page_index, page in enumerate(pdf_file.pages):
-            page_height = page.height
-            for image in page.images:
-                # box = (image['x0'], page_height - image['y1'], image['x1'], page_height - image['y0'])
-                box = BoundingBox(x1=image['x0'], y1=page_height - image['y1'], x2=image['x1'], y2=page_height - image['y0'])
-                metadata = {
-                    "image_page": image['page_number']-1,
-                    "image_id": f"id_{image_counter}",
-                    "xref": image['stream'].objid,
-                    "box": box,
-                }
-                image_metadata.append(metadata)
-                image_counter += 1
-            # page_array.append(page)
-
-        return image_metadata
     
-    # add figure based number incrementally
-    def process_pdf_page(self, figure_path, page_metadata, image_folders):
+    def process_pdf_pages(self, image_folders):
+        """
+        Extract figure metadata from PDF using fitz.
+        On each figure - find all glycans using the object detection pipeline and generate semantics
+        """
 
-        # Glycan detection
-        # self.find_glycans(figure_path,image_folders)
+        doc = fitz.open(self.input_filepath)
+        # figure_metadata = []
+        figure_num = 0
 
-        # continue with figure number 
-        
-        # do we need the below? since find_glycans() is already identifying each image
-        for image_index,figure_data in enumerate(page_metadata):
-            xref = figure_data["xref"]
-            img_name = f"{figure_data['image_id']}"
-            box = figure_data["box"]
-            x0, y0, x1, y1 = box.corners()
-            height = y1 - y0
-            width = x1 - x0
-            area = height * width
+        for page_num, page in enumerate(doc.pages()):
+            # page = doc[page_num]
+            info = page.get_image_info(xrefs=True)
+            for img in info:
+                xref = img["xref"]
 
-            # figure_data['height'] = height
-            # figure_data['width'] = width
+                # Note: pdf_fig_box is not in pixels
+                # this is in page cooridniates which is called points (1 point = 1/72 inch)
+                pdf_fig_box = fitz.Rect(img["bbox"])
+                pdf_fig_height = pdf_fig_box.height
+                pdf_fig_width = pdf_fig_box.width
+                area = pdf_fig_height * pdf_fig_width
 
-            self.log_file.write(
-                f"\nImage ID: {img_name}, Coordinates: {box}, Width: {width}, Height: {height}, Area: {area}\n"
-            )
+            
+                self.log_file.write(
+                    f"\nFigure number: {figure_num}, Page number: {page_num},  BBox: {img["bbox"]}, Width: {pdf_fig_width}, Height: {pdf_fig_height}, Area: {area}\n"
+                )
 
-            if height > 60 and width > 60 or area > 360:
-                figure_data['figure_count'] = self.figure_count
-                # output_path = os.path.join(self.workdir, "test", f"{xref}.png")
-                images_path = os.path.join(image_folders['figures_dir'], f"{xref}.png")
-                # fitx.Pixmap - uses this xref (as ID) to extract the pixel data for that image and save it.
-                pix = fitz.Pixmap(fitz.open(self.input_filepath), xref)
-                goodsave = False
-                try:
-                    pix.save(images_path)
-                    goodsave = True
-                except ValueError:
-                    pass
-                if not goodsave:
-                    pix = fitz.Pixmap(fitz.csRGB,pix)
-                    pix.save(images_path)
+                if (pdf_fig_height > 60 and pdf_fig_width > 60) or area > 360:
+                    # figure_data['figure_count'] = self.figure_count
 
-                self.log_file.write(f"\nSaved image to {images_path}")
-                
-                self.imageno = (image_index+1)
-                self.update_status("Processing image %d from page %d"%(self.imageno,self.pageno))
+                    images_path = os.path.join(image_folders['figures_dir'], f"{xref}.png")
 
-                self.find_glycans(images_path,image_folders, **figure_data)
+                    pix = fitz.Pixmap(doc, xref)
+                    try:
+                        pix = fitz.Pixmap(doc, xref)
 
-            self.figure_count += 1
+                        # Note - this is in pixels (which means it is the original dimensions of the image
+                        # irrespective of the scaling (smaller/bigger) used to display it on the PDF)
+                        fig_px_w, fig_px_h = pix.width, pix.height
+
+                        pix.save(images_path)
+                    except Exception as e:
+                        pix = fitz.Pixmap(fitz.csRGB, pix)
+                        pix.save(images_path)
+
+
+                    # Since the original image dimensions might be scaled on the PDF page - we
+                    # need to make adjustments to map these image pixels wrt the page
+                    x_scale = pdf_fig_box.width / float(fig_px_w) if fig_px_w else 0.0
+                    y_scale = pdf_fig_box.height / float(fig_px_h) if fig_px_h else 0.0
+
+
+                    figure_metadata = {
+                        "page_num": page_num,
+                        "figure_num": figure_num,
+                        "xref": xref,
+                        "pdf_fig_box": (pdf_fig_box.x0, pdf_fig_box.y0, pdf_fig_box.x1, pdf_fig_box.y1),
+                        # "fig_px_w": fig_px_w,
+                        # "fig_px_h": fig_px_h,
+                        "x_scale": x_scale,
+                        "y_scale": y_scale,
+                    }
+                    
+
+                    self.log_file.write(f"\nSaved image to {images_path}")
+
+                    self.update_status("Processing image %d from page %d" % (figure_num, page_num))
+
+                    self.find_glycans(images_path, image_folders, **figure_metadata)
+
+                    figure_num += 1
+
+                    
+
+
+
+    # def extract_pdf_figure_metadata(self):
+    #     """
+    #     Extract figure metadata using fitz.
+    #     Returns list with fig bbox in page coords and pixel dims + scales.
+    #     """
+    #     doc = fitz.open(self.input_filepath)
+    #     figure_metadata = []
+    #     figure_num = 0
+
+    #     for page_num in range(len(doc)):
+    #         page = doc[page_num]
+    #         info = page.get_image_info(xrefs=True)
+    #         # info entries include 'xref' and 'bbox' (page coordinate rect)
+    #         for img in info:
+    #             xref = img["xref"]
+
+    #             # Note: pdf_fig_bbox is not in pixels
+    #             # this is in page cooridniates which is called points (1 point = 1/72 inch)
+    #             pdf_fig_bbox = fitz.Rect(img["bbox"])
+
+    #             # Use Pixmap on xref to get pixel size
+    #             try:
+    #                 pix = fitz.Pixmap(doc, xref)
+
+    #                 # Note - this is in pixels (which means it is the original dimensions of the image
+    #                 # irrespective of the scaling (smaller/bigger) used to display it on the PDF)
+    #                 fig_px_w, fig_px_h = pix.width, pix.height
+    #             except Exception:
+    #                 # Fallback to displayed size if pixmap fails
+    #                 # fig_px_w, fig_px_h = int(fig_bbox.width), int(fig_bbox.height)
+    #                 self.log_file.write(f"Warning: Could not extract pixel dimensions for xref {xref}: {e}\n")
+    #                 continue  # Skip this image entirely
+                    
+
+    #             # Since the original image might be scaled on the PDF page - we
+    #             # need to make adjustments to map these image pixels wrt the page
+    #             x_scale = pdf_fig_bbox.width / float(fig_px_w) if fig_px_w else 0.0
+    #             y_scale = pdf_fig_bbox.height / float(fig_px_h) if fig_px_h else 0.0
+
+    #             # reason for scaling and storing pixel info - because the pipeline runs
+    #             # on the extracted figures and generates semnatics wrt figure pixels and then to create
+    #             # annotations back on the pdf - we need to scale it according to PDF dimesnions
+    #             metadata = {
+    #                 "page_num": page_num,
+    #                 "figure_num": figure_num,
+    #                 "xref": xref,
+    #                 "pdf_fig_bbox": (pdf_fig_bbox.x0, pdf_fig_bbox.y0, pdf_fig_bbox.x1, pdf_fig_bbox.y1),
+    #                 "fig_px_w": fig_px_w,
+    #                 "fig_px_h": fig_px_h,
+    #                 "x_scale": x_scale,
+    #                 "y_scale": y_scale,
+    #             }
+    #             figure_metadata.append(metadata)
+    #             figure_num += 1
+
+    #     return figure_metadata
+
+    
+    # def process_pdf_page(self, figures_metadata, image_folders):
+    #     doc = fitz.open(self.input_filepath)
+    #     for page_index, page in enumerate(doc.pages()):
+    #         page_metadata = [d for d in figures_metadata if d['page_num'] == page_index]
+    #         # self.process_pdf_page(doc, page_index, page_metadata, image_folders)
+
+    #         for image_index, figure_data in enumerate(page_metadata):
+    #             xref = figure_data["xref"]
+
+    #             # Use fitz provided bbox in page coordinates
+    #             pdf_fig_bbox = fitz.Rect(figure_data["pdf_fig_bbox"])   # since its a tuple - reconstruct it as a fitz Rect
+    #             pdf_fig_height = pdf_fig_bbox.height
+    #             pdf_fig_width = pdf_fig_bbox.width
+    #             area = pdf_fig_height * pdf_fig_width
+
+    #             self.log_file.write(
+    #                 f"\nFigure number: {figure_data["figure_num"]}, Page number: {figure_data["page_num"]},  BBox: {tuple(figure_data["pdf_fig_bbox"])}, Width: {pdf_fig_width}, Height: {pdf_fig_height}, Area: {area}\n"
+    #             )
+
+    #             if (pdf_fig_height > 60 and pdf_fig_width > 60) or area > 360:
+    #                 # figure_data['figure_count'] = self.figure_count
+
+    #                 images_path = os.path.join(image_folders['figures_dir'], f"{xref}.png")
+
+    #                 pix = fitz.Pixmap(doc, xref)
+    #                 try:
+    #                     pix.save(images_path)
+    #                 except ValueError:
+    #                     pix = fitz.Pixmap(fitz.csRGB, pix)
+    #                     pix.save(images_path)
+
+    #                 self.log_file.write(f"\nSaved image to {images_path}")
+
+    #                 self.update_status("Processing image %d from page %d" % (figure_data["figure_num"], figure_data["page_num"]))
+
+    #                 self.find_glycans(images_path, image_folders, **figure_data)
+
+
+
+
+
+    # def process_pdf_pages(self, doc, page_index, page_metadata, image_folders):
+    #     # page_index is used for status
+
+    #     for image_index, figure_data in enumerate(page_metadata):
+    #         xref = figure_data["xref"]
+
+    #         # Use fitz provided bbox in page coordinates
+    #         pdf_fig_bbox = fitz.Rect(figure_data["pdf_fig_bbox"])   # since its a tuple - reconstruct it as a fitz Rect
+    #         pdf_fig_height = pdf_fig_bbox.height
+    #         pdf_fig_width = pdf_fig_bbox.width
+    #         area = pdf_fig_height * pdf_fig_width
+
+    #         self.log_file.write(
+    #             f"\nFigure number: {figure_data["figure_num"]}, Page number: {figure_data["page_num"]},  BBox: {tuple(figure_data["pdf_fig_bbox"])}, Width: {pdf_fig_width}, Height: {pdf_fig_height}, Area: {area}\n"
+    #         )
+
+    #         if (pdf_fig_height > 60 and pdf_fig_width > 60) or area > 360:
+    #             # figure_data['figure_count'] = self.figure_count
+
+    #             images_path = os.path.join(image_folders['figures_dir'], f"{xref}.png")
+
+    #             # Use existing doc; do not reopen for each xref
+    #             pix = fitz.Pixmap(doc, xref)
+    #             try:
+    #                 pix.save(images_path)
+    #             except ValueError:
+    #                 pix = fitz.Pixmap(fitz.csRGB, pix)
+    #                 pix.save(images_path)
+
+    #             self.log_file.write(f"\nSaved image to {images_path}")
+
+    #             self.update_status("Processing image %d from page %d" % (figure_data["figure_num"], figure_data["page_num"]))
+
+    #             self.find_glycans(images_path, image_folders, **figure_data)
 
 
 

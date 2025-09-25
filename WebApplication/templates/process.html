@@ -6,38 +6,51 @@
   #fileType label.btn {
       flex: 1 1 0; /* Force equal growth */
       cursor: pointer;
+      margin-right: 0;              
+      white-space: nowrap;
+  }
+
+  #inputform {
+    width: 70%;
+    margin: 0 auto;
   }
   
   .upload-card {
       border: none;
       box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
       border-radius: 10px;
-      min-height: 60vh; /* Make card taller for better centering */
+      /* min-height: 60vh;  */
   }
-  
-  /* .card-body {
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      min-height: 50vh; 
-  } */
   
   .upload-area {
       border: 2px dashed #dee2e6;
       border-radius: 10px;
-      padding: 40px 20px;
+      padding: 20px 20px;
       text-align: center;
       transition: all 0.3s ease;
       background: #f8f9fa;
       /* margin: 20px auto;  */
       /* max-width: 500px;  */
-      width: 70%;
+
+      /* width: 70%; # */
   }
+
+  .upload-area {
+    width: 100%;
+    max-width: 100%;
+    /* box-sizing: border-box; */
+}
+
+    /* Keep images and controls responsive */
+    .upload-area img {
+        max-width: 100%;
+        height: auto;
+    }
   
-  .upload-area:hover {
-      border-color: #007bff;
-      background-color: #e3f2fd;
-  }
+    .upload-area:hover {
+        border-color: #007bff;
+        background-color: #e3f2fd;
+    }
   
   .upload-area.dragover {
       border-color: #007bff;
@@ -48,8 +61,8 @@
   .file-input-wrapper {
       position: relative;
       display: inline-block;
-      width: auto; /* Remove full width */
-      margin: 0 auto; /* Center the wrapper */
+      width: auto; 
+      margin: 0 auto; 
   }
   
   .file-input-wrapper input[type=file] {
@@ -59,15 +72,15 @@
   
   .file-input-label {
       display: inline-block;
-      padding: 8px 20px; /* Smaller padding */
+      padding: 8px 20px; 
       background: #007bff;
       color: white;
       border-radius: 6px;
       cursor: pointer;
       transition: all 0.3s ease;
-      width: auto; /* Remove full width */
+      width: auto; 
       text-align: center;
-      font-size: 14px; /* Smaller font */
+      font-size: 14px; 
   }
   
   .file-input-label:hover {
@@ -75,12 +88,11 @@
       transform: translateY(-2px);
   }
   
-  .form-group {
+  /* .form-group {
       margin-bottom: 20px;
-      max-width: 500px; /* Limit width for centering */
-      margin-left: auto;
-      margin-right: auto;
-  }
+  } */
+
+
   
   .form-control {
       border-radius: 6px;
@@ -95,16 +107,15 @@
   }
   
   .btn-secondary {
-      /* background: linear-gradient(135deg, #28a745 0%, #20c997 100%); */
       border: none;
-      padding: 8px 24px; /* Smaller padding */
-      font-size: 14px; /* Smaller font */
+      padding: 8px 24px; 
+      font-size: 14px; 
       font-weight: 600;
       border-radius: 6px;
       transition: all 0.3s ease;
-      width: auto; /* Remove full width */
-      margin: 20px auto 0; /* Center horizontally */
-      display: block; /* Make it a block element for centering */
+      width: auto; 
+      margin: 20px auto 0; 
+      display: block; 
   }
   
   .btn-submit:hover {
@@ -118,7 +129,7 @@
       padding: 10px;
       margin: 10px auto 0; /* Center horizontally */
       display: none;
-      max-width: 500px; /* Limit width */
+      /* max-width: 500px;     # */
   }
   
   .file-info.show {
@@ -126,14 +137,18 @@
   }
   
   .method-tabs {
-      max-width: 600px; /* Limit width for centering */
-      margin: 0 auto 20px; /* Center the tabs */
+      display: flex;
+      flex-wrap: wrap;
+      max-width: 100%;
+      width: 100%;
+      margin-left: auto;
+      margin-right: auto;
   }
   
-  .method-tabs .btn {
+  /* .method-tabs .btn {
       border-radius: 6px 6px 0 0;
       margin-right: 2px;
-  }
+  } */
   
   .method-tabs .btn.active {
       background: #007bff;
@@ -141,29 +156,6 @@
       border-color: #007bff;
   }
   
-  /* Center all form content */
-  #fileUploadField,
-  #urlInputField,
-  #photoField {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-  }
-  
-  #urlInputField,
-  #photoField {
-      display: none;
-  }
-  
-  #urlInputField.show,
-  #photoField.show {
-      display: flex;
-  }
-
-  #urlInputField h5 {
-    margin-top: 0;
-    margin-bottom: 0.5rem;
-}
 </style>
 
 <script>
