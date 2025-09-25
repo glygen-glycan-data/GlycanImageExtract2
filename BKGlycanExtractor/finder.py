@@ -41,6 +41,7 @@ class Finder(object):
              
         accepted, rejected = self.filter_objects(obj_list)
         self.set_results(obj, accepted, rejected)
+        self.log_error(obj, accepted, rejected)
         return accepted
 
     # same for KnownFinder and YOLOFinder

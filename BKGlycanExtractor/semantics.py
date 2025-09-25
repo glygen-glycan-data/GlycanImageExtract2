@@ -523,6 +523,7 @@ class GlycanSemantics(ImageSemantics):
 
     def add_glycan_error(self,error_msg):
         self.append('glycan_errors',error_msg)
+        self.log(error_msg)
 
     def glycan_errors(self):
         return self.get('glycan_errors',[])

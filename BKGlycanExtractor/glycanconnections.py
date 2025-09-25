@@ -27,8 +27,16 @@ class LinkFinder:
     def set_logger(self, logger_name=''):
         self.logger = logging.getLogger(logger_name+'.glycanconnections')
 
+
     def set_results(self, obj, accepted, rejected):
         obj.set_undirected_links(accepted,rejected)
+
+    def log_error(self,obj,accepted,rejected):
+        # check if num_monos - 1 == num_links
+        monos_count = len(obj.monos())
+        if monos_count - 1 != len(accepted):
+            obj.add_glycan_error(f"Count of monos: {monos_count}, count of links: {len(accepted)}")
+
     
     def finder_pipeline(self,config_manager):
         pipeline = GlycanExtractorPipeline()

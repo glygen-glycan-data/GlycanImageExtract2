@@ -38,6 +38,9 @@ class MonoFinder:
     def set_results(self, obj, accepted, rejected):
         obj.set_monos(accepted, rejected)
 
+    def log_error(self, obj, accepeted, rejected):
+        pass
+
     def finder_pipeline(self,config_manager):
         pipeline = GlycanExtractorPipeline()
         pipeline.set_steps('figure', config_manager.get_finders("SingleGlycanImage"))
