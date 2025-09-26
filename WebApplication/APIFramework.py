@@ -665,9 +665,9 @@ class APIFramework:
                     self.result_cache[res["id"]]['finished'] = True
                     self.remove_from_task_list(res["id"])    
 
-                file_path = os.path.join("static/files/"+res["id"], "results.json")
-                with open(file_path, 'w') as f:
-                    json.dump(self.result_cache[res["id"]],f,indent=2)
+                    file_path = os.path.join("static/files/"+res["id"], "results.json")
+                    with open(file_path, 'w') as f:
+                        json.dump(self.result_cache[res["id"]],f,indent=2)
 
             except queue.Empty:
                 break
