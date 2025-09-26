@@ -75,8 +75,7 @@ class ReferenceAPIFileBased(APIFramework):
 
             # Factory method - class reference is passed via get_prcessor() 
             # which is instantiated below
-            job_class = JobInstance.get_processor(task_detail)
-            job_instance = job_class(task_detail,msg_queue=result_queue)
+            job_instance = JobInstance.get_processor(task_detail,msg_queue=result_queue)
             try:
                 job_instance.process_file()
             except:

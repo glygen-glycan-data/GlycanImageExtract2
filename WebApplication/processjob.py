@@ -73,17 +73,15 @@ class JobInstance:
         self.update_status(status=None,state=state)
 
     @staticmethod
-    def get_processor(task_detail):
-        original_file_name = task_detail.get('original_file_name')
-        file_extension = original_file_name.rsplit('.', 1)[-1]
+    def get_processor(task_detail,*args,**kwargs):
+        submission_type = task_detail.get('submission_type')
 
-        if file_extension in ('png', 'jpg', 'jpeg'):
-            return ImageJob
-        elif file_extension == 'pdf':
-            return PDFJob
-        else:
-            raise ValueError(f"Unsupported file type: {file_extension}")
-
+        if submission_type == "Manuscript":
+            return PDFJob(task_detail,*args,**kwargs)
+        elif submission_type in ("Simple Glycan Image","Multi-Glycan Image"):
+            return ImageJob(task_detail,*args,**kwargs)           
+        
+        raise ValueError(f"Unsupported submission type: {submission_type}")
 
     def create_directories(self,*paths):
         for path in paths:
