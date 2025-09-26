@@ -24,7 +24,8 @@
   
   .upload-area {
       border: 2px dashed #dee2e6;
-      border-radius: 10px;
+      border-top: none;  
+      border-radius: 0 0 10px 10px; 
       padding: 20px 20px;
       text-align: center;
       transition: all 0.3s ease;
@@ -144,17 +145,12 @@
       margin-left: auto;
       margin-right: auto;
   }
-  
-  /* .method-tabs .btn {
-      border-radius: 6px 6px 0 0;
-      margin-right: 2px;
-  } */
-  
-  .method-tabs .btn.active {
-      background: #007bff;
-      color: white;
-      border-color: #007bff;
-  }
+
+  .method-tabs .btn {
+       margin-bottom: 0;       
+       border-radius: 6px 6px 0px 0px;  
+   }
+
   
 </style>
 
@@ -316,7 +312,7 @@
             <div class="card-body">
                 <form id="inputform" onsubmit="return validateForm()">
                     <!-- Upload Method Selection -->
-                    <div id="fileType" class="method-tabs d-flex w-100 mb-4" data-toggle="buttons">
+                    <div id="fileType" class="method-tabs d-flex w-100" data-toggle="buttons">
                         <label class="btn btn-outline-secondary flex-fill text-center active">
                           <input type="radio" name="fileType" value="file" autocomplete="off" checked> 
                           <!-- <i class="fas fa-upload mr-2"></i> -->
