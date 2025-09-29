@@ -53,7 +53,11 @@ def extract_annotated_images(output_dir,pdf_path):
 
             # get all the figures on the current page
             for fig_num, figure in enumerate(figures, 1):
-                xref = figure["xref"]
+                xref = figure.get("xref")
+
+                if not isinstance(xref, int) or xref <= 0:
+                    print("XREF ISSUES for: ", pdf_path)
+                    continue
 
                 # basics details about the figure
                 base_figure = doc.extract_image(xref)
@@ -148,6 +152,12 @@ def merge_glycan_data_with_tsv(output_dir, glycan_data, tsv_path):
             if k not in existing_order and k not in seen:
                 seen.add(k)
                 new_fields.append(k)
+
+
+        if rid in existing_rows:
+            existing_rows[rid].update(item)
+        else:
+            existing_rows[rid] = dict(item)
 
     # final header: ID, new fields, then existing fileds from provided TSV
     final_fields = ['ID'] if ('ID' in existing_order or any('ID' in d for d in glycan_data)) else []
