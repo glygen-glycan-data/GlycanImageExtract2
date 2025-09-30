@@ -54,27 +54,24 @@ def extract_annotated_images(output_dir,pdf_path):
             # get all the figures on the current page
             for fig_num, figure in enumerate(figures, 1):
                 xref = figure.get("xref")
-
-                if not isinstance(xref, int) or xref <= 0:
-                    print("XREF ISSUES for: ", pdf_path)
-                    continue
-
-                # basics details about the figure
-                base_figure = doc.extract_image(xref)
-                figure_bytes = base_figure["image"]
-                figure_ext = base_figure["ext"]
-
-                px_fig_width = base_figure["width"]
-                px_fig_height = base_figure["height"]
+                fig_box = fitz.Rect(figure["bbox"])
                 
                 # Create filename
                 figure_filename = f"{os.path.basename(output_dir)}_p{page_num}_f{fig_num}.png"
                 figure_path = os.path.join(output_dir, figure_filename)
 
+                # get origional figures dimensions in pixels 
+                # below steps exist in order to remove the scaling factor added to the figures while pasting them into the PDF
+                zoom_x = figure["width"] / fig_box.width
+                zoom_y = figure["height"] / fig_box.height
+                mat = fitz.Matrix(zoom_x, zoom_y)
+                pix = page.get_pixmap(matrix=mat, clip=fig_box, alpha=False)
+                px_fig_width = pix.width
+                px_fig_height = pix.height
+
                 annots_in_figure = False
 
-                fig_box = fitz.Rect(figure["bbox"])
-
+                
                 x_scale = fig_box.width  / float(px_fig_width)
                 y_scale = fig_box.height / float(px_fig_height)
 
@@ -114,8 +111,7 @@ def extract_annotated_images(output_dir,pdf_path):
 
                 # Only save the figure if it has annotations
                 if annots_in_figure:
-                    with open(figure_path, "wb") as figure_file:
-                        figure_file.write(figure_bytes)
+                    pix.save(figure_path)
                     
     return metadata
 
@@ -162,7 +158,7 @@ def merge_glycan_data_with_tsv(output_dir, glycan_data, tsv_path):
     # final header: ID, new fields, then existing fileds from provided TSV
     final_fields = ['ID'] if ('ID' in existing_order or any('ID' in d for d in glycan_data)) else []
     final_fields += [c for c in new_fields if c != 'ID' and c not in final_fields]
-    final_fields += [c for c in existing_order if c != 'ID' and c not in final_fields]
+    final_fields += [c for c in existing_order if c not in ['ID', 'x', 'y', 'w', 'h', 'image_index', 'image_width', 'image_height'] and c not in final_fields]
 
     # write merged
     tsv_filename = os.path.basename(tsv_path).rsplit('.', 1)[0]
