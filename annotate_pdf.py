@@ -72,52 +72,39 @@ image_data = []
 
 anyvotes = False
 
-for figure in figure_results:
-    page_num = figure['image_page']
-    page = doc[page_num]
+for result in figure_results:
+    fig_num = result["figure_num"]
 
+    # page_num - 1, because semantics counts page number starting from 1
+    # but fitz accesses page numbers starting from 0
+    page = doc[result["page_num"]-1]   
 
-    info = page.get_image_info(xrefs=True)
-    # ensures that we get the correct figure bbox wrt to the entire pdf page
-    bbox = next(i["bbox"] for i in info if i["xref"] == figure["xref"])
-    fig_bbox = fitz.Rect(bbox)
-    # page.add_rect_annot(fig_bbox).update()    # draw rect around entire figure for sanity check
+    fig_pdf_x, fig_pdf_y, fig_pdf_w, fig_pdf_h = result["pdf_fig_bbox"]
 
+    fig_px_w = result["width"]
+    fig_px_h = result["height"]
 
-    # figure pixel size used in semantics
-    fig_px_w = figure["width"] 
-    fig_px_h = figure["height"]   
+    # Since the original image dimensions might be scaled on the PDF page - we
+    # need to make adjustments to map these image pixels wrt the page
+    x_scale = fig_pdf_w / float(fig_px_w) 
+    y_scale = fig_pdf_h / float(fig_px_h)
 
+    for glycan in result["glycans"]:
+        x0, y0, w, h = glycan["bbox"]
 
-    if (fig_bbox.height <= 60 or fig_bbox.width <= 60) and (fig_bbox.height*fig_bbox.width <= 360):
-        continue
+        x1 = x0 + w
+        y1 = y0 + h
 
-    # scales from figure image pixels -> displayed figure on page
-    x_scale = fig_bbox.width  / float(fig_px_w)
-    y_scale = fig_bbox.height / float(fig_px_h)
+        pdf_x0 = fig_pdf_x + x0 * x_scale
+        pdf_x1 = fig_pdf_x + x1 * x_scale
+        pdf_y0 = fig_pdf_y + y0 * y_scale
+        pdf_y1 = fig_pdf_y + y1 * y_scale
 
-    
-    for glycan in figure['glycans']:
-        glycan_box = BoundingBox(bbox=glycan['bbox'])
-        x0, y0, x1, y1 = glycan_box.corners()
-        x,y,w,h = glycan_box.bbox()
+        gly_box = fitz.Rect((pdf_x0, pdf_y0, pdf_x1, pdf_y1))
+        annot = page.add_rect_annot(gly_box)
 
-        # normalize bbox ordering just in case
-        x0, x1 = sorted((x0, x1))
-        y0, y1 = sorted((y0, y1))
-
-        # map top-left-origin pixels -> page
-        pdf_x0 = fig_bbox.x0 + x0 * x_scale
-        pdf_x1 = fig_bbox.x0 + x1 * x_scale
-        pdf_y0 = fig_bbox.y0 + y0 * y_scale
-        pdf_y1 = fig_bbox.y0 + y1 * y_scale
-
-        glycan_rect = fitz.Rect(pdf_x0, pdf_y0, pdf_x1, pdf_y1)
-
-        annot = page.add_rect_annot(glycan_rect)
-
-        gid = f"G{figure['figure_count']}.{glycan['fig_glycan_count']}"
-        url = client.url() + f"/result/{taskid}#glycan-{figure['figure_count']}-{glycan['fig_glycan_count']}"
+        gid = f"G{fig_num}.{glycan['fig_glycan_count']}"
+        url = client.url() + f"/result/{taskid}#glycan-{fig_num}-{glycan['fig_glycan_count']}"
         content = (
             f"id: {gid}\n"
             f"url: {url}\n"
@@ -133,20 +120,21 @@ for figure in figure_results:
 
         image_data.append({
             "ID": gid,
-            "image_index": figure['figure_count'],
-            "page_number": page_num,
+            "xref": result["xref"],
+            "page_num": result["page_num"],
+            "fig_num": fig_num,
             "accession": glycan.get('accession', ''),
             "iupac": glycan.get('IUPAC', ''),
             "composition": glycan.get('composition_str', ''),
             'wurcs': glycan.get('WURCS', ''),
             'votes': votes,
             "url": url,
-            "image_width": fig_bbox.width,
-            "image_height": fig_bbox.height,
-            "x": x,
-            "y": y,
-            "w": w,
-            "h": h,
+            # uncomment the below if we decide to use bounding box info from the semnatics -
+            # for now it is decided to use info that is extracted during the extarct_figures step
+            # using the fitz model to extract co-ordinates of the annotations on the pdf
+            # "_gly_bbox": glycan.get("bbox"),  
+            # "_fig_width": result['width'],     
+            # "_fig_height": result['height']    
         })
 
 doc.save(basename + ".annotated.pdf")
@@ -154,7 +142,7 @@ doc.close()
 print("Wrote annotated PDF:",basename + ".annotated.pdf")   
 
 wh = open(os.path.join(basename + ".annotated.tsv"),'w')
-headers = "ID page_number composition iupac wurcs accession votes url image_index image_width image_height x y w h".split()
+headers = "ID xref page_num fig_num accession iupac composition wurcs votes url".split()
 if not anyvotes:
     headers.remove("votes")    
 print("\t".join(headers),file=wh)

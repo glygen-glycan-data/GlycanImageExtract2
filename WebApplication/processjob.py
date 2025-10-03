@@ -5,14 +5,8 @@ from PIL import Image
 from hashlib import md5
 from APIFramework import APIFramework
 
-
-
-
 from BKGlycanExtractor import Config_Manager, BoundingBox
-# from . import glycanExtractor
 
-# from .glycanannotator import GlycanExtractorPipeline
-from collections import Counter
 import numpy as np
 from shutil import copyfile
 
@@ -292,6 +286,7 @@ class JobInstance:
             nglycan = kwargs.get('nglycan')
             index = kwargs.get('index')
             figure_num = kwargs.get("figure_num",0)
+            # default for page_num becomes 0 - 0 is only for single images and not pdf
             page_num = kwargs.get("page_num",0)
             if page_num == 0:
                 self.update_status("Processing image, analyzed %d/%d glycan(s)"%(index,nglycan))
@@ -313,28 +308,6 @@ class JobInstance:
             key=lambda g: tuple(g.box().bbox())
         )
         figure_semantics.set_glycans(sorted_glycans)
-
-        fig_box_t = kwargs.get("pdf_fig_box")            # tuple (x0,y0,x1,y1)
-        x_scale = kwargs.get("x_scale")
-        y_scale = kwargs.get("y_scale")
-
-        # if case - special for PDF - so maybe this might need some re-org?
-        # Like a hook method for PDFJob class - leaving it for TO DO as of now
-        if fig_box_t is not None and x_scale is not None and y_scale is not None:
-            fig_box = fitz.Rect(fig_box_t)
-
-            for gly_semantics in figure_semantics.glycans():
-                x0, y0, x1, y1 = gly_semantics.box().corners()
-                x0, x1 = sorted((x0, x1))
-                y0, y1 = sorted((y0, y1))
-
-                pdf_x0 = fig_box.x0 + x0 * x_scale
-                pdf_x1 = fig_box.x0 + x1 * x_scale
-                pdf_y0 = fig_box.y0 + y0 * y_scale
-                pdf_y1 = fig_box.y0 + y1 * y_scale
-
-                gly_semantics.set("pdf_glycan_box", (pdf_x0, pdf_y0, pdf_x1, pdf_y1))
-
 
         nglycan = len(figure_semantics.glycans())
         if kwargs.get("page_num",0) == 0:
@@ -438,9 +411,9 @@ class PDFJob(JobInstance):
 
         doc = fitz.open(self.input_filepath)
         # figure_metadata = []
-        figure_num = 0
+        figure_num = 1
 
-        for page_num, page in enumerate(doc.pages()):
+        for page_num, page in enumerate(doc.pages(), 1):
             # page = doc[page_num]
             info = page.get_image_info(xrefs=True)
             for img in info:
@@ -466,34 +439,18 @@ class PDFJob(JobInstance):
                     pix = fitz.Pixmap(doc, xref)
                     try:
                         pix = fitz.Pixmap(doc, xref)
-
-                        # Note - this is in pixels (which means it is the original dimensions of the image
-                        # irrespective of the scaling (smaller/bigger) used to display it on the PDF)
-                        fig_px_w, fig_px_h = pix.width, pix.height
-
                         pix.save(images_path)
                     except Exception as e:
+                        # If save fails, convert to RGB and try again
                         pix = fitz.Pixmap(fitz.csRGB, pix)
                         pix.save(images_path)
-
-
-                    # Since the original image dimensions might be scaled on the PDF page - we
-                    # need to make adjustments to map these image pixels wrt the page
-                    x_scale = pdf_fig_box.width / float(fig_px_w) if fig_px_w else 0.0
-                    y_scale = pdf_fig_box.height / float(fig_px_h) if fig_px_h else 0.0
-
 
                     figure_metadata = {
                         "page_num": page_num,
                         "figure_num": figure_num,
                         "xref": xref,
-                        "pdf_fig_box": (pdf_fig_box.x0, pdf_fig_box.y0, pdf_fig_box.x1, pdf_fig_box.y1),
-                        # "fig_px_w": fig_px_w,
-                        # "fig_px_h": fig_px_h,
-                        "x_scale": x_scale,
-                        "y_scale": y_scale,
+                        "pdf_fig_bbox": [pdf_fig_box.x0, pdf_fig_box.y0, pdf_fig_width, pdf_fig_height],
                     }
-                    
 
                     self.log_file.write(f"\nSaved image to {images_path}")
 

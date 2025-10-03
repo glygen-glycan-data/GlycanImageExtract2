@@ -1,25 +1,9 @@
 import os
 import argparse
 import fitz
-import pandas as pd
 import glob
 import shutil
-
-
-def scale_annot_to_image(annot_rect, fig_rect, fig_width, fig_height):
-    """
-    Convert an annotation rectangle in PDF coordinates to
-    pixel coordinates within the cropped figure image.
-    """
-    scale_x = fig_width / fig_rect.width
-    scale_y = fig_height / fig_rect.height
-
-    x1 = (annot_rect.x0 - fig_rect.x0) * scale_x
-    y1 = (annot_rect.y0 - fig_rect.y0) * scale_y
-    x2 = (annot_rect.x1 - fig_rect.x0) * scale_x
-    y2 = (annot_rect.y1 - fig_rect.y0) * scale_y
-
-    return int(x1), int(y1), int(x2), int(y2)
+import csv
 
 
 def parse_comment(comment: str):
@@ -55,84 +39,141 @@ def parse_comment(comment: str):
     return glycan_id, url
 
 
-def extract_annotated_figures(page, page_num, output_dir):
-    """Extract figures on a page that contain annotations."""
-    all_metadata = []
+def extract_annotated_images(output_dir,pdf_path):
+    """Extract figures and annotations from a PDF file"""
 
-    # candidate figure regions = image blocks
-    figures = [fitz.Rect(b["bbox"]) for b in page.get_text("dict")["blocks"] if b["type"] == 1]
-    if not figures:
-        return all_metadata
+    metadata = []
 
-    annots = list(page.annots() or [])
-
-    for fig_index, fig_rect in enumerate(figures, start=1):
-        fig_annots = [a for a in annots if fig_rect.intersects(a.rect)]
-        if not fig_annots:
-            continue
-
-        # render figure
-        pix = page.get_pixmap(clip=fig_rect, annots=False)
-        figure_filename = f"{os.path.basename(output_dir)}_p{page_num+1}_f{fig_index}.png"
-        figure_path = os.path.join(output_dir, figure_filename)
-        pix.save(figure_path)
-
-        # collect metadata
-        for annot in fig_annots:
-            x1, y1, x2, y2 = scale_annot_to_image(annot.rect, fig_rect, pix.width, pix.height)
-            comment = annot.info.get("content") or annot.info.get("subject") or ""
-            glycan_id, url = parse_comment(comment)
-
-            metadata = {
-                "id": glycan_id,
-                # "page_num": page_num + 1,
-                "fig_width": pix.width,
-                "fig_height": pix.height,
-                "x1": x1, "y1": y1, "x2": x2, "y2": y2,
-                "pdf_coordinates": [annot.rect.x0, annot.rect.y0,
-                                    annot.rect.x1, annot.rect.y1],
-                "comment": comment,
-                "figure_name": figure_filename,
-                "figure_path": figure_path,
-                # "url": url,
-            }
-            all_metadata.append(metadata)
-
-    return all_metadata
-
-
-def extract_annotations(pdf_path):
-    """Extract figures and annotations from a PDF file into a list of metadata dicts."""
-    output_dir = os.path.splitext(os.path.basename(pdf_path))[0]
-
-    if os.path.exists(output_dir):
-        shutil.rmtree(output_dir)
-    os.makedirs(output_dir)
-
-    all_metadata = []
     with fitz.open(pdf_path) as doc:
-        for page_num, page in enumerate(doc):
-            all_metadata.extend(extract_annotated_figures(page, page_num, output_dir))
-    return all_metadata
+        for page_num, page in enumerate(doc, 1):
+            figures = page.get_image_info(xrefs=True)
+
+            # Get all annotations on the page
+            annotations = list(page.annots())
+
+            # get all the figures on the current page
+            for fig_num, figure in enumerate(figures, 1):
+                xref = figure.get("xref")
+                fig_box = fitz.Rect(figure["bbox"])
+                
+                # Create filename
+                figure_filename = f"{os.path.basename(output_dir)}_p{page_num}_f{fig_num}.png"
+                figure_path = os.path.join(output_dir, figure_filename)
+
+                # get origional figures dimensions in pixels 
+                # below steps exist in order to remove the scaling factor added to the figures while pasting them into the PDF
+                zoom_x = figure["width"] / fig_box.width
+                zoom_y = figure["height"] / fig_box.height
+                mat = fitz.Matrix(zoom_x, zoom_y)
+                pix = page.get_pixmap(matrix=mat, clip=fig_box, alpha=False)
+                px_fig_width = pix.width
+                px_fig_height = pix.height
+
+                annots_in_figure = False
+
+                
+                x_scale = fig_box.width  / float(px_fig_width)
+                y_scale = fig_box.height / float(px_fig_height)
+
+                # glycan_metadata = {}
+                for annot in annotations:
+                    if fig_box.intersects(annot.rect):
+                        annots_in_figure = True
+                        
+                        annot_box = annot.rect
+
+                        px_gly_x0 = round((annot_box.x0 - fig_box.x0) / x_scale)
+                        px_gly_x1 = round((annot_box.x1 - fig_box.x0) / x_scale)
+                        px_gly_y0 = round((annot_box.y0 - fig_box.y0) / y_scale)
+                        px_gly_y1 = round((annot_box.y1 - fig_box.y0) / y_scale)
+
+                        px_gly_w = abs(px_gly_x1-px_gly_x0)
+                        px_gly_h = abs(px_gly_y1-px_gly_y0)
+
+                        comment = annot.info.get("content") or annot.info.get("subject") or ""
+                        glycan_id, url = parse_comment(comment)
+
+                        annotation_data = {
+                            'ID': glycan_id,
+                            'url': url,
+                            'xref': xref,
+                            "gly_bbox": [px_gly_x0, px_gly_y0, px_gly_w, px_gly_h],
+                            # "comment": comment,
+                            "fig_width": px_fig_width,
+                            "fig_height": px_fig_height,
+                            "figure_name": figure_filename,
+                            "figure_path": figure_path,
+                            "page_num": page_num,
+                            "fig_num": fig_num
+                        }
+
+                        metadata.append(annotation_data)
+
+                # Only save the figure if it has annotations
+                if annots_in_figure:
+                    pix.save(figure_path)
+                    
+    return metadata
 
 
-def merge_with_existing(df, tsv_path):
-    """Merge extracted data with an existing TSV (glycan mapping)."""
-    glycan_df = pd.read_csv(tsv_path, sep="\t")
-    df["id"] = df["id"].str.strip()
-    glycan_df["ID"] = glycan_df["ID"].str.strip()
+def to_int(v):
+    try: return int(v)
+    except: return None
 
-    # Outer join
-    merged = glycan_df.merge(df, how="outer", left_on="ID", right_on="id")
+def merge_glycan_data_with_tsv(output_dir, glycan_data, tsv_path):
+    existing_rows = {}
+    existing_order = []
 
-    merged["ID"] = merged["ID"].fillna(merged["id"])
+    # track the existing rows via column name 'ID' (which is unique)
+    if os.path.exists(tsv_path):
+        with open(tsv_path, 'r', encoding='utf-8', newline='') as f:
+            r = csv.DictReader(f, delimiter='\t')
+            existing_order = r.fieldnames or []
+            for row in r:
+                rid = row.get('ID')
+                if rid:
+                    existing_rows[rid] = row
 
-    # Drop the duplicate id col
-    merged = merged.drop(columns=["id"])
+    # below code parses all the annotations that exist in the Manuscript
+    # 1) if an annotation matches with an already existing ID from with TSV, then merge the data
+    # 2) if a new manual annotation was added (ID doesnt exist in the TSV) - it will be added as a new row in the TSV file
+    new_fields = []
+    seen = set()
+    for item in glycan_data:
+        rid = item.get('ID')
+        if not rid: 
+            continue
+        # step to merge new data with existing data from the TSV file
+        for k in item:
+            if k not in existing_order and k not in seen:
+                seen.add(k)
+                new_fields.append(k)
 
-    return merged
 
+        if rid in existing_rows:
+            existing_rows[rid].update(item)
+        else:
+            existing_rows[rid] = dict(item)
 
+    # final header: ID, new fields, then existing fileds from provided TSV
+    final_fields = ['ID'] if ('ID' in existing_order or any('ID' in d for d in glycan_data)) else []
+    final_fields += [c for c in new_fields if c != 'ID' and c not in final_fields]
+    final_fields += [c for c in existing_order if c not in ['ID', 'x', 'y', 'w', 'h', 'image_index', 'image_width', 'image_height'] and c not in final_fields]
+
+    # write merged
+    tsv_filename = os.path.basename(tsv_path).rsplit('.', 1)[0]
+    merged_tsv_path = os.path.join(output_dir, f"{tsv_filename}_merged.tsv")
+
+    with open(merged_tsv_path, 'w', encoding='utf-8', newline='') as f:
+        w = csv.DictWriter(f, fieldnames=final_fields, delimiter='\t')
+        w.writeheader()
+        for row in existing_rows.values():
+            w.writerow({col: row.get(col, '') for col in final_fields})
+
+    print(f"Wrote merged TSV: {merged_tsv_path}")
+    return merged_tsv_path
+
+        
 def main(input_folder):
     pdf_files = glob.glob(os.path.join(input_folder, "*.pdf"))
 
@@ -140,16 +181,19 @@ def main(input_folder):
         file_name = os.path.splitext(os.path.basename(pdf_path))[0]
         tsv_path = os.path.join(input_folder, f"{file_name}.tsv")
 
+        output_dir = os.path.splitext(os.path.basename(pdf_path))[0]
+
+        if os.path.exists(output_dir):
+            shutil.rmtree(output_dir)
+        os.makedirs(output_dir)
+
         if not os.path.exists(tsv_path):
             print(f"Skipping {file_name}: no matching TSV found.")
             continue
 
-        metadata = extract_annotations(pdf_path)
-        df = pd.DataFrame(metadata)
-
-        merged_tsv_path = os.path.join(file_name, f"{file_name}_merged.tsv")
-        merged_df = merge_with_existing(df, tsv_path)
-        merged_df.to_csv(merged_tsv_path, sep="\t", index=False)
+        # main steps for extraction and merging
+        metadata = extract_annotated_images(output_dir,pdf_path)
+        merge_glycan_data_with_tsv(output_dir,metadata,tsv_path)
 
 
 if __name__ == "__main__":
