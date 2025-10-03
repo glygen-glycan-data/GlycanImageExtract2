@@ -73,10 +73,9 @@ class ReferenceAPIFileBased(APIFramework):
             # os.makedirs(os.path.join(workdir, "input"), exist_ok=True)
             # os.makedirs(os.path.join(workdir, "output"), exist_ok=True)
 
-            # Factory method - class reference is passed via get_prcessor() 
-            # which is instantiated below
-            job_instance = JobInstance.get_processor(task_detail,msg_queue=result_queue)
+            # Factory method - get_processor() 
             try:
+                job_instance = JobInstance.get_processor(task_detail, msg_queue=result_queue)
                 job_instance.process_file()
             except:
                 traceback.print_exc()
