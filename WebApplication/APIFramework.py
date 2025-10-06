@@ -154,7 +154,7 @@ class APIFramework:
         # self._flask_app.config['PERMANENT_SESSION_LIFETIME'] = 30*24*3600 # 30 days
 
     def set_prefix(self, prefix):
-        self._prefix = prefix
+        self._prefix = "/" + prefix.strip().strip('/')
 
     def input_file_folder(self):
         return self._input_file_folder
