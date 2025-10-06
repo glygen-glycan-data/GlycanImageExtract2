@@ -296,7 +296,14 @@ class APIFramework:
 
     def process(self):
         submission_type = flask.request.args.get("type")
-        return flask.render_template(self._process_html, submission_type=submission_type, urlprefix=self._prefix)
+
+        if submission_type == 'Manuscript':
+            placeholder_url = 'https://example.com/document.pdf'
+        else:
+            placeholder_url = 'https://example.com/image.png'
+
+        return flask.render_template(self._process_html, submission_type=submission_type, placeholder_url=placeholder_url, urlprefix=self._prefix)
+
 
     def examples(self):
         # Mcleod - https://www.neb.com/en-us/-/media/nebus/files/application-notes/appnote_characterization_of_glycans_from_erbitux_rituxan_and_enbrel_using_recombinant_pngase_f.pdf?rev=581a874aebbc4351bec05e10c07f96ea&hash=C8D5EB5AF1B7D5C331DFAB13BB87F649
@@ -378,19 +385,8 @@ class APIFramework:
                 if task1['state'] == self.QUEUED:
                     task1['status'] = "Position %d in queue"%(self.get_jobs_ahead(tid)+1,)
 
-                # Convert timestamp to readable datetime
-                ts = task1.get("submit_time")
-                if ts:
-                    dt = datetime.fromtimestamp(ts).astimezone()
-                    task1["submit_time_local"] = dt.strftime("%m/%d/%Y %H:%M")
-                else:
-                    task1["submit_time_local"] = "N/A"
                 recent_jobs.append(task1)
-        # print("recent jobs",recent_jobs)
-
-        # print("--->>",flask.jsonify(recent_jobs))
         return flask.jsonify(recent_jobs)
-
 
 
     def get_next_task_index(self):

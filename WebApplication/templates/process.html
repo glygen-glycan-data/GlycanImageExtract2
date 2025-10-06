@@ -1,4 +1,4 @@
-<!-- submission_type is receieved from the url param -->
+<!-- submission_type, placeholder_url is receieved from the url param -->
 {% extends "base.html" %}
 
 {% block head %}
@@ -243,6 +243,7 @@
         // Form validation and submit via AJAX
         function validateForm() {
             const submission_type = "{{ submission_type }}".trim();
+            const placeholder_url = "{{ placeholder_url }}".trim();
             const uploadOption = document.querySelector('input[name="fileType"]:checked').value;
             const allowedFormats = {
                 'Manuscript': ['pdf'],
@@ -358,7 +359,7 @@
                           <img src="{{urlprefix}}/static/images/link.svg">
                           <h5>URL</h5>
                           <input type="url" name="fileURL" id="fileURL" class="form-control" 
-                                 placeholder="https://example.com/document.pdf" />
+                                placeholder={{placeholder_url}} />
                         </div>
                       </div>
             

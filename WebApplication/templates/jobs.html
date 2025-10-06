@@ -38,53 +38,64 @@
 
 </style>
 <script>
+    function formatSubmitTime(epochSeconds) {
+        // Backend provides seconds (float) -> JS Date needs milliseconds
+        const date = new Date(epochSeconds * 1000);
+
+        // Uses the user's browser locale and time zone automatically
+        return new Intl.DateTimeFormat(undefined, {
+            dateStyle: 'short', // date style varies with locale (e.g: US - month/date/yr, London: date/month/yr)
+            timeStyle: 'short', 
+            hour12: true,  // 12 hr clock with AM/PM
+        }).format(new Date(epochSeconds * 1000));
+    }
+
     async function loadJobs() {
         try {
-    const response = await fetch("{{urlprefix}}/api/recent_jobs");;
-    const jobs = await response.json();
+            const response = await fetch("{{urlprefix}}/api/recent_jobs");;
+            const jobs = await response.json();
 
-    const container = document.getElementById('jobs-container');
-    
-    // We reload if necessary....
-    //
-    // <button id="refreshBtn" class="btn btn-secondary float-right" 
-    // onclick="loadJobs()" style="margin-bottom:10px">
-    //     Refresh
-    // </button>
+            const container = document.getElementById('jobs-container');
+            
+            // We reload if necessary....
+            //
+            // <button id="refreshBtn" class="btn btn-secondary float-right" 
+            // onclick="loadJobs()" style="margin-bottom:10px">
+            //     Refresh
+            // </button>
 
-    container.innerHTML = `
-    <table class="job-table" border="1" style="border-collapse: collapse;">
-        <thead>
-            <tr>
-            <th>Timestamp</th>
-            <th>Results</th>
-            <th>Type</th>
-            <th>Status</th>
-            </tr>
-        </thead>
-        <tbody>
-            ${jobs.map((job, index) => `<tr>
-            <td>${job.submit_time_local}</td>
-            <td><a href="{{urlprefix}}/result/${job.id}">${job.submission_detail.original_file_name}</a></td>
-            <td>${job.submission_type || job.file_type}</td>
-            <td class="text-truncate" title="${job.status || job.state}">${job.status || job.state}</td>
-            </tr>`).join('')}
-        </tbody>
-    </table>
-    `;
+            container.innerHTML = `
+            <table class="job-table" border="1" style="border-collapse: collapse;">
+                <thead>
+                    <tr>
+                    <th>Timestamp</th>
+                    <th>Results</th>
+                    <th>Type</th>
+                    <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${jobs.map((job, index) => `<tr>
+                    <td>${formatSubmitTime(job.submit_time)}</td>
+                    <td><a href="{{urlprefix}}/result/${job.id}">${job.submission_detail.original_file_name}</a></td>
+                    <td>${job.submission_type || job.file_type}</td>
+                    <td class="text-truncate" title="${job.status || job.state}">${job.status || job.state}</td>
+                    </tr>`).join('')}
+                </tbody>
+            </table>
+            `;
 
-    // reload the jobs data after 15 seconds... if any jobs are queued or running
-    if (jobs.some(job => (["Running","Queued"].includes(job.state)))) {
-        setTimeout(loadJobs, 15000);
-    }
+            // reload the jobs data after 15 seconds... if any jobs are queued or running
+            if (jobs.some(job => (["Running","Queued"].includes(job.state)))) {
+                setTimeout(loadJobs, 15000);
+            }
 
         } catch (err) {
             console.log("No jobs were submitted recently...", err)
             document.getElementById('jobs-container').innerHTML = 'No recent jobs...'
-        }
-
-        
+        }      
     }
+
 
     document.addEventListener("DOMContentLoaded", loadJobs);
 </script>
