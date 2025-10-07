@@ -47,7 +47,7 @@
             dateStyle: 'short', // date style varies with locale (e.g: US - month/date/yr, London: date/month/yr)
             timeStyle: 'short', 
             hour12: true,  // 12 hr clock with AM/PM
-        }).format(new Date(epochSeconds * 1000));
+        }).format(date);
     }
 
     async function loadJobs() {
