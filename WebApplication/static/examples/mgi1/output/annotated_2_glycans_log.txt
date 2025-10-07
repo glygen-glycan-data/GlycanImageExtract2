@@ -1,2 +1,2 @@
-rw46saw5v7
-/data2/projects/GlyGen/GlycanImageExtract2-dev/WebApplication/static/files/rw46saw5v7/output/annotated_2_glycans.png
+ugh664b5ab
+/data2/projects/GlyGen/GlycanImageExtract2-dev/WebApplication/static/files/ugh664b5ab/output/annotated_2_glycans.png

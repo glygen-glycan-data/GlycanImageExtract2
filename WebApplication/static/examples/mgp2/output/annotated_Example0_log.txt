@@ -1,6 +1,6 @@
-ou6kxyrtil
-/data2/projects/GlyGen/GlycanImageExtract2-dev/WebApplication/static/files/ou6kxyrtil/output/annotated_Example0.pdf
+mrvejro3nq
+/data2/projects/GlyGen/GlycanImageExtract2-dev/WebApplication/static/files/mrvejro3nq/output/annotated_Example0.pdf
 
 Figure number: 1, Page number: 1,  BBox: (72.0, 72.0, 539.7000122070312, 407.79998779296875), Width: 467.70001220703125, Height: 335.79998779296875, Area: 157053.65838989243
 
-Saved image to /data2/projects/GlyGen/GlycanImageExtract2-dev/WebApplication/static/files/ou6kxyrtil/extracted_figures/figures/9.png
+Saved image to /data2/projects/GlyGen/GlycanImageExtract2-dev/WebApplication/static/files/mrvejro3nq/extracted_figures/figures/9.png

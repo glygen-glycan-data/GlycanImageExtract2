@@ -1,21 +1,21 @@
-myyycgklon
-/data2/projects/GlyGen/GlycanImageExtract2-dev/WebApplication/static/files/myyycgklon/output/annotated_use_multi_pdf.pdf
+gmq4toyx7c
+/data2/projects/GlyGen/GlycanImageExtract2-dev/WebApplication/static/files/gmq4toyx7c/output/annotated_use_multi_pdf.pdf
 
 Figure number: 1, Page number: 2,  BBox: (59.73419952392578, 75.78797912597656, 556.1007080078125, 316.42718505859375), Width: 496.3665084838867, Height: 240.6392059326172, Area: 119445.24245310819
 
-Saved image to /data2/projects/GlyGen/GlycanImageExtract2-dev/WebApplication/static/files/myyycgklon/extracted_figures/figures/22.png
+Saved image to /data2/projects/GlyGen/GlycanImageExtract2-dev/WebApplication/static/files/gmq4toyx7c/extracted_figures/figures/22.png
 Figure number: 2, Page number: 2,  BBox: (119.89469909667969, 405.6643981933594, 495.97149658203125, 526.485595703125), Width: 376.07679748535156, Height: 120.82119750976562, Area: 45438.04902781779
 
-Saved image to /data2/projects/GlyGen/GlycanImageExtract2-dev/WebApplication/static/files/myyycgklon/extracted_figures/figures/25.png
+Saved image to /data2/projects/GlyGen/GlycanImageExtract2-dev/WebApplication/static/files/gmq4toyx7c/extracted_figures/figures/25.png
 Figure number: 3, Page number: 3,  BBox: (143.40130615234375, 75.78799438476562, 472.3315124511719, 428.78179931640625), Width: 328.9302062988281, Height: 352.9938049316406, Area: 116110.32507837284
 
-Saved image to /data2/projects/GlyGen/GlycanImageExtract2-dev/WebApplication/static/files/myyycgklon/extracted_figures/figures/31.png
+Saved image to /data2/projects/GlyGen/GlycanImageExtract2-dev/WebApplication/static/files/gmq4toyx7c/extracted_figures/figures/31.png
 Figure number: 4, Page number: 4,  BBox: (63.29988098144531, 75.78799438476562, 545.0548706054688, 376.69879150390625), Width: 481.75498962402344, Height: 300.9107971191406, Area: 144965.2779438882
 
-Saved image to /data2/projects/GlyGen/GlycanImageExtract2-dev/WebApplication/static/files/myyycgklon/extracted_figures/figures/35.png
+Saved image to /data2/projects/GlyGen/GlycanImageExtract2-dev/WebApplication/static/files/gmq4toyx7c/extracted_figures/figures/35.png
 Figure number: 5, Page number: 5,  BBox: (107.36129760742188, 75.7879638671875, 500.89019775390625, 588.2053833007812), Width: 393.5289001464844, Height: 512.4174194335938, Area: 201651.06348560192
 
-Saved image to /data2/projects/GlyGen/GlycanImageExtract2-dev/WebApplication/static/files/myyycgklon/extracted_figures/figures/40.png
+Saved image to /data2/projects/GlyGen/GlycanImageExtract2-dev/WebApplication/static/files/gmq4toyx7c/extracted_figures/figures/40.png
 Figure number: 6, Page number: 6,  BBox: (118.50150299072266, 75.7879638671875, 497.41888427734375, 630.094482421875), Width: 378.9173812866211, Height: 554.3065185546875, Area: 210036.37444084603
 
-Saved image to /data2/projects/GlyGen/GlycanImageExtract2-dev/WebApplication/static/files/myyycgklon/extracted_figures/figures/44.png
+Saved image to /data2/projects/GlyGen/GlycanImageExtract2-dev/WebApplication/static/files/gmq4toyx7c/extracted_figures/figures/44.png
