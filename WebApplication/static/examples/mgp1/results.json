@@ -1,81 +1,61 @@
 {
-  "id": "64c4wf35ug",
-  "task_index": 6,
+  "id": "myyycgklon",
+  "task_index": 4,
   "submission_detail": {
     "original_file_name": "use_multi_pdf.pdf",
     "submission_type": "Manuscript",
-    "id": "64c4wf35ug"
+    "id": "myyycgklon"
   },
   "state": "Complete",
   "status": "",
   "finished": true,
   "submission_type": "Manuscript",
-  "submit_time": 1758302794.2834916,
-  "sessionid": "4bqkrzphww5kuulu",
+  "submit_time": 1759862197.4208837,
+  "sessionid": "7ml7qoe66xht2rtd",
   "result": {
-    "id": "64c4wf35ug",
-    "start time": 1758303770.675113,
-    "end time": 1758304389.7726278,
-    "runtime": 619.0975148677826,
+    "id": "myyycgklon",
+    "start time": 1759862243.3916235,
+    "end time": 1759862876.6744568,
+    "runtime": 633.2828333377838,
     "error": [],
     "figure_result": [
       {
         "annotated_image_path": "extracted_figures/annotated_figures/22.png",
-        "bbox": [
-          59,
-          75,
-          498,
-          242
-        ],
-        "center": [
-          308.0,
-          196.0
-        ],
-        "figure_count": 0,
+        "figure_num": 1,
         "file_name": "22.png",
         "glycans": [],
         "height": 1021,
-        "image_id": "id_0",
-        "image_page": 1,
         "image_path": "extracted_figures/figures/22.png",
+        "page_num": 2,
+        "pdf_fig_bbox": [
+          59.73419952392578,
+          75.78797912597656,
+          496.3665084838867,
+          240.6392059326172
+        ],
         "width": 2105,
         "xref": 22
       },
       {
         "annotated_image_path": "extracted_figures/annotated_figures/25.png",
-        "bbox": [
-          119,
-          405,
-          377,
-          122
-        ],
-        "center": [
-          307.5,
-          466.0
-        ],
-        "figure_count": 1,
+        "figure_num": 2,
         "file_name": "25.png",
         "glycans": [],
         "height": 513,
-        "image_id": "id_1",
-        "image_page": 1,
         "image_path": "extracted_figures/figures/25.png",
+        "page_num": 2,
+        "pdf_fig_bbox": [
+          119.89469909667969,
+          405.6643981933594,
+          376.07679748535156,
+          120.82119750976562
+        ],
         "width": 1595,
         "xref": 25
       },
       {
         "annotated_image_path": "extracted_figures/annotated_figures/31.png",
-        "bbox": [
-          143,
-          75,
-          330,
-          354
-        ],
-        "center": [
-          308.0,
-          252.0
-        ],
-        "figure_count": 2,
+        "figure_num": 3,
         "file_name": "31.png",
         "glycans": [
           {
@@ -6547,69 +6527,54 @@
           }
         ],
         "height": 1497,
-        "image_id": "id_2",
-        "image_page": 2,
         "image_path": "extracted_figures/figures/31.png",
+        "page_num": 3,
+        "pdf_fig_bbox": [
+          143.40130615234375,
+          75.78799438476562,
+          328.9302062988281,
+          352.9938049316406
+        ],
         "width": 1395,
         "xref": 31
       },
       {
         "annotated_image_path": "extracted_figures/annotated_figures/35.png",
-        "bbox": [
-          63,
-          75,
-          483,
-          302
-        ],
-        "center": [
-          304.5,
-          226.0
-        ],
-        "figure_count": 3,
+        "figure_num": 4,
         "file_name": "35.png",
         "glycans": [],
         "height": 1277,
-        "image_id": "id_3",
-        "image_page": 3,
         "image_path": "extracted_figures/figures/35.png",
+        "page_num": 4,
+        "pdf_fig_bbox": [
+          63.29988098144531,
+          75.78799438476562,
+          481.75498962402344,
+          300.9107971191406
+        ],
         "width": 2043,
         "xref": 35
       },
       {
         "annotated_image_path": "extracted_figures/annotated_figures/40.png",
-        "bbox": [
-          107,
-          75,
-          394,
-          514
-        ],
-        "center": [
-          304.0,
-          332.0
-        ],
-        "figure_count": 4,
+        "figure_num": 5,
         "file_name": "40.png",
         "glycans": [],
         "height": 2174,
-        "image_id": "id_4",
-        "image_page": 4,
         "image_path": "extracted_figures/figures/40.png",
+        "page_num": 5,
+        "pdf_fig_bbox": [
+          107.36129760742188,
+          75.7879638671875,
+          393.5289001464844,
+          512.4174194335938
+        ],
         "width": 1669,
         "xref": 40
       },
       {
         "annotated_image_path": "extracted_figures/annotated_figures/44.png",
-        "bbox": [
-          118,
-          75,
-          380,
-          556
-        ],
-        "center": [
-          308.0,
-          353.0
-        ],
-        "figure_count": 5,
+        "figure_num": 6,
         "file_name": "44.png",
         "glycans": [
           {
@@ -32956,9 +32921,14 @@
           }
         ],
         "height": 2351,
-        "image_id": "id_5",
-        "image_page": 5,
         "image_path": "extracted_figures/figures/44.png",
+        "page_num": 6,
+        "pdf_fig_bbox": [
+          118.50150299072266,
+          75.7879638671875,
+          378.9173812866211,
+          554.3065185546875
+        ],
         "width": 1607,
         "xref": 44
       }

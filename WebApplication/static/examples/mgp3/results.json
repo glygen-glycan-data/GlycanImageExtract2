@@ -1,37 +1,27 @@
 {
-  "id": "azhevkybaw",
-  "task_index": 8,
+  "id": "nz5hvh55dq",
+  "task_index": 6,
   "submission_detail": {
     "original_file_name": "Example4_use.pdf",
     "submission_type": "Manuscript",
-    "id": "azhevkybaw"
+    "id": "nz5hvh55dq"
   },
   "state": "Complete",
   "status": "",
   "finished": true,
   "submission_type": "Manuscript",
-  "submit_time": 1758302796.354544,
-  "sessionid": "nziadq2lkmf4qjx2",
+  "submit_time": 1759862199.4937897,
+  "sessionid": "e6dswc3zam4phijg",
   "result": {
-    "id": "azhevkybaw",
-    "start time": 1758303934.5288985,
-    "end time": 1758304307.1903534,
-    "runtime": 372.66145491600037,
+    "id": "nz5hvh55dq",
+    "start time": 1759862271.069151,
+    "end time": 1759862657.9915593,
+    "runtime": 386.92240834236145,
     "error": [],
     "figure_result": [
       {
         "annotated_image_path": "extracted_figures/annotated_figures/33.png",
-        "bbox": [
-          45,
-          177,
-          343,
-          237
-        ],
-        "center": [
-          216.5,
-          295.5
-        ],
-        "figure_count": 0,
+        "figure_num": 1,
         "file_name": "33.png",
         "glycans": [
           {
@@ -4792,7 +4782,6 @@
             "downvotes": 0
           },
           {
-            "IUPAC": null,
             "bbox": [
               589,
               425,
@@ -4810,11 +4799,17 @@
             "extracted_image_path": "extracted_figures/extracted_images/33-12.png",
             "fig_glycan_count": 12,
             "glyImage": "https://glymage.glyomics.org//image/hash/221e6d5fb256f84d488113f9d0098050.svg",
+            "glycan_errors": [
+              "Couldn't find a reducing end for the glycan"
+            ],
             "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?GlcNAc=3&Man=2&Gal=1",
             "height": 221,
             "image_name": "33-12.png",
             "image_path": "extracted_figures/images/33-12.png",
             "linkexpl": "Extracted structure using Composition.",
+            "log": [
+              "[semantics.py:526 GlycanSemantics.add_glycan_error] Couldn't find a reducing end for the glycan"
+            ],
             "monos": [
               {
                 "bbox": [
@@ -11286,29 +11281,23 @@
           }
         ],
         "height": 981,
-        "image_id": "id_0",
-        "image_page": 1,
         "image_path": "extracted_figures/figures/33.png",
+        "page_num": 2,
+        "pdf_fig_bbox": [
+          45.599979400634766,
+          177.5998992919922,
+          341.7491111755371,
+          235.4373016357422
+        ],
         "width": 1424,
         "xref": 33
       },
       {
         "annotated_image_path": "extracted_figures/annotated_figures/34.png",
-        "bbox": [
-          425,
-          165,
-          146,
-          219
-        ],
-        "center": [
-          498.0,
-          274.5
-        ],
-        "figure_count": 1,
+        "figure_num": 2,
         "file_name": "34.png",
         "glycans": [
           {
-            "IUPAC": null,
             "bbox": [
               22,
               400,
@@ -11326,11 +11315,19 @@
             "extracted_image_path": "extracted_figures/extracted_images/34-1.png",
             "fig_glycan_count": 1,
             "glyImage": "https://glymage.glyomics.org//image/hash/e3797e241e1014e9efb0477372075a53.svg",
+            "glycan_errors": [
+              "Couldn't find a reducing end for the glycan",
+              "Count of monos: 6, count of links: 3"
+            ],
             "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?GlcNAc=3&Man=1&Gal=2",
             "height": 47,
             "image_name": "34-1.png",
             "image_path": "extracted_figures/images/34-1.png",
             "linkexpl": "Extracted structure using Composition.",
+            "log": [
+              "[semantics.py:526 GlycanSemantics.add_glycan_error] Couldn't find a reducing end for the glycan",
+              "[semantics.py:526 GlycanSemantics.add_glycan_error] Count of monos: 6, count of links: 3"
+            ],
             "monos": [
               {
                 "bbox": [
@@ -11669,7 +11666,6 @@
             "downvotes": 1
           },
           {
-            "IUPAC": null,
             "bbox": [
               22,
               442,
@@ -11687,11 +11683,19 @@
             "extracted_image_path": "extracted_figures/extracted_images/34-2.png",
             "fig_glycan_count": 2,
             "glyImage": "https://glymage.glyomics.org//image/hash/ba5184d8600c8bd4ee842b9a631f3ed6.svg",
+            "glycan_errors": [
+              "Couldn't find a reducing end for the glycan",
+              "Count of monos: 5, count of links: 2"
+            ],
             "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?GlcNAc=3&Man=1&Gal=1",
             "height": 52,
             "image_name": "34-2.png",
             "image_path": "extracted_figures/images/34-2.png",
             "linkexpl": "Extracted structure using Composition.",
+            "log": [
+              "[semantics.py:526 GlycanSemantics.add_glycan_error] Couldn't find a reducing end for the glycan",
+              "[semantics.py:526 GlycanSemantics.add_glycan_error] Count of monos: 5, count of links: 2"
+            ],
             "monos": [
               {
                 "bbox": [
@@ -12033,9 +12037,6 @@
             "downvotes": 1
           },
           {
-            "IUPAC": "GlcNAc?1-?GlcNAc",
-            "WURCS": "WURCS=2.0/1,2,1/[a2122h-1x_1-5_2*NCC/3=O]/1-1/a?-b1",
-            "accession": "G19234OH",
             "bbox": [
               27,
               616,
@@ -12052,12 +12053,18 @@
             "confidence": 0.9814653992652893,
             "extracted_image_path": "extracted_figures/extracted_images/34-3.png",
             "fig_glycan_count": 3,
-            "glyImage": "https://glymage.glyomics.org//image/hash/db06caad6ec8d656dedd4f0e24433e70.svg",
-            "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G19234OH",
+            "glyImage": "https://glymage.glyomics.org//image/hash/aef3b4e91803c37e9a7308931286f1ef.svg",
+            "glycan_errors": [
+              "Count of monos: 6, count of links: 4"
+            ],
+            "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?GlcNAc=4&Man=2",
             "height": 62,
             "image_name": "34-3.png",
             "image_path": "extracted_figures/images/34-3.png",
-            "linkexpl": "Extracted successfully using accession",
+            "linkexpl": "Extracted structure using Composition.",
+            "log": [
+              "[semantics.py:526 GlycanSemantics.add_glycan_error] Count of monos: 6, count of links: 4"
+            ],
             "monos": [
               {
                 "bbox": [
@@ -12092,26 +12099,7 @@
                 "classlabel": "GlcNAc",
                 "confidence": 0.9999856948852539,
                 "id": 2,
-                "links": [
-                  {
-                    "bbox": [
-                      52,
-                      28,
-                      26,
-                      13
-                    ],
-                    "center": [
-                      65.0,
-                      34.5
-                    ],
-                    "child_bond": 1,
-                    "classid": 0,
-                    "classlabel": "link",
-                    "confidence": 0.9997484087944031,
-                    "from_id": 2,
-                    "to_id": 4
-                  }
-                ],
+                "links": [],
                 "symbol": "GlcNAc"
               },
               {
@@ -12264,26 +12252,7 @@
                   "classlabel": "GlcNAc",
                   "confidence": 0.9999856948852539,
                   "id": 2,
-                  "links": [
-                    {
-                      "bbox": [
-                        52,
-                        28,
-                        26,
-                        13
-                      ],
-                      "center": [
-                        65.0,
-                        34.5
-                      ],
-                      "child_bond": 1,
-                      "classid": 0,
-                      "classlabel": "link",
-                      "confidence": 0.9997484087944031,
-                      "from_id": 2,
-                      "to_id": 4
-                    }
-                  ],
+                  "links": [],
                   "symbol": "GlcNAc"
                 },
                 "reason": "This object overlaps with the primary selected object"
@@ -12428,7 +12397,6 @@
             "downvotes": 1
           },
           {
-            "IUPAC": null,
             "bbox": [
               246,
               398,
@@ -12446,11 +12414,19 @@
             "extracted_image_path": "extracted_figures/extracted_images/34-4.png",
             "fig_glycan_count": 4,
             "glyImage": "https://glymage.glyomics.org//image/hash/e3797e241e1014e9efb0477372075a53.svg",
+            "glycan_errors": [
+              "Couldn't find a reducing end for the glycan",
+              "Count of monos: 6, count of links: 3"
+            ],
             "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?GlcNAc=3&Man=1&Gal=2",
             "height": 53,
             "image_name": "34-4.png",
             "image_path": "extracted_figures/images/34-4.png",
             "linkexpl": "Extracted structure using Composition.",
+            "log": [
+              "[semantics.py:526 GlycanSemantics.add_glycan_error] Couldn't find a reducing end for the glycan",
+              "[semantics.py:526 GlycanSemantics.add_glycan_error] Count of monos: 6, count of links: 3"
+            ],
             "monos": [
               {
                 "bbox": [
@@ -12813,7 +12789,6 @@
             "downvotes": 1
           },
           {
-            "IUPAC": null,
             "bbox": [
               246,
               441,
@@ -12831,11 +12806,19 @@
             "extracted_image_path": "extracted_figures/extracted_images/34-5.png",
             "fig_glycan_count": 5,
             "glyImage": "https://glymage.glyomics.org//image/hash/1164bdfd820f5338ddd541cabb1cda73.svg",
+            "glycan_errors": [
+              "Couldn't find a reducing end for the glycan",
+              "Count of monos: 5, count of links: 2"
+            ],
             "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?GlcNAc=2&Man=2&Gal=1",
             "height": 53,
             "image_name": "34-5.png",
             "image_path": "extracted_figures/images/34-5.png",
             "linkexpl": "Extracted structure using Composition.",
+            "log": [
+              "[semantics.py:526 GlycanSemantics.add_glycan_error] Couldn't find a reducing end for the glycan",
+              "[semantics.py:526 GlycanSemantics.add_glycan_error] Count of monos: 5, count of links: 2"
+            ],
             "monos": [
               {
                 "bbox": [
@@ -13201,7 +13184,6 @@
             "downvotes": 1
           },
           {
-            "IUPAC": null,
             "bbox": [
               250,
               621,
@@ -13219,11 +13201,19 @@
             "extracted_image_path": "extracted_figures/extracted_images/34-6.png",
             "fig_glycan_count": 6,
             "glyImage": "https://glymage.glyomics.org//image/hash/ba5184d8600c8bd4ee842b9a631f3ed6.svg",
+            "glycan_errors": [
+              "Couldn't find a reducing end for the glycan",
+              "Count of monos: 5, count of links: 2"
+            ],
             "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?GlcNAc=3&Man=1&Gal=1",
             "height": 58,
             "image_name": "34-6.png",
             "image_path": "extracted_figures/images/34-6.png",
             "linkexpl": "Extracted structure using Composition.",
+            "log": [
+              "[semantics.py:526 GlycanSemantics.add_glycan_error] Couldn't find a reducing end for the glycan",
+              "[semantics.py:526 GlycanSemantics.add_glycan_error] Count of monos: 5, count of links: 2"
+            ],
             "monos": [
               {
                 "bbox": [
@@ -13566,9 +13556,14 @@
           }
         ],
         "height": 909,
-        "image_id": "id_1",
-        "image_page": 1,
         "image_path": "extracted_figures/figures/34.png",
+        "page_num": 2,
+        "pdf_fig_bbox": [
+          425.4078063964844,
+          165.3000946044922,
+          145.05258178710938,
+          217.9846954345703
+        ],
         "width": 605,
         "xref": 34
       }

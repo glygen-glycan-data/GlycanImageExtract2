@@ -1,17 +1,7 @@
 [
   {
     "annotated_image_path": "extracted_figures/annotated_figures/9.png",
-    "bbox": [
-      72,
-      72,
-      468,
-      336
-    ],
-    "center": [
-      306.0,
-      240.0
-    ],
-    "figure_count": 0,
+    "figure_num": 1,
     "file_name": "9.png",
     "glycans": [
       {
@@ -4099,9 +4089,14 @@
       }
     ],
     "height": 697,
-    "image_id": "id_0",
-    "image_page": 0,
     "image_path": "extracted_figures/figures/9.png",
+    "page_num": 1,
+    "pdf_fig_bbox": [
+      72.0,
+      72.0,
+      467.70001220703125,
+      335.79998779296875
+    ],
     "width": 971,
     "xref": 9
   }

@@ -1,22 +1,22 @@
 {
-  "id": "r44f2n35mt",
-  "task_index": 3,
+  "id": "rw46saw5v7",
+  "task_index": 1,
   "submission_detail": {
     "original_file_name": "2_glycans.png",
     "submission_type": "Multi-Glycan Image",
-    "id": "r44f2n35mt"
+    "id": "rw46saw5v7"
   },
   "state": "Complete",
   "status": "",
   "finished": true,
   "submission_type": "Multi-Glycan Image",
-  "submit_time": 1758302791.2034988,
-  "sessionid": "okhobf4sduru2at6",
+  "submit_time": 1759862194.240682,
+  "sessionid": "5i2mwikjtdkkrzh7",
   "result": {
-    "id": "r44f2n35mt",
-    "start time": 1758303638.3224757,
-    "end time": 1758303670.8274927,
-    "runtime": 32.505017042160034,
+    "id": "rw46saw5v7",
+    "start time": 1759862194.2551012,
+    "end time": 1759862243.3914375,
+    "runtime": 49.13633632659912,
     "error": [],
     "figure_result": [
       {

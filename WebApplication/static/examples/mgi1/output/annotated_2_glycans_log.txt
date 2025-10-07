@@ -1,2 +1,2 @@
-r44f2n35mt
-/data2/projects/GlyGen/GlycanImageExtract2-dev/WebApplication/static/files/r44f2n35mt/output/annotated_2_glycans.png
+rw46saw5v7
+/data2/projects/GlyGen/GlycanImageExtract2-dev/WebApplication/static/files/rw46saw5v7/output/annotated_2_glycans.png

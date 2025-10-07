@@ -1,22 +1,22 @@
 {
-  "id": "busobgind5",
-  "task_index": 3,
+  "id": "ycxr2ntgxs",
+  "task_index": 9,
   "submission_detail": {
     "original_file_name": "058a64f0cda3490dffac747dfb599cef.png",
     "submission_type": "Simple Glycan Image",
-    "id": "busobgind5"
+    "id": "ycxr2ntgxs"
   },
   "state": "Complete",
   "status": "",
   "finished": true,
   "submission_type": "Simple Glycan Image",
-  "submit_time": 1758305429.755666,
-  "sessionid": "bq7usj74vzjc6r23",
+  "submit_time": 1759862202.5304754,
+  "sessionid": "cyncm7rq4762yzwd",
   "result": {
-    "id": "busobgind5",
-    "start time": 1758305451.5220592,
-    "end time": 1758305462.5495954,
-    "runtime": 11.027536153793335,
+    "id": "ycxr2ntgxs",
+    "start time": 1759862391.3549645,
+    "end time": 1759862402.4812005,
+    "runtime": 11.126235961914062,
     "error": [],
     "figure_result": [
       {
