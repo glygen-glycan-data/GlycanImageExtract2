@@ -115,6 +115,7 @@ header.navbar #sidebarToggle {
 .card-redirect .card-body {
     text-align: center;
     padding: 1.25rem 1rem;
+    min-height: 10rem;
 }
 
 /* .card-redirect .card-body i {
