@@ -381,13 +381,23 @@
             innerdiv += `<td style="text-align:center;" width="50%">`;
 
             if (glycan.glyImage) {
-                innerdiv += `
-                <figure style="margin:0;">
-                    <img style="max-width:300px; min-width:90px; width:auto; height:auto; display:block; margin:auto;"
-                        src="${glycan.glyImage}"
-                        alt="Glycan Image" />
-                </figure>
-                `;
+                if (glycan.glyImage.startsWith('https://')) {
+                    innerdiv += `
+                    <figure style="margin:0;">
+                        <img style="max-width:300px; min-width:90px; width:auto; height:auto; display:block; margin:auto;"
+                            src="${glycan.glyImage}"
+                            alt="Glycan Image" />
+                    </figure>
+                    `;
+                } else {
+                    innerdiv += `
+                    <figure style="margin:0;">
+                        <img style="max-width:300px; min-width:90px; width:auto; height:auto; display:block; margin:auto;"
+                            src="{{urlprefix}}/static/${location}/${list_id}/${glycan.glyImage}"
+                            alt="Glycan Image" />
+                    </figure>
+                    `;
+                }
             } else {
                 innerdiv += `<div style="font-size:16px; color:#555; margin-top:10px;">Couldn't extract structure</div>`;
             }

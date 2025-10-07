@@ -54,7 +54,7 @@ def searchGlyImage(*seqs, orientation='RL',display='normal', image_format='svg',
         for s in seqs
     ]
 
-    data = request_api(baseurl, "submit", tasks=json.dumps(tasks),developer_email=devemail)
+    data = request_api(baseurl, "submit", tasks=json.dumps(tasks), developer_email=devemail)
     
     jobids = []
     for job in data:

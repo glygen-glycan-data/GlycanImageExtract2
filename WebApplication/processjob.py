@@ -1,4 +1,4 @@
-import fitz, sys, os, cv2,shutil, time, ntpath, json, base64, re
+import fitz, sys, os, cv2,shutil, time, ntpath, json, base64, re, urllib.request
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from submit import searchGlyLookup, searchGlyImage, sendToGNOme
 from PIL import Image
@@ -133,6 +133,9 @@ class JobInstance:
 
                         if 'image_path' in glycan:
                             glycan['image_path'] = self.abs_to_rel(glycan['image_path'])
+
+                        if 'glyImage' in glycan:
+                            glycan['glyImage'] = self.abs_to_rel(glycan['glyImage'])
 
                         # Add more fields if necessary in the glycan object
 
@@ -278,8 +281,16 @@ class JobInstance:
             gly_semantics.set('fig_glycan_count', i+1)
 
             for key, val in self.get_IUPAC_metadata(gly_semantics).items():
-                gly_semantics.set(key,val)
-
+                if key != "glyImage":
+                    gly_semantics.set(key,val)
+                else:
+                   rest,imgfilename = val.rsplit('/',1)
+                   glymage_image = os.path.join(image_folders['glymage_images_dir'], imgfilename)
+                   wh = open(glymage_image,'wb')
+                   with urllib.request.urlopen(val) as h:
+                        wh.write(h.read())
+                   wh.close()
+                   gly_semantics.set(key,glymage_image)
 
     def progress_callback(self,**kwargs):
         if kwargs.get('stage') == "GLYCAN" and kwargs.get('checkpoint') == "DONE":
@@ -341,8 +352,9 @@ class ImageJob(JobInstance):
         figures_dir = os.path.join(self.workdir, "extracted_figures", "figures")
         extracted_images_dir = os.path.join(self.workdir, "extracted_figures", "extracted_images")
         images_dir = os.path.join(self.workdir, "extracted_figures", "images")
+        glymage_dir = os.path.join(self.workdir, "glymage")
 
-        image_folders = {'figures_dir': figures_dir, 'images_dir': images_dir, 'extracted_images_dir': extracted_images_dir}
+        image_folders = {'figures_dir': figures_dir, 'images_dir': images_dir, 'extracted_images_dir': extracted_images_dir, 'glymage_images_dir': glymage_dir}
 
         self.create_directories(*image_folders.values())
 
@@ -390,8 +402,9 @@ class PDFJob(JobInstance):
         figures_dir = os.path.join(self.workdir, "extracted_figures", "figures")
         extracted_images_dir = os.path.join(self.workdir, "extracted_figures", "extracted_images")
         images_dir = os.path.join(self.workdir, "extracted_figures", "images")
+        glymage_dir = os.path.join(self.workdir, "glymage")
 
-        image_folders = {'figures_dir': figures_dir, 'images_dir': images_dir, 'extracted_images_dir': extracted_images_dir}
+        image_folders = {'figures_dir': figures_dir, 'images_dir': images_dir, 'extracted_images_dir': extracted_images_dir, 'glymage_images_dir': glymage_dir}
 
         self.create_directories(*image_folders.values())
 
