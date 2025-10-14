@@ -21,6 +21,9 @@ import glob
 
 import os, ssl
 from datetime import datetime, timezone
+import xml.etree.ElementTree as ET
+import shutil
+
 
 
 if (not os.environ.get('PYTHONHTTPSVERIFY', '') and getattr(ssl,'_create_unverified_context', None)):
@@ -492,41 +495,116 @@ class APIFramework:
             res.append(self.get_result(list_id))
         return flask.jsonify(res)
 
+
+    def validate_pmid(self):
+        pmid = flask.request.json.get('pmid')
+        pmid_to_pmc_converter_api = f'https://pmc.ncbi.nlm.nih.gov/tools/idconv/api/v1/articles/?ids={pmid}&tool=extract&email=nm1058@georgetown.edu&idtype=pmid&format=json'
+
+        try:
+            resp = requests.get(pmid_to_pmc_converter_api, timeout=30)  # Changed api_url to pmid_to_pmc_converter_api
+            resp.raise_for_status()
+            resp_json = resp.json()
+            
+            if not resp_json.get('records') or len(resp_json['records']) == 0:
+                return flask.jsonify({'valid': False, 'error': 'No records found'}), 400
+                
+            pmcid = resp_json['records'][0].get('pmcid')
+            
+            if not pmcid:
+                return flask.jsonify({'valid': False, 'error': 'Given PMID is not supported by PubMed Central'}), 400
+                
+            return flask.jsonify({'valid': True, 'pmcid': pmcid}), 200
+            
+        except Exception as e:
+            return flask.jsonify({'valid': False, 'error': str(e)}), 500
+
+
     def upload_file(self):
-        # print("UPLOAD FILE")
         if flask.request.method == 'POST':
 
-            file = flask.request.files.get('file')  
-            if 'task' in flask.request.form:
-                task = json.loads(flask.request.form.get('task'))
-                file_url = task.get('fileURL')
-                submission_type = task.get('submission_type')
-            else:
-                file_url = flask.request.form.get('fileURL')
-                submission_type = flask.request.form.get('submission_type')
-            # pipeline_name = flask.request.form.get('fileType')
-            
-            # print("FILE", file, file_type)
-            # print("file_type",file_type)
-            # print("file url", file_url)
+            # if 'task' in flask.request.form: --> this code is present in the previous commits and not sure
+            # if we need it? 
 
-            if not file and not file_url:
-                return flask.abort(400, "No file or url provided")
+            file = flask.request.files.get('file')
+            file_url = flask.request.form.get('fileURL')
+            pmid = None
+            pmcid = None
+            submission_type = flask.request.form.get('submission_type')
 
-            if file and file.filename:
-                filename = werkzeug.utils.secure_filename(file.filename)
+            # Extract info using Pubmed API and get filename of the pdf based on PMID and at the same time extract figures as well - everything is present in the zipped file
+            if submission_type == 'PMID':
+                pmid = flask.request.form.get('pmid')
+                pmcid = flask.request.form.get('pmcid')
+
+                # Note: PMID is validated on the frontend which via the 'validate_pmid() API' -> only then is the upload_file() API called.
+
+                # STEPS:
+                # Getting a zipped file - which will be stored in the input folder (Docker volume while in production).   
+                # The zipped file contains the pdf and figures corresposnding to the the PMID.
+                # Unzip the file in the input folder dir.
+                # After the location to store the extracted pdf (extracted from the zip archieve) is determined, 
+                # - pdf can be stored 
+                # - rest of the figures can be stored in the extracted_figures directory later
+                # After moving files around to their dedicated locations -> the zipped archieves can be deleted 
+               
+
+                # steps to extract zipped file based on PMC
+                # 1) API retrieves XML tree
+                pmc_api = f'https://www.ncbi.nlm.nih.gov/pmc/utils/oa/oa.fcgi?id={pmcid}'
+                r = requests.get(pmc_api, timeout=30)
+                r.raise_for_status()
+
+                print(r.text)
+
+                root = ET.fromstring(r.text)
+                # find element in the tree which has a link and format is tgz
+                link = root.find(".//link[@format='tgz']") 
+                
+
+                if link is None:
+                    return flask.jsonify({"error": "Given PMID doesn't support Open Access to PubMed Central"}), 400 
+
+                # extract the href link, which is in ftp (NCBI supports both ftp and https protocols)
+                href = link.attrib.get("href")
+
+                # Convert FTP to HTTPS
+                download_url = href.replace("ftp://ftp.ncbi.nlm.nih.gov", "https://ftp.ncbi.nlm.nih.gov")
+
+                # TODO: Error handling appropriately
+                # 2) Download the zipped file to the input folder
+                zipped_path = os.path.join(self.input_file_folder(), f"{pmcid}.tar.gz")
+                with open(zipped_path, "wb") as f:
+                    with requests.get(download_url, stream=True, timeout=120) as resp:
+                        resp.raise_for_status()
+                        for chunk in resp.iter_content(1 << 20):
+                            if chunk:
+                                f.write(chunk)
+                
+                # 3) unzip the file and save it as a folder named 'PMCID'
+                shutil.unpack_archive(str(zipped_path), extract_dir=self.input_file_folder())
+
+                # get the name of the pdf file from the folder - this will be your filename, which will be added
+                # in one of the input folder directories after a unique task id is determined
+                folder_path = os.path.join(self.input_file_folder(), pmcid)
+                pdf_names = [os.path.basename(p) for p in glob.glob(os.path.join(folder_path, "*.pdf"))]
+
+                if len(pdf_names) > 1:
+                    return flask.jsonify({"error": "Error with processing the PMID"}), 400
+                
+                filename = pdf_names[0]
 
             elif file_url:
                 filename = werkzeug.utils.secure_filename(os.path.basename(file_url.split('?')[0]))
-                # print("URL FILE",filename)
 
                 if not os.path.splitext(filename)[1]:  
                     content_disposition = requests.head(file_url).headers.get('content-disposition')
                     if content_disposition:
                         filename = content_disposition.split('filename=')[-1].strip('"')
 
+            elif file:
+                filename = werkzeug.utils.secure_filename(file.filename)
             else:
-                return flask.jsonify("Invalid file or URL"), 400
+                return flask.jsonify({"error": "Invalid file or URL"}), 400
 
             sessionid = self.get_session()
 
@@ -535,11 +613,20 @@ class APIFramework:
             list_id = task_detail["id"]
             file_dir = os.path.join(self.input_file_folder(), list_id)
             os.makedirs(file_dir, exist_ok=True)
-            # file_path = os.path.join(self.input_file_folder(), list_id)
             file_path = os.path.join(file_dir, filename)
 
             try:
-                if file and self.allow_file_ext(file.filename):
+                if submission_type == 'PMID':
+                    # move the pdf to file_dir (i.e located in input/taskid)
+                    shutil.copy(os.path.join(self.input_file_folder(), pmcid ,filename), file_dir)
+
+                    # leave rest of the figures in the unzipped folder which is located in the the input folder location
+                    # processjob can access the folder using the PMCID name (same as folder name) from the json passed to it and
+                    # can populate the extracted_figures/figures directory.
+                    # PMCID folder and zipped file can be deleted after extracted figures folder is populated.
+
+
+                elif file and self.allow_file_ext(file.filename):
                     file.save(file_path)
                 elif file_url:
                     headers = {
@@ -554,13 +641,14 @@ class APIFramework:
                                 f.write(chunk)
 
                 else:
-                    return flask.jsonify(f"Unsupported file type: {filename}"), 400
-
+                    return flask.jsonify({"error": f"File format not supported: {filename}"}), 400
             except requests.exceptions.RequestException as e:
-                return flask.jsonify(f"Failed to download file: {str(e)}"), 400
+                return flask.jsonify({"error": f"Failed to download file: {str(e)}"}), 400
             except Exception as e:
-                return flask.jsonify(f"Unexpected error: {str(e)}"), 500
+                return flask.jsonify({"error": f"Unexpected error: {str(e)}"}), 400
 
+            if pmid and pmcid:
+                task_detail.update({"pmid": pmid, "pmcid": pmcid})
 
             status = {
                 "id": list_id,
@@ -572,7 +660,8 @@ class APIFramework:
                 "submission_type": submission_type,
                 "submit_time": time.time(),
                 "sessionid": sessionid,
-                "result": {}
+                "result": {},
+                **({"pmid": pmid, "pmcid": pmcid} if pmid and pmcid else {})
             }
 
             if list_id in self.result_cache:
@@ -584,7 +673,6 @@ class APIFramework:
             self.output(1, "Job received by API: %s" % (task_detail))
 
         return flask.jsonify([status])
-
 
 
     def download_file(self):
@@ -691,6 +779,7 @@ class APIFramework:
         self._flask_app.add_url_rule("/process", "process", self.process, methods=["GET"])
         self._flask_app.add_url_rule("/examples", "examples", self.examples, methods=["GET"])
         self._flask_app.add_url_rule("/jobs", "jobs", self.jobs, methods=["GET"])
+        self._flask_app.add_url_rule("/pmid", "validate_pmid", self.validate_pmid, methods=["POST"])
 
         if self._file_based_job:
             self._flask_app.add_url_rule("/file_upload", "upload_file", self.upload_file, methods=["GET", "POST"])
