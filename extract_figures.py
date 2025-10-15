@@ -5,6 +5,23 @@ import glob
 import shutil
 import csv
 
+parser = argparse.ArgumentParser(description="Extract annotated figures and comments from PDFs")
+
+parser.add_argument(
+    "-f", "--folder", 
+    type=str, 
+    required=True,
+    help="Folder containing PDFs and matching TSV files"
+)
+    
+parser.add_argument(
+    "-o", "--output_dir", 
+    type=str, 
+    required =True, 
+    help="New folder created/provided to store output files" 
+)
+
+args = parser.parse_args()
 
 def parse_comment(comment: str):
     """Parse annotation comment into (glycan_id, url).
@@ -13,7 +30,7 @@ def parse_comment(comment: str):
     
     Expected formats:
     - Multi-line with prefixes, e.g.:
-        ID: G123
+        IDX: G123
         URL: http://example.com
     - Single-line fallback, e.g.:
         G123
@@ -40,65 +57,125 @@ def parse_comment(comment: str):
 
 
 def extract_annotated_images(output_dir,pdf_path):
-    """Extract figures and annotations from a PDF file"""
+    """Extract figures and annotations from a PDF file
+    
+    This function iterates through annotations first, then finds the figure
+    each annotation belongs to by checking for intersection."""
 
     metadata = []
+    #Track which figures have been saved to avoid duplicates
+    saved_figures = {}
 
     with fitz.open(pdf_path) as doc:
         for page_num, page in enumerate(doc, 1):
+            # Get all figures on current page
             figures = page.get_image_info(xrefs=True)
 
             # Get all annotations on the page
             annotations = list(page.annots())
+            #print("annotations:",annotations)
 
-            # get all the figures on the current page
-            for fig_num, figure in enumerate(figures, 1):
-                xref = figure.get("xref")
-                fig_box = fitz.Rect(figure["bbox"])
-                
-                # Create filename
-                figure_filename = f"{os.path.basename(output_dir)}_p{page_num}_f{fig_num}.png"
-                figure_path = os.path.join(output_dir, figure_filename)
-
-                # get origional figures dimensions in pixels 
-                # below steps exist in order to remove the scaling factor added to the figures while pasting them into the PDF
-                zoom_x = figure["width"] / fig_box.width
-                zoom_y = figure["height"] / fig_box.height
-                mat = fitz.Matrix(zoom_x, zoom_y)
-                pix = page.get_pixmap(matrix=mat, clip=fig_box, alpha=False)
-                px_fig_width = pix.width
-                px_fig_height = pix.height
-
-                annots_in_figure = False
-
-                
-                x_scale = fig_box.width  / float(px_fig_width)
-                y_scale = fig_box.height / float(px_fig_height)
-
-                # glycan_metadata = {}
-                for annot in annotations:
-                    if fig_box.intersects(annot.rect):
-                        annots_in_figure = True
+            # glycan_metadata = {}
+            for annot in annotations:
+                    #print("annot:",annot)
+                    #print("annot type:", annot.type)
+                    
+                    if annot.type[1] not in ['Square', 'Rect']:
+                        continue
                         
-                        annot_box = annot.rect
+                    annot_box = annot.rect
 
+                    # Find which figure this annotation intersects with
+                    matching_figure = None
+                    overlap_ratio = None
+                    fig_num = None
+                        
+                    for idx, figure in enumerate(figures,1):
+                        fig_box = fitz.Rect(figure["bbox"])
+
+                        # Check if annotation intersects with this figure
+                        # Using intersection area to determine if annotation is on this figure
+                        if fig_box.intersects(annot_box):
+                            # Calculate intersection area as a percentage of annotation area
+                            intersection = fig_box & annot_box
+                            annot_area = annot_box.get_area()
+                        
+                            if annot_area > 0:
+                                overlap_ratio = intersection.get_area() / annot_area
+                                # If annotation is mostly (>50%) inside the figure, consider it a match
+                                if overlap_ratio > 0.5:
+                                    matching_figure = figure
+                                    fig_num = idx
+                                    break
+                
+                    # If no matching figure found then consider the image itself as a glycan and the dimensions as the figure diemnsions as well
+                    if not matching_figure:
+                        xref = annot.xref
+                        # print(f"Warning: Annotation at {annot_box} on page {page_num} doesn't match any figure and overlap {overlap_ratio}")
+                        comment = annot.info.get("content") or annot.info.get("subject") or ""
+                        glycan_id, url = parse_comment(comment)
+                        #print("----->>",glycan_id, annot.rect)
+
+                        # Create filename for standalone annotated glycan image
+                        figure_filename = f"{os.path.basename(output_dir)}_p{page_num}_annot{xref}.png"
+                        figure_path = os.path.join(output_dir, figure_filename)
+
+                        # Save cropped annotation area as image
+                        try:
+                            pix = page.get_pixmap(clip = annot_box)
+                            px_fig_width, px_fig_height = pix.width, pix.height
+                        except:
+                            px_fig_height = px_fig_width = 0
+                        
+                        # Fill in bounding box dimensions
+                        # the glycan box starts at the top-left corner of the cropped region, so x0, y0 = 0
+                        px_gly_x0 = 0
+                        px_gly_y0 = 0
+                        px_gly_w = int(annot_box.width)
+                        px_gly_h = int(annot_box.height)
+                        
+                
+                    # Extract figure information (including xref)
+                    if matching_figure:
+                        xref = matching_figure.get("xref")
+                        fig_box = fitz.Rect(matching_figure["bbox"])
+
+                        # Create filename
+                        figure_filename = f"{os.path.basename(output_dir)}_p{page_num}_f{fig_num}.png"
+                        figure_path = os.path.join(output_dir, figure_filename)
+                
+                        # Get original figure dimensions in pixels
+                        # Remove the scaling factor added to the figures while pasting them into the PDF
+                        zoom_x = matching_figure["width"] / fig_box.width
+                        zoom_y = matching_figure["height"] / fig_box.height
+                        mat = fitz.Matrix(zoom_x, zoom_y)
+                        pix = page.get_pixmap(matrix=mat, clip=fig_box, alpha=False)
+                        px_fig_width = pix.width
+                        px_fig_height = pix.height
+                
+                        # Calculate scaling factors
+                        x_scale = fig_box.width / float(px_fig_width)
+                        y_scale = fig_box.height / float(px_fig_height)
+                
+                        # Convert annotation coordinates to pixel coordinates relative to the figure
                         px_gly_x0 = round((annot_box.x0 - fig_box.x0) / x_scale)
                         px_gly_x1 = round((annot_box.x1 - fig_box.x0) / x_scale)
                         px_gly_y0 = round((annot_box.y0 - fig_box.y0) / y_scale)
                         px_gly_y1 = round((annot_box.y1 - fig_box.y0) / y_scale)
-
-                        px_gly_w = abs(px_gly_x1-px_gly_x0)
-                        px_gly_h = abs(px_gly_y1-px_gly_y0)
-
+                
+                        px_gly_w = abs(px_gly_x1 - px_gly_x0)
+                        px_gly_h = abs(px_gly_y1 - px_gly_y0)
+                
+                        # Parse annotation comment
                         comment = annot.info.get("content") or annot.info.get("subject") or ""
                         glycan_id, url = parse_comment(comment)
-
-                        annotation_data = {
+                
+                    annotation_data = {
                             'ID': glycan_id,
                             'url': url,
                             'xref': xref,
                             "gly_bbox": [px_gly_x0, px_gly_y0, px_gly_w, px_gly_h],
-                            # "comment": comment,
+                            "comment": comment,
                             "fig_width": px_fig_width,
                             "fig_height": px_fig_height,
                             "figure_name": figure_filename,
@@ -107,12 +184,15 @@ def extract_annotated_images(output_dir,pdf_path):
                             "fig_num": fig_num
                         }
 
-                        metadata.append(annotation_data)
+                    metadata.append(annotation_data)
 
-                # Only save the figure if it has annotations
-                if annots_in_figure:
-                    pix.save(figure_path)
-                    
+                    # Save the figure only once if not already saved
+                    figure_key = (page_num, fig_num)
+                    if figure_key not in saved_figures:
+                        if (px_fig_width > 60 and px_fig_height > 60):
+                            pix.save(figure_path)
+                            saved_figures[figure_key] = True
+                           
     return metadata
 
 
@@ -174,31 +254,26 @@ def merge_glycan_data_with_tsv(output_dir, glycan_data, tsv_path):
     return merged_tsv_path
 
         
-def main(input_folder):
-    pdf_files = glob.glob(os.path.join(input_folder, "*.pdf"))
+input_folder = args.folder
+output_folder = args.output_dir
+pdf_files = glob.glob(os.path.join(input_folder, "*.pdf"))
 
-    for pdf_path in pdf_files:
-        file_name = os.path.splitext(os.path.basename(pdf_path))[0]
-        tsv_path = os.path.join(input_folder, f"{file_name}.tsv")
+for pdf_path in pdf_files:
+    file_name = os.path.splitext(os.path.basename(pdf_path))[0]
+    tsv_path = os.path.join(input_folder, f"{file_name}.tsv")
 
-        output_dir = os.path.splitext(os.path.basename(pdf_path))[0]
+    output_dir = os.path.join(output_folder, file_name)
 
-        if os.path.exists(output_dir):
-            shutil.rmtree(output_dir)
-        os.makedirs(output_dir)
+    if not os.path.exists(output_dir):
+        # shutil.rmtree(output_dir)
+        os.makedirs(output_dir, exist_ok=True)
 
-        if not os.path.exists(tsv_path):
-            print(f"Skipping {file_name}: no matching TSV found.")
-            continue
+    if not os.path.exists(tsv_path):
+        print(f"Skipping {file_name}: no matching TSV found.")
+        continue
 
-        # main steps for extraction and merging
-        metadata = extract_annotated_images(output_dir,pdf_path)
-        merge_glycan_data_with_tsv(output_dir,metadata,tsv_path)
+    # main steps for extraction and merging
+    metadata = extract_annotated_images(output_dir,pdf_path)
+    merge_glycan_data_with_tsv(output_dir,metadata,tsv_path)
 
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Extract annotated figures and comments from PDFs")
-    parser.add_argument("-f", "--folder", type=str, required=True,
-                        help="Folder containing PDFs and matching TSV files")
-    args = parser.parse_args()
-    main(args.folder)
