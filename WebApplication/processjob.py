@@ -233,7 +233,7 @@ class JobInstance:
                 "linkexpl": "Extracted successfully using accession",
                 "gnomeurl": gnome_url,
                 "accession": accession, 
-                "glyImage": searchGlyImage(accession, orientation=IUPAC_data["orientation"],accession=True)
+                "glyImage": searchGlyImage(accession, orientation=IUPAC_data["orientation"],accession=True),
             })
             if wurcs:
                 IUPAC_data['WURCS'] = wurcs
@@ -243,8 +243,9 @@ class JobInstance:
                 "gnomeurl": gnome_url,
                 "glyImage": searchGlyImage(iupac, orientation=IUPAC_data["orientation"]),
             })
-        else:
+        elif compstr:
             # composition only
+            # Note: in some cases compstr is None (reason: maybe a False case of Glycan identification)
             IUPAC_data.update({
                 "linkexpl": "Extracted structure using Composition.",
                 "gnomeurl": gnome_url,
