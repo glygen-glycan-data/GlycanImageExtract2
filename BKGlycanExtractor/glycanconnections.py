@@ -126,7 +126,9 @@ class KnownLink(LinkFinder,KnownFinder):
     def create_boxes(self, map_dict):
         boxes = []
 
-        for (mono_id1, mono_id2), data in map_dict['links'].items():
+        # Note: map_dict data structure can store multiple glycans, but the current use-case is for SGI only
+        links = map_dict['glycans'][0]['links']
+        for (mono_id1, mono_id2), data in links.items():
 
             classlabel = "link"
             box = BoundingBox(x1=data['x_min'], y1=data['y_min'], 
@@ -149,7 +151,10 @@ class KnownLinkWithInfo(KnownLink):
     def create_boxes(self, map_dict):
         boxes = []
 
-        for (mono_id1, mono_id2), data in map_dict['links'].items():
+        # Note: map_dict data structure can store multiple glycans, but the current use-case is for SGI only
+        links = map_dict['glycan'][0]['links']
+
+        for (mono_id1, mono_id2), data in links.items():
 
             classlabel = f"{map_dict['monos'][mono_id2]['anomer']}{data['carbon_number']}"
             classlabel = classlabel.replace("?","x")

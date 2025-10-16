@@ -105,8 +105,11 @@ class KnownRoot(RootFinder,KnownFinder):
     def create_boxes(self, map_dict):
         boxes = []
 
-        root_mono_id = map_dict['root']
-        for id, data in map_dict['monos'].items():
+        # Note: map_dict data structure can store multiple glycans, but the current use-case is for SGI only
+        glycan = map_dict['glycans'][0]
+
+        root_mono_id = glycan['root']
+        for id, data in glycan['monos'].items():
             if id == root_mono_id:
                 classlabel = "redend"
             else:
@@ -145,8 +148,10 @@ class KnownRootPlusAnomer(KnownRoot):
     def create_boxes(self, map_dict):
         boxes = []
 
-        root_mono_id = map_dict['root']
-        for id, data in map_dict['monos'].items():
+        # Note: map_dict data structure can store multiple glycans, but the current use-case is for SGI only
+        glycan = map_dict['glycans'][0]
+        root_mono_id = glycan['root']
+        for id, data in glycan['monos'].items():
             anomer = data.get('anomer','?')
             if anomer == "?":
                 anomer = "x"

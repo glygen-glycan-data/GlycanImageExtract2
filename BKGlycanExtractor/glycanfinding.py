@@ -29,9 +29,6 @@ from BKGlycanExtractor import DebugMode, GlycanCompare
 # Base class
 class GlycanFinder:  
 
-    def set_logger(self, logger_name=''):
-        self.logger = logging.getLogger(logger_name+'.glycanfinding')
-
     def set_results(self, obj, accepted, rejected):
         obj.set_glycans(accepted, rejected)
 
@@ -45,6 +42,9 @@ class GlycanFinder:
 
     def semantic_compare(self,**kwargs):
         return GlycanCompare(**kwargs)
+
+    def set_logger(self, logger_name=''):
+        self.logger = logging.getLogger(logger_name+'.glycanfinding')
 
 # YOLO based glycan finder
 # allows minimum confidence thresholding, to restrict returns
@@ -91,25 +91,29 @@ class SingleGlycanImage(Finder,GlycanFinder):
         classid=self.get_label_index("glycan")
         return [ BoundingBox(classid=classid,classlabel="glycan",x=0,y=0,**obj) ]
 
-
-
 class KnownGlycanBoxes(KnownFinder,GlycanFinder):
 
     def __init__(self,**kwargs):
         KnownFinder.__init__(self,**kwargs)
         GlycanFinder.__init__(self)
 
-    def find_boxes(self, obj):
-        yoloannot = obj.image_path().rsplit('.',1)[0] + ".txt"
-        image = obj.image()
+    # method adapted to handle single/multiple glycan data
+    def create_boxes(self, map_dict):
         boxes = []
-        self.get_label_index("glycan")
-        for l in open(yoloannot):
-            classid,rcx,rcy,rw,rh = map(float,l.split())
-            classid = int(classid)
-            box = BoundingBox(rcx=rcx,rcy=rcy,rw=rw,rh=rh,image=image,
-                              classid=classid,classlabel=self.get_label(classid))
-            boxes.append(box)
+        fig_height = map_dict['figure']['height']
+        fig_width = map_dict['figure']['width']
+
+        # Note: map_dict data structure can store single/multiple glycans.
+        for glycan in map_dict['glycans']:
+            # TODO: probably have the flexibility to support different types of glycans?
+            classlabel = 'glycan'
+            classid = self.get_label_index(classlabel)
+            gly_bbox = glycan['bbox']
+
+            x,y,w,h = gly_bbox
+            gly_box = BoundingBox(classid=classid,classlabel=classlabel,x=x,y=y,w=w,h=h,image_width=fig_width, image_height=fig_height)
+            boxes.append(gly_box)
+
         return boxes
 
     def box_to_object(self,box,obj):

@@ -99,117 +99,150 @@ class KnownFinder(Finder):
             for label in self._labels:
                 print(f"{label}",file=wh)
         return
-        
+
     def get_known_data(self, image_path):
         '''
-        DATA STRUCTURE to store _map.txt file details
+        Structure to handle multiple glycans in a figure.
 
+        DATA STRUCTURE to store _map.txt file details
+        
         map_dict = {
-            'monos': {
-                1: {'symbol': GlcNac, 'anomer': 'a', 'x_min': 1, 'x_max': 5, 'y_min': 2, 'y_max':6},
-                2: {'symbol': Man, 'anomer': 'a', 'x_min': 1, 'x_max': 5, 'y_min': 2, 'y_max':6}
-            },
-            'links': {
-                (id1,id2): {'carbon_number': 1, ...},
-                (id1,id2): {'carbon_number': 4, ...},
-            }
-            'root': {
-                'mono_id': mono_id
-            },
-            'squiggle': {'symbol': '~', 'x_min': 1, 'x_max': 5, 'y_min': 2, 'y_max':6},
-            
+            'figure': {'height': x, 'width': x},
             'iupac': '',
             'composition': '',
-            .
-            .
-            .
+            ...,
+            'glycans': [
+                {
+                    'bbox': [x,y,w,h],
+                    'classid': x,
+                    'monos': {
+                        1: {'symbol': GlcNac, 'anomer': 'a', 'x_min': 1, 'x_max': 5, 'y_min': 2, 'y_max':6},
+                        2: {'symbol': Man, 'anomer': 'a', 'x_min': 1, 'x_max': 5, 'y_min': 2, 'y_max':6}
+                    },
+                    'links': {
+                        (id1,id2): {'carbon_number': 1, ...},
+                        (id1,id2): {'carbon_number': 4, ...},
+                    },
+                    'root': mono_id,
+                    'squiggle': {'symbol': '~', 'x_min': 1, 'x_max': 5, 'y_min': 2, 'y_max':6},
+                },
+                # ... more glycans
+            ],
         }
         '''
         
         image_data = image_path.rsplit('.',1)[0] + "_map.txt"
 
         map_dict = {
-            'monos':{},
-            'links': {},
-            'root': None
+            'figure': {},
+            'glycans': []
         }
 
-        with open(image_data, 'r') as file:
+        current_glycan = None
+        glycan_count = 0
 
-            root_id = float("inf")
+        with open(image_data, 'r') as file:
 
             for line in file:
                 data_points = line.split()
 
-                if data_points[0] == 'm':
-                    mono_id = int(data_points[1])
-                    root_id = min(root_id, mono_id)
-                    name = data_points[2]
-                    anomer = data_points[3]
-                    assert anomer in ('a','b','?')
-                    x_coords = []
-                    y_coords = []
+                if data_points[0] == '#####' and data_points[1] == 'WHOLEIMAGE:':
+                    map_dict['figure']['height'] = int(data_points[2])
+                    map_dict['figure']['width'] = int(data_points[4])
 
-                    for coords in data_points[4:-1]:
-                        x,y = map(int,coords.split(','))
-                        x_coords.append(x)
-                        y_coords.append(y)
+                elif data_points[0] == '###' and data_points[1] == 'GLYCAN:':
+                    # Create new glycan dictionary
+                    current_glycan = {
+                        'bbox': list(map(int, data_points[2:6])),
+                        'monos': {},
+                        'links': {},
+                        'root': None
+                    }
+                    map_dict['glycans'].append(current_glycan)
+                    glycan_count += 1
 
-                    x_min = int(min(x_coords))
-                    y_min = int(min(y_coords))
-                    x_max = int(max(x_coords))
-                    y_max = int(max(y_coords))
+                # not sure about this - still need to decide what is the convention in the map file - do we want to add classid or classlabel in the map file for glycan? 
+                elif data_points[0] == '###' and data_points[1] == 'CLASS:':
+                    if current_glycan is not None:
+                        current_glycan['classid'] = int(data_points[2])
 
-                    mono_data = {mono_id: {'symbol': name, 'anomer': anomer, 'x_min': x_min, 'x_max': x_max, 'y_min': y_min, 'y_max': y_max}}
+                elif data_points[0] == 'm':
+                    if current_glycan is not None:
+                        mono_id = int(data_points[1])
+                        name = data_points[2]
+                        anomer = data_points[3]
+                        assert anomer in ('a','b','?')
+                        x_coords = []
+                        y_coords = []
 
-                    map_dict['monos'].update(mono_data)
+                        for coords in data_points[4:-1]:
+                            x,y = map(int,coords.split(','))
+                            x_coords.append(x)
+                            y_coords.append(y)
+
+                        x_min = int(min(x_coords))
+                        y_min = int(min(y_coords))
+                        x_max = int(max(x_coords))
+                        y_max = int(max(y_coords))
+
+                        mono_data = {mono_id: {'symbol': name, 'anomer': anomer, 'x_min': x_min, 'x_max': x_max, 'y_min': y_min, 'y_max': y_max}}
+
+                        current_glycan['monos'].update(mono_data)
+                        
+                        # Update root to be the minimum mono_id
+                        if current_glycan['root'] is None:
+                            current_glycan['root'] = mono_id
+                        else:
+                            current_glycan['root'] = min(current_glycan['root'], mono_id)
 
                 elif data_points[0] == 'l':
-                    mono_id1, mono_id2 = map(int,[data_points[1],data_points[4]])
+                    if current_glycan is not None:
+                        mono_id1, mono_id2 = map(int,[data_points[1],data_points[4]])
 
-                    x1_min, x1_max, y1_min, y1_max = [v for k,v in map_dict['monos'][mono_id1].items() if k in ['x_min', 'x_max', 'y_min', 'y_max']]
-                    x2_min, x2_max, y2_min, y2_max = [v for k,v in map_dict['monos'][mono_id2].items() if k in ['x_min', 'x_max', 'y_min', 'y_max']]
+                        x1_min, x1_max, y1_min, y1_max = [v for k,v in current_glycan['monos'][mono_id1].items() if k in ['x_min', 'x_max', 'y_min', 'y_max']]
+                        x2_min, x2_max, y2_min, y2_max = [v for k,v in current_glycan['monos'][mono_id2].items() if k in ['x_min', 'x_max', 'y_min', 'y_max']]
 
-                    x_min, x_max = min(x1_min, x1_max,x2_min, x2_max), max(x1_min, x1_max,x2_min, x2_max)
-                    y_min, y_max = min(y1_min, y1_max, y2_min, y2_max), max(y1_min, y1_max, y2_min, y2_max)
+                        x_min, x_max = min(x1_min, x1_max,x2_min, x2_max), max(x1_min, x1_max,x2_min, x2_max)
+                        y_min, y_max = min(y1_min, y1_max, y2_min, y2_max), max(y1_min, y1_max, y2_min, y2_max)
 
-                    carbon_number = data_points[2]
-                    try:
-                        carbon_number = int(carbon_number)
-                    except ValueError:
-                        pass
-                    assert carbon_number in (1,2,3,4,5,6,8,'?')
+                        carbon_number = data_points[2]
+                        try:
+                            carbon_number = int(carbon_number)
+                        except ValueError:
+                            pass
+                        assert carbon_number in (1,2,3,4,5,6,8,'?')
 
-                    link_data = {
-                        (mono_id1, mono_id2): {'carbon_number': carbon_number,'x_min': x_min, 'x_max': x_max, 'y_min': y_min, 'y_max': y_max}
-                        # (mono_id1, mono_id2): {'carbon_number': data_points[2], 'anomer': map_dict['monos'][mono_id2]['anomer'] ,'x_min': x_min, 'x_max': x_max, 'y_min': y_min, 'y_max': y_max}
-                    }
+                        link_data = {
+                            (mono_id1, mono_id2): {'carbon_number': carbon_number,'x_min': x_min, 'x_max': x_max, 'y_min': y_min, 'y_max': y_max}
+                        }
 
-                    map_dict['links'].update(link_data)
+                        current_glycan['links'].update(link_data)
 
                 elif data_points[0] == 'r':
-                    x_coords = []
-                    y_coords = []
+                    if current_glycan is not None:
+                        x_coords = []
+                        y_coords = []
 
-                    for coords in data_points[4:-1]:
-                        x,y = map(int,coords.split(','))
-                        x_coords.append(x)
-                        y_coords.append(y)
+                        for coords in data_points[4:-1]:
+                            x,y = map(int,coords.split(','))
+                            x_coords.append(x)
+                            y_coords.append(y)
 
-                    x_min = int(min(x_coords))
-                    y_min = int(min(y_coords))
-                    x_max = int(max(x_coords))
-                    y_max = int(max(y_coords))
-                    map_dict['squiggle'] = {'symbol': data_points[2], 'x_min': x_min, 'x_max': x_max, 'y_min': y_min, 'y_max': y_max}
+                        x_min = int(min(x_coords))
+                        y_min = int(min(y_coords))
+                        x_max = int(max(x_coords))
+                        y_max = int(max(y_coords))
+                        current_glycan['squiggle'] = {'symbol': data_points[2], 'x_min': x_min, 'x_max': x_max, 'y_min': y_min, 'y_max': y_max}
 
                 elif data_points[0] == '#':
+                    # rest of the key-value pairs from map file (like iupac, composition, etc.)
                     key = data_points[1][:-1]
                     value = ' '.join(data_points[2:])
-
                     map_dict[key] = value
 
-            # map_dict['root'] = {root_id: map_dict['monos'][root_id]}
-            map_dict['root'] = root_id
+        # Boolean to indicate if map file contains SGI or MGI
+        map_dict["SGI"] = (glycan_count == 1)
+        map_dict["glycan_count"] = glycan_count
 
         return map_dict
 

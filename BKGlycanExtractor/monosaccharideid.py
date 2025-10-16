@@ -74,8 +74,10 @@ class KnownMono(MonoFinder,KnownFinder):
     # map_dict structure is present in KnownFinder class
     def create_boxes(self, map_dict):
         boxes = []
-
-        for id, data in map_dict['monos'].items():
+        
+        # Note: map_dict data structure can store multiple glycans, but the current use-case is for SGI only
+        monos = map_dict['glycans'][0]['monos']
+        for id, data in monos.items():
 
             symbol = data['symbol']
 
