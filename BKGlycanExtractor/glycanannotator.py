@@ -80,7 +80,7 @@ class GlycanExtractorPipeline():
 
         nglycan = len(figure_semantics.glycans())
         if progress_callback:
-            progress_callback(stage="FIGURE",checkpoint="DONE",nglycan=nglycan, page_num=kwargs.get("page_num",0), figure_num=kwargs.get("figure_num",0))
+            progress_callback(stage="FIGURE",checkpoint="DONE",nglycan=nglycan, page_num=kwargs.get("page_num",0), figure_num=kwargs.get("figure_num",0),pmid_job=kwargs.get("pmid_job", False))
 
         for i,glycan_semantics in enumerate(figure_semantics.glycans()):
             if progress_callback:
@@ -88,10 +88,10 @@ class GlycanExtractorPipeline():
             for glystep in self.steps['glycan']:
                 glystep.execute(glycan_semantics)
             if progress_callback:
-                progress_callback(stage="GLYCAN",checkpoint="DONE",index=i+1,nglycan=nglycan, page_num=kwargs.get("page_num",0),figure_num=kwargs.get("figure_num",0))
+                progress_callback(stage="GLYCAN",checkpoint="DONE",index=i+1,nglycan=nglycan, page_num=kwargs.get("page_num",0),figure_num=kwargs.get("figure_num",0),pmid_job=kwargs.get("pmid_job", False))
 
         if progress_callback:
-            progress_callback(stage="PIPELINE",checkpoint="DONE",nglycan=nglycan, page_num=kwargs.get("page_num",0),figure_num=kwargs.get("figure_num",0))
+            progress_callback(stage="PIPELINE",checkpoint="DONE",nglycan=nglycan, page_num=kwargs.get("page_num",0),figure_num=kwargs.get("figure_num",0),pmid_job=kwargs.get("pmid_job", False))
 
         return figure_semantics
 
