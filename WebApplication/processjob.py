@@ -168,11 +168,6 @@ class JobInstance:
             os.makedirs(path, exist_ok=True)
         return [os.path.join(self.workdir, subdir) for subdir in subdirs]
 
-
-    def process_file(self):
-        raise NotImplementedError
-
-
     def annotate_image(self,figure_semantics):
         """Annotate glycans and save the annotated image."""
 
@@ -335,9 +330,6 @@ class JobInstance:
         self.process_glycans(figure_semantics, image_folders)
         self.results.append(figure_semantics.tojson())
 
-
-class ImageJob(JobInstance):
-
     def process_file(self):
         self.jobstate(False)
         self.update_state(APIFramework.RUNNING)
@@ -361,47 +353,30 @@ class ImageJob(JobInstance):
 
         self.create_directories(*image_folders.values())
 
-        self.update_status("Processing image")
-        # self.imageno = 1
-        # self.pageno = 0
+        # after required directories are ready - process the input file (figures)
+        self.process_figures(image_folders)
 
-        # metadata = {}
-
-        
-        self.find_glycans(self.input_filepath,image_folders)
-        # self.glycan_obj['file_format_error'] = (
-        #     f"No glycans were present/detected in the image; switched to {new_file_type} detection mode!"
-        #     if glycan_data
-        #     else "Something might be wrong with the file you used, please enter another file"
-        # )
-
-        # self.log_file.close()
         self.jobstate(True)
 
 
+    def process_figures(self, image_folders):
+        return NotImplementedError
+
+class ImageJob(JobInstance):
+    def process_figures(self, image_folders):
+        self.update_status("Processing image")
+        self.find_glycans(self.input_filepath,image_folders)
+
 class PMIDJob(JobInstance):
+    def process_figures(self, image_folders):
 
-    def process_file(self):
-        self.jobstate(False)
-        self.update_state(APIFramework.RUNNING)
         base_path = os.path.dirname(os.path.abspath(__file__))
-        input_file = os.path.join(base_path, "input", self.id, self.original_file_name)
-        try:
-            copyfile(input_file, self.input_filepath)
-        except FileNotFoundError:
-            time.sleep(5)
-            copyfile(input_file, self.input_filepath)
-        self.log_file.write(f"{self.id}\n{self.output_filepath}\n")
-
-        figures_dir = os.path.join(self.workdir, "extracted_figures", "figures")
-        extracted_images_dir = os.path.join(self.workdir, "extracted_figures", "extracted_images")
-        images_dir = os.path.join(self.workdir, "extracted_figures", "images")
-        image_folders = {'figures_dir': figures_dir, 'images_dir': images_dir, 'extracted_images_dir': extracted_images_dir}
-        self.create_directories(*image_folders.values())
 
         # zipped file location - which contains all info related to the PMID
         # copy all the figures from the zipped file to the extracted_figures folder
         figures_src = os.path.join(base_path, "input", self.id, f"PMID-{self.pmid}.tar.gz")
+        
+        figures_dest_dir = image_folders['figures_dir']
 
         with tarfile.open(figures_src, "r:gz") as tar:
             for member in tar.getmembers():
@@ -411,25 +386,14 @@ class PMIDJob(JobInstance):
                     # Extract file content directly - extraction from a tar file requires thiese steps inorder to extract files to the correct directory
                     file_obj = tar.extractfile(member)
                     if file_obj:
-                        target_path = os.path.join(figures_dir, base)
+                        target_path = os.path.join(figures_dest_dir, base)
                         with open(target_path, 'wb') as f:
                             f.write(file_obj.read())
 
-        # for name in os.listdir(figures_src):
-        #     p = os.path.join(figures_src, name)
-        #     if os.path.isfile(p) and os.path.splitext(p)[1].lower() == ".png":
-        #         shutil.copy(p, figures_dir)
-
-        self.process_figures(image_folders)
-        self.jobstate(True)
-
-    def process_figures(self, image_folders):
-        figures_src = image_folders['figures_dir']
-
         # Get all image files and sort them (they should already be in order due to sequential naming)
         image_files = []
-        for fig_name in os.listdir(figures_src):
-            fig_path = os.path.join(figures_src, fig_name)
+        for fig_name in os.listdir(figures_dest_dir):
+            fig_path = os.path.join(figures_dest_dir, fig_name)
             if os.path.isfile(fig_path) and os.path.splitext(fig_name)[1].lower() in ['.jpg', '.jpeg', '.png']:
                 image_files.append(fig_name)
         
@@ -437,7 +401,7 @@ class PMIDJob(JobInstance):
         image_files.sort()
 
         for figure_num, fig_name in enumerate(image_files, 1):
-            fig_path = os.path.join(figures_src, fig_name)
+            fig_path = os.path.join(figures_dest_dir, fig_name)
             with Image.open(fig_path) as img:
                 width, height = img.size
             figure_metadata = {"fig_bbox": [0, 0, width, height], "pmid_job": True, "figure_num":figure_num}
@@ -446,48 +410,16 @@ class PMIDJob(JobInstance):
 
 
 class PDFJob(JobInstance):
-
-    def process_file(self):
-        """
-        Main processing logic for PDF files.
-        Handles file verification, page/image extraction, and glycan annotation.
-        """
-        self.jobstate(False)  
-        self.update_state(APIFramework.RUNNING)
-
-        base_path = os.path.dirname(os.path.abspath(__file__))
-        input_file = os.path.join(base_path, "input", self.id, self.original_file_name)
-
-        try:
-            copyfile(input_file, self.input_filepath)
-        except FileNotFoundError:
-            time.sleep(5)
-            copyfile(input_file, self.input_filepath)
-
-        self.log_file.write(f"{self.id}\n{self.output_filepath}\n")
-
-        figures_dir = os.path.join(self.workdir, "extracted_figures", "figures")
-        extracted_images_dir = os.path.join(self.workdir, "extracted_figures", "extracted_images")
-        images_dir = os.path.join(self.workdir, "extracted_figures", "images")
-
-        image_folders = {'figures_dir': figures_dir, 'images_dir': images_dir, 'extracted_images_dir': extracted_images_dir}
-
-        self.create_directories(*image_folders.values())
-
-        # figures_metadata = self.extract_pdf_figure_metadata()
-        # self.log_file.write(f"\nFound {len(figures_metadata)} figures in the PDF.")
-
-        self.process_pdf_pages(image_folders)
-
-        self.jobstate(True) 
-
+    """
+    Main processing logic for PDF files.
+    Handles file verification, page/image extraction, and glycan annotation.
+    """
     
-    def process_pdf_pages(self, image_folders):
+    def process_figures(self, image_folders):
         """
         Extract figure metadata from PDF using fitz.
         On each figure - find all glycans using the object detection pipeline and generate semantics
         """
-
         doc = fitz.open(self.input_filepath)
         # figure_metadata = []
         figure_num = 1
