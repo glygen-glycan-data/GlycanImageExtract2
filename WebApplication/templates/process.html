@@ -316,7 +316,6 @@
                 return false;
             }
         } else if (uploadOption === 'pmid') {
-            placeholder_url = "31614918"    // update the placeholder to a valid pmid for Manuscripts
             const pmid = document.getElementById('pmid').value.trim();
 
             if (!pmid) { 
@@ -474,7 +473,7 @@
                                 <img src="{{urlprefix}}/static/images/link.svg">
                                 <h5>PMID</h5>
                                 <input type="text" name="pmid" id="pmid" class="form-control" 
-                                        placeholder={{placeholder_url}} />
+                                        placeholder=31614918 />
                             </div>
                         </div>
             
