@@ -156,10 +156,14 @@
 
 <script>
     document.addEventListener("DOMContentLoaded", () => {
-        const submission_type = "{{ submission_type }}".trim(); // define it here
+        const submission_type = "{{ submission_type }}".trim();
 
         const fileTypeContainer = document.getElementById('fileType');
-        let labels = document.querySelectorAll('#fileType label'); // make this 'let'
+        let labels = document.querySelectorAll('#fileType label'); 
+
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('file');
+        const fileInfo = document.getElementById('fileInfo');
 
         const fields = {
             file: document.getElementById('fileUploadField'),
@@ -189,6 +193,16 @@
             if (target) target.classList.add('active');
         }
 
+        function updateFileInfo(file) {
+            const fileInfo = document.getElementById('fileInfo');
+            if (fileInfo) {
+                fileInfo.innerHTML = `
+                    <strong>Selected file:</strong> ${file.name}<br>
+                `;
+                fileInfo.classList.add('show');
+            }
+        }
+
         // Remove PMID option if not a Manuscript, then refresh labels
         if (submission_type !== 'Manuscript') {
             document
@@ -210,17 +224,65 @@
                 showField(input.value);
             });
         }
-
+        
         // Initialize AFTER any removals
-        const checked = document.querySelector('input[name="fileType"]:checked');
-        if (checked) {
-            setActiveLabelFor(checked.value);
-            showField(checked.value);
+        // if submission_type - is Manuscript --> PMID tab should be the primary tab
+        // else File uplaod should be the primary tab
+        if (submission_type === 'Manuscript') {
+            const pmidInput = document.querySelector('input[value="pmid"]');
+            if (pmidInput) {
+                pmidInput.checked = true;
+                setActiveLabelFor('pmid');
+                showField('pmid');
+            }
         } else {
-            hideAllFields();
+            // Default to file upload for non-Manuscript submissions
+            const fileInput = document.querySelector('input[value="file"]');
+            if (fileInput) {
+                fileInput.checked = true;
+                setActiveLabelFor('file');
+                showField('file');
+
+            }
+        } 
+
+
+        // Drag and drop functionality
+        if (uploadArea) {
+            uploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadArea.classList.add('dragover');
+            });
+
+            uploadArea.addEventListener('dragleave', () => {
+                uploadArea.classList.remove('dragover');
+            });
+
+            uploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadArea.classList.remove('dragover');
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    fileInput.files = files;
+                    updateFileInfo(files[0]);
+                }
+            });
+
+            // uploadArea.addEventListener('click', () => {
+            //     fileInput.click();
+            // });
         }
 
+        // File input change handler
+        if (fileInput) {
+            fileInput.addEventListener('change', (e) => {
+                if (e.target.files.length > 0) {
+                    updateFileInfo(e.target.files[0]);
+                }
+            });
+        }
     });
+
 
     function validateForm(event) {
         event.preventDefault(); 
@@ -228,19 +290,15 @@
         let submission_type = "{{ submission_type }}".trim();
         let pmcid = '';
         
-        const placeholder_url = "{{ placeholder_url }}".trim();
+        let placeholder_url = "{{ placeholder_url }}".trim();
         const uploadOption = document.querySelector('input[name="fileType"]:checked').value;
+        
         const allowedFormats = {
             'Manuscript': ['pdf'],
             'Multi-Glycan Image': ['png', 'jpg', 'jpeg'],
             'Simple Glycan Image': ['png', 'jpg', 'jpeg']
         };
-
-        if (!allowedFormats.hasOwnProperty(submission_type)) {
-            alert("Invalid submission type: " + submission_type);
-            return false;
-        }
-
+        
         if (uploadOption === 'file') {
             const fileInput = document.getElementById('file');
             if (!fileInput.files.length) { alert('Please upload a file.'); return false; }
@@ -258,6 +316,7 @@
                 return false;
             }
         } else if (uploadOption === 'pmid') {
+            placeholder_url = "31614918"    // update the placeholder to a valid pmid for Manuscripts
             const pmid = document.getElementById('pmid').value.trim();
 
             if (!pmid) { 
@@ -265,9 +324,7 @@
                 return false; 
             }
 
-            submission_type = 'PMID';
-
-            // Validate PMID via backend API using AJAX
+            // Validate if PMID has Open Access resources for PMCID via backend API using AJAX
             jQuery.ajax({
                 type: 'POST',
                 url: '{{urlprefix}}/pmid',
@@ -278,15 +335,12 @@
                         alert(result.error || 'Invalid PMID. Please check and try again.');
                         return false;
                     }
-                    
-                    console.log('Valid PMCID:', result.pmcid);
-                    pmcid = result.pmcid;
-                    
+                                        
                     // Proceed with form submission after PMID validation
-                    submitForm(submission_type, pmid, pmcid);
+                    submitForm(submission_type, pmid);
                 },
                 error: function(xhr, status, error) {
-                    console.error('AJAX error:', status, error);
+                    // console.log('AJAX error:', status, error);
                     
                     // Extract error message from Flask response
                     let errorMessage = 'Failed to validate PMID';
@@ -302,7 +356,6 @@
                         console.error('Error parsing response:', parseError);
                         errorMessage = `Failed to validate PMID: ${error}`;
                     }
-                    
                     alert(errorMessage);
                 }
             });
@@ -310,20 +363,27 @@
             return false; // Don't proceed until PMID validation completes
         }
 
-        // For non-PMID uploads, proceed directly
-        submitForm(submission_type, null, null);
+        // proceeds directly for non-PMID uploads without the PMID validation check
+        submitForm(submission_type, null);
         return false;
     }
 
-    function submitForm(submission_type, pmid, pmcid) {
-        const formData = new FormData(document.getElementById('inputform'));
+    function submitForm(submission_type, pmid) {
+        const formData = new FormData(); // Create empty FormData
         formData.append('submission_type', submission_type);
 
-        if (pmid) {
+        // Get the selected upload method
+        const uploadOption = document.querySelector('input[name="fileType"]:checked').value;
+    
+        // Add the appropriate field based on upload method
+        if (uploadOption === 'file') {
+            const fileInput = document.getElementById('file');
+            formData.append('file', fileInput.files[0]);
+        } else if (uploadOption === 'url') {
+            const urlInput = document.getElementById('fileURL');
+            formData.append('fileURL', urlInput.value.trim());
+        } else if (pmid) {
             formData.append('pmid', pmid);
-        }
-        if (pmcid) {
-            formData.append('pmcid', pmcid);
         }
         
         // POST form details using AJAX
@@ -339,7 +399,7 @@
                 }
             },
             error: function(xhr, status, error) { 
-                console.error('AJAX error:', status, error);
+                // console.log('AJAX err:', status, error);
                 
                 // Extract error message from Flask response
                 let errorMessage = "Upload failed: Either url is under a paywall or url format is not supported";
@@ -353,9 +413,7 @@
                     }
                 } catch (parseError) {
                     console.error('Error parsing response:', parseError);
-                    // Use default error message if parsing fails
                 }
-                
                 alert(errorMessage);
             }
         });
@@ -381,8 +439,14 @@
                 <form id="inputform" onsubmit="return validateForm(event)">
                     <!-- Upload Method Selection -->
                     <div id="fileType" class="method-tabs d-flex w-100" data-toggle="buttons">
-                        <label class="btn btn-outline-secondary flex-fill text-center active">
-                          <input type="radio" name="fileType" value="file" autocomplete="off" checked> 
+                        <label class="btn btn-outline-secondary flex-fill text-center">
+                            <input type="radio" name="fileType" value="pmid" autocomplete="off"> 
+                            <!-- <i class="fas fa-link mr-2"></i> -->
+                            PMID
+                        </label>
+
+                        <label class="btn btn-outline-secondary flex-fill text-center">
+                          <input type="radio" name="fileType" value="file" autocomplete="off"> 
                           <!-- <i class="fas fa-upload mr-2"></i> -->
                           Upload File
                         </label>
@@ -392,15 +456,28 @@
                           Paste URL
                         </label>
 
-                        <label class="btn btn-outline-secondary flex-fill text-center">
-                            <input type="radio" name="fileType" value="pmid" autocomplete="off"> 
-                            <!-- <i class="fas fa-link mr-2"></i> -->
-                            PMID
-                        </label>
                         <!-- <label class="btn btn-outline-secondary flex-fill text-center">
                           <input type="radio" name="fileType" value="photo" autocomplete="off"> 
                           <i class="fas fa-camera mr-2"></i>Take Photo
                         </label> -->
+                    </div>
+
+
+                    <!-- INPUT FIELDS -->
+
+                    <!-- PMID Input Field -->
+                    <div id="pmidInputField" style="display: none;">
+                        <div class="upload-area">
+                            <div class="form-group">
+                                <!-- <label for="fileURL" class="form-label">Document URL</label> -->
+                                <!-- <i class="fas fa-link fa-3x text-muted mb-3"></i> -->
+                                <img src="{{urlprefix}}/static/images/link.svg">
+                                <h5>PMID</h5>
+                                <input type="text" name="pmid" id="pmid" class="form-control" 
+                                        placeholder={{placeholder_url}} />
+                            </div>
+                        </div>
+            
                     </div>
 
                     <!-- File Upload Field -->
@@ -438,20 +515,6 @@
             
                     </div>
 
-                    <!-- PMID Input Field -->
-                    <div id="pmidInputField" style="display: none;">
-                        <div class="upload-area">
-                          <div class="form-group">
-                            <!-- <label for="fileURL" class="form-label">Document URL</label> -->
-                            <!-- <i class="fas fa-link fa-3x text-muted mb-3"></i> -->
-                            <img src="{{urlprefix}}/static/images/link.svg">
-                            <h5>PMID</h5>
-                            <input type="text" name="pmid" id="pmid" class="form-control" 
-                                  placeholder=31614918 />
-                          </div>
-                        </div>
-              
-                    </div>
 
                     <!-- Photo Field -->
                     <!-- <div id="photoField" style="display: none;">

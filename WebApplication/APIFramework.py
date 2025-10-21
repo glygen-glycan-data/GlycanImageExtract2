@@ -23,7 +23,7 @@ import os, ssl
 from datetime import datetime, timezone
 import xml.etree.ElementTree as ET
 import shutil
-
+import tarfile
 
 
 if (not os.environ.get('PYTHONHTTPSVERIFY', '') and getattr(ssl,'_create_unverified_context', None)):
@@ -495,13 +495,18 @@ class APIFramework:
             res.append(self.get_result(list_id))
         return flask.jsonify(res)
 
+    # Validates is the given PMID has a PMCID and that the resources for the PMCID are Open Access (check if zip file can be retrieved)
+    def validate_pmid(self, pmid=None):
+        developer_email="developer@georgetown.edu"
 
-    def validate_pmid(self):
-        pmid = flask.request.json.get('pmid')
-        pmid_to_pmc_converter_api = f'https://pmc.ncbi.nlm.nih.gov/tools/idconv/api/v1/articles/?ids={pmid}&tool=extract&email=nm1058@georgetown.edu&idtype=pmid&format=json'
+        if pmid is None:
+            pmid = flask.request.json.get('pmid')
+
+        pmid = pmid.strip()
+        pmid_to_pmc_converter_api = f'https://pmc.ncbi.nlm.nih.gov/tools/idconv/api/v1/articles/?ids={pmid}&tool=extract&email={developer_email}&idtype=pmid&format=json'
 
         try:
-            resp = requests.get(pmid_to_pmc_converter_api, timeout=30)  # Changed api_url to pmid_to_pmc_converter_api
+            resp = requests.get(pmid_to_pmc_converter_api, timeout=10)
             resp.raise_for_status()
             resp_json = resp.json()
             
@@ -509,15 +514,44 @@ class APIFramework:
                 return flask.jsonify({'valid': False, 'error': 'No records found'}), 400
                 
             pmcid = resp_json['records'][0].get('pmcid')
-            
             if not pmcid:
-                return flask.jsonify({'valid': False, 'error': 'Given PMID is not supported by PubMed Central'}), 400
+                return flask.jsonify({'valid': False, 'error': f"Submitted PMID {pmid} doesn't have PubMed Central resources"}), 400
+
+            # check if it is possible to retrieve the zipped file using PMCID
+            pmc_resp, pmc_status = self.validate_pmcid_resources(pmcid)
+            pmc_resp_json = pmc_resp.get_json()
+
+            if pmc_status != 200 or not pmc_resp_json.get('valid'):
+                return pmc_resp, pmc_status
                 
-            return flask.jsonify({'valid': True, 'pmcid': pmcid}), 200
-            
+            return flask.jsonify(pmc_resp_json), 200
         except Exception as e:
             return flask.jsonify({'valid': False, 'error': str(e)}), 500
 
+
+    def validate_pmcid_resources(self, pmcid):
+        pmc_api = f'https://www.ncbi.nlm.nih.gov/pmc/utils/oa/oa.fcgi?id={pmcid}'
+        r = requests.get(pmc_api, timeout=30)
+        r.raise_for_status()
+
+        root = ET.fromstring(r.text)
+        link = root.find(".//link[@format='tgz']")
+
+        if link is None:
+            return flask.jsonify({
+                'valid': False,
+                'error': f"Submitted PMID doesn't have Open Access permissions to PubMed Central"
+            }), 400
+
+        return flask.jsonify({
+            'valid': True,
+            'success': f'Given PMCID: {pmcid} is Open Access',
+            'resource': {
+                'href': link.get('href'),
+                'format': link.get('format'),
+                'pmcid': pmcid
+            }
+        }), 200
 
     def upload_file(self):
         if flask.request.method == 'POST':
@@ -527,72 +561,14 @@ class APIFramework:
 
             file = flask.request.files.get('file')
             file_url = flask.request.form.get('fileURL')
-            pmid = None
-            pmcid = None
+            pmid = flask.request.form.get('pmid')
             submission_type = flask.request.form.get('submission_type')
 
             # Extract info using Pubmed API and get filename of the pdf based on PMID and at the same time extract figures as well - everything is present in the zipped file
-            if submission_type == 'PMID':
-                pmid = flask.request.form.get('pmid')
-                pmcid = flask.request.form.get('pmcid')
-
-                # Note: PMID is validated on the frontend which via the 'validate_pmid() API' -> only then is the upload_file() API called.
-
-                # STEPS:
-                # Getting a zipped file - which will be stored in the input folder (Docker volume while in production).   
-                # The zipped file contains the pdf and figures corresposnding to the the PMID.
-                # Unzip the file in the input folder dir.
-                # After the location to store the extracted pdf (extracted from the zip archieve) is determined, 
-                # - pdf can be stored 
-                # - rest of the figures can be stored in the extracted_figures directory later
-                # After moving files around to their dedicated locations -> the zipped archieves can be deleted 
-               
-
-                # steps to extract zipped file based on PMC
-                # 1) API retrieves XML tree
-                pmc_api = f'https://www.ncbi.nlm.nih.gov/pmc/utils/oa/oa.fcgi?id={pmcid}'
-                r = requests.get(pmc_api, timeout=30)
-                r.raise_for_status()
-
-                print(r.text)
-
-                root = ET.fromstring(r.text)
-                # find element in the tree which has a link and format is tgz
-                link = root.find(".//link[@format='tgz']") 
-                
-
-                if link is None:
-                    return flask.jsonify({"error": "Given PMID doesn't support Open Access to PubMed Central"}), 400 
-
-                # extract the href link, which is in ftp (NCBI supports both ftp and https protocols)
-                href = link.attrib.get("href")
-
-                # Convert FTP to HTTPS
-                download_url = href.replace("ftp://ftp.ncbi.nlm.nih.gov", "https://ftp.ncbi.nlm.nih.gov")
-
-                # TODO: Error handling appropriately
-                # 2) Download the zipped file to the input folder
-                zipped_path = os.path.join(self.input_file_folder(), f"{pmcid}.tar.gz")
-                with open(zipped_path, "wb") as f:
-                    with requests.get(download_url, stream=True, timeout=120) as resp:
-                        resp.raise_for_status()
-                        for chunk in resp.iter_content(1 << 20):
-                            if chunk:
-                                f.write(chunk)
-                
-                # 3) unzip the file and save it as a folder named 'PMCID'
-                shutil.unpack_archive(str(zipped_path), extract_dir=self.input_file_folder())
-
-                # get the name of the pdf file from the folder - this will be your filename, which will be added
-                # in one of the input folder directories after a unique task id is determined
-                folder_path = os.path.join(self.input_file_folder(), pmcid)
-                pdf_names = [os.path.basename(p) for p in glob.glob(os.path.join(folder_path, "*.pdf"))]
-
-                if len(pdf_names) > 1:
-                    return flask.jsonify({"error": "Error with processing the PMID"}), 400
-                
-                filename = pdf_names[0]
-
+            if submission_type == "Manuscript" and pmid is not None:
+                pmid = pmid.strip()
+                # pdf file that goes in the input folder should be renamed as "PMID-<PMID>.pdf"
+                filename = 'PMID-' + pmid + ".pdf"
             elif file_url:
                 filename = werkzeug.utils.secure_filename(os.path.basename(file_url.split('?')[0]))
 
@@ -616,16 +592,66 @@ class APIFramework:
             file_path = os.path.join(file_dir, filename)
 
             try:
-                if submission_type == 'PMID':
-                    # move the pdf to file_dir (i.e located in input/taskid)
-                    shutil.copy(os.path.join(self.input_file_folder(), pmcid ,filename), file_dir)
+                if submission_type == "Manuscript" and pmid is not None:
+                    
+                    # validate if PMCID resources are Open Access before proceeding
+                    pmc_resp, pmc_status = self.validate_pmid(pmid)
+                    pmc_resp_json = pmc_resp.get_json()
 
-                    # leave rest of the figures in the unzipped folder which is located in the the input folder location
-                    # processjob can access the folder using the PMCID name (same as folder name) from the json passed to it and
-                    # can populate the extracted_figures/figures directory.
-                    # PMCID folder and zipped file can be deleted after extracted figures folder is populated.
+                    if pmc_status != 200 or not pmc_resp_json.get('valid'):
+                        return pmc_resp, pmc_status
 
+                    resource = pmc_resp_json.get("resource")
+                    
+                    pmcid = resource.get("pmcid")
 
+                    # 1) extract the href link, which is in ftp (NCBI supports both ftp and https protocols)
+                    href = resource.get("href")
+
+                    # Convert FTP to HTTPS
+                    download_url = href.replace("ftp://ftp.ncbi.nlm.nih.gov", "https://ftp.ncbi.nlm.nih.gov")
+
+                    # 2) Download the zipped file to the input folder
+                    zipped_path = os.path.join(file_dir, f"PMID-{pmid}.tar.gz")
+                    with open(zipped_path, "wb") as f:
+                        with requests.get(download_url, stream=True, timeout=120) as resp:
+                            resp.raise_for_status()
+                            for chunk in resp.iter_content(1 << 20):
+                                if chunk:
+                                    f.write(chunk)
+
+                    # 3) Extract data from tar file
+                    # Note: The zip file may contain multiple pdf's, so the main pdf filename is same
+                    # as the xml filename - the below code tracks and finds the correct pdf to use
+                    with tarfile.open(zipped_path, "r:gz") as tar:
+                        # Single pass: collect nxml files and their corresponding PDFs
+                        nxml_files = []
+                        pdf_files = {}
+                        for member in tar.getmembers():
+                            base = os.path.basename(member.name).lower()
+                            ext = os.path.splitext(base)[1]
+                            
+                            if ext == '.nxml':
+                                nxml_basename = os.path.splitext(base)[0]
+                                nxml_files.append((member, nxml_basename))
+                            elif ext == '.pdf':
+                                pdf_basename = os.path.splitext(base)[0]
+                                pdf_files[pdf_basename] = member
+
+                        # Now extract the main pdf and rename it as PMID-<PMID>.pdf
+                        for nxml_member, nxml_basename in nxml_files:                            
+                            if nxml_basename in pdf_files:
+                                pdf_member = pdf_files[nxml_basename]
+                                tar.extract(pdf_member, file_dir, filter="data")
+                                
+                                # Rename the PDF
+                                old_pdf_path = os.path.join(file_dir, pdf_member.name)
+                                new_pdf_path = os.path.join(file_dir, f"PMID-{pmid}.pdf" )
+                                
+                                if os.path.exists(old_pdf_path):
+                                    os.rename(old_pdf_path, new_pdf_path)
+                                else:
+                                    print(f"File not found: {old_pdf_path}")
                 elif file and self.allow_file_ext(file.filename):
                     file.save(file_path)
                 elif file_url:
@@ -639,7 +665,6 @@ class APIFramework:
                         with open(file_path, "wb") as f:
                             for chunk in response.iter_content(1024):
                                 f.write(chunk)
-
                 else:
                     return flask.jsonify({"error": f"File format not supported: {filename}"}), 400
             except requests.exceptions.RequestException as e:
@@ -647,6 +672,7 @@ class APIFramework:
             except Exception as e:
                 return flask.jsonify({"error": f"Unexpected error: {str(e)}"}), 400
 
+            # since we have already validated that pmcid exists and it is Open Access --> pmid and pmcid should be available at this p
             if pmid and pmcid:
                 task_detail.update({"pmid": pmid, "pmcid": pmcid})
 
