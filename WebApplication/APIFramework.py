@@ -652,6 +652,14 @@ class APIFramework:
                                     os.rename(old_pdf_path, new_pdf_path)
                                 else:
                                     print(f"File not found: {old_pdf_path}")
+
+                    # renamed the zipped file to PMID-<PMID>, while using the tarfile modeule a residual empty folder was created with the original zipped file name --> so deleting this empty folder 
+                    pmc_folder_path = os.path.join(file_dir, pmcid)
+                    try:
+                        shutil.rmtree(pmc_folder_path)
+                    except FileNotFoundError:
+                        pass 
+
                 elif file and self.allow_file_ext(file.filename):
                     file.save(file_path)
                 elif file_url:
