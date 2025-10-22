@@ -118,7 +118,7 @@ class APIFrameworkClient:
             res2json = res2.json()[0]
         except:
             raise
-        if not res2json[u"finished"] and not asis:
+        if not res2json.get("finished",False) and not asis:
             raise APIUnfinishedError(task_id,"NotComplete","The task %s is not finished yet" % task_id)
         return res2json
     
