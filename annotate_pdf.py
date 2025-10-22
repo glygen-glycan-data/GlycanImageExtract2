@@ -47,7 +47,7 @@ parser.add_argument(
 
 args = parser.parse_args()
 
-args.pdf = [ f for f in args.pdf if not f.endswith('annotated.pdf') ]
+args.pdf = [ f for f in args.pdf if not f.endswith('.annotated.pdf') ]
 
 if len(args.pdf) != len(set(args.pdf)):
     print("PDFs should be unique!",file=sys.stderr)
