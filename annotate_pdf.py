@@ -45,6 +45,14 @@ parser.add_argument(
     help = 'Extractor URL.'
 )
 
+parser.add_argument(
+    '--resubmit',
+    action = 'store_true',
+    default = False,
+    help = 'Resubmit analysis, even if results JSON is present.'
+)
+
+
 args = parser.parse_args()
 
 args.pdf = [ f for f in args.pdf if not f.endswith('.annotated.pdf') ]
@@ -57,32 +65,45 @@ if args.json is not None:
     assert len(args.json) == len(args.pdf)
 if args.taskid is not None:
     assert len(args.taskid) == len(args.pdf)
+if args.resubmit:
+    assert not args.json
+    assert not args.taskid
 
 client = ExtractorClient(apiurl=args.extractorurl)
 
 needsresults = set()
 all_json_data = {}
+resultfilename = {}
 for i,pdf in enumerate(args.pdf):
     assert os.path.exists(pdf)
     basename = os.path.splitext(pdf)[0]
     
     if args.json:
-        resultfilename = args.json[i]
-        assert os.path.exists(resultfilename)
+        resultfilename[i] = args.json[i]
+        assert os.path.exists(resultfilename[i])
     else:
-        resultfilename = basename+".results.json"
-    if not os.path.exists(resultfilename):
+        resultfilename[i] = basename+".results.json"
+    if not os.path.exists(resultfilename[i]) or args.resubmit:
         if args.taskid:
             taskid = args.taskid[i]
         else:
             print(os.path.split(pdf)[1],"submitted for analysis.")
             taskid = client.submit_manuscript_file(pdf)
         json_data = client.retrieve_once(taskid,asis=True)
-        with open(resultfilename,'w') as f:
+        with open(resultfilename[i],'w') as f:
             json.dump(json_data,f,indent=2)
     else:
-        with open(basename+".results.json", 'r') as f:
+        with open(resultfilename[i], 'r') as f:
             json_data = json.load(f)
+        if not json_data.get('finished',False):
+            tmp_json_data = client.retrieve_once(json_data['id'],asis=True)
+            if 'submission_detail' not in tmp_json_data:
+                # result file has non-existent taskid
+                print(os.path.split(pdf)[1],"resubmitted for analysis (bad taskid).")
+                taskid = client.submit_manuscript_file(pdf)
+                json_data = client.retrieve_once(taskid,asis=True)
+                with open(resultfilename[i],'w') as f:
+                    json.dump(json_data,f,indent=2)
     all_json_data[i] = json_data
     if not json_data.get('finished',False):
         needsresults.add(i)
@@ -103,9 +124,9 @@ while True:
             elif json_data['state'] == "Error":
                 print(pdf,"analysis error.")
             basename = os.path.splitext(args.pdf[i])[0]
-            with open(basename+".results.json",'w') as wh:
+            with open(resultfilename[i],'w') as wh:
                 wh.write(json.dumps(json_data))
-            print("Wrote results JSON:",basename+".results.json")
+            print("Wrote results JSON:",resultfilename[i])
         else:
             if json_data.get('status'):
                 print(pdf,"analysis in progress:",json_data['status'])
