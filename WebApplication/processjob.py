@@ -429,46 +429,58 @@ class PDFJob(JobInstance):
             info = page.get_image_info(xrefs=True)
             for img in info:
                 xref = img["xref"]
+                
+                # xref's are one of the most straigforward and efficient ways of extracting figures from pdf's
+                # journal logo's are images which often have xref = 0, which cannot be extracted using xref 
+                # (but note that it is still possible to extract these if required using different methods)
+                # Also, if any other related errors occur - try/except block will handle it
+                if xref < 1:   
+                    continue
 
-                # Note: pdf_fig_box is not in pixels
-                # this is in page cooridniates which is called points (1 point = 1/72 inch)
-                pdf_fig_box = fitz.Rect(img["bbox"])
-                pdf_fig_height = pdf_fig_box.height
-                pdf_fig_width = pdf_fig_box.width
-                area = pdf_fig_height * pdf_fig_width
+                try:
+                    # Note: pdf_fig_box is not in pixels
+                    # this is in page cooridniates which is called points (1 point = 1/72 inch)
+                    pdf_fig_box = fitz.Rect(img["bbox"])
+                    pdf_fig_height = pdf_fig_box.height
+                    pdf_fig_width = pdf_fig_box.width
+                    area = pdf_fig_height * pdf_fig_width
 
-            
-                self.log_file.write(
-                    f"\nFigure number: {figure_num}, Page number: {page_num},  BBox: {img["bbox"]}, Width: {pdf_fig_width}, Height: {pdf_fig_height}, Area: {area}\n"
-                )
+                
+                    self.log_file.write(
+                        f"\nFigure number: {figure_num}, Page number: {page_num},  BBox: {img["bbox"]}, Width: {pdf_fig_width}, Height: {pdf_fig_height}, Area: {area}\n"
+                    )
 
-                if (pdf_fig_height > 60 and pdf_fig_width > 60) or area > 360:
-                    # figure_data['figure_count'] = self.figure_count
+                    if (pdf_fig_height > 90 and pdf_fig_width > 90) or area > 8100:
+                        # figure_data['figure_count'] = self.figure_count
 
-                    images_path = os.path.join(image_folders['figures_dir'], f"{xref}.png")
+                        images_path = os.path.join(image_folders['figures_dir'], f"{xref}.png")
 
-                    pix = fitz.Pixmap(doc, xref)
-                    try:
                         pix = fitz.Pixmap(doc, xref)
-                        pix.save(images_path)
-                    except Exception as e:
-                        # If save fails, convert to RGB and try again
-                        pix = fitz.Pixmap(fitz.csRGB, pix)
-                        pix.save(images_path)
+                        try:
+                            pix.save(images_path)
+                        except Exception as e:
+                            # If save fails, convert to RGB and try again
+                            pix = fitz.Pixmap(fitz.csRGB, pix)
+                            pix.save(images_path)
 
-                    figure_metadata = {
-                        "page_num": page_num,
-                        "figure_num": figure_num,
-                        "xref": xref,
-                        "pdf_fig_bbox": [pdf_fig_box.x0, pdf_fig_box.y0, pdf_fig_width, pdf_fig_height],
-                    }
+                        figure_metadata = {
+                            "page_num": page_num,
+                            "figure_num": figure_num,
+                            "xref": xref,
+                            "pdf_fig_bbox": [pdf_fig_box.x0, pdf_fig_box.y0, pdf_fig_width, pdf_fig_height],
+                        }
 
-                    self.log_file.write(f"\nSaved image to {images_path}")
+                        self.log_file.write(f"\nSaved image to {images_path}")
 
-                    self.update_status("Processing image %d from page %d" % (figure_num, page_num))
+                        self.update_status("Processing image %d from page %d" % (figure_num, page_num))
 
-                    self.find_glycans(images_path, image_folders, **figure_metadata)
+                        self.find_glycans(images_path, image_folders, **figure_metadata)
 
-                    figure_num += 1
+                        figure_num += 1
+                except Exception as e:
+                    self.log_file.write(
+                        f"\nException occured while extracting a figure from the pdf: {e}."
+                    )
+
 
 
