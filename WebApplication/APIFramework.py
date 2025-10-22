@@ -556,13 +556,12 @@ class APIFramework:
     def upload_file(self):
         if flask.request.method == 'POST':
 
-            # if 'task' in flask.request.form: --> this code is present in the previous commits and not sure
-            # if we need it? 
+            task = json.loads(flask.request.form.get('task','{}'))
 
             file = flask.request.files.get('file')
-            file_url = flask.request.form.get('fileURL')
-            pmid = flask.request.form.get('pmid')
-            submission_type = flask.request.form.get('submission_type')
+            file_url = flask.request.form.get('fileURL',task.get('fileURL'))
+            pmid = flask.request.form.get('pmid',task.get('pmid'))
+            submission_type = flask.request.form.get('submission_type',task.get('submission_type'))
 
             # Extract info using Pubmed API and get filename of the pdf based on PMID and at the same time extract figures as well - everything is present in the zipped file
             if submission_type == "Manuscript" and pmid is not None:
