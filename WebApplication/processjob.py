@@ -294,12 +294,12 @@ class JobInstance:
             pmid_job = kwargs.get("pmid_job", False)
             
             if pmid_job:    # for PMID submissions
-                self.update_status("Processing image %d, analyzed %d/%d glycan(s)"%(figure_num,index,nglycan))
+                self.update_status("Processing figure %d, analyzed %d/%d glycan(s)"%(figure_num,index,nglycan))
             elif page_num == 0:     # for simple/multi glycans submissions
                 self.update_status("Processing image, analyzed %d/%d glycan(s)"%(index,nglycan))
             else:   # for pdf submission
                 # self.update_status("Processing image %d from page %d, analyzed %d/%d glycan(s)"%(self.imageno,self.pageno,index,nglycan))
-                self.update_status("Processing image %d from page %d, analyzed %d/%d glycan(s)"%(figure_num,page_num,index,nglycan))
+                self.update_status("Processing figure %d from page %d, analyzed %d/%d glycan(s)"%(figure_num,page_num,index,nglycan))
 
 
     def find_glycans(self, figure_path, image_folders, **kwargs):
@@ -319,12 +319,11 @@ class JobInstance:
         nglycan = len(figure_semantics.glycans())
 
         if kwargs.get("pmid_job", False):
-            self.update_status("Processing image %d, postprocessing %d glycan(s)"%(kwargs["figure_num"],nglycan))
+            self.update_status("Processing figure %d, postprocessing %d glycan(s)"%(kwargs["figure_num"],nglycan))
         elif kwargs.get("page_num",0) == 0:
             self.update_status("Processing image, postprocessing %d glycan(s)" % (nglycan))
         else:
-            # self.update_status("Processing image %d from page %d, postprocessing %d glycan(s)" % (self.imageno, kwargs["page_num"], nglycan))
-            self.update_status("Processing image %d from page %d, postprocessing %d glycan(s)" % (kwargs["figure_num"], kwargs["page_num"], nglycan))
+            self.update_status("Processing figure %d from page %d, postprocessing %d glycan(s)" % (kwargs["figure_num"], kwargs["page_num"], nglycan))
 
         self.annotate_image(figure_semantics)
         self.process_glycans(figure_semantics, image_folders)
@@ -402,11 +401,13 @@ class PMIDJob(JobInstance):
 
         for figure_num, fig_name in enumerate(image_files, 1):
             fig_path = os.path.join(figures_dest_dir, fig_name)
+
             with Image.open(fig_path) as img:
                 width, height = img.size
-            figure_metadata = {"fig_bbox": [0, 0, width, height], "pmid_job": True, "figure_num":figure_num}
-            self.update_status("Processing image %d" % figure_num)
-            self.find_glycans(fig_path, image_folders, **figure_metadata)
+                
+                figure_metadata = {"fig_bbox": [0, 0, width, height], "pmid_job": True, "figure_num":figure_num}
+                self.update_status("Processing figure %d" % figure_num)
+                self.find_glycans(fig_path, image_folders, **figure_metadata)
 
 
 class PDFJob(JobInstance):
@@ -472,7 +473,7 @@ class PDFJob(JobInstance):
 
                         self.log_file.write(f"\nSaved image to {images_path}")
 
-                        self.update_status("Processing image %d from page %d" % (figure_num, page_num))
+                        self.update_status("Processing figure %d from page %d" % (figure_num, page_num))
 
                         self.find_glycans(images_path, image_folders, **figure_metadata)
 
