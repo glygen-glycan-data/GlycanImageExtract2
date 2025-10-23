@@ -1,2 +1,2 @@
-tixkz5niju
-/data2/projects/GlyGen/GlycanImageExtract2-dev/WebApplication/static/files/tixkz5niju/output/annotated_multi_glycans.png
+gx6o4kfqpb
+/data2/projects/GlyGen/GlycanImageExtract2-dev/WebApplication/static/files/gx6o4kfqpb/output/annotated_multi_glycans.png
