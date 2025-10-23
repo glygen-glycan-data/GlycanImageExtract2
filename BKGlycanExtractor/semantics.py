@@ -742,7 +742,7 @@ class GlycanSemantics(ImageSemantics):
             linked_mono = self.mono(link.to_id())
             sym = linked_mono.symbol()
 
-            if sym == 'Fuc':
+            if sym == 'Fuc' and len(root_links) > 1:
                 continue
 
             linked_mono_box = linked_mono.get('box')
@@ -767,6 +767,9 @@ class GlycanSemantics(ImageSemantics):
                 else:
                     # print("orientation","BT")
                     return "BT"  # Moving upward
+        
+        # catch all default to avoid error...
+        return "BT"
 
 
 if __name__ == "__main__":
