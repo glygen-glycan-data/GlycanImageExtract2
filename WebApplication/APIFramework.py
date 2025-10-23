@@ -497,7 +497,7 @@ class APIFramework:
 
     # Validates is the given PMID has a PMCID and that the resources for the PMCID are Open Access (check if zip file can be retrieved)
     def validate_pmid(self, pmid=None):
-        developer_email="developer@georgetown.edu"
+        developer_email="nje5+extractor@georgetown.edu"
 
         if pmid is None:
             pmid = flask.request.json.get('pmid')
@@ -511,11 +511,11 @@ class APIFramework:
             resp_json = resp.json()
             
             if not resp_json.get('records') or len(resp_json['records']) == 0:
-                return flask.jsonify({'valid': False, 'error': 'No records found'}), 400
+                return flask.jsonify({'valid': False, 'error': f'PMID {pmid} is not in PubMed Central'}), 400
                 
             pmcid = resp_json['records'][0].get('pmcid')
             if not pmcid:
-                return flask.jsonify({'valid': False, 'error': f"Submitted PMID {pmid} doesn't have PubMed Central resources"}), 400
+                return flask.jsonify({'valid': False, 'error': f"PMID {pmid} is not in PubMed Central"}), 400
 
             # check if it is possible to retrieve the zipped file using PMCID
             pmc_resp, pmc_status = self.validate_pmcid_resources(pmcid)
@@ -540,7 +540,7 @@ class APIFramework:
         if link is None:
             return flask.jsonify({
                 'valid': False,
-                'error': f"Submitted PMID doesn't have Open Access permissions to PubMed Central"
+                'error': f"PMID is not Open Access in PubMed Central"
             }), 400
 
         return flask.jsonify({
