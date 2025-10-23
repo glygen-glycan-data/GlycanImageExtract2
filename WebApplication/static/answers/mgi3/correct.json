@@ -26,7 +26,7 @@
             "composition_str": "GlcNAc(2)Man(5)"
           },
           {
-            "IUPAC": "Man?1-?Man?1-?(Man?1-?Man?1-?)Man?1-?(Man?1-?(Man?1-?)Man?1-?)Man?1-?GlcNAc",
+            "IUPAC": "Man?1-?(Man?1-?)Man?1-?(Man?1-?Man?1-?(Man?1-?Man?1-?)Man?1-?)Man?1-?GlcNAc",
             "accession": "G85612WL",
             "bbox": [
               291,
