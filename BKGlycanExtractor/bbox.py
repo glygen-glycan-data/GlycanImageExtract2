@@ -112,6 +112,12 @@ class BoundingBox:
     def center(self):
         return (self.x+self.w/2,self.y+self.h/2)
 
+    def width(self):
+        return self.w
+    
+    def height(self):
+        return self.h
+
     def corners(self):
         return (self.x,self.y,self.x+self.w-1,self.y+self.h-1)
 	

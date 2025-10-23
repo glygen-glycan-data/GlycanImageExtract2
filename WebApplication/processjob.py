@@ -229,7 +229,7 @@ class JobInstance:
                 "linkexpl": "Extracted successfully using accession",
                 "gnomeurl": gnome_url,
                 "accession": accession, 
-                "glyImage": searchGlyImage(accession, orientation=IUPAC_data["orientation"],accession=True)
+                "glyImage": searchGlyImage(iupac, orientation=IUPAC_data["orientation"])
             })
             if wurcs:
                 IUPAC_data['WURCS'] = wurcs

@@ -87,6 +87,8 @@ class BoxPredictionSemantics(Semantics):
         self.set('box',box)
         self.set('bbox',box.bbox())
         self.set('center',box.center())
+        self.set('width',box.width())
+        self.set('height',box.height())
 
         # # add confidence and classlabel - for box_to_object))
         # confidence = box.get('confidence')
@@ -106,6 +108,12 @@ class BoxPredictionSemantics(Semantics):
 
     def center(self):
         return self.get('center')
+
+    def width(self):
+        return self.get('width')
+
+    def height(self):
+        return self.get('height')
 
     def confidence(self):
         return self.get('confidence')
@@ -694,27 +702,63 @@ class GlycanSemantics(ImageSemantics):
         # Filter adjacent nodes to only include unvisited ones
         filtered_adj = [v[0] for v in adj[u] if v[0] not in visited]
 
-        # Sort the children (branches) lexicographically by their symbol for consistency
-        filtered_adj = sorted(filtered_adj, key=lambda x: self.mono(x).symbol())
+        # Use monosaccharide positions, if possible, for branch order
+        uxy = self.mono(u).center()
+        scale = (self.mono(u).width()+self.mono(u).height())/2 #average of width + height
+        approx = round(0.2*scale) #pixel to tolerance for "equal"
+        adjxy = [ self.mono(v).center() for v in filtered_adj ]
+     
+        # figure out if they are all on one side of u
+        dircnt = defaultdict(int)
+        for vxy in adjxy:
+            if (vxy[0] - uxy[0]) > approx:
+                dircnt['right'] += 1
+            elif (uxy[0] - vxy[0]) > approx:
+                dircnt['left'] += 1
+            if (vxy[1] - uxy[1]) > approx:
+                dircnt['down'] += 1
+            elif (uxy[1] - vxy[1]) > approx:
+                dircnt['up'] += 1
+      
+        xyorder = [0]*len(adjxy)
+        if len(adjxy) > 1 and max(dircnt.values()) == len(adjxy):
+            # all are on one side
+            dirn = max(dircnt.items(),key=lambda t: t[1])[0]
+            if dirn in ("up","down"):
+                cy = sum(vxy[1] for vxy in adjxy)/len(adjxy)
+                maxdel = max(abs(vxy[1]-cy) for vxy in adjxy)
+                # check they are all in a "line"
+                if maxdel <= approx/2:
+                    if dirn == "up":
+                        xyorder = [ vxy[0] for vxy in adjxy ]
+                    if dirn == "down":
+                        xyorder = [ -vxy[0] for vxy in adjxy ]
+            else: # left, right
+                cx = sum(vxy[0] for vxy in adjxy)/len(adjxy)
+                maxdel = max(abs(vxy[0]-cx) for vxy in adjxy)
+                # check they are all in a "line"
+                if maxdel <= approx/2:
+                    if dirn == "left":
+                        xyorder = [ -vxy[1] for vxy in adjxy ]
+                    if dirn == "right":
+                        xyorder = [ vxy[1] for vxy in adjxy ]
 
         branch_strings = []
-        for v in filtered_adj:
+        for i,v in enumerate(filtered_adj):
             branch_iupac = []
             self.generate_iupac(branch_iupac, adj, visited, u, v)  # Recurse for each child
             
             # Convert the branch into a single string
             branch_str = ''.join(branch_iupac[::-1])  # Reverse the list and join it into a string
-            branch_strings.append(branch_str)
+            branch_strings.append((i,branch_str))
 
         # Sort branches lexicographically after recursion
-        branch_strings.sort(key=lambda bs: (bs[-1],bs))
+        branch_strings.sort(key=lambda bs: (xyorder[bs[0]],bs[1][-1],bs[1]))
 
-        # Handle parentheses for branches based on the rule
-        for idx, branch in enumerate(branch_strings):
-            if idx < len(branch_strings) - 1:  # For all branches except the last
+        if len(branch_strings) > 0:
+            for idx, branch in branch_strings[:-1]:
                 iupac.append('(' + branch + ')')
-            else:  # For the last branch
-                iupac.append(branch)
+            iupac.append(branch_strings[-1][1])
 
         return iupac
 
