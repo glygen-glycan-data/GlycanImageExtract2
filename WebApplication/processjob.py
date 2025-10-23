@@ -153,7 +153,7 @@ class JobInstance:
             with open(self.json_filepath, 'w') as f:
                 json.dump(data, f, indent=2)
             self.log_file.close()
-            print("-------->>>JOB COMPLETED", state)
+            # print("-------->>>JOB COMPLETED", state)
 
         return True
 
