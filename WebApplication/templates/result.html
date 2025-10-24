@@ -269,10 +269,11 @@
         resstr += "<span><a class='pill-link' href='{{urlprefix}}/static/" + location + "/" + list_id + "/results.json' target='_blank'>JSON data</a> | </span> ";
         const originalHref = "{{urlprefix}}/static/" + location + "/" + list_id + "/input/" + encodeURIComponent(result.submission_detail.original_file_name);
         if (file_extension === "pdf") {
-            resstr += "<span><a class='pill-link' target='_blank' href='" + originalHref + "'>Original PDF</a></span>";
+            resstr += "<span><a class='pill-link' target='_blank' href='" + originalHref + "'>Original PDF</a> | </span>";
         } else {
-            resstr += "<span><a class='pill-link' target='_blank' href='" + originalHref + "'>Original Image</a></span>";
+            resstr += "<span><a class='pill-link' target='_blank' href='" + originalHref + "'>Original Image</a> | </span>";
         }
+        resstr += "<span><a class='pill-link' href='{{urlprefix}}/resubmit_file/" + list_id  + "'>Reanalyze</a>";
 
         resstr += "</h3>";
         if (result['state'] === "Error") {

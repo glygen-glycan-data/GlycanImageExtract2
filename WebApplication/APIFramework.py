@@ -553,13 +553,15 @@ class APIFramework:
             }
         }), 200
 
-    def upload_file(self):
-        if flask.request.method == 'POST':
+    def upload_file(self,task=None):
+        if flask.request.method == 'POST' or task:
 
-            task = json.loads(flask.request.form.get('task','{}'))
+            task = json.loads(flask.request.form.get('task',task if task else '{}'))
 
             file = flask.request.files.get('file')
+
             file_url = flask.request.form.get('fileURL',task.get('fileURL'))
+            input_file_path = flask.request.form.get('filePath',task.get('filePath'))
             pmid = flask.request.form.get('pmid',task.get('pmid'))
             submission_type = flask.request.form.get('submission_type',task.get('submission_type'))
 
@@ -570,12 +572,12 @@ class APIFramework:
                 filename = 'PMID-' + pmid + ".pdf"
             elif file_url:
                 filename = werkzeug.utils.secure_filename(os.path.basename(file_url.split('?')[0]))
-
                 if not os.path.splitext(filename)[1]:  
                     content_disposition = requests.head(file_url).headers.get('content-disposition')
                     if content_disposition:
                         filename = content_disposition.split('filename=')[-1].strip('"')
-
+            elif input_file_path:
+                filename = werkzeug.utils.secure_filename(os.path.split(input_file_path)[1])
             elif file:
                 filename = werkzeug.utils.secure_filename(file.filename)
             else:
@@ -672,6 +674,8 @@ class APIFramework:
                         with open(file_path, "wb") as f:
                             for chunk in response.iter_content(1024):
                                 f.write(chunk)
+                elif input_file_path:
+                    shutil.copyfile(input_file_path,file_path)
                 else:
                     return flask.jsonify({"error": f"File format not supported: {filename}"}), 400
             except requests.exceptions.RequestException as e:
@@ -707,6 +711,17 @@ class APIFramework:
 
         return flask.jsonify([status])
 
+    def resubmit_file(self,tid=None):
+        params = self.api_para()
+        if 'tid' in params:
+            tid = params['tid']
+        result = self.get_result(tid)
+        oldtask = result['submission_detail']
+        input_file = os.path.join('static', result.get('location','files'), tid, 'input', oldtask['original_file_name'])
+        submission_type = oldtask['submission_type']
+        newtask = dict(submission_type=submission_type,filePath=input_file)
+        response = self.upload_file(task=json.dumps(newtask))
+        return flask.redirect(flask.url_for('jobs'))
 
     def download_file(self):
         if flask.request.method in ['GET', 'POST']:
@@ -808,6 +823,8 @@ class APIFramework:
         self._flask_app.add_url_rule("/get_job_counts", "get_job_counts", self.get_job_counts, methods=["GET", "POST"])
         self._flask_app.add_url_rule("/get_job_status", "get_job_status", self.get_job_status, methods=["GET", "POST"])
         self._flask_app.add_url_rule("/get_job_status/<tid>", "get_job_status", self.get_job_status, methods=["GET", "POST"])
+        self._flask_app.add_url_rule("/resubmit_file", "resubmit_file", self.resubmit_file, methods=["GET", "POST"])
+        self._flask_app.add_url_rule("/resubmit_file/<tid>", "resubmit_file", self.resubmit_file, methods=["GET", "POST"])
         self._flask_app.add_url_rule("/api/recent_jobs", "get_recent_jobs_api", self.get_recent_jobs_api, methods=["GET"])
         self._flask_app.add_url_rule("/process", "process", self.process, methods=["GET"])
         self._flask_app.add_url_rule("/examples", "examples", self.examples, methods=["GET"])
