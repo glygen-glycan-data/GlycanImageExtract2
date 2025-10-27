@@ -242,7 +242,7 @@ class JobInstance:
                 "gnomeurl": gnome_url,
                 "glyImage": searchGlyImage(iupac, orientation=IUPAC_data["orientation"]),
             })
-        else:
+        elif compstr:
             # composition only
             IUPAC_data.update({
                 "linkexpl": "Extracted structure using Composition.",
