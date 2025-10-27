@@ -1,2 +1,2 @@
-piobho4l2k
-/data2/projects/GlyGen/GlycanImageExtract2-dev/WebApplication/static/files/piobho4l2k/output/annotated_2_glycans.png
+hc2ezxn3gg
+/data2/projects/GlyGen/GlycanImageExtract2-dev/WebApplication/static/files/hc2ezxn3gg/output/annotated_2_glycans.png

@@ -1,22 +1,22 @@
 {
-  "id": "gx6o4kfqpb",
-  "task_index": 25,
+  "id": "i3hh266caf",
+  "task_index": 3,
   "submission_detail": {
     "original_file_name": "multi_glycans.png",
     "submission_type": "Multi-Glycan Image",
-    "id": "gx6o4kfqpb"
+    "id": "i3hh266caf"
   },
   "state": "Complete",
   "status": "",
   "finished": true,
   "submission_type": "Multi-Glycan Image",
-  "submit_time": 1761249499.4538991,
-  "sessionid": "cjzubyvnnq3dbq6w",
+  "submit_time": 1761573249.3416505,
+  "sessionid": "hh6gr6bzoam6vuxm",
   "result": {
-    "id": "gx6o4kfqpb",
-    "start time": 1761249499.4541512,
-    "end time": 1761249537.8311572,
-    "runtime": 38.37700605392456,
+    "id": "i3hh266caf",
+    "start time": 1761573249.3421793,
+    "end time": 1761573307.2328918,
+    "runtime": 57.89071249961853,
     "error": [],
     "figure_result": [
       {
@@ -43,7 +43,7 @@
             "confidence": 0.9899869561195374,
             "extracted_image_path": "extracted_figures/extracted_images/multi_glycans-1.png",
             "fig_glycan_count": 1,
-            "glyImage": "https://glymage.glyomics.org//image/hash/24c21452125197d710f515a7e92774a2.svg",
+            "glyImage": "glymage/24c21452125197d710f515a7e92774a2.svg",
             "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G27815BZ",
             "height": 110,
             "image_name": "multi_glycans-1.png",
@@ -424,7 +424,7 @@
             "confidence": 0.9903537631034851,
             "extracted_image_path": "extracted_figures/extracted_images/multi_glycans-2.png",
             "fig_glycan_count": 2,
-            "glyImage": "https://glymage.glyomics.org//image/hash/6dcbc1ae50f08504df69d56f89b9ac7e.svg",
+            "glyImage": "glymage/6dcbc1ae50f08504df69d56f89b9ac7e.svg",
             "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G73636FD",
             "height": 99,
             "image_name": "multi_glycans-2.png",
@@ -867,7 +867,7 @@
             "confidence": 0.9850949048995972,
             "extracted_image_path": "extracted_figures/extracted_images/multi_glycans-3.png",
             "fig_glycan_count": 3,
-            "glyImage": "https://glymage.glyomics.org//image/hash/13d9922b859fd345bd49f419fcc81fb7.svg",
+            "glyImage": "glymage/13d9922b859fd345bd49f419fcc81fb7.svg",
             "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G85612WL",
             "height": 181,
             "image_name": "multi_glycans-3.png",

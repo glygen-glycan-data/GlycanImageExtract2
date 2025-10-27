@@ -1,22 +1,22 @@
 {
-  "id": "piobho4l2k",
-  "task_index": 23,
+  "id": "hc2ezxn3gg",
+  "task_index": 1,
   "submission_detail": {
     "original_file_name": "2_glycans.png",
     "submission_type": "Multi-Glycan Image",
-    "id": "piobho4l2k"
+    "id": "hc2ezxn3gg"
   },
   "state": "Complete",
   "status": "",
   "finished": true,
   "submission_type": "Multi-Glycan Image",
-  "submit_time": 1761249497.4301395,
-  "sessionid": "kjlo5kiycba4wsll",
+  "submit_time": 1761573247.2860723,
+  "sessionid": "cuct2436yjavqm6t",
   "result": {
-    "id": "piobho4l2k",
-    "start time": 1761249497.4305348,
-    "end time": 1761249524.3414214,
-    "runtime": 26.910886526107788,
+    "id": "hc2ezxn3gg",
+    "start time": 1761573247.2875164,
+    "end time": 1761573291.861901,
+    "runtime": 44.574384689331055,
     "error": [],
     "figure_result": [
       {
@@ -43,7 +43,7 @@
             "confidence": 0.9966831803321838,
             "extracted_image_path": "extracted_figures/extracted_images/2_glycans-1.png",
             "fig_glycan_count": 1,
-            "glyImage": "https://glymage.glyomics.org//image/hash/c6564ad8eb235da6eb9a7c46cfdcbc21.svg",
+            "glyImage": "glymage/c6564ad8eb235da6eb9a7c46cfdcbc21.svg",
             "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G35465JY",
             "height": 384,
             "image_name": "2_glycans-1.png",
@@ -796,7 +796,7 @@
             "confidence": 0.9649699330329895,
             "extracted_image_path": "extracted_figures/extracted_images/2_glycans-2.png",
             "fig_glycan_count": 2,
-            "glyImage": "https://glymage.glyomics.org//image/hash/1062e7bcb3b3b971dd39512cd4624757.svg",
+            "glyImage": "glymage/1062e7bcb3b3b971dd39512cd4624757.svg",
             "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G66457WL",
             "height": 247,
             "image_name": "2_glycans-2.png",

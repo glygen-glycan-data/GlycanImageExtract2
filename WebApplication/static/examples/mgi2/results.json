@@ -1,22 +1,22 @@
 {
-  "id": "zclbctpzfm",
-  "task_index": 24,
+  "id": "qjo4l6isnn",
+  "task_index": 2,
   "submission_detail": {
     "original_file_name": "pdf7_extra.png",
     "submission_type": "Multi-Glycan Image",
-    "id": "zclbctpzfm"
+    "id": "qjo4l6isnn"
   },
   "state": "Complete",
   "status": "",
   "finished": true,
   "submission_type": "Multi-Glycan Image",
-  "submit_time": 1761249498.443112,
-  "sessionid": "3b5zihnp567byacu",
+  "submit_time": 1761573248.3048828,
+  "sessionid": "ewjxxknlfxve4zhg",
   "result": {
-    "id": "zclbctpzfm",
-    "start time": 1761249498.4433966,
-    "end time": 1761249538.1447747,
-    "runtime": 39.70137810707092,
+    "id": "qjo4l6isnn",
+    "start time": 1761573248.305528,
+    "end time": 1761573305.9666586,
+    "runtime": 57.66113066673279,
     "error": [],
     "figure_result": [
       {
@@ -43,7 +43,7 @@
             "confidence": 0.9936928749084473,
             "extracted_image_path": "extracted_figures/extracted_images/pdf7_extra-1.png",
             "fig_glycan_count": 1,
-            "glyImage": "https://glymage.glyomics.org//image/hash/651f575c11369f07331fae1b9a8a5ac5.svg",
+            "glyImage": "glymage/651f575c11369f07331fae1b9a8a5ac5.svg",
             "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G78130XL",
             "height": 439,
             "image_name": "pdf7_extra-1.png",
@@ -856,7 +856,7 @@
             "confidence": 0.9903014302253723,
             "extracted_image_path": "extracted_figures/extracted_images/pdf7_extra-2.png",
             "fig_glycan_count": 2,
-            "glyImage": "https://glymage.glyomics.org//image/hash/5d47a3dee0a6c95da6d7a6c799f4c93e.svg",
+            "glyImage": "glymage/5d47a3dee0a6c95da6d7a6c799f4c93e.svg",
             "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G38382KG",
             "height": 493,
             "image_name": "pdf7_extra-2.png",
@@ -1670,7 +1670,7 @@
             "confidence": 0.9898123145103455,
             "extracted_image_path": "extracted_figures/extracted_images/pdf7_extra-3.png",
             "fig_glycan_count": 3,
-            "glyImage": "https://glymage.glyomics.org//image/hash/51c089f9b9020109b0a3a514ddf69e6f.svg",
+            "glyImage": "glymage/51c089f9b9020109b0a3a514ddf69e6f.svg",
             "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G66420HM",
             "height": 493,
             "image_name": "pdf7_extra-3.png",

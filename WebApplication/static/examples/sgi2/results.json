@@ -1,22 +1,22 @@
 {
-  "id": "n44dnff6jw",
-  "task_index": 30,
+  "id": "yr6nvyeabe",
+  "task_index": 8,
   "submission_detail": {
     "original_file_name": "wrong.png",
     "submission_type": "Simple Glycan Image",
-    "id": "n44dnff6jw"
+    "id": "yr6nvyeabe"
   },
   "state": "Complete",
   "status": "",
   "finished": true,
   "submission_type": "Simple Glycan Image",
-  "submit_time": 1761249504.579315,
-  "sessionid": "qxithm6loarx5gaz",
+  "submit_time": 1761573254.7283635,
+  "sessionid": "xtuyg2uliflc3z7a",
   "result": {
-    "id": "n44dnff6jw",
-    "start time": 1761249627.1772609,
-    "end time": 1761249639.4734397,
-    "runtime": 12.296178817749023,
+    "id": "yr6nvyeabe",
+    "start time": 1761573392.274255,
+    "end time": 1761573405.5446837,
+    "runtime": 13.270428657531738,
     "error": [],
     "figure_result": [
       {
@@ -41,7 +41,7 @@
             "extracted_image_path": "extracted_figures/extracted_images/wrong-1.png",
             "fig_glycan_count": 1,
             "file_name": "wrong.png",
-            "glyImage": "https://glymage.glyomics.org//image/hash/87f77881714c76e1a4222434e788a128.svg",
+            "glyImage": "glymage/87f77881714c76e1a4222434e788a128.svg",
             "glycan_errors": [
               "Couldn't find a reducing end for the glycan"
             ],

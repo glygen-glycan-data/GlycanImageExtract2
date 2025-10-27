@@ -21,7 +21,7 @@
         "extracted_image_path": "extracted_figures/extracted_images/wrong-1.png",
         "fig_glycan_count": 1,
         "file_name": "wrong.png",
-        "glyImage": "https://glymage.glyomics.org//image/hash/87f77881714c76e1a4222434e788a128.svg",
+        "glyImage": "glymage/87f77881714c76e1a4222434e788a128.svg",
         "glycan_errors": [
           "Couldn't find a reducing end for the glycan"
         ],
