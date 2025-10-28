@@ -71,7 +71,11 @@ def main(args):
         text = f.read()
 
     # max_batch = no.of classes * 2000, but max_bathces should never be lower than 6000
-    max_batches = max(classes * 2000, 6000)
+    if args.max_batches is not None:
+        max_batches = args.max_batches
+    else:
+        max_batches = classes * 2000
+    max_batches = max(max_batches,6000) 
 
     # Compute steps at 80% and 90% of max_batches
     step1 = int(max_batches * 0.8)
@@ -100,6 +104,8 @@ if __name__ == "__main__":
     # config_file_path and no.of classes are not user inputs - hence they wont be present in the help text
     parser.add_argument("--yolo_config", type=str, required=True, help=argparse.SUPPRESS)
     parser.add_argument("--classes", type=int, required=True, help=argparse.SUPPRESS)
+
+    parser.add_argument("--max_batches", type=int, default=None, help="Number of training iterations (batches).")
 
     parser.add_argument("--batch", type=int, default=64, help="Number of training images per iteration (batch size).")
 

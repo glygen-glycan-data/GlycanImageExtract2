@@ -73,6 +73,7 @@ while [ "$#" -gt 0 ]; do
             echo ""
             echo "Optional:"
             echo "  --clean          Remove local and remote job folders"
+            echo "  --max_batches    Number of interations for YOLO config"
             echo "  --batch          Batch size for YOLO config"
             echo "  --subdivisions   Subdivisions for YOLO config"
             echo "  --height         Input image height"

@@ -57,7 +57,7 @@ args = parser.parse_args()
 
 config = Config_Manager()
 
-build_training_zip(
+build_training(
     config=config,
     finder_name=args.finder,
     images=args.images,
