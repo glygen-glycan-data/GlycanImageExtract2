@@ -105,8 +105,7 @@ class KnownGlycanBoxes(KnownFinder,GlycanFinder):
 
         # Note: map_dict data structure can store single/multiple glycans.
         for glycan in map_dict['glycans']:
-            # TODO: probably have the flexibility to support different types of glycans?
-            classlabel = 'glycan'
+            classlabel = glycan['classlabel']
             classid = self.get_label_index(classlabel)
             gly_bbox = glycan['bbox']
 

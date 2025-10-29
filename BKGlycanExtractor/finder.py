@@ -108,13 +108,13 @@ class KnownFinder(Finder):
         
         map_dict = {
             'figure': {'height': x, 'width': x},
-            'iupac': '',
-            'composition': '',
-            ...,
             'glycans': [
-                {
+                {   
+                    'iupac': '',        # Note: these were supposed be key-value pair outside the list of glycan - but had to add them inside - because multiple glycans in a figure exist while doing the build training data task for glycans
+                    'composition': '',
+                    ...,
                     'bbox': [x,y,w,h],
-                    'classid': x,
+                    classlabel: label, (if present, else default label = 'glycan')
                     'monos': {
                         1: {'symbol': GlcNac, 'anomer': 'a', 'x_min': 1, 'x_max': 5, 'y_min': 2, 'y_max':6},
                         2: {'symbol': Man, 'anomer': 'a', 'x_min': 1, 'x_max': 5, 'y_min': 2, 'y_max':6}
@@ -153,6 +153,7 @@ class KnownFinder(Finder):
                 elif data_points[0] == '###' and data_points[1] == 'GLYCAN:':
                     # Create new glycan dictionary
                     current_glycan = {
+                        'classlabel': 'glycan',    # default label is glycan, if map file contains a CLASS - it will be updated
                         'bbox': list(map(int, data_points[2:6])),
                         'monos': {},
                         'links': {},
@@ -161,10 +162,9 @@ class KnownFinder(Finder):
                     map_dict['glycans'].append(current_glycan)
                     glycan_count += 1
 
-                # not sure about this - still need to decide what is the convention in the map file - do we want to add classid or classlabel in the map file for glycan? 
                 elif data_points[0] == '###' and data_points[1] == 'CLASS:':
                     if current_glycan is not None:
-                        current_glycan['classid'] = int(data_points[2])
+                        current_glycan['classlabel'] = data_points[2]
 
                 elif data_points[0] == 'm':
                     if current_glycan is not None:
@@ -238,12 +238,13 @@ class KnownFinder(Finder):
                     # rest of the key-value pairs from map file (like iupac, composition, etc.)
                     key = data_points[1][:-1]
                     value = ' '.join(data_points[2:])
-                    map_dict[key] = value
+                    current_glycan[key] = value
 
         # Boolean to indicate if map file contains SGI or MGI
         map_dict["SGI"] = (glycan_count == 1)
         map_dict["glycan_count"] = glycan_count
-
+        
+        print("\n----->>>map_dict",map_dict)
         return map_dict
 
     def find_boxes(self, obj):
