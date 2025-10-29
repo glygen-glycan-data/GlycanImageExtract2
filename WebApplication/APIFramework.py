@@ -497,7 +497,7 @@ class APIFramework:
 
     # Validates is the given PMID has a PMCID and that the resources for the PMCID are Open Access (check if zip file can be retrieved)
     def validate_pmid(self, pmid=None):
-        developer_email="nje5+extractor@georgetown.edu"
+        developer_email="nje5extractor@georgetown.edu"
 
         if pmid is None:
             pmid = flask.request.json.get('pmid')

@@ -11,6 +11,7 @@ import numpy as np
 from shutil import copyfile
 import tarfile
 
+import xml.etree.ElementTree as ET
 
 
 class JobInstance:
@@ -306,12 +307,12 @@ class JobInstance:
             pmid_job = kwargs.get("pmid_job", False)
             
             if pmid_job:    # for PMID submissions
-                self.update_status("Processing figure %d, analyzed %d/%d glycan(s)"%(figure_num,index,nglycan))
+                self.update_status("Processing %s, analyzed %d/%d glycan(s)"%(kwargs['figure_name'],index,nglycan))
             elif page_num == 0:     # for simple/multi glycans submissions
                 self.update_status("Processing image, analyzed %d/%d glycan(s)"%(index,nglycan))
             else:   # for pdf submission
                 # self.update_status("Processing image %d from page %d, analyzed %d/%d glycan(s)"%(self.imageno,self.pageno,index,nglycan))
-                self.update_status("Processing figure %d from page %d, analyzed %d/%d glycan(s)"%(figure_num,page_num,index,nglycan))
+                self.update_status("Processing image %d from page %d, analyzed %d/%d glycan(s)"%(figure_num,page_num,index,nglycan))
 
 
     def find_glycans(self, figure_path, image_folders, **kwargs):
@@ -331,11 +332,11 @@ class JobInstance:
         nglycan = len(figure_semantics.glycans())
 
         if kwargs.get("pmid_job", False):
-            self.update_status("Processing figure %d, postprocessing %d glycan(s)"%(kwargs["figure_num"],nglycan))
+            self.update_status("Processing %s, postprocessing %d glycan(s)"%(kwargs['figure_name'],nglycan))
         elif kwargs.get("page_num",0) == 0:
             self.update_status("Processing image, postprocessing %d glycan(s)" % (nglycan))
         else:
-            self.update_status("Processing figure %d from page %d, postprocessing %d glycan(s)" % (kwargs["figure_num"], kwargs["page_num"], nglycan))
+            self.update_status("Processing image %d from page %d, postprocessing %d glycan(s)" % (kwargs["figure_num"], kwargs["page_num"], nglycan))
 
         self.annotate_image(figure_semantics)
         self.process_glycans(figure_semantics, image_folders)
@@ -380,6 +381,37 @@ class ImageJob(JobInstance):
         self.find_glycans(self.input_filepath,image_folders)
 
 class PMIDJob(JobInstance):
+
+    # Helper to get tag name without namespace from xml doc
+    def get_tag_name(self, elem):
+        return elem.tag.split('}')[-1] if '}' in elem.tag else elem.tag
+
+    def find_figures(self, root):
+        for elem in root.iter():
+            if self.get_tag_name(elem) == 'fig':
+                yield elem
+
+    def extract_figure_info(self, fig):
+        XLINK_NS = "http://www.w3.org/1999/xlink"  # W3C standard - consistent for xml files
+        XLINK_HREF = f"{{{XLINK_NS}}}href"
+
+        xml_fig_label = None
+        fig_filename = None
+
+        for child in fig.iter():
+            tag = self.get_tag_name(child)
+            if tag == 'label' and child.text:
+                xml_fig_label = child.text.strip()
+
+            if tag in ('graphic', 'inline-graphic'):
+                # Check both regular href and xlink:href
+                href = child.get('href') or child.get(XLINK_HREF)
+                if href:
+                    fig_filename = os.path.basename(href)
+
+        return fig_filename, xml_fig_label
+
+
     def process_figures(self, image_folders):
 
         base_path = os.path.dirname(os.path.abspath(__file__))
@@ -387,27 +419,67 @@ class PMIDJob(JobInstance):
         # zipped file location - which contains all info related to the PMID
         # copy all the figures from the zipped file to the extracted_figures folder
         figures_src = os.path.join(base_path, "input", self.id, f"PMID-{self.pmid}.tar.gz")
-        
         figures_dest_dir = image_folders['figures_dir']
 
+        fig_to_label_map = {}
+
+        # First pass: extract *nxml file and build label mapping (i.e create a dict which will help map the figure_no/name in the pdf with the extracted figure)
+        # key - figure_name, value - figure label name from xml (that is present in the pdf)
+        with tarfile.open(figures_src, "r:gz") as tar:
+            for member in tar.getmembers():
+                if member.name.lower().endswith('.nxml'):
+                    file_obj = tar.extractfile(member)
+                    if file_obj:
+                        nxml_content = file_obj.read().decode('utf-8', errors='ignore')
+
+                        # Parse XML to find figure labels
+                        try:
+                            root = ET.fromstring(nxml_content)
+
+                            for fig in self.find_figures(root):
+                                fig_filename, xml_fig_label = self.extract_figure_info(fig)
+
+                                # if both exist - then this is a True figure in the pdf (so the fig_name can be renamed to reflect what appears in the pdf)
+                                if fig_filename and xml_fig_label:
+                                    fig_to_label_map[fig_filename] = xml_fig_label
+
+                        except ET.ParseError as e:
+                            print(f"Warning: Could not parse nxml: {e}")
+
+
+        # Second pass: extract figure from the zipped location
         with tarfile.open(figures_src, "r:gz") as tar:
             for member in tar.getmembers():
                 base = os.path.basename(member.name).lower()
                 ext = os.path.splitext(base)[1]
                 if ext == '.jpg':
-                    # Extract file content directly - extraction from a tar file requires thiese steps inorder to extract files to the correct directory
+                    # Extract file content directly using the tar module - extraction from a tar file requires thiese steps inorder to extract files to the correct directory
                     file_obj = tar.extractfile(member)
                     if file_obj:
                         target_path = os.path.join(figures_dest_dir, base)
                         with open(target_path, 'wb') as f:
                             f.write(file_obj.read())
 
-        # Get all image files and sort them (they should already be in order due to sequential naming)
+        # Get all the figures - rename them based on figure name from the xml document
+        # only figure which have a label mapping in the pdf are included - because rest of the figure where part of the publication name figure, etc which are not useful
         image_files = []
         for fig_name in os.listdir(figures_dest_dir):
             fig_path = os.path.join(figures_dest_dir, fig_name)
-            if os.path.isfile(fig_path) and os.path.splitext(fig_name)[1].lower() in ['.jpg', '.jpeg', '.png']:
-                image_files.append(fig_name)
+            if os.path.isfile(fig_path) and os.path.splitext(fig_name)[1].lower() in ['.jpg']:
+                # Get basename without extension for matching
+                base_name, ext = os.path.splitext(fig_name)
+
+                if base_name in fig_to_label_map:
+                    label_id = fig_to_label_map[base_name]
+                    renamed_file = f"{label_id}{ext}"
+                    renamed_file_path = os.path.join(figures_dest_dir, renamed_file)
+
+                    os.rename(fig_path, renamed_file_path)
+                    image_files.append(renamed_file)  
+                else:
+                    # figures that dont have an explict label name in the xml/pdf will still be added but not renamed to match with the pdf.
+                    # Figures are still considered because sometimes they have glycan - but do not how useful it would be to collect this info
+                    image_files.append(fig_name)
         
         # Sort to ensure correct order
         image_files.sort()
@@ -418,8 +490,9 @@ class PMIDJob(JobInstance):
             with Image.open(fig_path) as img:
                 width, height = img.size
                 
-                figure_metadata = {"fig_bbox": [0, 0, width, height], "pmid_job": True, "figure_num":figure_num}
-                self.update_status("Processing figure %d" % figure_num)
+                base_fig_name = fig_name.rsplit('.',1)[0]
+                figure_metadata = {"fig_bbox": [0, 0, width, height], "pmid_job": True, "figure_name": base_fig_name}
+                self.update_status("Processing %s" % base_fig_name)
                 self.find_glycans(fig_path, image_folders, **figure_metadata)
 
 
@@ -435,11 +508,11 @@ class PDFJob(JobInstance):
         On each figure - find all glycans using the object detection pipeline and generate semantics
         """
         doc = fitz.open(self.input_filepath)
-        # figure_metadata = []
-        figure_num = 1
+        # figure_num = 1
 
         for page_num, page in enumerate(doc.pages(), 1):
             # page = doc[page_num]
+            figure_num = 1
             info = page.get_image_info(xrefs=True)
             for img in info:
                 xref = img["xref"]
@@ -461,7 +534,7 @@ class PDFJob(JobInstance):
 
                 
                     self.log_file.write(
-                        f"\nFigure number: {figure_num}, Page number: {page_num},  BBox: {img["bbox"]}, Width: {pdf_fig_width}, Height: {pdf_fig_height}, Area: {area}\n"
+                        f"\nPage number: {page_num}, Figure number: {figure_num},  BBox: {img["bbox"]}, Width: {pdf_fig_width}, Height: {pdf_fig_height}, Area: {area}\n"
                     )
 
                     if (pdf_fig_height > 90 and pdf_fig_width > 90) or area > 8100:
@@ -486,7 +559,7 @@ class PDFJob(JobInstance):
 
                         self.log_file.write(f"\nSaved image to {images_path}")
 
-                        self.update_status("Processing figure %d from page %d" % (figure_num, page_num))
+                        self.update_status("Processing image %d from page %d" % (figure_num, page_num))
 
                         self.find_glycans(images_path, image_folders, **figure_metadata)
 
