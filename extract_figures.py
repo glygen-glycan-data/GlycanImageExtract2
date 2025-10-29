@@ -1,3 +1,15 @@
+"""
+Extracts figures and annotation information present on them.
+
+Input: Accepts a folder with annotated pdf's and their associated TSV's
+Note: Only accepts files with the extension: *.annotated.*
+
+Output: Figures and their semantic files (map files).
+Semantics file contains info about the figure, glycan, info from TSV file (class, ID, xref, accession, iupac, etc)
+
+Note: Figures with no annotations will also be stored along with a semantics/map file (containing only figure dimensions)
+"""
+
 import os
 import argparse
 import fitz
@@ -17,248 +29,200 @@ parser.add_argument(
 parser.add_argument(
     "-o", "--output_dir", 
     type=str, 
-    required =True, 
-    help="New folder created/provided to store output files" 
+    required=True, 
+    help="Provide folder name to store output" 
 )
 
 args = parser.parse_args()
 
-def parse_comment(comment: str):
+def parse_comment(comment):
     """Parse annotation comment into (glycan_id, url).
 
-    2 different formats of comments exist, need to handle both the types to extract id and url
+    2 different formats of comments exist in the annotated pdf, need to handle both the types to extract id and url
     
     Expected formats:
     - Multi-line with prefixes, e.g.:
-        IDX: G123
-        URL: http://example.com
-    - Single-line fallback, e.g.:
+        id: G123
+        url: http://example.com
+    - Single-line (which is the id), e.g.:
         G123
     """
     comment = (comment or "").strip()
-    glycan_id, url = None, None
 
-    if not comment:
-        return glycan_id, url
+    if comment is None:
+        return {}
 
+    comment_dict = {}
     lines = [line.strip() for line in comment.splitlines() if line.strip()]
     for line in lines:
-        lower = line.lower()
-        if lower.startswith("id:"):
-            glycan_id = line.split(":", 1)[1].strip()
-        elif lower.startswith("url:"):
-            url = line.split(":", 1)[1].strip()
+        if ':' in line:
+            key, value = line.split(':', 1)
+            comment_dict[key.strip().lower()] = value.strip()
+        
+    # fallback: single-line comment with no "id:" or "url:" (some annotations dont have a key-value pair, they just have the value directly mentioned)
+    if len(lines) == 1:
+        # glycan_id = lines[0]
+        comment_dict['id'] = lines[0]
+    return comment_dict
 
-    # fallback: single-line comment with no "id:" or "url:"
-    if not glycan_id and not url and len(lines) == 1:
-        glycan_id = lines[0]
+def save_figure(page, figure, figure_path):
+    pdf_fig_box = fitz.Rect(figure["bbox"])
+    zoom_x = figure["width"] / pdf_fig_box.width
+    zoom_y = figure["height"] / pdf_fig_box.height
+    mat = fitz.Matrix(zoom_x, zoom_y)
 
-    return glycan_id, url
+    pix = page.get_pixmap(matrix=mat, clip=pdf_fig_box, annots=False)
+    pix.save(figure_path)
 
-
-def extract_annotated_images(output_dir,pdf_path):
-    """Extract figures and annotations from a PDF file
-    
-    This function iterates through annotations first, then finds the figure
-    each annotation belongs to by checking for intersection."""
-
-    metadata = []
-    #Track which figures have been saved to avoid duplicates
-    saved_figures = {}
-
-    with fitz.open(pdf_path) as doc:
-        for page_num, page in enumerate(doc, 1):
-            # Get all figures on current page
-            figures = page.get_image_info(xrefs=True)
-
-            # Get all annotations on the page
-            annotations = list(page.annots())
-            #print("annotations:",annotations)
-
-            # glycan_metadata = {}
-            for annot in annotations:
-                    #print("annot:",annot)
-                    #print("annot type:", annot.type)
-                    
-                    if annot.type[1] not in ['Square', 'Rect']:
-                        continue
-                        
-                    annot_box = annot.rect
-
-                    # Find which figure this annotation intersects with
-                    matching_figure = None
-                    overlap_ratio = None
-                    fig_num = None
-                        
-                    for idx, figure in enumerate(figures,1):
-                        fig_box = fitz.Rect(figure["bbox"])
-
-                        # Check if annotation intersects with this figure
-                        # Using intersection area to determine if annotation is on this figure
-                        if fig_box.intersects(annot_box):
-                            # Calculate intersection area as a percentage of annotation area
-                            intersection = fig_box & annot_box
-                            annot_area = annot_box.get_area()
-                        
-                            if annot_area > 0:
-                                overlap_ratio = intersection.get_area() / annot_area
-                                # If annotation is mostly (>50%) inside the figure, consider it a match
-                                if overlap_ratio > 0.5:
-                                    matching_figure = figure
-                                    fig_num = idx
-                                    break
-                
-                    # If no matching figure found then consider the image itself as a glycan and the dimensions as the figure diemnsions as well
-                    if not matching_figure:
-                        xref = annot.xref
-                        # print(f"Warning: Annotation at {annot_box} on page {page_num} doesn't match any figure and overlap {overlap_ratio}")
-                        comment = annot.info.get("content") or annot.info.get("subject") or ""
-                        glycan_id, url = parse_comment(comment)
-                        #print("----->>",glycan_id, annot.rect)
-
-                        # Create filename for standalone annotated glycan image
-                        figure_filename = f"{os.path.basename(output_dir)}_p{page_num}_annot{xref}.png"
-                        figure_path = os.path.join(output_dir, figure_filename)
-
-                        # Save cropped annotation area as image
-                        try:
-                            pix = page.get_pixmap(clip = annot_box)
-                            px_fig_width, px_fig_height = pix.width, pix.height
-                        except:
-                            px_fig_height = px_fig_width = 0
-                        
-                        # Fill in bounding box dimensions
-                        # the glycan box starts at the top-left corner of the cropped region, so x0, y0 = 0
-                        px_gly_x0 = 0
-                        px_gly_y0 = 0
-                        px_gly_w = int(annot_box.width)
-                        px_gly_h = int(annot_box.height)
-                        
-                
-                    # Extract figure information (including xref)
-                    if matching_figure:
-                        xref = matching_figure.get("xref")
-                        fig_box = fitz.Rect(matching_figure["bbox"])
-
-                        # Create filename
-                        figure_filename = f"{os.path.basename(output_dir)}_p{page_num}_f{fig_num}.png"
-                        figure_path = os.path.join(output_dir, figure_filename)
-                
-                        # Get original figure dimensions in pixels
-                        # Remove the scaling factor added to the figures while pasting them into the PDF
-                        zoom_x = matching_figure["width"] / fig_box.width
-                        zoom_y = matching_figure["height"] / fig_box.height
-                        mat = fitz.Matrix(zoom_x, zoom_y)
-                        pix = page.get_pixmap(matrix=mat, clip=fig_box, alpha=False)
-                        px_fig_width = pix.width
-                        px_fig_height = pix.height
-                
-                        # Calculate scaling factors
-                        x_scale = fig_box.width / float(px_fig_width)
-                        y_scale = fig_box.height / float(px_fig_height)
-                
-                        # Convert annotation coordinates to pixel coordinates relative to the figure
-                        px_gly_x0 = round((annot_box.x0 - fig_box.x0) / x_scale)
-                        px_gly_x1 = round((annot_box.x1 - fig_box.x0) / x_scale)
-                        px_gly_y0 = round((annot_box.y0 - fig_box.y0) / y_scale)
-                        px_gly_y1 = round((annot_box.y1 - fig_box.y0) / y_scale)
-                
-                        px_gly_w = abs(px_gly_x1 - px_gly_x0)
-                        px_gly_h = abs(px_gly_y1 - px_gly_y0)
-                
-                        # Parse annotation comment
-                        comment = annot.info.get("content") or annot.info.get("subject") or ""
-                        glycan_id, url = parse_comment(comment)
-                
-                    annotation_data = {
-                            'ID': glycan_id,
-                            'url': url,
-                            'xref': xref,
-                            "gly_bbox": [px_gly_x0, px_gly_y0, px_gly_w, px_gly_h],
-                            "comment": comment,
-                            "fig_width": px_fig_width,
-                            "fig_height": px_fig_height,
-                            "figure_name": figure_filename,
-                            "figure_path": figure_path,
-                            "page_num": page_num,
-                            "fig_num": fig_num
-                        }
-
-                    metadata.append(annotation_data)
-
-                    # Save the figure only once if not already saved
-                    figure_key = (page_num, fig_num)
-                    if figure_key not in saved_figures:
-                        if (px_fig_width > 60 and px_fig_height > 60):
-                            pix.save(figure_path)
-                            saved_figures[figure_key] = True
-                           
-    return metadata
-
-
-def to_int(v):
-    try: return int(v)
-    except: return None
-
-def merge_glycan_data_with_tsv(output_dir, glycan_data, tsv_path):
-    existing_rows = {}
-    existing_order = []
-
-    # track the existing rows via column name 'ID' (which is unique)
+def load_tsv_data(tsv_path):
+    """Load TSV into dictionary keyed by ID"""
+    tsv_data = {}
     if os.path.exists(tsv_path):
         with open(tsv_path, 'r', encoding='utf-8', newline='') as f:
-            r = csv.DictReader(f, delimiter='\t')
-            existing_order = r.fieldnames or []
-            for row in r:
-                rid = row.get('ID')
-                if rid:
-                    existing_rows[rid] = row
+            reader = csv.DictReader(f, delimiter='\t')
+            for row in reader:
+                row_id = row.get('ID')
+                if row_id:
+                    tsv_data[row_id] = row
+    return tsv_data
 
-    # below code parses all the annotations that exist in the Manuscript
-    # 1) if an annotation matches with an already existing ID from with TSV, then merge the data
-    # 2) if a new manual annotation was added (ID doesnt exist in the TSV) - it will be added as a new row in the TSV file
-    new_fields = []
-    seen = set()
-    for item in glycan_data:
-        rid = item.get('ID')
-        if not rid: 
-            continue
-        # step to merge new data with existing data from the TSV file
-        for k in item:
-            if k not in existing_order and k not in seen:
-                seen.add(k)
-                new_fields.append(k)
+def pixel_coordinates(page,annot_box,figure,fig_box):
+    '''
+    figure["width"], figure["height"] - are the original pixel dimensions
+    fig_box - is the PDF page bounding box in points 
+
+    return List[gly_bbox], fig_width, fig_height
+    '''
+
+    fig_box = fitz.Rect(figure["bbox"])
+
+    # The division yields the zoom factor that restores the original pixel dimensions.
+    zoom_x = figure["width"] / fig_box.width
+    zoom_y = figure["height"] / fig_box.height
+    mat = fitz.Matrix(zoom_x, zoom_y)
+    
+    pix = page.get_pixmap(matrix=mat, clip=fig_box, alpha=False, annots=False)
+    px_fig_width, px_fig_height = pix.width, pix.height
+    
+    # Calculate scaling factors
+    x_scale = fig_box.width / float(px_fig_width)
+    y_scale = fig_box.height / float(px_fig_height)
+    
+    # Convert annotation coordinates to pixel coordinates
+    px_gly_x0 = round((annot_box.x0 - fig_box.x0) / x_scale)
+    px_gly_x1 = round((annot_box.x1 - fig_box.x0) / x_scale)
+    px_gly_y0 = round((annot_box.y0 - fig_box.y0) / y_scale)
+    px_gly_y1 = round((annot_box.y1 - fig_box.y0) / y_scale)
+    
+    px_gly_w = abs(px_gly_x1 - px_gly_x0)
+    px_gly_h = abs(px_gly_y1 - px_gly_y0)
+
+    return [px_gly_x0, px_gly_y0, px_gly_w, px_gly_h], px_fig_width, px_fig_height
+
+def process_figure_annotation(annotation, figure, page, tsv_data, comment_dict, **kwargs):
+    '''method to process information about an annotation'''
+    annot_box = annotation.rect
+    xref = figure.get("xref")
+    fig_box = fitz.Rect(figure["bbox"])
+    
+    # convert's pdf coordinates to pixel coordinates - output - glycan_bbox, fig_width, fig_height 
+    gly_bbox, px_fig_width, px_fig_height = pixel_coordinates(page, annot_box, figure, fig_box)
+
+    return {
+        'ID': comment_dict['id'],
+        'url': comment_dict.get('url'),
+        'xref': xref,
+        'gly_bbox': gly_bbox,
+        'fig_width': px_fig_width,
+        'fig_height': px_fig_height,
+        **{k: v.strip() for k, v in tsv_data.items() 
+            if k in ['class','accession', 'iupac', 'composition', 'wurcs'] and v is not None},
+        **kwargs,
+    }
 
 
-        if rid in existing_rows:
-            existing_rows[rid].update(item)
-        else:
-            existing_rows[rid] = dict(item)
+def extract_annotations(output_dir, pdf_path, tsv_path):
+    """
+    Main extraction method.
+    Extracts figures and associated annotation information.
+    """
 
-    # final header: ID, new fields, then existing fileds from provided TSV
-    final_fields = ['ID'] if ('ID' in existing_order or any('ID' in d for d in glycan_data)) else []
-    final_fields += [c for c in new_fields if c != 'ID' and c not in final_fields]
-    final_fields += [c for c in existing_order if c not in ['ID', 'x', 'y', 'w', 'h', 'image_index', 'image_width', 'image_height'] and c not in final_fields]
+    tsv_data = load_tsv_data(tsv_path)
 
-    # write merged
-    tsv_filename = os.path.basename(tsv_path).rsplit('.', 1)[0]
-    merged_tsv_path = os.path.join(output_dir, f"{tsv_filename}_merged.tsv")
+    with fitz.open(pdf_path) as doc:
+        for page_num, page in enumerate(doc.pages(), 1):
+            page_info = page.get_image_info(xrefs=True)
+            page_annotations = list(page.annots() or [])
 
-    with open(merged_tsv_path, 'w', encoding='utf-8', newline='') as f:
-        w = csv.DictWriter(f, fieldnames=final_fields, delimiter='\t')
-        w.writeheader()
-        for row in existing_rows.values():
-            w.writerow({col: row.get(col, '') for col in final_fields})
+            # Save all the figures on this page (discard if height and width is too small)
+            fig_num = 1
+            for figure in page_info:
+                pdf_fig_box = fitz.Rect(figure["bbox"])
+                
+                if (pdf_fig_box.height > 90 and pdf_fig_box.width > 90):
+                    figure_filename = f"{os.path.basename(output_dir)}_p{page_num}_f{fig_num}.png"
+                    figure_path = os.path.join(output_dir, figure_filename)
+                    save_figure(page, figure, figure_path)
 
-    print(f"Wrote merged TSV: {merged_tsv_path}")
-    return merged_tsv_path
+                    # create semnatic (map) file for all the corresponding figures
+                    semantics_file = figure_path.rsplit('.', 1)[0] + '_map.txt'
+                    with open(semantics_file, 'w') as sem_file:
+                        sem_file.write(f'##### WHOLEIMAGE: {round(pdf_fig_box.height)} x {round(pdf_fig_box.width)} (height x width)\n')
+                        
+                        # verify that the annotation intersects with figure
+                        for annotation in page_annotations:
+                            annotation_box = annotation.rect
+                            # instead of intersects - you can you IOU as well to check
+                            if pdf_fig_box.intersects(annotation_box):
+                                comment = annotation.info.get("content") or annotation.info.get("subject") or ""
+                                comment_dict = parse_comment(comment)  # annotated_comments_dict
+                                glycan_id = comment_dict['id']
 
-        
+                                tsv_row_data = {}
+                                if glycan_id in tsv_data:
+                                    tsv_row_data = tsv_data[glycan_id]
+
+                                metadata = {'figure_num': fig_num, 'page_num': page_num, 'figure_name': figure_filename, 'figure_path': figure_path}
+                                
+                                data = process_figure_annotation(annotation, figure, page, tsv_row_data, comment_dict)
+                                data.update(metadata)
+                                write_semantics(sem_file, data)
+          
+                    fig_num += 1
+
+
+
+def write_semantics(semnatics_file, glycan_data):
+    x, y, w, h = glycan_data['gly_bbox']
+    semnatics_file.write(f"### GLYCAN: {x} {y} {w} {h} (bbox: x y w h)\n")
+
+    # class name is supposed/optionally to be present in the TSV file (added manually) 
+    # so incase it is not present, dont add it to semantics
+    if glycan_data.get('class'):    
+        semnatics_file.write(f"### CLASS: {glycan_data.get('class')}\n") 
+
+    semnatics_file.write(f"# ID: {glycan_data['ID']}\n")
+    semnatics_file.write(f"# xref: {glycan_data['xref']}\n")
+    
+    # add other key-value pairs from TSV file if required
+    for key in ['accession', 'iupac', 'composition', 'wurcs']:
+        value = glycan_data.get(key)
+        if value and value.strip():  # Checks: not None, not empty, not just whitespace
+            semnatics_file.write(f"# {key}: {value}\n")
+
+
 input_folder = args.folder
 output_folder = args.output_dir
-pdf_files = glob.glob(os.path.join(input_folder, "*.pdf"))
+# accepts annotated pdf's only
+pdf_files = glob.glob(os.path.join(input_folder, "*.annotated.pdf")) 
 
+if os.path.exists(output_folder):
+    shutil.rmtree(output_folder)
+os.mkdir(output_folder)
+
+print("\nStarting Process...")
 for pdf_path in pdf_files:
+    print("Processing PDF:", pdf_path)
     file_name = os.path.splitext(os.path.basename(pdf_path))[0]
     tsv_path = os.path.join(input_folder, f"{file_name}.tsv")
 
@@ -272,8 +236,8 @@ for pdf_path in pdf_files:
         print(f"Skipping {file_name}: no matching TSV found.")
         continue
 
-    # main steps for extraction and merging
-    metadata = extract_annotated_images(output_dir,pdf_path)
-    merge_glycan_data_with_tsv(output_dir,metadata,tsv_path)
+    # main step for extraction
+    extract_annotations(output_dir,pdf_path,tsv_path)
+
 
 
