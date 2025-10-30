@@ -417,70 +417,62 @@ class PMIDJob(JobInstance):
         base_path = os.path.dirname(os.path.abspath(__file__))
 
         # zipped file location - which contains all info related to the PMID
-        # copy all the figures from the zipped file to the extracted_figures folder
+        # copy all the figures from the zipped file to the extracted_figures folder (the figures are renamed to match the figure labels that appear in the manuscript)
         figures_src = os.path.join(base_path, "input", self.id, f"PMID-{self.pmid}.tar.gz")
         figures_dest_dir = image_folders['figures_dir']
 
         fig_to_label_map = {}
-
-        # First pass: extract *nxml file and build label mapping (i.e create a dict which will help map the figure_no/name in the pdf with the extracted figure)
-        # key - figure_name, value - figure label name from xml (that is present in the pdf)
-        with tarfile.open(figures_src, "r:gz") as tar:
-            for member in tar.getmembers():
-                if member.name.lower().endswith('.nxml'):
-                    file_obj = tar.extractfile(member)
-                    if file_obj:
-                        nxml_content = file_obj.read().decode('utf-8', errors='ignore')
-
-                        # Parse XML to find figure labels
-                        try:
-                            root = ET.fromstring(nxml_content)
-
-                            for fig in self.find_figures(root):
-                                fig_filename, xml_fig_label = self.extract_figure_info(fig)
-
-                                # if both exist - then this is a True figure in the pdf (so the fig_name can be renamed to reflect what appears in the pdf)
-                                if fig_filename and xml_fig_label:
-                                    fig_to_label_map[fig_filename] = xml_fig_label
-
-                        except ET.ParseError as e:
-                            print(f"Warning: Could not parse nxml: {e}")
-
-
-        # Second pass: extract figure from the zipped location
-        with tarfile.open(figures_src, "r:gz") as tar:
-            for member in tar.getmembers():
-                base = os.path.basename(member.name).lower()
-                ext = os.path.splitext(base)[1]
-                if ext == '.jpg':
-                    # Extract file content directly using the tar module - extraction from a tar file requires thiese steps inorder to extract files to the correct directory
-                    file_obj = tar.extractfile(member)
-                    if file_obj:
-                        target_path = os.path.join(figures_dest_dir, base)
-                        with open(target_path, 'wb') as f:
-                            f.write(file_obj.read())
-
-        # Get all the figures - rename them based on figure name from the xml document
-        # only figure which have a label mapping in the pdf are included - because rest of the figure where part of the publication name figure, etc which are not useful
         image_files = []
-        for fig_name in os.listdir(figures_dest_dir):
-            fig_path = os.path.join(figures_dest_dir, fig_name)
-            if os.path.isfile(fig_path) and os.path.splitext(fig_name)[1].lower() in ['.jpg']:
-                # Get basename without extension for matching
-                base_name, ext = os.path.splitext(fig_name)
 
-                if base_name in fig_to_label_map:
-                    label_id = fig_to_label_map[base_name]
-                    renamed_file = f"{label_id}{ext}"
-                    renamed_file_path = os.path.join(figures_dest_dir, renamed_file)
+        try:
+            with tarfile.open(figures_src, "r:gz") as tar:
 
-                    os.rename(fig_path, renamed_file_path)
-                    image_files.append(renamed_file)  
-                # else:
-                #     # figures that dont have an explict label name in the xml/pdf will still be added but not renamed to match with the pdf.
-                #     # Figures are still considered because sometimes they have glycan - but do not how useful it would be to collect this info
-                #     image_files.append(fig_name)
-        
+                # First pass: extract *nxml file and build label mapping (i.e create a dict which will help map the figure_no/name in the pdf with the extracted figure)
+                # key - figure_name, value - figure label name from xml (that is present in the pdf)
+                for member in tar.getmembers():
+                    if member.name.lower().endswith('.nxml'):
+                        file_obj = tar.extractfile(member)
+                        if file_obj:
+                            nxml_content = file_obj.read().decode('utf-8', errors='ignore')
+
+                            # Parse XML to find figure labels
+                            try:
+                                root = ET.fromstring(nxml_content)
+
+                                for fig in self.find_figures(root):
+                                    fig_filename, xml_fig_label = self.extract_figure_info(fig)
+
+                                    # if both exist - then this is a True figure in the pdf (so the fig_name can be renamed to reflect what appears in the pdf)
+                                    if fig_filename and xml_fig_label:
+                                        fig_to_label_map[fig_filename] = xml_fig_label
+
+                            except ET.ParseError as e:
+                                self.log_file.write(f"Warning: Could not parse nxml: {e}")
+
+
+                # Second pass: extract figure from the zipped location and rename them to match the figure labels in the pdf
+                for member in tar.getmembers():
+                    filename = os.path.basename(member.name).lower()
+                    base_name, ext = os.path.splitext(filename)                    
+                    if ext == '.jpg':
+                        # Extract file content directly using the tar module - extraction from a tar file requires thiese steps inorder to extract files to the correct directory
+                        file_obj = tar.extractfile(member)
+                        if file_obj:
+                            # check if the figure label is officially present in pdf - only then should the figure be displayed on the website
+                            if base_name in fig_to_label_map:
+                                label_id = fig_to_label_map[base_name]
+                                renamed_file = f"{label_id}{ext}"
+                                renamed_file_path = os.path.join(figures_dest_dir, renamed_file)
+
+                                target_path = os.path.join(figures_dest_dir, filename)
+                                with open(renamed_file_path, 'wb') as f:
+                                    f.write(file_obj.read())
+
+                                image_files.append(renamed_file)
+        except Exception as e:
+            self.log_file.write(f"Error: opening tar {figures_src}: {e}")
+            return
+
         # Sort to ensure correct order
         image_files.sort()
 
