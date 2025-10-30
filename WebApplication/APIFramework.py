@@ -506,7 +506,7 @@ class APIFramework:
         pmid_to_pmc_converter_api = f'https://pmc.ncbi.nlm.nih.gov/tools/idconv/api/v1/articles/?ids={pmid}&tool=extract&email={developer_email}&idtype=pmid&format=json'
 
         try:
-            resp = requests.get(pmid_to_pmc_converter_api, timeout=10)
+            resp = requests.get(pmid_to_pmc_converter_api, timeout=5)
             resp.raise_for_status()
             resp_json = resp.json()
             
@@ -531,7 +531,7 @@ class APIFramework:
 
     def validate_pmcid_resources(self, pmcid):
         pmc_api = f'https://www.ncbi.nlm.nih.gov/pmc/utils/oa/oa.fcgi?id={pmcid}'
-        r = requests.get(pmc_api, timeout=30)
+        r = requests.get(pmc_api, timeout=5)
         r.raise_for_status()
 
         root = ET.fromstring(r.text)
