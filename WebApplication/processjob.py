@@ -476,10 +476,10 @@ class PMIDJob(JobInstance):
 
                     os.rename(fig_path, renamed_file_path)
                     image_files.append(renamed_file)  
-                else:
-                    # figures that dont have an explict label name in the xml/pdf will still be added but not renamed to match with the pdf.
-                    # Figures are still considered because sometimes they have glycan - but do not how useful it would be to collect this info
-                    image_files.append(fig_name)
+                # else:
+                #     # figures that dont have an explict label name in the xml/pdf will still be added but not renamed to match with the pdf.
+                #     # Figures are still considered because sometimes they have glycan - but do not how useful it would be to collect this info
+                #     image_files.append(fig_name)
         
         # Sort to ensure correct order
         image_files.sort()
