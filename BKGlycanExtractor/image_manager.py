@@ -12,35 +12,51 @@ import colour
 import shutil
 from fnmatch import fnmatch
 from . svg_parse_path import get_points
+import glob
 
 class Image_Manager:
-    def __init__(self,glycan_folder,pattern='*.png,*.jpg'):
-        self.globs = pattern.split(',')
-        self.images = self.get_images(glycan_folder)
+	'''
+	Image Manager can explore images in the following different ways:
+	1) Explore a folder recursively, picking out requested image extensions
+	2) Take multiple folders and explore each of them
+	3) Take multiple files
+	'''
+	def __init__(self, inputs, pattern='*.png,*.jpg', exclude=None):
+		self.globs = [p.strip() for p in pattern.split(',') if p.strip()]
+		self.images = self.get_images(inputs)
+		if exclude:
+			self.exclude(exclude)
 
-    def __iter__(self):
-        return iter(self.images)
+	def __iter__(self):
+		return iter(self.images)
 
-    def exclude(self,pattern="*.annotated.*"):
-        self.images = list(filter(lambda fn: not fnmatch(fn,pattern), self.images))
+	def exclude(self, pattern="*.annotated.*"):
+		self.images = [fn for fn in self.images if not fnmatch(os.path.basename(fn), pattern)]
 
-    def get_images(self,glycan_folder):
-        images = []
+	def match_glob(self, path):
+		name = os.path.basename(path)
+		for ext in self.globs:
+			if fnmatch(name, ext):
+				return True
+		return False
 
-        if isinstance(glycan_folder,list):
-            for image_file in glycan_folder:
-                if os.path.is_file(image_file) and self.match_glob(image_file):
-                    images.append(image_file)
-        elif os.path.isdir(glycan_folder):
-            for image_file in os.scandir(glycan_folder):
-                if image_file.is_file() and self.match_glob(image_file):
-                    images.append(image_file.path)
-        return sorted(images)
+	def get_images(self, inputs):
+		images = set()
 
-    def match_glob(self,image_file):
-        return any(fnmatch(image_file.name,ext) for ext in self.globs)
+		for base in inputs:
+			if os.path.isfile(base):
+				if self.match_glob(base):
+					images.add(os.path.abspath(base))
+			elif os.path.isdir(base):
+				for g in self.globs:  # e.g., '*.png', '*.jpg'
+					pattern = os.path.join(base, '**', g)  # e.g., dir/**/*.png
+					for path in glob.glob(pattern, recursive=True):
+						if os.path.isfile(path):
+							images.add(os.path.abspath(path))
+			else:
+				continue  # ignore missing
 
-
+		return sorted(images)
 
 class Image_Data:
 
