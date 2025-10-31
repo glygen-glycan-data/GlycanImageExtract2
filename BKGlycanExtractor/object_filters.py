@@ -242,6 +242,49 @@ class FilterTreeLinks(ObjectFilter):
 
         return accepted, rejected
 
+class FilterLabels(ObjectFilter):
+
+    def __init__(self,keep=[],discard=[]):
+        self._keep = keep
+        self._discard = discard
+
+    def filter(self, objlist):
+        accepted = []
+        rejected = []
+
+        for obj in objlist:
+            if len(self._keep) > 0:
+                if obj.get('classlabel') in self._keep: 
+                    accepted.append(obj)
+                else:
+                    rejected.append(obj)
+            elif len(self._discard) > 0:
+                if obj.get('classlabel') in self._discard:
+                    rejected.append(obj)
+                else:
+                    accepted.append(obj)
+            else:
+                accepted.append(obj) # noop
+        return accepted, rejected
+
+class LabelMap(ObjectFilter):
+
+    def __init__(self,map={}):
+        self._map = map
+
+    def filter(self, objlist):
+        accepted = []
+        rejected = []
+
+        for obj in objlist:
+            oldcl = obj.get('classlabel')
+            newcl = self._map.get(oldcl,oldcl)
+            if newcl is None:
+                rejected.append(obj)
+            else:
+                obj.set('classlabel',newcl)
+                accepted.append(obj)
+        return accepted, rejected
 
 class RemapLinkLabels(ObjectFilter):
     '''
