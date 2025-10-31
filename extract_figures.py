@@ -192,24 +192,16 @@ def extract_annotations(output_dir, pdf_path, tsv_path):
 
 
 
-def write_semantics(semnatics_file, glycan_data):
+def write_semantics(semantics_file, glycan_data):
     x, y, w, h = glycan_data['gly_bbox']
-    semnatics_file.write(f"### GLYCAN: {x} {y} {w} {h} (bbox: x y w h)\n")
-
-    # class name is supposed/optionally to be present in the TSV file (added manually) 
-    # so incase it is not present, dont add it to semantics
-    if glycan_data.get('class'):    
-        semnatics_file.write(f"### CLASS: {glycan_data.get('class')}\n") 
-
-    semnatics_file.write(f"# ID: {glycan_data['ID']}\n")
-    semnatics_file.write(f"# xref: {glycan_data['xref']}\n")
+    semantics_file.write(f"### GLYCAN: {x} {y} {w} {h} (bbox: x y w h)\n")
     
-    # add other key-value pairs from TSV file if required
-    for key in ['accession', 'iupac', 'composition', 'wurcs']:
-        value = glycan_data.get(key)
-        if value and value.strip():  # Checks: not None, not empty, not just whitespace
-            semnatics_file.write(f"# {key}: {value}\n")
-
+    # add other key-value pairs from TSV file
+    for key in glycan_data.keys():
+        if key not in ['page_num', 'fig_num']:
+            value = glycan_data.get(key)
+            if value:  # Checks: not None, not empty, not just whitespace
+                semantics_file.write(f"# {key}: {value}\n")
 
 input_folder = args.folder
 output_folder = args.output_dir
