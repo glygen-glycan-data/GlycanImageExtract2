@@ -497,7 +497,7 @@ class APIFramework:
 
     # Validates is the given PMID has a PMCID and that the resources for the PMCID are Open Access (check if zip file can be retrieved)
     def validate_pmid(self, pmid=None):
-        developer_email="nje5extractor@georgetown.edu"
+        developer_email="nje5%2bextractor@georgetown.edu"
 
         if pmid is None:
             pmid = flask.request.json.get('pmid')
@@ -507,9 +507,13 @@ class APIFramework:
 
         try:
             resp = requests.get(pmid_to_pmc_converter_api, timeout=5)
-            resp.raise_for_status()
+            #
+            # This API raises 400 errors for bad parameters, which need a 
+            # nicer error message than the exception handler can give...
+            # 
+            # resp.raise_for_status()
             resp_json = resp.json()
-            
+
             if not resp_json.get('records') or len(resp_json['records']) == 0:
                 return flask.jsonify({'valid': False, 'error': f'PMID {pmid} is not in PubMed Central'}), 400
                 
@@ -525,7 +529,8 @@ class APIFramework:
                 return pmc_resp, pmc_status
                 
             return flask.jsonify(pmc_resp_json), 200
-        except Exception as e:
+        
+        except (requests.exceptions.Timeout,requests.exceptions.ReadTimeout,requests.exceptions.RequestException) as e:
             return flask.jsonify({'valid': False, 'error': str(e)}), 500
 
 
