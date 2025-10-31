@@ -18,7 +18,7 @@ from .yolomodels import YOLOModel
 from .glycanannotator import Config, Config_Manager, GlycanExtractorPipeline
 from .bbox import BoundingBox
 from .finder import Finder,YOLOFinder, KnownFinder
-from BKGlycanExtractor import LinksCompare, DebugMode, FilterTreeLinks, FilterRepeatedLinks, RemapLinkLabels
+from BKGlycanExtractor import LinksCompare, DebugMode, FilterTreeLinks, FilterRepeatedLinks, RemapLinkLabels, LabelMap, FilterLabels, FilterOverlaps
 from .semantics import UndirectedLinkSemantics
 
 
@@ -151,6 +151,66 @@ class KnownLink(LinkFinder,KnownFinder):
     def box_to_object(self, box, obj):
         return UndirectedLinkSemantics(box=box, **box.items())
 
+class KnownLinkNoLink(LinkFinder,KnownFinder):
+
+    def __init__(self,**kwargs):
+        KnownFinder.__init__(self,**kwargs)
+        LinkFinder.__init__(self)
+
+    def create_boxes(self, map_dict):
+        boxes = []
+
+        # Note: map_dict data structure can store multiple glycans, but the current use-case is for SGI only
+        linklabelid = self.get_label_index("link")
+        monos = map_dict['glycans'][0]['monos']
+        links = map_dict['glycans'][0]['links']
+        for m1 in monos:
+          for m2 in monos:
+            if m1 >= m2:
+              continue
+            if (m1,m2) in links:
+              classlabel = "link"
+              mono_id1 = m1
+              mono_id2 = m2
+            elif (m2,m1) in links:
+              classlabel = "link"
+              mono_id1 = m2
+              mono_id2 = m1
+            else:
+              classlabel = "nolink"
+              mono_id1 = m1
+              mono_id2 = m2
+            box = BoundingBox(
+                x1=min(monos[m1]['x_min'],monos[m2]['x_min']),
+                y1=min(monos[m1]['y_min'],monos[m2]['y_min']),
+                x2=max(monos[m1]['x_max'],monos[m2]['x_max']),
+                y2=max(monos[m1]['y_max'],monos[m2]['y_max']),
+                classlabel=classlabel,
+                classid=self.get_label_index(classlabel),
+                mono_id1=m1,
+                mono_id2=m2,
+            )
+            boxes.append(box)
+
+        toremove = []
+        for b1 in boxes:
+            for b2 in boxes:
+                if b1 == b2:
+                    continue
+                if b1.contains(b2) and b1.get('classlabel') == "nolink":
+                    toremove.append(b1)
+                    break
+
+        for b1 in toremove:
+            boxes.remove(b1)
+       
+        return boxes
+
+    def box_to_object(self, box, obj):
+        if box.get('classlabel') == "link":
+            return UndirectedLinkSemantics(box=box, **box.items())
+        return None
+
 class KnownLinkWithInfo(KnownLink):
     
     def create_boxes(self, map_dict):
@@ -201,4 +261,8 @@ class ConnectYOLOInfoLabel(ConnectYOLO):
     '''
     class to mask all the different labels (eg. ax, bx, etc) to 'link'.
     '''
-    filters = ConnectYOLO.filters + [RemapLinkLabels()]
+    filters =  [ RemapLinkLabels() ] + ConnectYOLO.filters
+
+class ConnectYOLOwNoLink(ConnectYOLO):
+
+    filters = [ FilterOverlaps(maxiou=0.8), FilterLabels(keep=["link"]) ] + ConnectYOLO.filters
