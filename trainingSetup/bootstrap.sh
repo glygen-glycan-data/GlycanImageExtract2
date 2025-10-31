@@ -72,7 +72,8 @@ if [ ! -d "$RCLONE_DIR" ]; then
 fi
 if [ ! -d "$SCRIPTS" ]; then
   mkdir -p "$SCRIPTS"
-  for f in darknet.sh darknetjs.sh update_yolo_cfg.py split_data.py bootstrap.sh; do
+  mkdir -p "$SCRIPTS/docker"
+  for f in darknet.sh darknetjs.sh update_yolo_cfg.py split_data.py bootstrap.sh docker/build.sh docker/install.sh docker/Dockerfile; do
     download "$SCRIPTURL/$f" "$SCRIPTS/$f"
     case $f in
       *.sh) chmod +x "$SCRIPTS/$f" ;;
