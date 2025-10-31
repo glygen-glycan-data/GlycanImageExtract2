@@ -49,6 +49,8 @@ exists() {
 RESULTS=""
 NAME=""
 CLEAN="0"
+IOU="0.5"
+CONF="0.25"
 
 while [ "$#" -gt 0 ]; do
     case $1 in
@@ -58,6 +60,14 @@ while [ "$#" -gt 0 ]; do
             ;;
         --job_name)
             NAME="$2"
+            shift 2
+            ;;
+        --iou)
+            IOU="$2"
+            shift 2
+            ;;
+        --conf)
+            CONF="$2"
             shift 2
             ;;
 	--clean)
@@ -71,14 +81,20 @@ while [ "$#" -gt 0 ]; do
             echo "  --image_folder   Writable Google drive folder for images and results"
             echo "  --job_name       Job name for this training run"
             echo ""
-            echo "Optional:"
+	    echo "Optional:"
             echo "  --clean          Remove local and remote job folders"
-            echo "  --max_batches    Number of interations for YOLO config"
-            echo "  --batch          Batch size for YOLO config"
-            echo "  --subdivisions   Subdivisions for YOLO config"
-            echo "  --height         Input image height"
-            echo "  --width          Input image width"
-            echo "  --learning_rate  Learning rate for YOLO"
+	    echo ""
+	    echo "YOLO config (optional):"
+	    echo "  --max_batches    Number of interations for YOLO config. Default: max(#classes*2000,6000)."
+            echo "  --batch          Batch size for YOLO config. Default: 64."
+            echo "  --subdivisions   Subdivisions for YOLO config. Default: 16."
+            echo "  --height         Input image height. Default: 416."
+            echo "  --width          Input image width. Default: 416."
+            echo "  --learning_rate  Learning rate for YOLO. Default: 0.001."
+	    echo ""
+	    echo "Darknet train parameters (optional):"
+	    echo "  --iou            IoU for mAP evaluation. Default: 0.5."
+	    echo "  --conf           Confidence threshold for mAP evaluation. Default: 0.25."
             exit 0
             ;;
         *)
@@ -208,7 +224,7 @@ BEST_WEIGHTS_FILE="$YOLO_WEIGHTS/yolov3_${EXP}_best.weights"
 
 DARKNET="sudo docker run --gpus all -v .:/src sherensberk/darknet:2204.550.1241-devel darknet"
 
-$DARKNET detector train "$TRAIN_CONFIG" "$YOLO_CONFIG" ./darknet53.conv.74 -dont_show -map -nocolour </dev/null >$TRAIN_LOG 2>&1 &
+$DARKNET detector train "$TRAIN_CONFIG" "$YOLO_CONFIG" ./darknet53.conv.74 -dont_show -map -random -nocolour -iou_thresh "$IOU" -thresh "$CONF" </dev/null >$TRAIN_LOG 2>&1 &
 
 rm -f $HOME/.noshutdown
 
