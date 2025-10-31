@@ -239,8 +239,9 @@ LAST_WEIGHTS_FILE="$YOLO_WEIGHTS/yolov3_${EXP}_last.weights"
 FINAL_WEIGHTS_FILE="$YOLO_WEIGHTS/yolov3_${EXP}_final.weights"
 BEST_WEIGHTS_FILE="$YOLO_WEIGHTS/yolov3_${EXP}_best.weights"
 
-# DARKNET="sudo docker run --gpus all -v .:/src sherensberk/darknet:2204.550.1241-devel darknet"
-DARKNET="sudo docker run --gpus all -v .:/src glyomics/darknet darknet"
+# DARKNET="sudo docker run --rm --gpus all -v .:/src sherensberk/darknet:2204.550.1241-devel darknet"
+sudo docker pull glyomics/darknet:latest
+DARKNET="sudo docker run --rm --gpus all -v .:/src glyomics/darknet darknet"
 
 $DARKNET detector train "$TRAIN_CONFIG" "$YOLO_CONFIG" ./darknet53.conv.74 -dont_show -map -random -nocolour $CONF $IOU $NMS </dev/null >$TRAIN_LOG 2>&1 &
 

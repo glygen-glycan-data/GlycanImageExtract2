@@ -45,6 +45,7 @@ ARG build_date
 
 RUN git clone https://github.com/hank-ai/darknet
 
+ARG install_md5
 COPY install.sh .
 RUN chmod +x install.sh && ./install.sh
 
