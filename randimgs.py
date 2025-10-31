@@ -1,7 +1,7 @@
 #!.venv/bin/python
 from __future__ import print_function
 
-import sys, os, random, time, re, shutil, traceback, cv2
+import sys, os, random, time, re, shutil, traceback, cv2, glob
 from collections import defaultdict
 import findpygly
 from pygly.GlycanImage import GlycanImage
@@ -23,6 +23,7 @@ parser.add_argument("-c", "--clear", action='store_true', help="Clear output dir
 parser.add_argument("-k", "--keepsvg", action='store_true', help="Keep SVG file - useful for debugging.", default=False)
 parser.add_argument("-F", "--force", action='store_true', help="Force re-download of GlyTouCan accessions and sequences", default=False)
 parser.add_argument("-s", "--skip", type=str, help="File of accessions to skip. Default: None.", default=None)
+parser.add_argument("-S", "--skipdir", type=str, nargs="+", help="Directories of images with accessions to skip. Default: None.", default=None)
 parser.add_argument("-r", "--random", type=str, help="Randomization mode. One of uniform accessions (uniform), biased sampling (biased), random monosaccharides (mono), random monosaccharides + baised sampling (biasmono), random linkages (linkinfo). Default: uniform.", default="uniform")
 parser.add_argument("-A", "--accessions", type=str, help="Limit to specific accessions by regular expression or prefix. Default: No restriction.", default=None)
 parser.add_argument("-P","--program", type=str, help="Program to use to make images. One of GlycanBuilder2, Glycowork. Default: GlycanBuilder2.", default="GlycanBuilder2")
@@ -54,9 +55,14 @@ if output_folder:
         os.makedirs(output_folder)
     assert os.path.isdir(output_folder)
 
-badaccfile = args.skip
-if badaccfile:
-    assert os.path.isfile(badaccfile)
+if args.skip:
+  for f in args.skip:
+    assert os.path.isfile(f)
+
+if args.skipdir:
+  for d in args.skipdir:
+    assert os.path.isdir(d)
+
 randmode = args.random
 assert randmode in ("uniform","biased","mono","biasmono","linkinfo")
 assert args.program in ("GlycanBuilder2","Glycowork")
@@ -136,8 +142,15 @@ if accregex:
 
 # accessions your model was trained on, to avoid testing on them
 trained_accessions = set()
-if badaccfile is not None:
-    trained_accessions = set(open(badaccfile).read().split())
+
+if args.skip:
+    for f in args.skip:
+        trained_accessions.update(set(open(f).read().split()))
+if args.skipdir:
+    for d in args.skipdir:
+        for f in glob.glob('**/*.png', recursive=True):
+            acc = os.path.split(f)[1].rsplit('.',1)[0]
+            trained_accessions.add(acc)
 
 monofreq = Composition()
 monofreq.set(*valid_monos,value=1)
@@ -165,7 +178,7 @@ for j in range(iterations):
         acc = random.choice(accs)
         if acc in seen:
             continue
-        # print("random choice:",acc,file=sys.stderr)
+        print("random choice:",acc,file=sys.stderr)
         seen.add(acc)
         acc1 = acc
         if randmode in ("mono","biasmono","linkinfo"):
@@ -278,6 +291,7 @@ for j in range(iterations):
             outputcount += 1
             continue
 
+
         #manipulate the SVG file...
         if imageWriter.get('display') == 'normalinfo':
             if randmode == "linkinfo":
@@ -285,9 +299,17 @@ for j in range(iterations):
                 # this will re-write the SVG file...
                 imageData.randomize_linkinfo(outfile,anomers=anomer_options,carbon_bonds=bond_options)
             else:
-                imageData.randomize_blanks(outfile,
-                                           unknown_blank if unknowns > 0 else [False],
-                                           redend_blank if imageWriter.get('reducing_end') else [False])
+                try:
+                    imageData.randomize_blanks(outfile,
+                                               unknown_blank if unknowns > 0 else [False],
+                                               redend_blank if imageWriter.get('reducing_end') else [False])
+                except ValueError as e:
+                    print("Unexpected monosaccharide in %s glycan:"%(acc,),e.args[1])
+                    if os.path.exists(pngfile):
+                        os.unlink(pngfile)
+                    if os.path.exists(outfile):
+                        os.unlink(outfile)
+                    continue
 
         mapfile = None
         try:
