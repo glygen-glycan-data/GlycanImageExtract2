@@ -6,8 +6,6 @@ assess ovelap, intersection over union value, class comparison, etc
 
 import math
 
-from . bbox import BoundingBox
-
 class CompareBoxes:
 
     def __init__(self, **kw):
@@ -31,11 +29,15 @@ class CompareBoxes:
         return math.sqrt((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2)                                                            
                                                                                                                              
     @staticmethod                                                                                                            
-    def euclidean_distance(x,y):                                                                                             
-        if isinstance(x,BoundingBox):                                                                                        
-            x = x.center()                                                                                                  
-        if isinstance(y,BoundingBox):                                                                                        
-            y = y.center()                                                                                                  
+    def euclidean_distance(x,y):
+        try:
+            x = x.center()
+        except AttributeError:
+            pass
+        try:
+            y = y.center()
+        except AttributeError:
+            pass                                                                                                                                                                                        
         return CompareBoxes.euclidean_distance_points(x,y)
 
     @staticmethod
