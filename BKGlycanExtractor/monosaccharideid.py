@@ -78,15 +78,8 @@ class KnownMono(MonoFinder,KnownFinder):
         # Note: map_dict data structure can store multiple glycans, but the current use-case is for SGI only
         monos = map_dict['glycans'][0]['monos']
         for id, data in monos.items():
-
             symbol = data['symbol']
-
-            # classlabel can be updated via the semantics file - if the optionally provided label_type matches a key in the semantics file
-            if self.label_type:
-                print("label",self.label_type,map_dict['glycans'][0][self.label_type])
-                classlabel = map_dict['glycans'][0][self.label_type]
-            else:
-                classlabel = symbol
+            classlabel = symbol
 
             box = BoundingBox(
                 x1=data['x_min'], y1=data['y_min'], 

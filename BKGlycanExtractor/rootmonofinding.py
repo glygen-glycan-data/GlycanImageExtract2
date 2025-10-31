@@ -110,14 +110,11 @@ class KnownRoot(RootFinder,KnownFinder):
 
         root_mono_id = glycan['root']
         for id, data in glycan['monos'].items():
-            # classlabel can be updated via the semantics file - if the optionally provided label_type matches a key in the semantics file
-            if self.label_type:
-                classlabel = glycan[self.label_type]
+            
+            if id == root_mono_id:
+                classlabel = "redend"
             else:
-                if id == root_mono_id:
-                    classlabel = "redend"
-                else:
-                    classlabel = "not_redend"
+                classlabel = "not_redend"
 
             classid = self.get_label_index(classlabel)
 
@@ -161,14 +158,10 @@ class KnownRootPlusAnomer(KnownRoot):
             if anomer == "?":
                 anomer = "x"
 
-            # classlabel can be updated via the semantics file - if the optionally provided label_type matches a key in the semantics file
-            if self.label_type:
-                classlabel = glycan[self.label_type]
+            if id == root_mono_id:
+                classlabel = "redend"+anomer
             else:
-                if id == root_mono_id:
-                    classlabel = "redend"+anomer
-                else:
-                    classlabel = "not_redend"
+                classlabel = "not_redend"
 
             classid = self.get_label_index(classlabel)
 

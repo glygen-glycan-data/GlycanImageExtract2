@@ -129,12 +129,7 @@ class KnownLink(LinkFinder,KnownFinder):
         # Note: map_dict data structure can store multiple glycans, but the current use-case is for SGI only
         links = map_dict['glycans'][0]['links']
         for (mono_id1, mono_id2), data in links.items():
-
-            # classlabel can be updated via the semantics file - if the optionally provided label_type matches a key in the semantics file
-            if self.label_type:
-                classlabel = map_dict['glycans'][0][self.label_type]
-            else:
-                classlabel = "link"
+            classlabel = "link"
 
             box = BoundingBox(x1=data['x_min'], y1=data['y_min'], 
                 x2=data['x_max'], y2=data['y_max'], 
@@ -220,12 +215,8 @@ class KnownLinkWithInfo(KnownLink):
         links = map_dict['glycans'][0]['links']
 
         for (mono_id1, mono_id2), data in links.items():
-
-            if self.label_type:
-                classlabel = map_dict['glycans'][0][self.label_type]
-            else:
-                classlabel = f"{map_dict['monos'][mono_id2]['anomer']}{data['carbon_number']}"
-                classlabel = classlabel.replace("?","x")
+            classlabel = f"{map_dict['monos'][mono_id2]['anomer']}{data['carbon_number']}"
+            classlabel = classlabel.replace("?","x")
             classid = self.get_label_index(classlabel)
 
             box = BoundingBox(x1=data['x_min'], y1=data['y_min'], 
