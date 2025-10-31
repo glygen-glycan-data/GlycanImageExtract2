@@ -49,8 +49,9 @@ exists() {
 RESULTS=""
 NAME=""
 CLEAN="0"
-IOU="0.5"
-CONF="0.25"
+IOU=""
+CONF=""
+NMS=""
 
 while [ "$#" -gt 0 ]; do
     case $1 in
@@ -70,31 +71,37 @@ while [ "$#" -gt 0 ]; do
             CONF="$2"
             shift 2
             ;;
-	--clean)
+        --nms)
+            NMS="$2"
+            shift 2
+            ;;
+	      --clean)
             CLEAN=1
             shift
             ;;
         -h|--help)
-            echo "Usage: ./darknetjs.sh --image_folder <location> --job_name <name> \[optional parameters\]"
+            echo "Usage: ./darknetjs.sh --image_folder <location> --job_name <name> \[optional parameters\] \[YOLO config parameters\]"
             echo ""
             echo "Required:"
             echo "  --image_folder   Writable Google drive folder for images and results"
             echo "  --job_name       Job name for this training run"
             echo ""
-	    echo "Optional:"
+	          echo "Optional:"
             echo "  --clean          Remove local and remote job folders"
-	    echo ""
-	    echo "YOLO config (optional):"
-	    echo "  --max_batches    Number of interations for YOLO config. Default: max(#classes*2000,6000)."
+	          echo ""
+	          echo "Darknet parameters (optional):"
+	          echo "  --iou            IoU for mAP evaluation. Default: 0.5."
+	          echo "  --conf           Confidence threshold for mAP evaluation. Default: 0.25."
+            echo "  --nms            The NMS (non-maximal suppression) threshold. Default: None."
+	          echo ""
+	          echo "YOLO config (optional, must at end of arguments):"
+	          echo "  --max_batches    Number of interations for YOLO config. Default: max(#classes*2000,6000)."
             echo "  --batch          Batch size for YOLO config. Default: 64."
             echo "  --subdivisions   Subdivisions for YOLO config. Default: 16."
             echo "  --height         Input image height. Default: 416."
             echo "  --width          Input image width. Default: 416."
             echo "  --learning_rate  Learning rate for YOLO. Default: 0.001."
-	    echo ""
-	    echo "Darknet train parameters (optional):"
-	    echo "  --iou            IoU for mAP evaluation. Default: 0.5."
-	    echo "  --conf           Confidence threshold for mAP evaluation. Default: 0.25."
+            echo ""
             exit 0
             ;;
         *)
@@ -102,6 +109,16 @@ while [ "$#" -gt 0 ]; do
             ;;
     esac
 done
+
+if [ "$CONF" != "" ]; then
+    CONF="-thresh $CONF"
+fi
+if [ "$IOU" != "" ]; then
+    IOU="-iou_thresh $IOU"
+fi
+if [ "$NMS" != "" ]; then
+    NMS="-nms $NMS"
+fi
 
 BASE="$PWD"
 SCRIPTS="$BASE/scripts"
@@ -222,9 +239,10 @@ LAST_WEIGHTS_FILE="$YOLO_WEIGHTS/yolov3_${EXP}_last.weights"
 FINAL_WEIGHTS_FILE="$YOLO_WEIGHTS/yolov3_${EXP}_final.weights"
 BEST_WEIGHTS_FILE="$YOLO_WEIGHTS/yolov3_${EXP}_best.weights"
 
-DARKNET="sudo docker run --gpus all -v .:/src sherensberk/darknet:2204.550.1241-devel darknet"
+# DARKNET="sudo docker run --gpus all -v .:/src sherensberk/darknet:2204.550.1241-devel darknet"
+DARKNET="sudo docker run --gpus all -v .:/src glyomics/darknet darknet"
 
-$DARKNET detector train "$TRAIN_CONFIG" "$YOLO_CONFIG" ./darknet53.conv.74 -dont_show -map -random -nocolour -iou_thresh "$IOU" -thresh "$CONF" </dev/null >$TRAIN_LOG 2>&1 &
+$DARKNET detector train "$TRAIN_CONFIG" "$YOLO_CONFIG" ./darknet53.conv.74 -dont_show -map -random -nocolour $CONF $IOU $NMS </dev/null >$TRAIN_LOG 2>&1 &
 
 rm -f $HOME/.noshutdown
 

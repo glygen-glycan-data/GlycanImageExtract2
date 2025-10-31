@@ -74,8 +74,7 @@ def main(args):
     if args.max_batches is not None:
         max_batches = args.max_batches
     else:
-        max_batches = classes * 2000
-    max_batches = max(max_batches,6000) 
+        max_batches = max(classes*2000,6000)
 
     # Compute steps at 80% and 90% of max_batches
     step1 = int(max_batches * 0.8)
