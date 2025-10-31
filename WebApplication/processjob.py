@@ -457,9 +457,9 @@ class PMIDJob(JobInstance):
 
                 # Second pass: extract figure from the zipped location and rename them to match the figure labels in the pdf
                 for member in tar.getmembers():
-                    filename = os.path.basename(member.name).lower()
-                    base_name, ext = os.path.splitext(filename)                    
-                    if ext == '.jpg':
+                    filename = os.path.basename(member.name)
+                    base_name, ext = os.path.splitext(filename)
+                    if ext.lower() == '.jpg':
                         # Extract file content directly using the tar module - extraction from a tar file requires thiese steps inorder to extract files to the correct directory
                         file_obj = tar.extractfile(member)
                         if file_obj:
