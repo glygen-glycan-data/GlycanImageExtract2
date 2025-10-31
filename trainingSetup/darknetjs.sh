@@ -50,7 +50,7 @@ RESULTS=""
 NAME=""
 CLEAN="0"
 IOU="0.5"
-THR="0.25"
+CONF="0.25"
 
 while [ "$#" -gt 0 ]; do
     case $1 in
