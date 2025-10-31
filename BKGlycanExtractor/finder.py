@@ -84,6 +84,11 @@ class KnownFinder(Finder):
             boxpadding = Config.get_param('boxpadding', Config.FLOAT, kwargs, self.defaults),
         ))
 
+        # generally a label type selected from the TSV file while building training data
+        # this will be provided to the respective known finders - create_boxes/find_boxes - so that the labels can be updated
+        # based on cmd line args (which is optional) during the activity of buildign training data
+        self.label_type = None
+
     def write_model(self, finder_name, filename):
         with open(filename, 'w') as wh:
             print(f"[Finder:{finder_name}]",file=wh)
@@ -99,6 +104,9 @@ class KnownFinder(Finder):
             for label in self._labels:
                 print(f"{label}",file=wh)
         return
+
+    def set_label(self,label_type):
+        self.label_type = label_type
 
     def get_known_data(self, image_path):
         '''
@@ -161,10 +169,6 @@ class KnownFinder(Finder):
                     }
                     map_dict['glycans'].append(current_glycan)
                     glycan_count += 1
-
-                elif data_points[0] == '###' and data_points[1] == 'CLASS:':
-                    if current_glycan is not None:
-                        current_glycan['classlabel'] = data_points[2]
 
                 elif data_points[0] == 'm':
                     if current_glycan is not None:
@@ -233,9 +237,8 @@ class KnownFinder(Finder):
                         x_max = int(max(x_coords))
                         y_max = int(max(y_coords))
                         current_glycan['squiggle'] = {'symbol': data_points[2], 'x_min': x_min, 'x_max': x_max, 'y_min': y_min, 'y_max': y_max}
-
+                # rest of the key-value pairs from map file (like iupac, composition, classlabel, etc.)
                 elif data_points[0] == '#':
-                    # rest of the key-value pairs from map file (like iupac, composition, etc.)
                     key = data_points[1][:-1]
                     value = ' '.join(data_points[2:])
                     current_glycan[key] = value
@@ -244,7 +247,6 @@ class KnownFinder(Finder):
         map_dict["SGI"] = (glycan_count == 1)
         map_dict["glycan_count"] = glycan_count
         
-        print("\n----->>>map_dict",map_dict)
         return map_dict
 
     def find_boxes(self, obj):

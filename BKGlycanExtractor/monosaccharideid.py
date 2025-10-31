@@ -81,12 +81,19 @@ class KnownMono(MonoFinder,KnownFinder):
 
             symbol = data['symbol']
 
+            # classlabel can be updated via the semantics file - if the optionally provided label_type matches a key in the semantics file
+            if self.label_type:
+                print("label",self.label_type,map_dict['glycans'][0][self.label_type])
+                classlabel = map_dict['glycans'][0][self.label_type]
+            else:
+                classlabel = symbol
+
             box = BoundingBox(
                 x1=data['x_min'], y1=data['y_min'], 
                 x2=data['x_max'], y2=data['y_max'], 
                 symbol=symbol,
-                classid=self.get_label_index(symbol),
-                classlabel=symbol,
+                classid=self.get_label_index(classlabel),
+                classlabel=classlabel,
                 id=id
             )
             boxes.append(box)
