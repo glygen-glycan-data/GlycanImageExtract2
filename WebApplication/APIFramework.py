@@ -717,9 +717,14 @@ class APIFramework:
             tid = params['tid']
         result = self.get_result(tid)
         oldtask = result['submission_detail']
-        input_file = os.path.join('static', result.get('location','files'), tid, 'input', oldtask['original_file_name'])
-        submission_type = oldtask['submission_type']
-        newtask = dict(submission_type=submission_type,filePath=input_file)
+        if 'pmid' in oldtask:
+            submission_type = oldtask['submission_type']
+            pmid = oldtask['pmid']
+            newtask = dict(submission_type=submission_type,pmid=pmid)
+        else:
+            input_file = os.path.join('static', result.get('location','files'), tid, 'input', oldtask['original_file_name'])
+            submission_type = oldtask['submission_type']
+            newtask = dict(submission_type=submission_type,filePath=input_file)
         response = self.upload_file(task=json.dumps(newtask))
         return flask.redirect(flask.url_for('jobs'))
 
