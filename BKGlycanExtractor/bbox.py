@@ -6,6 +6,8 @@ import copy
 def hasall(dct,*keys):
     return all(map(lambda k: dct.get(k) is not None, keys))
 
+from . compareboxes import CompareBoxes
+
 class BoundingBox: 
     reserved_kwargs = set("""
        image image_width image_height
@@ -154,6 +156,9 @@ class BoundingBox:
                 self.y/self.imheight,
                 (self.x+self.w-1)/self.imwidth,
                 (self.y+self.h-1)/self.imheight)
+
+    def contains(self,b):
+        return CompareBoxes.is_contained_in(b,self)
 
     def __str__(self):
         x1,y1,x2,y2 = self.corners()
