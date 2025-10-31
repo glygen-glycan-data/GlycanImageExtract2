@@ -8,7 +8,7 @@ def _remove_tempdir(tempdir):
     if os.path.exists(tempdir):
         shutil.rmtree(tempdir)
 
-def build_training(*, config, finder_name, images, out_zip, boxpadding=None, exclude_pattern="*.annotated.*"):
+def build_training(*, config, finder_name, images, out_zip, boxpadding=None, label_type=None, exclude_pattern="*.annotated.*"):
     if not out_zip.endswith('.zip'):
         raise ValueError("Zip file filename must have .zip extension")
     if os.path.exists(out_zip):
@@ -26,6 +26,11 @@ def build_training(*, config, finder_name, images, out_zip, boxpadding=None, exc
 
     if boxpadding is not None:
         finder.set_param('boxpadding', boxpadding)
+
+    # if a label_type was provided, that it will be picked from the semantics file and substituted as the
+    # classlabel for the known boxes
+    if label_type:
+        finder.set_label(label_type)
 
     images_mgr = Image_Manager(images)
     if exclude_pattern:

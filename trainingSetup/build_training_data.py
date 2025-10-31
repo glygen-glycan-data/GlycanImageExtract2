@@ -28,8 +28,17 @@ parser = argparse.ArgumentParser(description="Build training data")
 parser.add_argument(
     '--finder',
     type = str,
-    required = True,
+    default = "KnownGlycanBoxes",
     help = 'Finder for known boxes on images. Usually, one of KnownGlycanBoxes, KnownMono, KnownRoot, KnownLink, or KnownLinkWithInfo.'
+)
+
+# TODO: issue 29 - cmd line args optionally to change the classlabel
+parser.add_argument(
+    '--label_type',
+    type = str,
+    required = False,
+    default = None,
+    help = 'Label type used to build training data. The type can be selected from the TSV file.'
 )
 
 parser.add_argument(
@@ -42,8 +51,9 @@ parser.add_argument(
 parser.add_argument(
     '--images',
     type = str,
+    nargs = "+",
     required = True,
-    help = 'Directory path where image files are stored. Required.'
+    help = "One or more paths - directories and/or files. Required"
 )
 
 parser.add_argument(
@@ -62,7 +72,8 @@ build_training(
     finder_name=args.finder,
     images=args.images,
     out_zip=args.out,
-    boxpadding=args.boxpadding
+    boxpadding=args.boxpadding,
+    label_type=args.label_type
 )
 print("Training data is ready...")
 print(args.out)
