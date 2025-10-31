@@ -422,6 +422,15 @@ class FigureSemantics(ImageSemantics):
                     text = str(link.classlabel())
                 self.annotate(x_min,y_min,x_max,y_max,color=color,text=text,thickness=1)
 
+    def annotate_boxes(self,boxes,colors=[(255, 255, 0)],labels=False):
+        for box in boxes:
+            x_min,y_min,x_max,y_max = box.corners()
+            text=''
+            if labels:
+                text = str(box.get('classlabel',''))
+            color = colors[box.get('classid',0)%len(colors)]
+            self.annotate(x_min,y_min,x_max,y_max,color=color,text=text,thickness=1)
+
     def write_image(self,**kwargs):
         cv2.imwrite(self.make_filename(**kwargs), self.image())
 
