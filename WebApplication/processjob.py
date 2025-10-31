@@ -402,6 +402,11 @@ class PMIDJob(JobInstance):
             tag = self.get_tag_name(child)
             if tag == 'label' and child.text:
                 xml_fig_label = child.text.strip()
+                # Should match "Fig. 1" and "Figure 1" and other variations...
+                m = re.search(r'^\s*\w+\.?\s*(\d+)\s*$',xml_fig_label)
+                if m:
+                    # normalize figure label
+                    xml_fig_label = "figure %s"%(m.group(1))
 
             if tag in ('graphic', 'inline-graphic'):
                 # Check both regular href and xlink:href
