@@ -45,7 +45,7 @@
     /* Keep images and controls responsive */
     .upload-area img {
         max-width: 100%;
-        height: auto;
+        height: 35px;
     }
   
     .upload-area:hover {
@@ -88,11 +88,6 @@
       background: #0056b3;
       transform: translateY(-2px);
   }
-  
-  /* .form-group {
-      margin-bottom: 20px;
-  } */
-
 
   
   .form-control {
@@ -283,6 +278,23 @@
         }
     });
 
+    function setLoadingState(isLoading) {
+        const btn = document.querySelector('button[type="submit"]');
+        const uploadArea = document.querySelector('.upload-area');
+        if (isLoading) {
+            btn.disabled = true;
+            btn.textContent = 'Processing...';
+            uploadArea.style.backgroundColor = '#b3b5b7';
+        } else {
+            // Remove inline styles to revert to original CSS
+            btn.disabled = false;
+            btn.textContent = 'Submit';
+            uploadArea.style.backgroundColor = '';;
+        }
+        
+        btn.style.backgroundColor = '#6c757d';
+        btn.style.color = 'white'
+    }
 
     function validateForm(event) {
         event.preventDefault(); 
@@ -323,6 +335,9 @@
                 return false; 
             }
 
+            // Change sumbit button style to indicate that the request is being processed - UI visual changes
+            setLoadingState(true);
+
             // Validate if PMID has Open Access resources for PMCID via backend API using AJAX
             jQuery.ajax({
                 type: 'POST',
@@ -355,12 +370,17 @@
                         console.error('Error parsing response:', parseError);
                         errorMessage = `Failed to validate PMID: ${error}`;
                     }
+
+                    setLoadingState(false);
                     alert(errorMessage);
                 }
             });
             
             return false; // Don't proceed until PMID validation completes
         }
+        
+        // Change sumbit button style to indicate that the request is being processed - UI visual changes
+        setLoadingState(true);
 
         // proceeds directly for non-PMID uploads without the PMID validation check
         submitForm(submission_type, null);
@@ -425,6 +445,14 @@
 
 {% block content %}
 <div class="container-fluid d-flex flex-column">
+    <!-- Loading/pinner Overlay -->
+    <div class="clearfix">
+        <div class="spinner-border float-right" role="status">
+          <span class="sr-only">Loading...</span>
+        </div>
+    </div>
+
+
     <nav aria-label="breadcrumb">
         <ol class="breadcrumb bg-white">
             <li class="breadcrumb-item"><a href="{{urlprefix}}/">Home</a></li>
@@ -470,7 +498,7 @@
                             <div class="form-group">
                                 <!-- <label for="fileURL" class="form-label">Document URL</label> -->
                                 <!-- <i class="fas fa-link fa-3x text-muted mb-3"></i> -->
-                                <img src="{{urlprefix}}/static/images/link.svg">
+                                <img src="{{urlprefix}}/static/images/pdf.svg">
                                 <h5>PubMed ID (Open-Access, PMC manuscripts only)</h5>
                                 <input type="text" name="pmid" id="pmid" class="form-control" 
                                         placeholder=31614918 />
