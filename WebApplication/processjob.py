@@ -403,7 +403,7 @@ class PMIDJob(JobInstance):
             if tag == 'label' and child.text:
                 xml_fig_label = child.text.strip()
                 # Should match "Fig. 1" and "Figure 1" and other variations...
-                m = re.search(r'^\s*\w+\.?\s*(\d+)\s*$',xml_fig_label)
+                m = re.search(r'^\s*\w+\.?\s*(\d+)\.?\s*$',xml_fig_label)
                 if m:
                     # normalize figure label
                     xml_fig_label = "figure %s"%(m.group(1))

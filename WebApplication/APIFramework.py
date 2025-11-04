@@ -522,7 +522,7 @@ class APIFramework:
                 return flask.jsonify({'valid': False, 'error': f"PMID {pmid} is not in PubMed Central"}), 400
 
             # check if it is possible to retrieve the zipped file using PMCID
-            pmc_resp, pmc_status = self.validate_pmcid_resources(pmcid)
+            pmc_resp, pmc_status = self.validate_pmcid_resources(pmid, pmcid)
             pmc_resp_json = pmc_resp.get_json()
 
             if pmc_status != 200 or not pmc_resp_json.get('valid'):
@@ -534,7 +534,7 @@ class APIFramework:
             return flask.jsonify({'valid': False, 'error': str(e)}), 500
 
 
-    def validate_pmcid_resources(self, pmcid):
+    def validate_pmcid_resources(self, pmid, pmcid):
         pmc_api = f'https://www.ncbi.nlm.nih.gov/pmc/utils/oa/oa.fcgi?id={pmcid}'
         r = requests.get(pmc_api, timeout=5)
         r.raise_for_status()
@@ -545,7 +545,7 @@ class APIFramework:
         if link is None:
             return flask.jsonify({
                 'valid': False,
-                'error': f"PMID is not Open Access in PubMed Central"
+                'error': f"PMID {pmid} is not Open Access in PubMed Central"
             }), 400
 
         return flask.jsonify({
