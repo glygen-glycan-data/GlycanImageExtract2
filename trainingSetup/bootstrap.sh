@@ -73,7 +73,7 @@ fi
 if [ ! -d "$SCRIPTS" ]; then
   mkdir -p "$SCRIPTS"
   mkdir -p "$SCRIPTS/docker"
-  for f in darknet.sh darknetjs.sh update_yolo_cfg.py split_data.py bootstrap.sh docker/build.sh docker/install.sh docker/Dockerfile; do
+  for f in darknet.sh darknetjs.sh darknetjs-many.sh update_yolo_cfg.py split_data.py bootstrap.sh docker/build.sh docker/install.sh docker/Dockerfile; do
     download "$SCRIPTURL/$f" "$SCRIPTS/$f"
     case $f in
       *.sh) chmod +x "$SCRIPTS/$f" ;;
