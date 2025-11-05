@@ -87,7 +87,7 @@ if [ ! -d "$DARKNET_DIR" ]; then
     rm -f $BASE/darknet.zip
 
     # Rename the extracted folder to 'darknet'
-    mv $BASE/darknet-* $DARKNET_DIR
+    mv $BASE/*darknet-* $DARKNET_DIR
 fi
 
 python3 -m pip install --user -q gdown openstackclient
