@@ -265,7 +265,7 @@ fi
 DARKNET_DIR="$BASE/darknet"
 # get the original yolo config everytime (-f flag ensures this behaviour)
 if [ "${CONFIG}" = "yolov3-darknet53" ]; then
-  cp -f $DARKNET_DIR/cfg/darknet53.cfg "$YOLO_CONFIG"
+  cp -f $DARKNET_DIR/cfg/yolov3.cfg "$YOLO_CONFIG"
 else
   cp -f $DARKNET_DIR/cfg/${CONFIG}.cfg "$YOLO_CONFIG"
 fi
