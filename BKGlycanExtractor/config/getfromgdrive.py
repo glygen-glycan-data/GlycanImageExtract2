@@ -40,6 +40,8 @@ def download_fileids_from_google_drive(fid, destination_dir, path, configs, extn
             l = eval(l.split('window[\'_DRIVE_ivd\'] = ',1)[1].split(';if ',1)[0].replace(r'\/','/'))
             data = json.loads(l)
             data = data[0]
+            if data is None:
+                continue
             for i,it in enumerate(data):
                 # print(it)
                 itdata = dict(id=it[0],name=it[2],type=it[3],size=it[13],ordinal=i+1)
