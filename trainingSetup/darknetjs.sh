@@ -256,7 +256,7 @@ python3 $SCRIPTS/split_data.py --image_dir $YOLO_DATA --train_txt $TRAINING_FILE
 
 # get darknet YOLOv3 initial trained weights
 if [ ! -f "${YOLO_INIT_WEIGHTS}" ]; then
-  echo "Downloading ${YOLO_INIT_WEIGHTS}..."
+  echo "Downloading ${CONFIG} weights..."
   download_weights "${CONFIG}" "${YOLO_INIT_WEIGHTS}"
 else
   echo "${YOLO_INIT_WEIGHTS} already exists. Skipping download."

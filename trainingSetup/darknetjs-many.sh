@@ -13,9 +13,11 @@ while IFS= read -r line; do
     arg=($line)
     imagedir="${arg[0]}"
     jobname="${arg[1]}" 
-    arg=("${arg[@]:2}") 
-    echo ./darknetjs.sh --image_folder ${imagedir} --job_name ${jobname} --clean --noshutdown ${arg[@]} > ${jobname}.log
-    ./darknetjs.sh --image_folder ${imagedir} --job_name ${jobname} --clean --noshutdown ${arg[@]} >> ${jobname}.log 2>&1
+    arg=("${arg[@]:2}")
+    if [ ! -d ${jobname} ]; then
+        echo ./darknetjs.sh --image_folder ${imagedir} --job_name ${jobname} --clean --noshutdown ${arg[@]} > ${jobname}.log
+        ./darknetjs.sh --image_folder ${imagedir} --job_name ${jobname} --clean --noshutdown ${arg[@]} >> ${jobname}.log 2>&1
+    fi
 done
 
 if [ -f $HOME/.openrc.sh ]; then
