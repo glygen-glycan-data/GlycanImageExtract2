@@ -38,6 +38,35 @@ download() {
   fi
 }
 
+download_weights() {
+  case "$1" in
+    yolov3-darknet53)
+      # darknet53.conv.74
+      download "https://drive.google.com/file/d/1A2tUanRGnlFkK7clccpVLiGFnEeQ1Jc2" "$2";;
+    yolov3) 
+      # yolov3.conv.81
+      download "https://drive.google.com/file/d/1BLNPV1_1wBCFewX17UOJWOYBwQS8_nMV" "$2";;
+    yolov3-tiny) 
+      # yolov3-tiny.conv.15
+      download "https://drive.google.com/file/d/1iSTibH4ZRLsw3VcijZY1r41Ia-CH_2MK" "$2";;
+    yolov4)  
+      # yolov4.conv.137
+      download "https://drive.google.com/file/d/1OCRGWiUznDoJ4QNIBqBYcvfbtFW-Hhu8" "$2";;
+    yolov4-tiny)  
+      # yolov4-tiny.conv.29
+      download "https://drive.google.com/file/d/1c6iGzCr3jlC4YX34QaFLg2ZbpLPq5bgR" "$2";;
+    yolov7)
+      # yolov7.conv.133  
+      download "https://drive.google.com/file/d/1k3yEw3mnhFooFAWRdZDuVHibPD1RVwDr" "$2";;
+    yolov7-tiny)  
+      # yolov7-tiny.conv.89
+      download "https://drive.google.com/file/d/13vQDJM0AD6lyo1x9AJxmNNbbQA9tb1I_" "$2";;
+    *)
+      echo "Bad YOLO config $1..." 1>&2
+      exit 1;;
+  esac
+}
+
 upload() {
   rclone copyto "$1" "$2"
 }
@@ -51,7 +80,9 @@ NAME=""
 CLEAN="0"
 IOU=""
 CONF=""
-NMS=""
+CONFIG="yolov3-darknet53"
+SPLIT="0.8"
+SHUTDOWN="1"
 
 while [ "$#" -gt 0 ]; do
     case $1 in
@@ -63,6 +94,14 @@ while [ "$#" -gt 0 ]; do
             NAME="$2"
             shift 2
             ;;
+	      --config)
+            CONFIG="$2"
+	          shift 2
+	          ;;
+	      --split)
+            SPLIT="$2"
+	          shift 2
+	          ;;
         --iou)
             IOU="$2"
             shift 2
@@ -71,9 +110,9 @@ while [ "$#" -gt 0 ]; do
             CONF="$2"
             shift 2
             ;;
-        --nms)
-            NMS="$2"
-            shift 2
+        --noshutdown)
+            SHUTDOWN=0
+            shift
             ;;
 	      --clean)
             CLEAN=1
@@ -86,16 +125,20 @@ while [ "$#" -gt 0 ]; do
             echo "  --image_folder   Writable Google drive folder for images and results"
             echo "  --job_name       Job name for this training run"
             echo ""
-	          echo "Optional:"
+            echo "Optional:"
+            echo "  --split          Proportion of images to use for training. Default: 0.8."
+            echo "  --noshutdown     Do not shelve the instance when done."
             echo "  --clean          Remove local and remote job folders"
-	          echo ""
-	          echo "Darknet parameters (optional):"
-	          echo "  --iou            IoU for mAP evaluation. Default: 0.5."
-	          echo "  --conf           Confidence threshold for mAP evaluation. Default: 0.25."
-            echo "  --nms            The NMS (non-maximal suppression) threshold. Default: None."
-	          echo ""
-	          echo "YOLO config (optional, must at end of arguments):"
-	          echo "  --max_batches    Number of interations for YOLO config. Default: max(#classes*2000,6000)."
+            echo ""
+            echo "Darknet command-line parameters (optional):"
+            echo "  --config         YOLO config. Default: yolov3-darknet53."
+            echo "  --iou            IoU for mAP evaluation. Default: 0.5."
+            echo "  --conf           Confidence threshold for mAP evaluation. Default: 0.25."
+            echo ""
+            echo "YOLO config (optional, must at the end of arguments list):"
+            echo "  --max_batches    Number of interations for YOLO config. Default: max(#classes*2000,6000)."
+            echo "  --nms_kind       Non-maximal suppression algorithm. One of default, greedynms, diounms, cornernms."
+            echo "  --beta_nms       Non-maximal suppression threshold for greedynms. Default: 0.6."
             echo "  --batch          Batch size for YOLO config. Default: 64."
             echo "  --subdivisions   Subdivisions for YOLO config. Default: 16."
             echo "  --height         Input image height. Default: 416."
@@ -115,9 +158,6 @@ if [ "$CONF" != "" ]; then
 fi
 if [ "$IOU" != "" ]; then
     IOU="-iou_thresh $IOU"
-fi
-if [ "$NMS" != "" ]; then
-    NMS="-nms $NMS"
 fi
 
 BASE="$PWD"
@@ -161,6 +201,7 @@ fi
 
 echo "Image folder: $RESULTS"
 echo "Job name: $NAME"
+echo "Darknet parameters:" --config "$CONFIG" "$IOU" "$CONF"
 echo "Training parameters:" "$@"
 
 EXP="$NAME"
@@ -171,7 +212,8 @@ DRIVEROOT="$RESULTS/$NAME"
 # We will access the local copy for quick use
 YOLO_DATA="data"   # folder where training data is unzipped
 YOLO_WEIGHTS="weights"
-YOLO_CONFIG="yolov3_${EXP}.cfg"
+YOLO_INIT_WEIGHTS="${CONFIG}_${EXP}.weights"
+YOLO_CONFIG="${CONFIG}_${EXP}.cfg"
 TRAIN_CONFIG="train.data"
 TRAINING_FILE="train.txt"
 VALIDATION_FILE="valid.txt"
@@ -189,10 +231,10 @@ unzip -qq -j "images.zip" -d "$YOLO_DATA"
 # Move classes.txt out of YOLO_DATA
 mv "$YOLO_DATA/classes.txt" .
 cp "classes.txt" "classes.names"
-cp "classes.txt" "yolov3_${EXP}.labels"
+cp "classes.txt" "${CONFIG}_${EXP}.labels"
 
 upload "$EXPROOT/classes.txt" "$DRIVEROOT/classes.txt"
-upload "$EXPROOT/yolov3_${EXP}.labels" "$DRIVEROOT/yolov3_${EXP}.labels"
+upload "$EXPROOT/${CONFIG}_${EXP}.labels" "$DRIVEROOT/${CONFIG}_${EXP}.labels"
 
 # YOLO_CLASSES - Count the number of non-empty lines in classes.txt
 # This tells us how many classes are defined (ignoring any blank lines)
@@ -210,20 +252,23 @@ backup = $YOLO_WEIGHTS
 EOF
 
 # need to create training and validation sets
-python3 $SCRIPTS/split_data.py --image_dir $YOLO_DATA --train_txt $TRAINING_FILE --val_txt $VALIDATION_FILE --split_ratio 0.8
+python3 $SCRIPTS/split_data.py --image_dir $YOLO_DATA --train_txt $TRAINING_FILE --val_txt $VALIDATION_FILE --split_ratio "$SPLIT"
 
-
-# get darknet initial weights
-if [ ! -f ./darknet53.conv.74 ]; then
-  echo "Downloading darknet53.conv.74..."
-  download "https://drive.google.com/uc?id=16i5nt2np-4cVw9NlQVL_UrYDBo5zLcgm" darknet53.conv.74
+# get darknet YOLOv3 initial trained weights
+if [ ! -f "${YOLO_INIT_WEIGHTS}" ]; then
+  echo "Downloading ${YOLO_INIT_WEIGHTS}..."
+  download_weights "${YOLO_CONFIG}" "${YOLO_INIT_WEIGHTS}"
 else
-  echo "darknet53.conv.74 already exists. Skipping download."
+  echo "${YOLO_INIT_WEIGHTS} already exists. Skipping download."
 fi
 
 DARKNET_DIR="$BASE/darknet"
 # get the original yolo config everytime (-f flag ensures this behaviour)
-cp -f $DARKNET_DIR/cfg/yolov3.cfg "$YOLO_CONFIG"
+if [ ${CONFIG} == "yolov3-darknet53"]; then
+  cp -f $DARKNET_DIR/cfg/darknet53_488.cfg "$YOLO_CONFIG"
+else
+  cp -f $DARKNET_DIR/cfg/${CONFIG}.cfg "$YOLO_CONFIG"
+fi
 
 python3 $SCRIPTS/update_yolo_cfg.py --yolo_config $YOLO_CONFIG --classes $YOLO_CLASSES "$@"
 
@@ -235,17 +280,19 @@ echo "INFO: Starting training..."
 rm -rf "$YOLO_WEIGHTS"
 mkdir -p "$YOLO_WEIGHTS"
 
-LAST_WEIGHTS_FILE="$YOLO_WEIGHTS/yolov3_${EXP}_last.weights"
-FINAL_WEIGHTS_FILE="$YOLO_WEIGHTS/yolov3_${EXP}_final.weights"
-BEST_WEIGHTS_FILE="$YOLO_WEIGHTS/yolov3_${EXP}_best.weights"
+LAST_WEIGHTS_FILE="$YOLO_WEIGHTS/${CONFIG}_${EXP}_last.weights"
+FINAL_WEIGHTS_FILE="$YOLO_WEIGHTS/${CONFIG}_${EXP}_final.weights"
+BEST_WEIGHTS_FILE="$YOLO_WEIGHTS/${CONFIG}_${EXP}_best.weights"
 
 # DARKNET="sudo docker run --rm --gpus all -v .:/src sherensberk/darknet:2204.550.1241-devel darknet"
 sudo docker pull glyomics/darknet:latest
 DARKNET="sudo docker run --rm --gpus all -v .:/src glyomics/darknet darknet"
 
-$DARKNET detector train "$TRAIN_CONFIG" "$YOLO_CONFIG" ./darknet53.conv.74 -dont_show -map -random -nocolour $CONF $IOU $NMS </dev/null >$TRAIN_LOG 2>&1 &
+nohup $DARKNET detector train "$TRAIN_CONFIG" "$YOLO_CONFIG" ./darknet53.conv.74 -dont_show -map -random -nocolour $CONF $IOU </dev/null >$TRAIN_LOG 2>&1 &
 
-rm -f $HOME/.noshutdown
+if [ "$SHUTDOWN" -eq 1 ]; then
+  rm -f $HOME/.noshutdown
+fi
 
 # Get the PID of the training process
 TRAIN_PID=$!

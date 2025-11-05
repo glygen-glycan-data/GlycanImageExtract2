@@ -18,7 +18,7 @@ def update_block_params(text, section, param_dict):
     result = []
     inside_section = False
     updated_params = set()
-
+    
     for line in lines:
         stripped = line.strip()
         if stripped == f"[{section}]":
@@ -26,11 +26,18 @@ def update_block_params(text, section, param_dict):
             result.append(line)
             updated_params.clear()
         # regex to mark the end of the [yolo] section that we made changes on
-        elif inside_section and re.match(r"\[.*\]", stripped):
+        elif inside_section and re.search(r"^\[\w+\]$", stripped):
             inside_section = False
+            ifany = False
+            for key in param_dict:
+                if key not in updated_params and param_dict.get(key):
+                    result.append(f"{key}={param_dict[key]}")
+                    ifany = True
+            if ifany:
+                result.append("")
             result.append(line)
         elif inside_section:
-            key = stripped.split("=")[0]
+            key = stripped.split("=")[0].strip()
             if key in param_dict and key not in updated_params:
                 result.append(f"{key}={param_dict[key]}")
                 updated_params.add(key)
@@ -38,7 +45,11 @@ def update_block_params(text, section, param_dict):
                 result.append(line)
         else:
             result.append(line)
-
+    if inside_section:
+        for key in param_dict:
+            if key not in updated_params and param_dict.get(key):
+                result.append(f"{key}={param_dict[key]}")
+    result.append("\n")
     return "\n".join(result)
 
 def update_filters_before_yolo(text, filters_val):
@@ -83,20 +94,20 @@ def main(args):
     
     text = update_globals(text, {"batch": args.batch, "subdivisions": args.subdivisions, "max_batches": max_batches, "steps": steps, "height": args.height, "width": args.width, "learning_rate": args.learning_rate})
 
-    print("text",args.subdivisions)
+    # print("text",args.subdivisions)
     
-    param_updates = {"classes": classes}
+    param_updates = {"classes": classes, "nms_kind": args.nms_kind, "beta_nms": args.beta_nms}
     text = update_block_params(text, "yolo", param_updates)
     text = update_filters_before_yolo(text, filters)
 
+    # sys.stdout.write(text)
     with open(cfg_path, 'w') as f:
         f.write(text)
-
-    print(f"Updated '{cfg_path}' for {classes} classes and {filters} filters.")
+    # print(f"Updated '{cfg_path}' for {classes} classes and {filters} filters.")
 
 if __name__ == "__main__":
 
-    print("sys.argv:", sys.argv)
+    # print("sys.argv:", sys.argv)
 
     parser = argparse.ArgumentParser()
 
@@ -112,6 +123,9 @@ if __name__ == "__main__":
                         help='''Splits the batch into smaller groups to reduce GPU memory usage. 
                         Each subdivision loads (batch / subdivisions) images at a time. 
                         Increase to 32 or 64 if you encounter out-of-memory errors.''')
+
+    parser.add_argument("--nms_kind", type=str, default=None, help="NMS kind (default, greedynms, diounms, cornersnms).")
+    parser.add_argument("--beta_nms", type=float, default=None, help="NMS value.")
 
     parser.add_argument("--height", type=int, default=416, help="Height of input training images (in pixels).")
 

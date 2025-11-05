@@ -4,7 +4,7 @@ set -euo pipefail
 # set -x
 
 SCRIPTURL="https://raw.githubusercontent.com/glygen-glycan-data/GlycanImageExtract2/refs/heads/dev/trainingSetup/"
-DARKNET_SRC="https://github.com/AlexeyAB/darknet/archive/6f3ba4422e5719a0fed1ff45045ebaa0c236d582.zip"
+DARKNET_SRC="https://codeload.github.com/EdwardsLabProjects/hank-ai-darknet/zip/refs/tags/v5.0"
 RCLONE_VERSION="v1.69.1"
 
 log_exit() {
@@ -40,8 +40,8 @@ while [ "$#" -gt 0 ]; do
             echo "Usage: ./bootstrap.sh [ options ]"
             echo ""
             echo "Arguments:"
-	    echo "  --rclone_config   File or URL of rclone config."
-	    echo "  --clean           Remove existing downloads."
+	          echo "  --rclone_config   File or URL of rclone config."
+	          echo "  --clean           Remove existing downloads."
             exit 0
             ;;
         *)
