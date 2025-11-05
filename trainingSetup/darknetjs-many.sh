@@ -15,7 +15,7 @@ while IFS= read -r line; do
     jobname="${arg[1]}" 
     arg=("${arg[@]:2}")
     if [ ! -d ${jobname} ]; then
-        echo ./darknetjs.sh --image_folder ${imagedir} --job_name ${jobname} --clean --noshutdown ${arg[@]} > ${jobname}.log
+        echo ./scripts/darknetjs.sh --image_folder ${imagedir} --job_name ${jobname} --clean --noshutdown ${arg[@]} > ${jobname}.log
         ./darknetjs.sh --image_folder ${imagedir} --job_name ${jobname} --clean --noshutdown ${arg[@]} >> ${jobname}.log 2>&1
     fi
 done
