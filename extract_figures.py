@@ -205,7 +205,7 @@ input_folder = args.folder
 output_folder = args.output_dir
 # accepts annotated pdf's only - because annotate_pdf step generates pdf's with the extension .annotated.pdf
 # so it is safe to accept only those kind of pdf's
-pdf_files = glob.glob(os.path.join(input_folder, "*.annotated.pdf")) 
+pdf_files = glob.glob(os.path.join(input_folder, "*.pdf")) 
 
 if os.path.exists(output_folder):
     shutil.rmtree(output_folder)
@@ -213,19 +213,22 @@ os.mkdir(output_folder)
 
 print("\nStarting Process...")
 for pdf_path in pdf_files:
-    print("Processing PDF:", pdf_path)
-    file_name = os.path.splitext(os.path.basename(pdf_path))[0]
-    tsv_path = os.path.join(input_folder, f"{file_name}.tsv")
+    pdf_basename = os.path.basename(pdf_path).rsplit('.',1)[0]
 
-    output_dir = os.path.join(output_folder, file_name)
+    # check if a corresponding tsv file exists for the pdf
+    tsv_path = os.path.join(input_folder, pdf_basename + '.tsv')
+
+    if not os.path.exists(tsv_path):
+        print(f"\nSkipping PDF: {pdf_path} - no matching TSV found.")
+        continue
+
+    print("\nProcessing PDF:", pdf_path)
+
+    output_dir = os.path.join(output_folder, pdf_basename)
 
     if not os.path.exists(output_dir):
         # shutil.rmtree(output_dir)
         os.makedirs(output_dir, exist_ok=True)
-
-    if not os.path.exists(tsv_path):
-        print(f"Skipping {file_name}: no matching TSV found.")
-        continue
 
     # main step for extraction
     extract_annotations(output_dir,pdf_path,tsv_path)
