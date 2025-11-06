@@ -716,7 +716,8 @@ class GlycanSemantics(ImageSemantics):
         scale = (self.mono(u).width()+self.mono(u).height())/2 #average of width + height
         approx = round(0.2*scale) #pixel to tolerance for "equal"
         adjxy = [ self.mono(v).center() for v in filtered_adj ]
-     
+
+        print(self.mono(u).get('symbol'),[self.mono(v).get('symbol') for v in filtered_adj])
         # figure out if they are all on one side of u
         dircnt = defaultdict(int)
         for vxy in adjxy:
@@ -737,7 +738,7 @@ class GlycanSemantics(ImageSemantics):
                 cy = sum(vxy[1] for vxy in adjxy)/len(adjxy)
                 maxdel = max(abs(vxy[1]-cy) for vxy in adjxy)
                 # check they are all in a "line"
-                if maxdel <= approx/2:
+                if maxdel <= approx:
                     if dirn == "up":
                         xyorder = [ vxy[0] for vxy in adjxy ]
                     if dirn == "down":
@@ -746,7 +747,7 @@ class GlycanSemantics(ImageSemantics):
                 cx = sum(vxy[0] for vxy in adjxy)/len(adjxy)
                 maxdel = max(abs(vxy[0]-cx) for vxy in adjxy)
                 # check they are all in a "line"
-                if maxdel <= approx/2:
+                if maxdel <= approx:
                     if dirn == "left":
                         xyorder = [ -vxy[1] for vxy in adjxy ]
                     if dirn == "right":
