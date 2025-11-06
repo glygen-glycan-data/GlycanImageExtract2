@@ -32,7 +32,6 @@ parser.add_argument(
     help = 'Finder for known boxes on images. Usually, one of KnownGlycanBoxes, KnownMono, KnownRoot, KnownLink, or KnownLinkWithInfo.'
 )
 
-# TODO: issue 29 - cmd line args optionally to change the classlabel
 parser.add_argument(
     '--label_type',
     type = str,
