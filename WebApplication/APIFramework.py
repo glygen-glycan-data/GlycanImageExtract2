@@ -840,6 +840,7 @@ class APIFramework:
         self._flask_app.add_url_rule("/examples", "examples", self.examples, methods=["GET"])
         self._flask_app.add_url_rule("/jobs", "jobs", self.jobs, methods=["GET"])
         self._flask_app.add_url_rule("/pmid", "validate_pmid", self.validate_pmid, methods=["POST"])
+        self._flask_app.add_url_rule("/pmid/<pmid>", "validate_pmid", self.validate_pmid, methods=["GET"])
 
         if self._file_based_job:
             self._flask_app.add_url_rule("/file_upload", "upload_file", self.upload_file, methods=["GET", "POST"])
