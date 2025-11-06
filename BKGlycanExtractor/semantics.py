@@ -716,8 +716,9 @@ class GlycanSemantics(ImageSemantics):
         scale = (self.mono(u).width()+self.mono(u).height())/2 #average of width + height
         approx = round(0.2*scale) #pixel to tolerance for "equal"
         adjxy = [ self.mono(v).center() for v in filtered_adj ]
+        
+        # print(self.mono(u).get('symbol'),[self.mono(v).get('symbol') for v in filtered_adj])
 
-        print(self.mono(u).get('symbol'),[self.mono(v).get('symbol') for v in filtered_adj])
         # figure out if they are all on one side of u
         dircnt = defaultdict(int)
         for vxy in adjxy:
