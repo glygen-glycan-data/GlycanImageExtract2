@@ -58,11 +58,8 @@ def parse_comment(comment):
         if ':' in line:
             key, value = line.split(':', 1)
             comment_dict[key.strip().lower()] = value.strip()
-        
-    # fallback: single-line comment with no "id:" or "url:" (some annotations dont have a key-value pair, they just have the value directly mentioned)
-    if len(lines) == 1:
-        # glycan_id = lines[0]
-        comment_dict['id'] = lines[0]
+        else:   # case where is single line is present - will probably be an id (id's are compulsory)
+            comment_dict['id'] = lines[0]
     return comment_dict
 
 def save_figure(page, figure, figure_path):
@@ -73,6 +70,7 @@ def save_figure(page, figure, figure_path):
 
     pix = page.get_pixmap(matrix=mat, clip=pdf_fig_box, annots=False)
     pix.save(figure_path)
+    return pix.width, pix.height
 
 def load_tsv_data(tsv_path):
     """Load TSV into dictionary keyed by ID"""
@@ -109,10 +107,10 @@ def pixel_coordinates(page,annot_box,figure,fig_box):
     y_scale = fig_box.height / float(px_fig_height)
     
     # Convert annotation coordinates to pixel coordinates
-    px_gly_x0 = round((annot_box.x0 - fig_box.x0) / x_scale)
-    px_gly_x1 = round((annot_box.x1 - fig_box.x0) / x_scale)
-    px_gly_y0 = round((annot_box.y0 - fig_box.y0) / y_scale)
-    px_gly_y1 = round((annot_box.y1 - fig_box.y0) / y_scale)
+    px_gly_x0 = round(abs(annot_box.x0 - fig_box.x0) / x_scale)
+    px_gly_x1 = round(abs(annot_box.x1 - fig_box.x0) / x_scale)
+    px_gly_y0 = round(abs(annot_box.y0 - fig_box.y0) / y_scale)
+    px_gly_y1 = round(abs(annot_box.y1 - fig_box.y0) / y_scale)
     
     px_gly_w = abs(px_gly_x1 - px_gly_x0)
     px_gly_h = abs(px_gly_y1 - px_gly_y0)
@@ -162,12 +160,12 @@ def extract_annotations(output_dir, pdf_path, tsv_path):
                 if (pdf_fig_box.height > 90 and pdf_fig_box.width > 90):
                     figure_filename = f"{os.path.basename(output_dir)}_p{page_num}_f{fig_num}.png"
                     figure_path = os.path.join(output_dir, figure_filename)
-                    save_figure(page, figure, figure_path)
+                    px_fig_height, px_fig_width = save_figure(page, figure, figure_path)
 
                     # create semnatic (map) file for all the corresponding figures
                     semantics_file = figure_path.rsplit('.', 1)[0] + '_map.txt'
                     with open(semantics_file, 'w') as sem_file:
-                        sem_file.write(f'##### WHOLEIMAGE: {round(pdf_fig_box.height)} x {round(pdf_fig_box.width)} (height x width)\n')
+                        sem_file.write(f'##### WHOLEIMAGE: {round(px_fig_height)} x {round(px_fig_width)} (height x width)\n')
                         
                         # verify that the annotation intersects with figure
                         for annotation in page_annotations:
@@ -205,7 +203,8 @@ def write_semantics(semantics_file, glycan_data):
 
 input_folder = args.folder
 output_folder = args.output_dir
-# accepts annotated pdf's only
+# accepts annotated pdf's only - because annotate_pdf step generates pdf's with the extension .annotated.pdf
+# so it is safe to accept only those kind of pdf's
 pdf_files = glob.glob(os.path.join(input_folder, "*.annotated.pdf")) 
 
 if os.path.exists(output_folder):
