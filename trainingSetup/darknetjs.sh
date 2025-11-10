@@ -230,11 +230,14 @@ unzip -qq -j "images.zip" -d "$YOLO_DATA"
 
 # Move classes.txt out of YOLO_DATA
 mv "$YOLO_DATA/classes.txt" .
+mv "$YOLO_DATA/model.ini" .
 cp "classes.txt" "classes.names"
 cp "classes.txt" "${CONFIG}_${EXP}.labels"
+cp "model.ini" "${CONFIG}_${EXP}.model"
 
 upload "$EXPROOT/classes.txt" "$DRIVEROOT/classes.txt"
 upload "$EXPROOT/${CONFIG}_${EXP}.labels" "$DRIVEROOT/${CONFIG}_${EXP}.labels"
+upload "$EXPROOT/${CONFIG}_${EXP}.model" "$DRIVEROOT/${CONFIG}_${EXP}.model"
 
 # YOLO_CLASSES - Count the number of non-empty lines in classes.txt
 # This tells us how many classes are defined (ignoring any blank lines)
@@ -288,7 +291,7 @@ BEST_WEIGHTS_FILE="$YOLO_WEIGHTS/${CONFIG}_${EXP}_best.weights"
 sudo docker pull glyomics/darknet:latest
 DARKNET="sudo docker run --rm --gpus all -v .:/src glyomics/darknet darknet"
 
-nohup $DARKNET detector train "$TRAIN_CONFIG" "$YOLO_CONFIG" ./darknet53.conv.74 -dont_show -map -random -nocolour $CONF $IOU </dev/null >$TRAIN_LOG 2>&1 &
+nohup $DARKNET detector train "$TRAIN_CONFIG" "$YOLO_CONFIG" "$YOLO_INIT_WEIGHTS" -dont_show -map -random -nocolour $CONF $IOU </dev/null >$TRAIN_LOG 2>&1 &
 
 if [ "$SHUTDOWN" -eq 1 ]; then
   rm -f $HOME/.noshutdown
