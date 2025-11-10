@@ -28,7 +28,7 @@ rclone() {
 download() {
   rm -f "$2"
   case "$1" in 
-    https://drive.google.com/*) gdown -q -O "$2" "$1";;
+    https://drive.google.com/*) gdown --fuzzy -q -O "$2" "$1";;
     http*) wget --no-check-certificate -q -O "$2" "$1";;
     *) rclone copyto "$1" "$2";;
   esac
@@ -42,29 +42,30 @@ download_weights() {
   case "$1" in
     yolov3-darknet53)
       # darknet53.conv.74
-      download "https://drive.google.com/uc?id=1A2tUanRGnlFkK7clccpVLiGFnEeQ1Jc2" "$2";;
+      download "https://drive.google.com/uc?id=1A2tUanRGnlFkK7clccpVLiGFnEeQ1Jc2" "darknet53.conv.74";;
     yolov3) 
       # yolov3.conv.81
-      download "https://drive.google.com/uc?id=1BLNPV1_1wBCFewX17UOJWOYBwQS8_nMV" "$2";;
+      download "https://drive.google.com/uc?id=1BLNPV1_1wBCFewX17UOJWOYBwQS8_nMV" "yolov3.conv.81";;
     yolov3-tiny) 
       # yolov3-tiny.conv.15
-      download "https://drive.google.com/uc?id=1iSTibH4ZRLsw3VcijZY1r41Ia-CH_2MK" "$2";;
+      download "https://drive.google.com/uc?id=1iSTibH4ZRLsw3VcijZY1r41Ia-CH_2MK" "yolov3-tiny.conv.15";;
     yolov4)  
       # yolov4.conv.137
-      download "https://drive.google.com/uc?id=1OCRGWiUznDoJ4QNIBqBYcvfbtFW-Hhu8" "$2";;
+      download "https://drive.google.com/uc?id=1OCRGWiUznDoJ4QNIBqBYcvfbtFW-Hhu8" "yolov4.conv.137";;
     yolov4-tiny)  
       # yolov4-tiny.conv.29
-      download "https://drive.google.com/uc?id=1c6iGzCr3jlC4YX34QaFLg2ZbpLPq5bgR" "$2";;
+      download "https://drive.google.com/uc?id=1c6iGzCr3jlC4YX34QaFLg2ZbpLPq5bgR" "yolov4-tiny.conv.29";;
     yolov7)
       # yolov7.conv.133  
-      download "https://drive.google.com/uc?id=1k3yEw3mnhFooFAWRdZDuVHibPD1RVwDr" "$2";;
+      download "https://drive.google.com/uc?id=1k3yEw3mnhFooFAWRdZDuVHibPD1RVwDr" "yolov7.conv.133";;
     yolov7-tiny)  
       # yolov7-tiny.conv.89
-      download "https://drive.google.com/uc?id=13vQDJM0AD6lyo1x9AJxmNNbbQA9tb1I_" "$2";;
+      download "https://drive.google.com/uc?id=13vQDJM0AD6lyo1x9AJxmNNbbQA9tb1I_" "yolov7-tiny.conv.89";;
     *)
       echo "Bad YOLO config $1..." 1>&2
       exit 1;;
   esac
+  echo *.conv.*
 }
 
 upload() {
@@ -257,13 +258,7 @@ EOF
 # need to create training and validation sets
 python3 $SCRIPTS/split_data.py --image_dir $YOLO_DATA --train_txt $TRAINING_FILE --val_txt $VALIDATION_FILE --split_ratio "$SPLIT"
 
-# get darknet YOLOv3 initial trained weights
-if [ ! -f "${YOLO_INIT_WEIGHTS}" ]; then
-  echo "Downloading ${CONFIG} weights..."
-  download_weights "${CONFIG}" "${YOLO_INIT_WEIGHTS}"
-else
-  echo "${YOLO_INIT_WEIGHTS} already exists. Skipping download."
-fi
+YOLO_INIT_WEIGHTS=`download_weights "${CONFIG}"`
 
 DARKNET_DIR="$BASE/darknet"
 # get the original yolo config everytime (-f flag ensures this behaviour)
