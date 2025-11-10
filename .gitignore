@@ -140,3 +140,4 @@ dmypy.json
 WebApplication/input/
 WebApplication/static/files/
 test*/
+trainingSetup/YOLO
