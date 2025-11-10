@@ -38,7 +38,7 @@ def update_block_params(text, section, param_dict):
             result.append(line)
         elif inside_section:
             key = stripped.split("=")[0].strip()
-            if key in param_dict and key not in updated_params:
+            if param_dict.get(key) and key not in updated_params:
                 result.append(f"{key}={param_dict[key]}")
                 updated_params.add(key)
             else:
