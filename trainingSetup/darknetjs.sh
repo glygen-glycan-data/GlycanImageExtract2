@@ -12,7 +12,7 @@ log_exit() {
   fi
   local code=$?
   echo "$(date '+%Y-%m-%d %H:%M:%S') Script exited with code $code"
-  if [ -f $HOME/.openrc.sh -a ! -f $HOME/.noshutdown -a "$SHUTDOWN" -eq 1 ]; then
+  if [ -f $HOME/.openrc.sh -a ! -f $HOME/.noshutdown -a "$SHUTDOWN" = "1" ]; then
       source $HOME/.openrc.sh
       openstack server shelve `cat /run/cloud-init/.instance-id`
   fi
