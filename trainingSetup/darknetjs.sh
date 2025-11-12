@@ -83,7 +83,7 @@ IOU=""
 CONF=""
 CONFIG="yolov3-darknet53"
 SPLIT="0.8"
-SHUTDOWN="1"
+SHUTDOWN=""
 
 while [ "$#" -gt 0 ]; do
     case $1 in
@@ -154,6 +154,9 @@ while [ "$#" -gt 0 ]; do
     esac
 done
 
+if [ "$SHUTDOWN" = "" ]; then
+     SHUTDOWN=1
+fi
 if [ "$SHUTDOWN" -eq 1 ]; then
   touch $HOME/.noshutdown
 fi
