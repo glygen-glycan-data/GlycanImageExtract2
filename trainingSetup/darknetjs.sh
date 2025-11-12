@@ -137,14 +137,14 @@ while [ "$#" -gt 0 ]; do
             echo "  --conf           Confidence threshold for mAP evaluation. Default: 0.25."
             echo ""
             echo "YOLO config (optional, must at the end of arguments list):"
-            echo "  --max_batches    Number of interations for YOLO config. Default: max(#classes*2000,6000)."
+            echo "  --max_batches    Number of iterations. Default: max(#classes*2000,6000)."
             echo "  --nms_kind       Non-maximal suppression algorithm. One of default, greedynms, diounms, cornernms."
             echo "  --beta_nms       Non-maximal suppression threshold for greedynms. Default: 0.6."
-            echo "  --batch          Batch size for YOLO config. Default: 64."
-            echo "  --subdivisions   Subdivisions for YOLO config. Default: 16."
+            echo "  --batch          Batch size. Default: 64."
+            echo "  --subdivisions   Subdivisions. Default: 16."
             echo "  --height         Input image height. Default: 416."
             echo "  --width          Input image width. Default: 416."
-            echo "  --learning_rate  Learning rate for YOLO. Default: 0.001."
+            echo "  --learning_rate  Learning rate. Default: 0.001."
             echo ""
             exit 0
             ;;
@@ -286,6 +286,7 @@ BEST_WEIGHTS_FILE="$YOLO_WEIGHTS/${CONFIG}_${EXP}_best.weights"
 sudo docker pull glyomics/darknet:latest
 DARKNET="sudo docker run --rm --gpus all -v .:/src glyomics/darknet darknet"
 
+echo darknet train "$TRAIN_CONFIG" "$YOLO_CONFIG" "$YOLO_INIT_WEIGHTS" -dont_show -map -random -nocolour $CONF $IOU
 nohup $DARKNET detector train "$TRAIN_CONFIG" "$YOLO_CONFIG" "$YOLO_INIT_WEIGHTS" -dont_show -map -random -nocolour $CONF $IOU </dev/null >$TRAIN_LOG 2>&1 &
 
 if [ "$SHUTDOWN" -eq 1 ]; then
@@ -317,7 +318,7 @@ upload_files() {
 echo ">> Monitoring weights and uploading to Drive..."
 while kill -0 "$TRAIN_PID" 2>/dev/null; do
 
-  upload_files $YOLO_WEIGHTS/yolo*.weights *-log.txt chart*.png
+  upload_files $YOLO_WEIGHTS/yolo*.weights *-log.txt chart*.png ../${EXPROOT}.log
   sleep 60
 
 done
@@ -326,7 +327,7 @@ done
 rm -f $TMPDIR/*
 
 echo "INFO: Uploading last weights to Drive..."
-upload_files $YOLO_WEIGHTS/yolo*.weights *-log.txt chart*.png
+upload_files $YOLO_WEIGHTS/yolo*.weights *-log.txt chart*.png ../${EXPROOT}.log
 
 if [ -f "$LAST_WEIGHTS_FILE" ]; then
   echo "SUCCESS: Training complete. Final sync of weights to Drive done..."
