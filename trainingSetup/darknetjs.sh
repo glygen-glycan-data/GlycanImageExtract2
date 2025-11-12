@@ -4,7 +4,9 @@ set -euo pipefail
 # set -x
 
 TMPDIR=""
-touch $HOME/.noshutdown
+if [ "$SHUTDOWN" -eq 1 ]; then
+  touch $HOME/.noshutdown
+fi
 
 log_exit() {
   if [ -n "$TMPDIR" -a -d "$TMPDIR" ]; then
@@ -12,7 +14,7 @@ log_exit() {
   fi
   local code=$?
   echo "$(date '+%Y-%m-%d %H:%M:%S') Script exited with code $code"
-  if [ -f $HOME/.openrc.sh -a ! -f $HOME/.noshutdown ]; then
+  if [ -f $HOME/.openrc.sh -a ! -f $HOME/.noshutdown -a "$SHUTDOWN" -eq 1 ]; then
       source $HOME/.openrc.sh
       openstack server shelve `cat /run/cloud-init/.instance-id`
   fi
