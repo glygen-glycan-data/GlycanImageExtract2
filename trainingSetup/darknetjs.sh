@@ -4,9 +4,7 @@ set -euo pipefail
 # set -x
 
 TMPDIR=""
-if [ "$SHUTDOWN" -eq 1 ]; then
-  touch $HOME/.noshutdown
-fi
+SHUTDOWN=0
 
 log_exit() {
   if [ -n "$TMPDIR" -a -d "$TMPDIR" ]; then
@@ -156,6 +154,9 @@ while [ "$#" -gt 0 ]; do
     esac
 done
 
+if [ "$SHUTDOWN" -eq 1 ]; then
+  touch $HOME/.noshutdown
+fi
 if [ "$CONF" != "" ]; then
     CONF="-thresh $CONF"
 fi
