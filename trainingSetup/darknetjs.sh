@@ -324,7 +324,7 @@ upload_files() {
 echo ">> Monitoring weights and uploading to Drive..."
 while kill -0 "$TRAIN_PID" 2>/dev/null; do
 
-  upload_files $YOLO_WEIGHTS/yolo*.weights *-log.txt chart*.png ../${EXPROOT}.log
+  upload_files $YOLO_WEIGHTS/yolo*.weights *-log.txt chart*.png ${EXPROOT}.log
   sleep 60
 
 done
@@ -333,7 +333,7 @@ done
 rm -f $TMPDIR/*
 
 echo "INFO: Uploading last weights to Drive..."
-upload_files $YOLO_WEIGHTS/yolo*.weights *-log.txt chart*.png ../${EXPROOT}.log
+upload_files $YOLO_WEIGHTS/yolo*.weights *-log.txt chart*.png ${EXPROOT}.log
 
 if [ -f "$LAST_WEIGHTS_FILE" ]; then
   echo "SUCCESS: Training complete. Final sync of weights to Drive done..."
