@@ -15,9 +15,15 @@ parser = argparse.ArgumentParser(description="Compute Precision-Recall")
 parser.add_argument(
     '--finders',
     type = str,
-    required = True,
     nargs = '+', # allows one or more values
-    help = 'At least one glycan element finder. Required.'
+    help = 'At least one glycan element finder. One of --finders or --pipelines must be specified.'
+)
+
+parser.add_argument(
+    '--pipelines',
+    type = str,
+    nargs = '+', # allows one or more values
+    help = 'At least one evaluation and known glycan pipeline pair (P1:P2). One of --finders or --pipelines must be specified.'
 )
 
 # required argument
@@ -120,6 +126,18 @@ if args.verbose:
     verbose = True
 elif args.quiet:
     verbose = False
+
+if args.finders and args.pipelines:
+    print("Only one of --finders and --pipelines should be specified.",file=sys.stderr)
+    sys.exit(1)
+
+if not args.finders and not args.pipelines:
+    print("At least one of --finders and --pipelines should be specified.",file=sys.stderr)
+    sys.exit(1)
+
+if args.pipelines:
+    print("--pipelines not yet supported.",file=sys.stderr)
+    sys.exit(1)
 
 if args.boxes and args.semantics:
     print("Only one of --boxes and --semantics should be specified.",file=sys.stderr)
