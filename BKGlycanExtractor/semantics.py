@@ -64,8 +64,11 @@ class Semantics(object):
     def __iter__(self):
         return self.keys()
     
+    def __str__(self):
+        return "<"+self.__class__.__name__+" instance>"
+
     def __repr__(self):
-        return str(self)
+        return self.__str__()
 
     def log(self,message):
         self.append('log',"[%s] %s"%(callsig(1),message))
@@ -102,6 +105,11 @@ class BoxPredictionSemantics(Semantics):
 
     def box(self):
         return self.get('box')
+    
+    def corners(self):
+        if self.get('box'):
+            return self.get('box').corners()
+        return None
 
     def bbox(self):
         return self.get('bbox')
@@ -120,7 +128,10 @@ class BoxPredictionSemantics(Semantics):
 
     def classlabel(self):
         return self.get('classlabel')
-
+    
+    def __str__(self):
+        return f"[Box: classlabel: {self['classlabel']}, box: {self['box']}, confidence: {self.get('confidence')}]"
+        
 class LinkSemantics(BoxPredictionSemantics):
     def __init__(self, *, from_id, to_id, **kwargs):
         super().__init__(from_id=int(from_id),to_id=int(to_id),**kwargs)
@@ -224,7 +235,26 @@ class UndirectedLinkSemantics(BoxPredictionSemantics):
     
     def anomer(self):
         return self.get('anomer')
-
+    
+    def creates_cycle(self,ulinks):
+        # try to find a path from one mono id to the other
+        fromto = defaultdict(set)
+        for ul in ulinks:
+            ids = ul.mono_ids()
+            fromto[ids[0]].add(ids[1])
+            fromto[ids[1]].add(ids[0])
+        selfids = self.mono_ids()
+        toexplore = set([selfids[0]])
+        found = set()
+        while len(toexplore) > 0 and selfids[1] not in found:
+            u = toexplore.pop()
+            found.add(u)
+            for v in fromto[u]:
+                if v not in toexplore and v not in found:
+                    toexplore.add(v)
+        if selfids[1] in found:
+            return True
+        return False
 
 # Base class for any thing (figure, glycan) which has an image with width and height
 class ImageSemantics(BoxPredictionSemantics):
@@ -328,8 +358,13 @@ class FigureSemantics(ImageSemantics):
         color = kwargs.get('color',(0,255,0))
         thickness = kwargs.get('thickness',1)
         text = kwargs.get('text','')
-        xt=kwargs.get('xt',x2)
-        yt=kwargs.get('yt',y1)
+        textanchor = kwargs.get('textanchor',"TR")
+        if textanchor == "TR":
+            xt=kwargs.get('xt',x2)
+            yt=kwargs.get('yt',y1)
+        elif textanchor == "BR":
+            xt=kwargs.get('xt',x2)
+            yt=kwargs.get('yt',y2)
         xtoff=kwargs.get('xtoff',0)
         ytoff=kwargs.get('ytoff',0)
         xt += xtoff
