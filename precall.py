@@ -92,6 +92,14 @@ parser.add_argument(
     help = "Precision for confidence values. Default: 4."
 )
 
+# optional argument
+parser.add_argument(
+    '--annotate_images',
+    action = 'store_true',
+    default = False,
+    help = 'Annotate images with no prediction (NP), extra prediction (EP), and bad label (BL) boxes.'
+)
+
 dp.add_arguments(parser)
 
 # optional argument
@@ -284,3 +292,6 @@ Evaluator.plotprecisionrecall(
     grid=True,
     **extra_args
 )
+
+if args.annotate_images:
+    Evaluator.annotate_images(evaluators,images)

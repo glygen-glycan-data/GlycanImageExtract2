@@ -11,6 +11,7 @@ import os
 import re
 import copy
 import cv2
+import glob
 from collections import defaultdict
 # import multiprocessing
 import sys
@@ -25,7 +26,7 @@ from .compareboxes import CompareBoxes
 from .debug_methods import DebugMode
 from .glycanannotator import Config_Manager
 from .distproc import DistributedProcessing as dp
-from .semantics import BoxPredictionSemantics
+from .semantics import BoxPredictionSemantics, FigureSemantics
 
 class CompareBase(object):
     def __init__(self,precision=8,verbose=False,whole_image=False,restrict_class=None,**kwargs):
@@ -59,25 +60,25 @@ class CompareBase(object):
         Primary sorting criteria is confidence"""
         return 0
 
-    def _update_metrics(self,results,confidence,TP,FP,FN):
+    def _update_metrics(self,results,confidence,TP,FP,FN,badboxes):
         if self.verbose:
             # print(self.str_trunc_conf(confidence),"TP",TP,"FP",FP,"FN",FN,file=sys.stderr)
             print(self.str_trunc_conf(confidence),"TP",TP,"FP",FP,"FN",FN)
-        results[confidence] = dict(TP=TP,FP=FP,FN=FN)        
+        results[confidence] = dict(TP=TP,FP=FP,FN=FN,badboxes=badboxes)        
 
-    def update_metrics(self,results,confidence,nTRUE,TP,FP,FN):
+    def update_metrics(self,results,confidence,nTRUE,TP,FP,FN,badboxes):
         if self.whole_image:
             if FP + TP >= nTRUE:
                 if FP == 0:
-                    self._update_metrics(results,confidence,1,0,0)
+                    self._update_metrics(results,confidence,1,0,0,badboxes)
                 elif TP == nTRUE:
-                    self._update_metrics(results,confidence,1,1,0)
+                    self._update_metrics(results,confidence,1,1,0,badboxes)
                 else:
-                    self._update_metrics(results,confidence,0,1,0)
+                    self._update_metrics(results,confidence,0,1,0,badboxes)
             else:
-                self._update_metrics(results,confidence,0,0,1)
+                self._update_metrics(results,confidence,0,0,1,badboxes)
         else:
-            self._update_metrics(results,confidence,TP,FP,FN)
+            self._update_metrics(results,confidence,TP,FP,FN,badboxes)
 
     def compare(self,pred_objs,known_objs,**kwargs):
         if self.classrestriction is not None:
@@ -121,17 +122,21 @@ class CompareBase(object):
         results = {}
 
         gt_count = len(known_data)
+        gt_ids = set(range(gt_count))
         
         for threshold in confidence_scores:
             TP, FP, FN = 0, 0, 0
 
             matched_gt = set()  # Set of matched ground truth IDs
             matched_pred = set()  # Set of matched predicted box IDs
+            badboxids = defaultdict(set)
 
             # FP's includes all the pred_data which is above the threshold
-            accepted_pred_count = sum( 
-                1 for data in pred_data if self.scaled_trunc_conf(data.get('confidence')) >= threshold
-            )
+            accepted_pred_ids = set(filter(
+                                           lambda i: self.scaled_trunc_conf(pred_data[i].get('confidence')) >= threshold,
+                                           range(len(pred_data))
+                                           ))
+            accepted_pred_count = len(accepted_pred_ids)
 
             # Greedy matching based on Confidence
             # if edges are not sorted  - algo breaks
@@ -154,16 +159,33 @@ class CompareBase(object):
                 if item['classlabel'][0] == item['classlabel'][1]:
                     TP += 1
                 else:
-                    FP += 1
-                    FN += 1
+                    FP += 1; badboxids['fp'].add(pred_id)
+                    FN += 1; badboxids['fn'].add(known_id)
+                    badboxids['badlabel'].add(pred_id)
 
-            FN += gt_count - len(matched_gt)
-            FP += accepted_pred_count - len(matched_pred)
+            fnboxes = gt_ids-matched_gt
+            FN += len(fnboxes)
+            badboxids['fn'].update(fnboxes)
+            badboxids['nopred'].update(fnboxes)
 
-            self.update_metrics(results,threshold,gt_count,TP,FP,FN)
+            fpboxes = accepted_pred_ids-matched_pred
+            FP += len(fpboxes)
+            badboxids['fp'].update(fpboxes)
+            badboxids['extrapred'].update(fpboxes)
+
+            badboxes = defaultdict(list)
+            for k,ids in badboxids.items():
+                if k in ("fp","badlabel","extrapred"):
+                    if len(badboxids[k]) > 0:
+                        badboxes[k] = [ pred_data[i] for i in badboxids[k] ]
+                elif k in ("fn","nopred"):
+                    if len(badboxids[k]) > 0:
+                        badboxes[k] = [ known_data[i] for i in badboxids[k] ]
+
+            self.update_metrics(results,threshold,gt_count,TP,FP,FN,badboxes)
 
         last_threshold = self.scaled_onepluseps
-        self.update_metrics(results,last_threshold,gt_count,0,0,gt_count)
+        self.update_metrics(results,last_threshold,gt_count,0,0,gt_count,{})
 
         return results
     
@@ -359,6 +381,7 @@ class Evaluator:
     def process_results(self,collected_results):
         # print("all_pipelines",self.pipelines)
         aggregated_results = {}
+        per_image_results = {}
 
         all_confidences = set()
         for pred_name, data in collected_results.items():
@@ -372,6 +395,15 @@ class Evaluator:
             aggregated_results[pred_name] = {
                 conf: {'TP': 0, 'FP': 0, 'FN': 0} for conf in sorted_confidences
             }
+
+        for pred_name, data in collected_results.items():
+            for image_name in data.keys():
+                per_image_results.setdefault(pred_name, {})   
+                per_image_results[pred_name].setdefault(image_name, {})
+                for conf in sorted_confidences:
+                    per_image_results[pred_name][image_name].setdefault(
+                        conf, {'TP': 0, 'FP': 0, 'FN': 0, 'badboxes': {}}
+                    )
 
         # aggregated_results = {conf: {'TP': 0, 'FP': 0, 'FN': 0} for conf in sorted_confidences}
 
@@ -388,6 +420,9 @@ class Evaluator:
                         aggregated_results[pred_name][conf]['TP'] += metrics['TP']
                         aggregated_results[pred_name][conf]['FP'] += metrics['FP']
                         aggregated_results[pred_name][conf]['FN'] += metrics['FN']
+
+                        per_image_results[pred_name][image_name][conf] = metrics
+                    
                     else:
                         print("NOT RELEVANT")
             
@@ -398,10 +433,48 @@ class Evaluator:
                     print("-->>",k1,v1,file=sys.stderr)
              
         # print("\naggregated_results",aggregated_results)
+        self.per_image_results = per_image_results
 
+        # print("\nself.per_image_results", self.per_image_results)
+        # print("per_image_results")
+        # for pred_name,rest in per_image_results.items():
+        #     for image_name,rest1 in rest.items():
+        #        for conf,rest2 in rest1.items():
+        #            if rest2['FP'] == 0:
+        #                continue
+        #            for key,items in rest2['badboxes'].items():
+        #                print("-->>",pred_name,image_name,conf,key,items)
+ 
         Evaluator.check_data_monotonicity(aggregated_results, sort_data=False)   # aggregated data should already be in sorted format
 
         self.final_structure = aggregated_results
+
+    @staticmethod
+    def annotate_images(evaluators,images):
+        for fullpath in images:
+            # print(fullpath)
+            filename = os.path.split(fullpath)[1]
+            for fn in glob.glob(fullpath.rsplit('.',1)[0]+".annotated-*.png"):
+                # print(fn)
+                os.unlink(fn)
+            curveindex = 0
+            for i,eval in enumerate(evaluators):
+                for predname in eval.per_image_results:
+                    curveindex += 1
+                    if filename not in eval.per_image_results[predname]:
+                        continue
+                    imagedata = eval.per_image_results[predname][filename]
+                    sortedconf = sorted(imagedata)
+                    if len(sortedconf) < 2:
+                        continue
+                    minconf = sortedconf[0]
+                    if imagedata[minconf]['FN'] > 0 or imagedata[minconf]['FP'] > 0:
+                        badboxes = imagedata[minconf]['badboxes']
+                        sem = FigureSemantics(image_path=fullpath)
+                        sem.annotate_boxes(badboxes['nopred'],color=(128, 128, 0),label="NP")
+                        sem.annotate_boxes(badboxes['extrapred'],color=(128, 0, 128),label="EP",anchor="BR")
+                        sem.annotate_boxes(badboxes['badlabel'],color=(0, 100, 0),label="BL")
+                        sem.write_image(extension="annotated-%d.png"%(curveindex,))
 
     @staticmethod
     def plotprecisionrecall(results, **kwargs):
@@ -442,6 +515,7 @@ class Evaluator:
         plt.figure(1,figsize=figsize) 
         plt.figure(2,figsize=figsize)
 
+        details = {}
         for pipeline in results:
             for pipeline_details, result_data in pipeline.final_structure.items():
 
