@@ -31,7 +31,8 @@ parser.add_argument(
     '--images',
     type = str,
     required = True,
-    help = 'Directory path where image files are stored. Required.'
+    nargs = "+",
+    help = 'Directory path(s) where image files are stored. Required.'
 )
 
 parser.add_argument(
