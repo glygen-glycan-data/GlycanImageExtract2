@@ -4,12 +4,14 @@ from submit import searchGlyLookup, searchGlyImage, sendToGNOme
 from PIL import Image
 from hashlib import md5
 from APIFramework import APIFramework
-
-from BKGlycanExtractor import Config_Manager, BoundingBox
+from BKGlycanExtractor import PDF_Figure_Search
+from BKGlycanExtractor import Config_Manager, BoundingBox, PDFBoundingBox, CompareBoxes
+from BKGlycanExtractor import PDFHandler, CompoundPDFImageFilter, PDFXRefImageFilter, PDFImageSizeFilter
 
 import numpy as np
 from shutil import copyfile
 import tarfile
+# from difflib import SequenceMatcher     # python standard library to compare textual sequences
 
 import xml.etree.ElementTree as ET
 
@@ -24,6 +26,7 @@ class JobInstance:
     }
 
     def __init__(self, task_detail, msg_queue = None):
+        self.task_detail = task_detail
         self.id = task_detail.get('id')
         self.msg_queue = msg_queue
         self.original_file_name = task_detail.get('original_file_name')
@@ -378,6 +381,9 @@ class JobInstance:
 class ImageJob(JobInstance):
     def process_figures(self, image_folders):
         self.update_status("Processing image")
+        self.task_detail['original_filepath'] = self.abs_to_rel(self.input_filepath)
+        self.task_detail['abs_original_filepath'] = self.input_filepath
+        self.task_detail['pipeline_name'] = self.pipeline_name
         self.find_glycans(self.input_filepath,image_folders)
 
 class PMIDJob(JobInstance):
@@ -420,6 +426,11 @@ class PMIDJob(JobInstance):
     def process_figures(self, image_folders):
 
         base_path = os.path.dirname(os.path.abspath(__file__))
+
+        self.update_status("Processing image")
+        self.task_detail['original_filepath'] = self.abs_to_rel(self.input_filepath)
+        self.task_detail['abs_original_filepath'] = self.input_filepath
+        self.task_detail['pipeline_name'] = self.pipeline_name
 
         # zipped file location - which contains all info related to the PMID
         # copy all the figures from the zipped file to the extracted_figures folder (the figures are renamed to match the figure labels that appear in the manuscript)
@@ -493,7 +504,7 @@ class PMIDJob(JobInstance):
                 self.find_glycans(fig_path, image_folders, **figure_metadata)
 
 
-class PDFJob(JobInstance):
+class PDFJob(JobInstance,PDF_Figure_Search):
     """
     Main processing logic for PDF files.
     Handles file verification, page/image extraction, and glycan annotation.
@@ -501,70 +512,57 @@ class PDFJob(JobInstance):
     
     def process_figures(self, image_folders):
         """
-        Extract figure metadata from PDF using fitz.
-        On each figure - find all glycans using the object detection pipeline and generate semantics
+        Extract figure metadata from PDF using the two methods:
+        a) xref based figure extraction (returns figures metadata) 
+        b) Using Heuristics (PDFigCapX)- Text block and Image block positions (returns figures metadata) 
+
+        Step 1
+        - Both the above methods return figures metadata for the pdf. 
+        Merge the info obtained --> to get the overall best figures metadata in the pdf.
+
+        Step 2
+        - Using the figures metadata, find all glycans using the object detection pipeline and generate semantics.
         """
+
+        # update task_detail - with the original input_filepath
+        self.task_detail['original_filepath'] = self.abs_to_rel(self.input_filepath)
+        self.task_detail['abs_original_filepath'] = self.input_filepath
+        self.task_detail['pipeline_name'] = self.pipeline_name
+
         doc = fitz.open(self.input_filepath)
-        # figure_num = 1
 
-        for page_num, page in enumerate(doc.pages(), 1):
-            # page = doc[page_num]
-            figure_num = 1
-            info = page.get_image_info(xrefs=True)
-            for img in info:
-                xref = img["xref"]
-                
-                # xref's are one of the most straigforward and efficient ways of extracting figures from pdf's
-                # journal logo's are images which often have xref = 0, which cannot be extracted using xref 
-                # (but note that it is still possible to extract these if required using different methods)
-                # Also, if any other related errors occur - try/except block will handle it
-                if xref < 1:   
-                    continue
+        # Note - Getting figures metadata from all the different strategies, so that
+        # the for loop below can use your choice of metadata (easier for testing)
 
+        # a) xref based figures extraction
+        xref_figures_metadata = self.xref_figure_info(self.input_filepath)
+
+        # b) Heuristics based extraction (PDFigCapX)
+        figcap_figures_metadata = self.figcap_figure_info(self.input_filepath)
+
+        # merging method (a) and method (b) metadata
+        merged_pdf_info = self.merge_pdf_fig_info(xref_figures_metadata, figcap_figures_metadata)
+
+        for page_num, fig_data in merged_pdf_info.items():
+            page = doc[page_num-1]
+            for figure_num, figure_info in fig_data.items():
+
+                image_path = os.path.join(image_folders['figures_dir'], f"{figure_info['image_count']}.png")
+
+                pix = page.get_pixmap(clip=figure_info['pdf_fig_bbox'])        # x1,y1,x2,y2
+                figure_info['width'] = pix.width
+                figure_info['height'] = pix.height
                 try:
-                    # Note: pdf_fig_box is not in pixels
-                    # this is in page cooridniates which is called points (1 point = 1/72 inch)
-                    pdf_fig_box = fitz.Rect(img["bbox"])
-                    pdf_fig_height = pdf_fig_box.height
-                    pdf_fig_width = pdf_fig_box.width
-                    area = pdf_fig_height * pdf_fig_width
-
-                
-                    self.log_file.write(
-                        f"\nPage number: {page_num}, Figure number: {figure_num},  BBox: {img["bbox"]}, Width: {pdf_fig_width}, Height: {pdf_fig_height}, Area: {area}\n"
-                    )
-
-                    if (pdf_fig_height > 90 and pdf_fig_width > 90) or area > 8100:
-                        # figure_data['figure_count'] = self.figure_count
-
-                        images_path = os.path.join(image_folders['figures_dir'], f"{xref}.png")
-
-                        pix = fitz.Pixmap(doc, xref)
-                        try:
-                            pix.save(images_path)
-                        except Exception as e:
-                            # If save fails, convert to RGB and try again
-                            pix = fitz.Pixmap(fitz.csRGB, pix)
-                            pix.save(images_path)
-
-                        figure_metadata = {
-                            "page_num": page_num,
-                            "figure_num": figure_num,
-                            "xref": xref,
-                            "pdf_fig_bbox": [pdf_fig_box.x0, pdf_fig_box.y0, pdf_fig_width, pdf_fig_height],
-                        }
-
-                        self.log_file.write(f"\nSaved image to {images_path}")
-
-                        self.update_status("Processing image %d from page %d" % (figure_num, page_num))
-
-                        self.find_glycans(images_path, image_folders, **figure_metadata)
-
-                        figure_num += 1
+                    pix.save(image_path)
+                    print("saved image", image_path)
                 except Exception as e:
-                    self.log_file.write(
-                        f"\nException occured while extracting a figure from the pdf: {e}."
-                    )
+                    # If save fails, convert to RGB and try again
+                    pix = fitz.Pixmap(fitz.csRGB, pix)
+                    pix.save(image_path)
 
+                self.log_file.write(f"\nSaved image to {image_path}")
 
+                self.update_status("Processing image %d from page %d" % (figure_num, page_num))
+
+                self.find_glycans(image_path, image_folders, **figure_info)
 
