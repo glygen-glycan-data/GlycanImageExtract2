@@ -8,7 +8,51 @@ def hasall(dct,*keys):
 
 from . compareboxes import CompareBoxes
 
-class BoundingBox: 
+class BaseBoundingBox:
+    '''
+    Abstarct Base class for bounding boxes
+
+    Defines the common interface that all bounding box class implementations must provide.
+    '''
+
+    def area(self):
+        raise NotImplementedError
+    
+    def corners(self):
+        """
+        Return corner coordinates.
+        For pixel boxes: (x, y, x+w-1, y+h-1)
+        For PDF boxes: (x0, y0, x1, y1)
+        """
+        raise NotImplementedError
+    
+    def bbox(self):
+        """
+        Return bounding box
+        For pixel boxes: (x, y, w, h)
+        For PDF boxes: (x0, y0, x1, y1)
+        """
+        raise NotImplementedError
+    
+    def center(self):
+        """Return the center point as (cx, cy)."""
+        raise NotImplementedError
+    
+    def width(self):
+        raise NotImplementedError
+    
+    def height(self):
+        raise NotImplementedError
+
+
+
+class BoundingBox(BaseBoundingBox): 
+    '''
+    Pixel-based bounding box using (x, y, w, h) format with integer (pixels) coordinates.
+
+    Internal representation has: x, y, w, h as integers.
+    '''
+
     reserved_kwargs = set("""
        image image_width image_height
        x y w h
@@ -209,6 +253,41 @@ class BoundingBox:
         y2 = min(y2,self.imheight-1)                                                                      
         self.update_bbox(x=x1,y=y1,w=(x2-x1+1),h=(y2-y1+1))
 
+    def to_pdf_bbox(self, pdf_page_width: float, pdf_page_height: float, pdf_fig_bbox):
+        """
+        Convert to PDFBoundingBox using page dimensions.
+
+        pdf_page_width, pdf_page_height -- refers to the pdf page
+
+        pdf_fig_bbox - helps to calculate the scale
+                    
+        Returns: PDFBoundingBox with coordinates in PDF space
+        """
+
+        if self.imwidth is None or self.imheight is None:
+            raise ValueError("Image dimensions required for conversion")
+
+        pdf_x1_orig, pdf_y1_orig, pdf_x2_orig, pdf_y2_orig = pdf_fig_bbox
+        pdf_bbox_width = pdf_x2_orig - pdf_x1_orig
+        pdf_bbox_height = pdf_y2_orig - pdf_y1_orig
+        
+        # Convert pixel coordinates to PDF coordinates
+        scale_x = pdf_bbox_width / self.imwidth
+        scale_y = pdf_bbox_height / self.imheight
+
+        x1 = pdf_x1_orig + (self.x * scale_x)
+        y1 = pdf_y1_orig + (self.y * scale_y)
+        x2 = pdf_x1_orig + ((self.x + self.w-1) * scale_x)
+        y2 = pdf_y1_orig + ((self.y + self.h-1) * scale_y)
+
+        
+        return PDFBoundingBox(
+            page_width=pdf_page_width,
+            page_height=pdf_page_height,
+            x1=x1, y1=y1, x2=x2, y2=y2,
+            **self.data
+        )
+
     # below here needs to be fixed, commenting for now 
     #
     #    def annotate(self, image, defaulttext='', colour=(0,255,0)):
@@ -280,3 +359,253 @@ class BoundingBox:
     #        self.imwidth = self.imwidth + self.white_space
     #        self.imheight = self.imheight + self.white_space
     #
+
+
+class PDFBoundingBox(BaseBoundingBox):
+    '''
+    PDF coordinate bounding box using (x1, y1, x2, y2) format with float coordinates.
+    
+    Internal representation: x1, y1, x2, y2 as floats
+    PDF coordinates are in points (1/72 inch) and are typically floats.
+    '''
+
+    reserved_kwargs = set("""
+       page_width page_height
+       bbox
+       x1 y1 x2 y2
+       x y w h
+       width height
+    """.split())
+
+
+    def __init__(self, **kwargs):
+        self.set_page_dimensions(**kwargs)
+        
+        # PDF bbox format: x1, y1, x2, y2 (corner coordinates as floats)
+        if hasall(kwargs, 'x1', 'y1', 'x2', 'y2'):
+            self.x1 = float(kwargs['x1'])
+            self.y1 = float(kwargs['y1'])
+            self.x2 = float(kwargs['x2'])
+            self.y2 = float(kwargs['y2'])
+        elif hasall(kwargs, 'bbox'):
+            # bbox can be [x1, y1, x2, y2] or [x, y, w, h]
+            bbox = kwargs['bbox']
+            if len(bbox) == 4:
+                # Try to determine format: if x2 > x1 and y2 > y1, assume corners
+                # Otherwise assume x, y, w, h
+                if bbox[2] > bbox[0] and bbox[3] > bbox[1]:
+                    # Likely x1, y1, x2, y2 format
+                    self.x1 = float(bbox[0])
+                    self.y1 = float(bbox[1])
+                    self.x2 = float(bbox[2])
+                    self.y2 = float(bbox[3])
+                else:
+                    # Likely x, y, w, h format - convert to corners
+                    self.x1 = float(bbox[0])
+                    self.y1 = float(bbox[1])
+                    self.x2 = float(bbox[0]) + float(bbox[2]) - 1
+                    self.y2 = float(bbox[1]) + float(bbox[3]) - 1
+            else:
+                raise ValueError(f"bbox must have 4 elements, got {len(bbox)}")
+        elif hasall(kwargs, 'x', 'y', 'w', 'h'):
+            # Convert from x, y, w, h to x1, y1, x2, y2
+            self.x1 = float(kwargs['x'])
+            self.y1 = float(kwargs['y'])
+            self.x2 = float(kwargs['x']) + float(kwargs['w']) - 1
+            self.y2 = float(kwargs['y']) + float(kwargs['h']) - 1
+        elif hasall(kwargs, 'x', 'y', 'width', 'height'):
+            self.x1 = float(kwargs['x'])
+            self.y1 = float(kwargs['y'])
+            self.x2 = float(kwargs['x']) + float(kwargs['width']) - 1
+            self.y2 = float(kwargs['y']) + float(kwargs['height']) - 1
+        else:
+            raise ValueError("required arguments missing: need (x1,y1,x2,y2) or (x,y,w,h) or bbox")
+        
+        # Ensure x1 < x2 and y1 < y2
+        if self.x1 > self.x2:
+            self.x1, self.x2 = self.x2, self.x1
+        if self.y1 > self.y2:
+            self.y1, self.y2 = self.y2, self.y1
+        
+        self.data = dict()
+        for k, v in kwargs.items():
+            if k not in self.reserved_kwargs:
+                self.data[k] = copy.deepcopy(v)
+    
+    def set_page_dimensions(self, **kwargs):
+        """Set PDF page dimensions (in points)."""
+        if hasall(kwargs, 'page_width', 'page_height'):
+            self.page_width = float(kwargs['page_width'])
+            self.page_height = float(kwargs['page_height'])
+        else:
+            self.page_width = None
+            self.page_height = None
+    
+    def set(self, key, value):
+        self.data[key] = value
+    
+    def has(self, key):
+        return key in self.data
+    
+    def get(self, key, default=None):
+        return self.data.get(key, default)
+    
+    def items(self):
+        return {**self.data}
+    
+    def update(self, **kwargs):
+        self.data.update(kwargs)
+    
+    def clone(self):
+        return PDFBoundingBox(
+            page_width=self.page_width,
+            page_height=self.page_height,
+            x1=self.x1, y1=self.y1, x2=self.x2, y2=self.y2,
+            **self.data
+        )
+    
+    def center(self):
+        return ((self.x1 + self.x2) / 2.0, (self.y1 + self.y2) / 2.0)
+    
+    def width(self):
+        return self.x2 - self.x1 + 1
+    
+    def height(self):
+        return self.y2 - self.y1 + 1
+    
+    def corners(self):
+        """Return corner coordinates as (x1, y1, x2, y2)."""
+        return (self.x1, self.y1, self.x2, self.y2)
+    
+    def area(self):
+        return self.width() * self.height()
+    
+    def bbox(self):
+        """Return bounding box in PDF format: (x1, y1, x2, y2)."""
+        return (self.x1, self.y1, self.x2, self.y2)
+    
+    def bbox_xywh(self):
+        """TEST: Return bounding box in (x, y, w, h) format."""
+        return (self.x1, self.y1, self.width(), self.height())
+    
+    def update_bbox(self, **kwargs):
+        if 'x1' in kwargs:
+            self.x1 = float(kwargs['x1'])
+        if 'y1' in kwargs:
+            self.y1 = float(kwargs['y1'])
+        if 'x2' in kwargs:
+            self.x2 = float(kwargs['x2'])
+        if 'y2' in kwargs:
+            self.y2 = float(kwargs['y2'])
+        
+        # Ensure x1 < x2 and y1 < y2
+        if self.x1 > self.x2:
+            self.x1, self.x2 = self.x2, self.x1
+        if self.y1 > self.y2:
+            self.y1, self.y2 = self.y2, self.y1
+    
+    def tolist(self, *extra_keys):
+        """Return bbox as list plus extra data values."""
+        return list(self.bbox()) + [self.data.get(k) for k in extra_keys]
+    
+    def __str__(self):
+        retval = "[ "
+        retval += "(%s" % self.x1
+        retval += ", %s)" % self.y1
+        retval += ", (%s" % self.x2
+        retval += ", %s)" % self.y2
+        for k, v in sorted(self.data.items()):
+            retval += ", " + k + ": " + str(v)
+        retval += " ]"
+        return retval
+    
+    def __repr__(self):
+        return str(self)
+    
+    def normalize(self):
+        """Normalize bounding box to be within page boundaries."""
+        if self.page_width is None or self.page_height is None:
+            raise RuntimeError("Page dimensions not provided.")
+        
+        self.x1 = max(self.x1, 0.0)
+        self.y1 = max(self.y1, 0.0)
+        self.x2 = min(self.x2, self.page_width)
+        self.y2 = min(self.y2, self.page_height)
+        
+        # Ensure valid box
+        if self.x1 >= self.x2:
+            self.x1 = 0.0
+            self.x2 = self.page_width
+        if self.y1 >= self.y2:
+            self.y1 = 0.0
+            self.y2 = self.page_height
+    
+    def pad(self, padding: float):
+        self.x1 -= padding
+        self.y1 -= padding
+        self.x2 += padding
+        self.y2 += padding
+        self.normalize()
+    
+    def shift(self, dx: float = 0.0, dy: float = 0.0):
+        """Shift the bounding box by dx, dy (in PDF points)."""
+        self.x1 += dx
+        self.y1 += dy
+        self.x2 += dx
+        self.y2 += dy
+        self.normalize()
+    
+    def pad_relative(self, padding):
+        w = self.width()
+        h = self.height()
+        self.x1 -= padding * w
+        self.y1 -= padding * h
+        self.x2 += padding * w
+        self.y2 += padding * h
+        self.normalize()
+    
+    # TODO NEED TO TEST
+    def to_pixel_bbox(self, image_width: int, image_height: int):
+        """
+        Convert to BoundingBox (pixel coordinates) using image dimensions.
+
+        image_width, image_height --> int in pixels
+        
+            
+        Returns: BoundingBox with coordinates in pixel space
+            
+        Note: Conversion from float PDF coordinates to integer pixels may lose precision.
+        The conversion uses rounding to minimize error.
+        """
+        if self.page_width is None or self.page_height is None:
+            raise ValueError("Page dimensions required for conversion")
+        
+        # Convert PDF coordinates to pixel coordinates
+        scale_x = image_width / self.page_width
+        scale_y = image_height / self.page_height
+        
+        # Convert corners, then to x, y, w, h
+        # Use rounding to minimize conversion error
+        x1_px = round(self.x1 * scale_x)
+        y1_px = round(self.y1 * scale_y)
+        x2_px = round(self.x2 * scale_x)
+        y2_px = round(self.y2 * scale_y)
+        
+        # Convert to x, y, w, h format
+        x = int(x1_px)
+        y = int(y1_px)
+        w = int(x2_px) - int(x1_px) + 1  # +1 to include both endpoints
+        h = int(y2_px) - int(y1_px) + 1
+        
+        return BoundingBox(
+            image_width=image_width,
+            image_height=image_height,
+            x=x, y=y, w=w, h=h,
+            **self.data
+        )
+
+
+
+
+
+

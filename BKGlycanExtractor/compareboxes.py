@@ -47,7 +47,8 @@ class CompareBoxes:
         return distance/min(w, h)
 
     @staticmethod
-    def is_contained_in(b1,b2):                                                                           
+    def is_contained_in(b1,b2):   
+        # return true only if b1 in contained inside b2                                                                        
         b1x1,b1y1,b1x2,b1y2 = b1.corners()                                                                
         b2x1,b2y1,b2x2,b2y2 = b2.corners()                                                                
         if b1x1 < b2x1:                                                                                   
@@ -60,6 +61,16 @@ class CompareBoxes:
             return False                                                                                  
         assert CompareBoxes.intersection_area(b1,b2) == b1.area()                                                      
         return True
+
+    @staticmethod
+    def get_containment(b1,b2):
+        # returns (contained box, container box)
+        if CompareBoxes.is_contained_in(b1,b2):
+            return (b1,b2)
+        elif CompareBoxes.is_contained_in(b2,b1):
+            return (b2,b1)
+        return None
+
 
     @staticmethod
     def have_intersection(training, detected):
@@ -99,6 +110,35 @@ class CompareBoxes:
             # assert float('-inf') <= iou <= 1
             return iou
         return 0.0
+
+    @staticmethod
+    def union_boxes(bbox1, bbox2):
+        x1,y1,w1,h1 = bbox1.bbox()
+        x2,y2,w2,h2 = bbox2.bbox()
+
+        # finding the bbox which contains both the boxes i.e merging both boxes into one box
+        x_min = min(x1,x2)
+        y_min = min(y1,y2)
+        x_max = max(x1+w1-1, x2+w2-1)
+        y_max = max(y1+h1-1, y2+h2-1)
+        
+        return (x_min, y_min, x_max-x_min, y_max-y_min)     # x,y,w,h 
+
+    @staticmethod
+    def union_pdf_boxes(bbox1, bbox2):
+        # IMP - this method is only meant to merge pdf boxes
+        x1, y1, x2, y2 = bbox1.bbox()
+        _x1, _y1, _x2, _y2 = bbox2.bbox()
+        
+        # finding the bbox which contains both the boxes i.e merging both boxes into one box
+        x_min = min(x1, _x1)  # leftmost x
+        y_min = min(y1, _y1)  # bottommost y (or topmost depending on coordinate system)
+        x_max = max(x2, _x2)  # rightmost x
+        y_max = max(y2, _y2)  # topmost y (or bottommost depending on coordinate system)
+        
+        return [x_min, y_min, x_max, y_max]  # x1, y1, x2, y2
+
+        
     
     def is_overlapping(self, training, detected):
         if CompareBoxes.iou(training, detected) > self.overlap_threshold:
