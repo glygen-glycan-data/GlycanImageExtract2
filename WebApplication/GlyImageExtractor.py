@@ -62,6 +62,7 @@ class ReferenceAPIFileBased(APIFramework):
             task_detail = task_queue.get(block=True)
 
             calculation_start_time = time.time()
+            result = None
             error = []
 
             token = task_detail["id"]
@@ -77,11 +78,10 @@ class ReferenceAPIFileBased(APIFramework):
             try:
                 job_instance = JobInstance.get_processor(task_detail, msg_queue=result_queue)
                 job_instance.process_file()
+                result = job_instance.get_results()
             except:
                 traceback.print_exc()
                 error.append(traceback.format_exc())
-
-            result = job_instance.get_results()
 
             calculation_end_time = time.time()
             calculation_time_cost = calculation_end_time - calculation_start_time
@@ -97,12 +97,16 @@ class ReferenceAPIFileBased(APIFramework):
                     status = "File could not be interpreted as a PDF."
 
             # information for webservice (API Framework)
+            updated_task_detail = job_instance.task_detail
             res = {
                 "id": token,
                 "start time": calculation_start_time,
                 "end time": calculation_end_time,
                 "runtime": calculation_time_cost,
                 "error": error,
+                "original_filepath": updated_task_detail['original_filepath'],
+                "abs_original_filepath": updated_task_detail['abs_original_filepath'],
+                "pipeline_name": updated_task_detail['pipeline_name'],
                 "figure_result": result,
                 "finished": True,
                 "state": state,
