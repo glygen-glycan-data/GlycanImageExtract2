@@ -18,17 +18,14 @@ class PDFHandler(object):
     
     @staticmethod
     def image_dimensions(image_info):
-        # Why do we need to create a box?
-        pdf_fig_box = fitz.Rect(image_info['bbox'])
-        pdf_fig_height = pdf_fig_box.height
-        pdf_fig_width = pdf_fig_box.width
-        return pdf_fig_width,pdf_fig_height
+        x0,y0,x1,y1 = image_info['bbox']      # fitz based bbox is [x0,y0,x1,y1]
+        return abs(x0-x1)+1, abs(y0-y1)+1         # returns width, height
     
+    # TODO need to create a class which verifies or converts bbox and box version automatcailly 
     @staticmethod
     def image_bbox(image_info):
-        # Why do we need to create a box?
-        pdf_fig_box = fitz.Rect(image_info['bbox'])
-        return pdf_fig_box.x0, pdf_fig_box.y0, pdf_fig_box.width, pdf_fig_box.height
+        return image_info['bbox']       # returns fitz based bbox is [x0,y0,x1,y1]
+
 
     @staticmethod
     def create_box(bbox):
@@ -49,14 +46,23 @@ class PDFHandler(object):
             pic.save(filename)
     
     def figures(self,filter=None):
+        image_count = 1
         for page_number,page in enumerate(self.pages(),1):
-            images = self.images_per_page(page)
+            images = self.images_per_page(page)         # image identification is based on xrefs
             for image_number,image in enumerate(images,1):
+                pdf_fig_width, pdf_fig_height = self.image_dimensions(image)
                 image['page_number'] = page_number
-                image['image_number'] = image_number
-                image['pdf_fig_bbox'] = self.image_bbox(image)
+                image['image_number'] = image_number                # image count per page
+                image['pdf_fig_bbox'] = self.image_bbox(image)      # pdf_fig_bbox - x0,y0,x1,y1
+                image['pdf_fig_width'] = pdf_fig_width
+                image['pdf_fig_height'] = pdf_fig_height
+                image['page_width'] = page.rect.width
+                image['page_height'] = page.rect.height
                 if filter is None or filter.keep(image):
+                    image['image_count'] = image_count                  # total image count so far
+                    image_count += 1
                     yield image
+                                    
 
 class PDFImageFilter(object):
     def keep(self,image):
