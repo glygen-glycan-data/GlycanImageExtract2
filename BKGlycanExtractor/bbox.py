@@ -9,11 +9,31 @@ def hasall(dct,*keys):
 from . compareboxes import CompareBoxes
 
 class BaseBoundingBox:
-    '''
-    Abstarct Base class for bounding boxes
+    def __init__(self):
+        self.data = {}
 
-    Defines the common interface that all bounding box class implementations must provide.
-    '''
+    def set(self,key,value):
+        self.data[key] = value
+
+    def has(self,key):
+        return key in self.data
+
+    def get(self,key,default=None):
+        return self.data.get(key,default)
+
+    # method to return a dict of items that the box object contains except the dimensions
+    def items(self):
+        # return self.data    # any changes made will to the data passed from here will reflect back to the object.....users can utilize getters/setters to make changes instead
+        return {**self.data}
+
+    def update(self,**kwargs):
+        self.data.update(kwargs)
+
+    def __repr__(self):
+        return str(self)
+
+    def tolist(self,*extra_keys):
+        return list(self.bbox()) + [ self.data.get(k) for k in extra_keys ]
 
     def area(self):
         raise NotImplementedError
@@ -44,6 +64,8 @@ class BaseBoundingBox:
     def height(self):
         raise NotImplementedError
 
+    def clone(self):
+        raise NotImplementedError
 
 
 class BoundingBox(BaseBoundingBox): 
@@ -63,7 +85,7 @@ class BoundingBox(BaseBoundingBox):
        rcx rcy rw rh
     """.split())
     def __init__(self, **kwargs):
-
+        super().__init__()
         self.set_image_dimensions(**kwargs)
 
         # 
@@ -114,7 +136,7 @@ class BoundingBox(BaseBoundingBox):
         else:
             raise ValueError("required arguments missing")
 
-        self.data = dict()
+        # self.data = dict()        # initialized in Base class
         for k,v in kwargs.items():
             if k not in self.reserved_kwargs:
                 self.data[k] = copy.deepcopy(v)
@@ -132,23 +154,6 @@ class BoundingBox(BaseBoundingBox):
         else:
             self.imwidth = None
             self.imheight = None
-
-    def set(self,key,value):
-        self.data[key] = value
-
-    def has(self,key):
-        return key in self.data
-
-    def get(self,key,default=None):
-        return self.data.get(key,default)
-
-    # method to return a dict of items that the box object contains except the dimensions
-    def items(self):
-        # return self.data    # any changes made will to the data passed from here will reflect back to the object.....users can utilize getters/setters to make changes instead
-        return {**self.data}
-
-    def update(self,**kwargs):
-        self.data.update(kwargs)
 
     def clone(self):
         return BoundingBox(image_width=self.imwidth, image_height=self.imheight,
@@ -184,9 +189,6 @@ class BoundingBox(BaseBoundingBox):
         if 'h' in kwargs:
             self.h = int(kwargs['h'])
  
-    def tolist(self,*extra_keys):
-        return list(self.bbox()) + [ self.data.get(k) for k in extra_keys ]
-
     def center_relative(self):
         assert(self.imwidth is not None and self.imheight is not None)
         return ((self.x+self.w/2)/self.imwidth,
@@ -205,19 +207,18 @@ class BoundingBox(BaseBoundingBox):
         return CompareBoxes.is_contained_in(b,self)
 
     def __str__(self):
-        x1,y1,x2,y2 = self.corners()
+        # should probably show [x,y,w,h] for BBOX? 
+        # and [x1,y1,x2,y2] for PDfBBOX?
+        x,y,w,h = self.bbox()
         retval = "[ "
-        retval += "(%s"%(x1,)
-        retval += ", %s)"%(y1,)
-        retval += ", (%s"%(x2,)
-        retval += ", %s)"%(y2,)
+        retval += "(%s"%(x,)
+        retval += ", %s)"%(y,)
+        retval += ", (%s"%(w,)
+        retval += ", %s)"%(h,)
         for k,v in sorted(self.data.items()):
             retval += ", " + k + ": " + str(v)
         retval += " ]"
-        return retval
-    
-    def __repr__(self):
-        return str(self)
+        return retval    
 
     def crop(self,image):
         (x1, y1, x2, y2) = self.corners()
@@ -379,6 +380,7 @@ class PDFBoundingBox(BaseBoundingBox):
 
 
     def __init__(self, **kwargs):
+        super().__init__()
         self.set_page_dimensions(**kwargs)
         
         # PDF bbox format: x1, y1, x2, y2 (corner coordinates as floats)
@@ -427,7 +429,7 @@ class PDFBoundingBox(BaseBoundingBox):
         if self.y1 > self.y2:
             self.y1, self.y2 = self.y2, self.y1
         
-        self.data = dict()
+        # self.data = dict()    # initialized in Base class
         for k, v in kwargs.items():
             if k not in self.reserved_kwargs:
                 self.data[k] = copy.deepcopy(v)
@@ -440,21 +442,6 @@ class PDFBoundingBox(BaseBoundingBox):
         else:
             self.page_width = None
             self.page_height = None
-    
-    def set(self, key, value):
-        self.data[key] = value
-    
-    def has(self, key):
-        return key in self.data
-    
-    def get(self, key, default=None):
-        return self.data.get(key, default)
-    
-    def items(self):
-        return {**self.data}
-    
-    def update(self, **kwargs):
-        self.data.update(kwargs)
     
     def clone(self):
         return PDFBoundingBox(
@@ -504,23 +491,19 @@ class PDFBoundingBox(BaseBoundingBox):
         if self.y1 > self.y2:
             self.y1, self.y2 = self.y2, self.y1
     
-    def tolist(self, *extra_keys):
-        """Return bbox as list plus extra data values."""
-        return list(self.bbox()) + [self.data.get(k) for k in extra_keys]
-    
     def __str__(self):
+        # should probably show [x,y,w,h] for BBOX? 
+        # and [x1,y1,x2,y2] for PDfBBOX?
+        x1,y1,x2,y2 = self.bbox()
         retval = "[ "
-        retval += "(%s" % self.x1
-        retval += ", %s)" % self.y1
-        retval += ", (%s" % self.x2
-        retval += ", %s)" % self.y2
-        for k, v in sorted(self.data.items()):
+        retval += "(%s"%(x1,)
+        retval += ", %s)"%(y1,)
+        retval += ", (%s"%(x2,)
+        retval += ", %s)"%(y2,)
+        for k,v in sorted(self.data.items()):
             retval += ", " + k + ": " + str(v)
         retval += " ]"
         return retval
-    
-    def __repr__(self):
-        return str(self)
     
     def normalize(self):
         """Normalize bounding box to be within page boundaries."""
