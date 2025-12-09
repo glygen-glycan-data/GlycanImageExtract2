@@ -549,7 +549,7 @@ class PDFJob(JobInstance,PDF_Figure_Search):
 
                 image_path = os.path.join(image_folders['figures_dir'], f"{figure_info['image_count']}.png")
 
-                pix = page.get_pixmap(clip=figure_info['pdf_fig_bbox'])        # x1,y1,x2,y2
+                pix = page.get_pixmap(clip=figure_info['pdf_fig_bbox'], dpi=PDF_Figure_Search.dpi)        # x1,y1,x2,y2
                 figure_info['width'] = pix.width
                 figure_info['height'] = pix.height
                 try:
@@ -565,4 +565,3 @@ class PDFJob(JobInstance,PDF_Figure_Search):
                 self.update_status("Processing image %d from page %d" % (figure_num, page_num))
 
                 self.find_glycans(image_path, image_folders, **figure_info)
-

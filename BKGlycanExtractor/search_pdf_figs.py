@@ -136,6 +136,7 @@ class FigCapX_Search:
 
 
 class PDF_Figure_Search:
+    dpi=300
 
     def xref_figure_info(self, input_filepath):
         """
