@@ -44,9 +44,7 @@ class RootFinder:
 
 class YOLORootFinder(YOLOFinder, RootFinder):
 
-    filters = [ FilterOverlaps(maxiou=0.2,discard=True),
-                DiscardClass(todiscard=["not_redend"]), 
-                SingleBest() ]
+    filters = [ SingleBest(minconf=0.01) ]
 
     def __init__(self,**kwargs):
         YOLOFinder.__init__(self,**kwargs)
@@ -61,6 +59,12 @@ class YOLORootFinder(YOLOFinder, RootFinder):
         normalized_dist, selected_mono = self.match_root_to_mono(monos,box)
 
         if normalized_dist <= 0.5: 
+            # print(box,selected_mono.get('id'))
+            if box.get('classlabel') == "not_redend":
+                box.set('classlabel','redend')
+                box.set('classid',1-box.get('classid'))
+                box.set('confidence',1-box.get('confidence'))
+                # print(">",box,selected_mono.get('id'))
             return RootSemantics(mono_id=selected_mono.get('id'), box=box, **box.items())
         return None
 

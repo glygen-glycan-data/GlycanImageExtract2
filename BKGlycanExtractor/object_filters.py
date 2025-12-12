@@ -91,10 +91,14 @@ class DiscardClass(ObjectFilter):
         return accepted,rejected
 
 class SingleBest(ObjectFilter):
+    def __init__(self,minconf=0.0):
+        self.minconf = minconf
     def filter(self, objlist):
         if len(objlist) == 0:
             return [],[]
-        return objlist[0:1],objlist[1:]
+        if objlist[0].get('confidence',1.0) >= self.minconf:
+            return objlist[0:1],objlist[1:]
+        return [],objlist
 
 
 # Similar to DiscardClass - but this only keeps one single

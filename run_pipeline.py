@@ -6,6 +6,7 @@ import logging
 from BKGlycanExtractor import Image_Manager, Config_Manager
 from BKGlycanExtractor.distproc import DistributedProcessing as dp
 from BKGlycanExtractor.glycanfinding import KnownGlycanBoxes
+from BKGlycanExtractor.glycanconnections import KnownLinkNoLink
  
 parser = argparse.ArgumentParser(description="Start")
 
@@ -57,10 +58,13 @@ if args.verbose:
 else:
     results = pipeline.runall(images,workers=workers)
 
+finder = KnownLinkNoLink()
+
 for result in results:
-    result.write_json()
+    # result.write_json()
+    result.annotate_boxes(boxes=finder.find_boxes(result),colors=[(255, 255, 0),(0,255,0)],labels=True)
     # result.annotate_glycans(color=(0,0,255))
     # result.annotate_monos() 
     # result.annotate_links(labels=True) 
-    # result.write_image(extension="annotated.png")
+    result.write_image(extension="annotated.png")
 

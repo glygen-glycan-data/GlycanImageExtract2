@@ -23,7 +23,7 @@ parser.add_argument(
     '--pipelines',
     type = str,
     nargs = '+', # allows one or more values
-    help = 'At least one evaluation and known glycan pipeline pair (P1:P2). One of --finders or --pipelines must be specified.'
+    help = 'At least one evaluation and known glycan pipeline pair (P1:P2) or pipeline (GlycanCompare-KnownFinders assumed for known glycan pipeline). One of --finders or --pipelines must be specified.'
 )
 
 # required argument
@@ -55,7 +55,8 @@ parser.add_argument(
 parser.add_argument(
     '--proximity',
     type = float,
-    nargs = '*', # allows zero or more values
+    default = None,
+    nargs = '+', # allows one or more values
     help = 'Proximity threshold. Monosaccharide semantics evaluation only. Default: 0.25.'
 )
 
@@ -63,7 +64,8 @@ parser.add_argument(
 parser.add_argument(
     '--iou',
     type = float,
-    nargs = '*', # allows zero or more values
+    default = None,
+    nargs = '+', # allows one or more values
     help = 'IOU threshold. Box-based PR curve only. Default: 0.5.'
 )
 
@@ -72,7 +74,7 @@ parser.add_argument(
     '--class_restriction',
     type = str,
     default = [ None ],
-    nargs = '+', # allows zero, one, or more values
+    nargs = '+', # allows one, or more values
     help = 'Class restriction. Default: No class restriction.'
 )
 
@@ -99,6 +101,15 @@ parser.add_argument(
     default = False,
     help = 'Annotate images with no prediction (NP), extra prediction (EP), and bad label (BL) boxes.'
 )
+
+# optional argument
+parser.add_argument(
+    '--dump_errors',
+    type = str,
+    default = None,
+    help = 'Dump status for each image\'s boxes in TSV file.'
+)
+
 
 dp.add_arguments(parser)
 
@@ -144,9 +155,9 @@ if not args.finders and not args.pipelines:
     print("At least one of --finders and --pipelines should be specified.",file=sys.stderr)
     sys.exit(1)
 
-if args.pipelines:
-    print("--pipelines not yet supported.",file=sys.stderr)
-    sys.exit(1)
+# if args.pipelines:
+#     print("--pipelines not yet supported.",file=sys.stderr)
+#     sys.exit(1)
 
 if args.boxes and args.semantics:
     print("Only one of --boxes and --semantics should be specified.",file=sys.stderr)
@@ -169,25 +180,26 @@ cm = Config_Manager()
 FinderTypes = (MonoFinder, LinkFinder, RootFinder, GlycanFinder)
 TypeCount = defaultdict(int)
 
-for finder_name in args.finders:
-    try:
-        f = cm.get_finder(finder_name)
-        for ft in FinderTypes:
-            if isinstance(f,ft):
-                TypeCount[ft.__name__] += 1
-        TypeCount[None] += 1
-    except LookupError:
-        print("Finder \"%s\" not found.\n\nAvailable finders:"%(finder_name,),file=sys.stderr)
-        for fdname in cm.list_finders():
-            print("  "+fdname,file=sys.stderr)
-        print(file=sys.stderr)
-        sys.exit(1)
+if args.finders:
+    for finder_name in args.finders:
+        try:
+            f = cm.get_finder(finder_name)
+            for ft in FinderTypes:
+                if isinstance(f,ft):
+                    TypeCount[ft.__name__] += 1
+            TypeCount[None] += 1
+        except LookupError:
+            print("Finder \"%s\" not found.\n\nAvailable finders:"%(finder_name,),file=sys.stderr)
+            for fdname in cm.list_finders():
+                print("  "+fdname,file=sys.stderr)
+            print(file=sys.stderr)
+            sys.exit(1)
 
 if len(TypeCount) > 2:
     print("Mixed finder types specified.",file=sys.stderr)
     sys.exit(1)
 
-if len(set(TypeCount.values())) != 1:
+if args.finders and len(set(TypeCount.values())) != 1:
     print("Unexpected finder type specified.",file=sys.stderr)
     sys.exit(1)
 
@@ -216,22 +228,43 @@ else:
 images = Image_Manager(args.images)
 images.exclude("*annotated*")
 
+allitems = []
+if args.finders:
+    allitems.extend([ ("finder",f) for f in args.finders ])
+if args.pipelines:
+    allitems.extend([ ("pipeline",p) for p in args.pipelines ])
+
 evaluators = []
-for i,finder_name in enumerate(args.finders):
-    print(f"Building pipeline for {finder_name}")
-
-    # ------------------------------
-    # Build prediction pipeline
-    # ------------------------------
-
-    f = cm.get_finder(finder_name)
-    pred_pipeline = f.finder_pipeline(cm)
-
-    kf = f.known_finder()
-    known_pipeline = kf.finder_pipeline(cm)
-
+for i,(ptype,name) in enumerate(allitems):
     pipelines = {}
-    pipelines[finder_name] = (pred_pipeline,known_pipeline)
+    if ptype == "finder":
+        print(f"Building pipeline for {name}")
+
+        # ------------------------------
+        # Build prediction pipeline
+        # ------------------------------
+
+        f = cm.get_finder(name)
+        pred_pipeline = f.finder_pipeline(cm)
+
+        kf = f.known_finder()
+        known_pipeline = kf.finder_pipeline(cm)
+
+        pipelines[name] = (pred_pipeline,known_pipeline)
+
+    elif ptype == "pipeline":
+
+        names = name.split(":")
+        if len(names) == 1:
+            names.append("GlycanCompare-KnownFinders")
+        pname,kname = names
+        print(f"Retrieving pipelines {pname} and {kname}")
+        pred_pipeline = cm.get_pipeline(pname)
+        known_pipeline = cm.get_pipeline(kname)
+        pipelines[pname] = (pred_pipeline,known_pipeline)
+
+        # for the compare method below...
+        f = pred_pipeline.get_steps("glycan")[-1]
 
     # Set up comparison strategy
     compares = {}
@@ -266,11 +299,11 @@ for i,finder_name in enumerate(args.finders):
 
 runall_evaluators(evaluators,images,workers=distproc,verbose=verbose)
 
-if len(compares) > 1 and len(args.finders) == 1:
+if len(compares) > 1 and len(allitems) == 1:
     label = "%(comparitor)s"
     title = titlestr + "Precision-Recall Curve (%(predictor)s)"
     extra_args=dict(title=title,label=label)
-elif len(args.finders) > 1 and len(compares) == 1:
+elif len(allitems) > 1 and len(compares) == 1:
     label = "%(predictor)s"
     if list(compares)[0] == "":
         title = titlestr + "Precision-Recall Curve"
@@ -295,3 +328,12 @@ Evaluator.plotprecisionrecall(
 
 if args.annotate_images:
     Evaluator.annotate_images(evaluators,images)
+
+if args.dump_errors:
+    if args.dump_errors == "-":
+        wh = None
+    else:
+        wh = open(args.dump_errors,'w')
+    Evaluator.dump_errors(evaluators,images,file=wh)
+    if wh is not None:
+        wh.close()

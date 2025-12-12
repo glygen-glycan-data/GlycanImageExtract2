@@ -55,7 +55,7 @@ class MonoFinder:
     
 class YOLOMonos(YOLOFinder,MonoFinder):
 
-    filters = [ FilterOverlaps() ]
+    filters = [ FilterOverlaps(maxiou=0.3) ]
    
     def __init__(self,**kwargs):   
         YOLOFinder.__init__(self,**kwargs)

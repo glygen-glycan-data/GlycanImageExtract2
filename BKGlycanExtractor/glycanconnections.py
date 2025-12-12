@@ -70,22 +70,147 @@ class ConnectYOLO(YOLOFinder,LinkFinder):
 
         for mono in obj.monos(): 
             x_cen, y_cen = mono.get('center')
-
             if x_cen > x1 and x_cen < x2 and y_cen > y1 and y_cen < y2:
                 linked_monos.append(mono)
+        
+        # print(x1,y1,x2,y2,len(linked_monos),[(m.id(),m.symbol()) for m in linked_monos])
+        
+        mono_pairs = None
 
-        mono_pair = None
         if len(linked_monos) == 2:
-            mono_pair = (linked_monos[0], linked_monos[1])
-        elif 2 < len(linked_monos) <= 4:    # more than 2 monos present in the same detected box
-            farthest_pair = self.find_farthest_pair(linked_monos)
-            if not farthest_pair:
-                return None
-            mono_pair = farthest_pair
+            mono_pairs = [(linked_monos[0], linked_monos[1])]
 
-        if mono_pair:
-            return self.make_link(mono_pair,box)
+        elif len(linked_monos) > 2:    # more than 2 monos present in the same detected box
+            mono_pairs = self.closest_to_diag_corners(box,linked_monos)
+            
+        if mono_pairs:
+            ulinks = [ self.make_link(mp,box) for mp in mono_pairs ]
+            # print([ (mp[0].id(),mp[0].symbol(),mp[1].id(),mp[1].symbol()) for mp in mono_pairs ])
+            if len(ulinks) == 1:
+                return ulinks[0]
+            return ulinks
+        
+        return None
 
+    # each second chance box has more than two links in it. Ideally, decide, using 
+    # all the cleanly identified links, which of the two to pick. Last resort, terminal 
+    # residues (Fuc, Xyl, NeuAc, NeuGc)
+    def second_chance_boxes_to_objects(self,scboxes,obj,obj_list):
+        local_obj_list = list(obj_list) # avoid modifying obj_list
+        print("number of second-chance boxes:",len(scboxes))
+        resolved = set()
+        anyresolved = True
+        while anyresolved:
+            print("start cycle elimination pass...")
+            anyresolved = False
+            for i,(box,alts) in enumerate(scboxes):
+                if i in resolved:
+                    continue
+                keep = []
+                for alt in alts:
+                    if not alt.creates_cycle(local_obj_list):
+                        keep.append(alt)
+                if len(keep) == 1:
+                    local_obj_list.append(keep[0])
+                    resolved.add(i)
+                    anyresolved = True
+                    print("resolved second-chance box",i+1)
+        
+        print("number resolved:",len(resolved))
+
+        terminal_symbols = ["Fuc", "Xyl", "NeuAc", "NeuGc"]
+
+        anyresolved = True
+        while anyresolved:
+            print("start terminal residue degree test pass...")
+            anyresolved = False
+            for i,(box,alts) in enumerate(scboxes):
+                if i in resolved:
+                    continue
+        
+                degree = defaultdict(int)
+                for link in obj_list:
+                    m1,m2 = link.mono_ids()
+                    degree[m1]+=1
+                    degree[m2]+=1
+
+                keep = []
+                for alt in alts:
+                    skip = False
+                    for mi in alt.mono_ids():
+                        if obj.mono(mi).symbol() in terminal_symbols and degree[mi] > 0:
+                            skip = True
+                            break
+                    if not skip:
+                        keep.append(alt)
+                if len(keep) == 1:
+                    local_obj_list.append(keep[0])
+                    resolved.add(i)
+                    anyresolved = True
+                    print("resolved second-chance box",i+1)
+
+        return local_obj_list
+
+    def closest_to_diag_corners(self, box, monos):
+        meanw = sum(m.width() for m in monos)/len(monos)
+        meanh = sum(m.height() for m in monos)/len(monos)
+        mwh = (meanw+meanh)/2
+        # print(mwh)
+        
+        x1, y1, x2, y2 = box.corners()
+        anchors = dict()
+        anchors["TL"] = (x1+mwh/2,y1+mwh/2)
+        anchors["TR"] = (x2-mwh/2,y1+mwh/2)
+        anchors["BL"] = (x1+mwh/2,y2-mwh/2)
+        anchors["BR"] = (x2-mwh/2,y2-mwh/2)
+
+        # each mono is assigned to its closest corner if <= mwh
+        corners = defaultdict(list)
+        for m in monos:
+            dists = {}
+            for k,v in anchors.items():
+                dists[k] = self.dist(anchors[k],m)
+            dists = sorted(dists.items(),key=lambda t: t[1])
+            if dists[0][1] <= mwh:
+                corners[dists[0][0]].append((dists[0][1],m))
+        
+        # each corner chooses its closest monosaccharide
+        cms = defaultdict(lambda: None)
+        for k in corners:
+            if len(corners[k]) > 0:
+                corners[k].sort(key=lambda t: t[0])
+                cms[k] = corners[k][0]
+        
+        # diagonally opposite monosaccharides can't be too far from their anchors
+        if cms["TL"] and cms["BR"] and (cms["TL"][0]+cms["BR"][0])/2>=mwh/2:
+            cms["TL"] = None; cms["BR"] = None
+        if cms["TR"] and cms["BL"] and (cms["TR"][0]+cms["BL"][0])/2>=mwh/2:
+            cms["TR"] = None; cms["BL"] = None
+
+        # print(cms)
+        # for k in cms:
+        #     if cms[k]:
+        #         print(k,cms[k][0],cms[k][1].id(),cms[k][1].symbol())
+
+        if cms["TL"] is not None and cms["BR"] is not None:
+            if cms["TR"] is None or cms["BL"] is None:
+                # only one pair is good
+                return [(cms["TL"][1],cms["BR"][1])]
+            else:
+                # if one pair is significantly closer to the anchors than the other
+                if (cms["TL"][0]+cms["BR"][0])*3 < (cms["TR"][0]+cms["BL"][0]):
+                    return [(cms["TL"][1],cms["BR"][1])]
+                elif (cms["TR"][0]+cms["BL"][0])*3 < (cms["TL"][0]+cms["BR"][0]):
+                    return [(cms["TR"][1],cms["BL"][1])]
+                else:
+                    # can't decide which one, need more context...
+                    # print("altenatives")
+                    return [(cms["TL"][1],cms["BR"][1]),(cms["TR"][1],cms["BL"][1])]  
+        elif cms["TR"] is not None and cms["BL"] is not None:
+            # only one pair is good
+            return [(cms["TR"][1],cms["BL"][1])]
+        # no good solutions
+        # print("No good solutions")
         return None
 
     def find_farthest_pair(self, monos):
@@ -234,6 +359,7 @@ class KnownLinkWithInfo(KnownLink):
 
     def box_to_object(self, box, obj):
         link = UndirectedLinkSemantics(box=box, **box.items())
+        return link
 
 class ConnectYOLOInfo(ConnectYOLO):
 

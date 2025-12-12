@@ -4,7 +4,7 @@ import os.path
 from . glycanannotator import Config_Manager, Config
 from . yolomodels import YOLOModel
 from . compareboxes import CompareBoxes
-from . semantics import BoxPredictionSemantics
+from . semantics import BoxPredictionSemantics, Semantics
 from . bbox import BoundingBox
 from . model_evaluator import BoxCompare
 
@@ -27,18 +27,33 @@ class Finder(object):
     def find_boxes(self, obj):
         raise NotImplementedError
 
+    def box_to_object(self, box, semantics):
+        raise NotImplementedError
+    
+    def second_chance_boxes_to_objects(self,second_chance_boxes,obj,obj_list):
+        raise NotImplementedError
+
     # same for KnownFinder and YOLOFinder
     def find_objects(self, obj):
-        obj_list = []
-
         boxes = self.find_boxes(obj)
-
+        
+        obj_list = []
+        second_chance_boxes = []
+        
         for box in boxes:
             new_obj = self.box_to_object(box,obj)
-
-            if new_obj is not None:
+            if new_obj is not None and isinstance(new_obj, Semantics):
                 obj_list.append(new_obj)
-             
+            elif new_obj is not None and len(new_obj) > 1:
+                # ambiguous case (for links)
+                second_chance_boxes.append((box,new_obj))
+            else:
+                pass
+        
+        if len(second_chance_boxes) > 0:
+            obj_list = self.second_chance_boxes_to_objects(second_chance_boxes,obj,obj_list)
+        
+        obj_list.sort(key=lambda o: -o.get('confidence',0.0))
         accepted, rejected = self.filter_objects(obj_list)
         self.set_results(obj, accepted, rejected)
         self.log_error(obj, accepted, rejected)

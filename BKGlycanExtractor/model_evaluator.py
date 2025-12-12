@@ -35,6 +35,8 @@ class CompareBase(object):
         self.precision = precision
         self.scale = (10 ** precision)
         self.scaled_onepluseps = (self.scale+1)
+        self.scaled_oneminuseps = (self.scale-1)
+        self.scaled_one = self.scale
         while self.float_trunc_conf(self.scaled_onepluseps) <= 1.0:
             self.scaled_onepluseps += 1
         self.classrestriction = None
@@ -85,7 +87,7 @@ class CompareBase(object):
             pred_objs = [ obj for obj in pred_objs if obj.get('classlabel') in self.classrestriction ]
             known_objs = [ obj for obj in known_objs if obj.get('classlabel') in self.classrestriction ]
         edges, confidence_scores = self.matched_data(pred_objs, known_objs, **kwargs)
-        return self.compare_data(known_objs, pred_objs, edges,confidence_scores)
+        return self.compare_data(known_objs, pred_objs, edges, confidence_scores)
 
     def matched_data(self,pred_objs,known_objs, **kwargs):
         """ Returns sorted edges (sort optionally based on condition of IOU/proximity) and sorted confidence values """
@@ -184,8 +186,11 @@ class CompareBase(object):
 
             self.update_metrics(results,threshold,gt_count,TP,FP,FN,badboxes)
 
+        badboxes = defaultdict(list)
+        badboxes["fn"] = [ known_data[i] for i in gt_ids ]
+        badboxes["nopred"] = [ known_data[i] for i in gt_ids ]
         last_threshold = self.scaled_onepluseps
-        self.update_metrics(results,last_threshold,gt_count,0,0,gt_count,{})
+        self.update_metrics(results,last_threshold,gt_count,0,0,gt_count,badboxes)
 
         return results
     
@@ -320,20 +325,19 @@ class Evaluator:
                     if pairs['TP'] <= TP:
                         TP = pairs['TP']
                     else:
-                        print("-->>TP error:",conf, TP, pairs['TP'])
+                        pass #print("-->>TP error:",conf, TP, pairs['TP'])
 
                     if pairs['FP'] <= FP:
                         FP = pairs['FP']
                     else:
-                        print("-->>FP error:",conf,FP,pairs['FP'])
+                        pass #print("-->>FP error:",conf,FP,pairs['FP'])
 
                     if pairs['FN'] >= FN:
                         FN = pairs['FN']
                     else:
-                        print("-->>FN error",conf)
+                        pass #print("-->>FN error",conf)
                 else:
-                    print("CONFIDENCE IS NOT ORDERED")
-
+                    pass #print("CONFIDENCE IS NOT ORDERED")
 
     def isboxeval(self):
         return self.boxeval
@@ -351,14 +355,12 @@ class Evaluator:
                 print(prname,os.path.split(image)[1])
             pred_items, pred_semantics = prpl.run_evaluation(image,self.isboxeval())
             known_items, known_semantics = knpl.run_evaluation(image,self.isboxeval())
-            # sometimes no root is detected - so pred_items could be None
-            if pred_items is not None and len(pred_items) > 0 and pred_items[0] is not None:
-                for k,cmpname in enumerate(cmpnames):
-                    cmp = self.compares[cmpname]
-                    i += 1
-                    results[(i,prname,j+1,cmpname,k+1)] = cmp.compare(pred_items, known_items, 
-                                                                    pred_semantics=pred_semantics, 
-                                                                    known_semantics=known_semantics)
+            for k,cmpname in enumerate(cmpnames):
+                cmp = self.compares[cmpname]
+                i += 1
+                results[(i,prname,j+1,cmpname,k+1)] = cmp.compare(pred_items, known_items, 
+                                                                  pred_semantics=pred_semantics, 
+                                                                  known_semantics=known_semantics)
         return image,results
 
     def runall(self, images):
@@ -424,7 +426,7 @@ class Evaluator:
                         per_image_results[pred_name][image_name][conf] = metrics
                     
                     else:
-                        print("NOT RELEVANT")
+                        pass #print("NOT RELEVANT")
             
         if self.verbose:
             for k,v in aggregated_results.items():
@@ -450,6 +452,45 @@ class Evaluator:
         self.final_structure = aggregated_results
 
     @staticmethod
+    def dump_errors(evaluators,images,file=None):
+        if file is None:
+            file=sys.stdout
+        for fullpath in images:
+            filename = os.path.split(fullpath)[1]
+            curveindex = 0
+            for i,eval in enumerate(evaluators):
+                for predname in eval.per_image_results:
+                    curveindex += 1
+                    if filename not in eval.per_image_results[predname]:
+                        print("\t".join(map(str,[filename,curveindex,"not recorded"])),file=file)
+                        continue
+                    imagedata = eval.per_image_results[predname][filename]
+                    sortedconf = sorted(imagedata)
+                    minconf = sortedconf[0]
+                    mcdata = imagedata[minconf]
+                    if mcdata['FN'] > 0 or mcdata['FP'] > 0:
+                        # print(mcdata)
+                        badboxes = mcdata['badboxes']
+                        badlabel = []
+                        for b1 in badboxes['badlabel']:
+                            # print(b1)
+                            for b2 in badboxes['fn']:
+                                # print(b2,b1.iou(b2))
+                                if b1.iou(b2) >= 0.8:
+                                    badlabel.append((b1,b2.get('classlabel')))
+                        # print(badlabel)
+                        # print(badboxes['badlabel'])
+                        assert len(badlabel) == len(badboxes['badlabel'])
+                        for b in badboxes['nopred']:
+                            print("\t".join(map(str,[filename,curveindex,"nopred",b.get('classlabel'),b.get('bbox')])),file=file)
+                        for b in badboxes['extrapred']:
+                            print("\t".join(map(str,[filename,curveindex,"extrapred",b.get('classlabel'),b.get('confidence'),b.get('bbox')])),file=file)
+                        for b,kl in badlabel:
+                            print("\t".join(map(str,[filename,curveindex,"badlabel",b.get('classlabel'),b.get('confidence'),b.get('bbox'),kl])),file=file)
+                    else:
+                        print("\t".join(map(str,[filename,curveindex,"correct"])),file=file)
+                    
+    @staticmethod
     def annotate_images(evaluators,images):
         for fullpath in images:
             # print(fullpath)
@@ -461,12 +502,8 @@ class Evaluator:
             for i,eval in enumerate(evaluators):
                 for predname in eval.per_image_results:
                     curveindex += 1
-                    if filename not in eval.per_image_results[predname]:
-                        continue
                     imagedata = eval.per_image_results[predname][filename]
                     sortedconf = sorted(imagedata)
-                    if len(sortedconf) < 2:
-                        continue
                     minconf = sortedconf[0]
                     if imagedata[minconf]['FN'] > 0 or imagedata[minconf]['FP'] > 0:
                         badboxes = imagedata[minconf]['badboxes']
@@ -604,10 +641,16 @@ class Evaluator:
                 plt.plot(step_recall, step_precision, ".-", label=label%details)
                 # plt.plot(recall, precision, "r.",)
 
+                plt.text(filtered_recall[0]+.002,filtered_precision[0]+.002,
+                         "%.1f%%,%.1f%%"%(100*filtered_recall[0],100*filtered_precision[0]))
+
                 plt.figure(2)
                 plt.plot(step_recall, step_precision, ".-", label=label%details)
                 # plt.plot(recall, precision, "r.",)
 
+                plt.text(filtered_recall[0]+.002,filtered_precision[0]+.002,
+                         "%.1f%%,%.1f%%"%(100*filtered_recall[0],100*filtered_precision[0]))
+                
         # Plot figure 1
         plt.figure(1)
         plt.title(title%details)
@@ -706,10 +749,17 @@ def runall_evaluators(evaluators, images, workers=None, verbose="TQDM"):
 
         start_time = time.time()
 
+        if verbose == True:
+            print(f"Stage {i+1}: Analyze images...")            
+
+
         collected_results = defaultdict(dict)
         for result in proc.stage_process(i+1,images):
             for pred_name, content in result[1].items():
                 collected_results[pred_name][os.path.basename(result[0])] = content
+        
+        if verbose == True:
+            print(f"Stage {i+1}: Summarizing results...")            
 
         eval.process_results(collected_results)        
 

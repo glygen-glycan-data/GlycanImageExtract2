@@ -110,6 +110,11 @@ class BoxPredictionSemantics(Semantics):
         if self.get('box'):
             return self.get('box').corners()
         return None
+    
+    def iou(self,b):
+        if self.get('box') and b.get('box'):
+            return self.get('box').iou(b.get('box'))
+        return None
 
     def bbox(self):
         return self.get('bbox')

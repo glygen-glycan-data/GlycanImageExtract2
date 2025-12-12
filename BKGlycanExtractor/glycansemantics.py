@@ -3,6 +3,7 @@ class for generating data for IUPAC.
 """
 from .finder import Finder
 from .glycanannotator import Config
+from .model_evaluator import GlycanCompare
 
 # check if links == monos -1 , etc all the details for logging can be added here
 
@@ -22,6 +23,9 @@ class Glycan_Base(Finder):
         if self.label_type == 'composition':
             return obj.get('composition_str',"")
         return obj.get('IUPAC',"")
+
+    def semantic_compare(self,**kwargs):
+        return GlycanCompare(**kwargs)
 
 
 # create two different class for IUPAC AND COMPOSITION - not like this 
@@ -53,10 +57,12 @@ class YOLO_Glycan(Glycan_Base):
     
     # this should also add IUPAC/COMPOSITION in the semnatics - it should be in the pipeline
     def find_objects(self, obj):
-        obj.set('classlabel',self.get_label(obj) )
-        obj.set('center',obj.center())     # helps for proximity
-        obj.set('confidence', self.get_confidence(obj))
-        return [ obj ]
+        if len(obj.glycan_errors()) == 0 and self.get_label(obj):
+            obj.set('classlabel',self.get_label(obj) )
+            obj.set('center',obj.center())     # helps for proximity
+            obj.set('confidence', self.get_confidence(obj))
+            return [ obj ]
+        return []
 
     def find_boxes(self):
         pass
