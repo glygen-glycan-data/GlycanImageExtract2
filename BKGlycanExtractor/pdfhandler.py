@@ -30,6 +30,23 @@ class PDFHandler(object):
     @staticmethod
     def create_box(bbox):
         return fitz.Rect(bbox)
+
+    @staticmethod
+    def calculate_dpi(image_info):
+        """
+        Calculate DPI from image info.
+        Uses xres/yres if available in image_info.
+        """
+        # Check if xres/yres are directly available (PyMuPDF sometimes includes this)
+        if 'xres' in image_info and 'yres' in image_info:
+            # Use average if x and y differ slightly
+            dpi_x = image_info['xres']
+            dpi_y = image_info['yres']
+            
+            return int(max(dpi_x, dpi_y))
+        
+        return None
+        
     
     def write_image(self,image,filename=None):
         if filename is None:
@@ -58,6 +75,11 @@ class PDFHandler(object):
                 image['pdf_fig_height'] = pdf_fig_height
                 image['page_width'] = page.rect.width
                 image['page_height'] = page.rect.height
+
+                dpi = self.calculate_dpi(image)
+                if dpi is not None:
+                    image['dpi'] = dpi
+                    
                 if filter is None or filter.keep(image):
                     image['image_count'] = image_count                  # total image count so far
                     image_count += 1

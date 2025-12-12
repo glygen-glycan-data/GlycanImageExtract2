@@ -18,7 +18,7 @@ from PDFigCapX.code import xpdf_process
 class FigCapX_Search:
     
     @staticmethod
-    def figures_info(pdf):
+    def figures_info(pdf,page_dpi):
         '''TODO accepts a pdf - use Image Manager (if multiple pdf's, folders of pdfs??)'''
 
         # pdf_full_path = os.path.join(self.input_path, pdf)
@@ -41,7 +41,7 @@ class FigCapX_Search:
             figures = {}
             while flag==0 and wrong_count<5:
                 try:
-                    figures, info = xpdf_process.figures_captions_list(pdf)
+                    figures, info = xpdf_process.figures_captions_list(pdf,page_dpi)
                     flag = 1
 
                 except Exception as exc:
@@ -119,6 +119,8 @@ class FigCapX_Search:
                         "pdf_fig_height": pdf_box.height(), 
                         "page_width": info["page_width"],
                         "page_height": info["page_height"],
+                        # "xres": info["xres"],
+                        # "yres": info["yres"],
                         **({"caption_bbox": caption_box.bbox()} if caption_box else {}),
                     })
 
@@ -136,6 +138,7 @@ class FigCapX_Search:
 
 
 class PDF_Figure_Search:
+    DPI=300
 
     def xref_figure_info(self, input_filepath):
         """
@@ -172,9 +175,12 @@ class PDF_Figure_Search:
             if page_number not in pdf_metadata:
                 pdf_metadata[page_number] = {}
 
-            pdf_metadata[page_number][image_number] = {k:v for k,v in fig_metadata.items() if k in ('bbox', 'width', 'height', 'xref', 'pdf_fig_bbox', 'pdf_fig_width', 'pdf_fig_height', 'page_width', 'page_height', 'pdf_fig_height', 'image_count')}
+            pdf_metadata[page_number][image_number] = {k:v for k,v in fig_metadata.items() if k in ('bbox', 'width', 'height', 'xref', 'pdf_fig_bbox', 'pdf_fig_width', 'pdf_fig_height', 'page_width', 'page_height', 'pdf_fig_height', 'image_count', 'dpi')}
             pdf_metadata[page_number][image_number].update({'page_number': page_number, 'image_number': image_number})
 
+            if 'dpi' not in pdf_metadata[page_number][image_number]:
+                pdf_metadata[page_number][image_number]['dpi'] = self.DPI       # setting a default DPI
+            
             self.log_file.write(
                 f"\nXREF: {fig_metadata.get('xref')}, Page number: {page_number}, Image number: {image_number},  bbox: {fig_metadata["pdf_fig_bbox"]}, Width: {fig_metadata['pdf_fig_width']}, Height: {fig_metadata['pdf_fig_height']}\n"
             )
@@ -204,7 +210,12 @@ class PDF_Figure_Search:
         pdf_metadata = {}
         figures_data = {}       # data obtained from PDFigCapX repository
 
-        json_data_path = FigCapX_Search.figures_info(input_filepath) 
+        # PDFigCapX - saves the pdf pages as a pixmap and processing it using openCV to identify the different components present on the page.
+        # The higher the dpi, better the resolution, the more accurate the figure detection will be.
+        # the page dpi value doesnt change the dpi of the figures in the pdf, an attempt to obtain the original dpi of the figures will be made
+        page_dpi = 300    
+
+        json_data_path = FigCapX_Search.figures_info(input_filepath,page_dpi) 
         with open(json_data_path) as f:
             figures_data = json.load(f)
 
@@ -234,12 +245,15 @@ class PDF_Figure_Search:
 
                 # TODO edge case - sometimes the caption bbox encompasses the figure as well - so make sure that the
                 # caption bbox always starts below the figure
+
+                # dpi = PDFHandler.calculate_dpi(result)
         
                 figure_metadata = {
                     "page_number": page_num,
                     "image_number": figure_num,      # number based on per page
                     "image_count": image_count,   # cumulative count
-                    **{k:v for k,v in result.items() if k in ('pdf_fig_bbox', 'pdf_fig_width', 'pdf_fig_height', 'caption_bbox', 'figure_name','caption_text', 'page_width', 'page_height')}
+                    **{k:v for k,v in result.items() if k in ('pdf_fig_bbox', 'pdf_fig_width', 'pdf_fig_height', 'caption_bbox', 'figure_name','caption_text', 'page_width', 'page_height')},
+                    "dpi": self.DPI
                 }
 
                 pdf_metadata[page_num][figure_num] = {**figure_metadata}
@@ -312,7 +326,7 @@ class PDF_Figure_Search:
                     matched_box_keys.add(contained_key)         # so these contained_key related boxes should not appear in the merged_figure metadata anymore as have been replaced by on large container box
 
                 except Exception as e:
-                    print("\nException occuered while finding containment:", e)
+                    print("\nException occured while finding containment:", e)
 
         # finally add all the final container keys in the matched box keys
         # adding this after the for loops ends --> so that the big container is free to grab 'n' no. of contained boxes within it
@@ -372,9 +386,9 @@ class PDF_Figure_Search:
 
                 fig_info1 = all_boxes_lookup[(fig_no1, fig_type1)]
                 fig_info2 = all_boxes_lookup[(fig_no2, fig_type2)]
-                            
+
                 # Merge boxes - by taking union of the boxes
-                merged_bbox = CompareBoxes.union_pdf_boxes(pdf_fig_box1, pdf_fig_box2)      # method from compareboxes - which returns a bbox (doesnt return box object - circular import problem , will think about what to do...)
+                merged_bbox = CompareBoxes.union_pdf_boxes(fig_info1['box'], fig_info2['box'])      # method from compareboxes - which returns a bbox (doesnt return box object - circular import problem , will think about what to do...)
                 merged_box = PDFBoundingBox(bbox=merged_bbox, page_width=fig_info1['page_width'], page_height=fig_info1['page_height'])
                 
                 # page_number from both the extraction methods will be the same,
@@ -386,22 +400,38 @@ class PDF_Figure_Search:
                 if page_number not in merged_figures:
                     merged_figures[page_number] = {}
                 
-                image_number = len(merged_figures[page_number]) + 1
-                
-                # add the most important updated wrt to the new merged/union box.
-                # so fig_info1 and fig_info2 are added first and then the 
-                # rest of the information (i.e pdf_fig_bbox, pdf_fig_width, pdf_fig_height) overwrites the data from fig_info1 and fig_info2
-                merged_figures[page_number][image_number] = {
-                    **fig_info1,
-                    **fig_info2,
-                    'pdf_fig_bbox': merged_bbox,
-                    'pdf_fig_height': merged_box.height(),
-                    'pdf_fig_width': merged_box.width(),
-                    'page_number': page_number,
-                    'image_number': image_number,
-                    'merge_type': 'iou',
-                    'merged_iou': iou,
-                }
+                # image_number = len(merged_figures[page_number]) + 1
+                existing_image_numbers = list(merged_figures[page_number].keys())
+                if existing_image_numbers:
+                    image_number = max(existing_image_numbers) + 1
+                else:
+                    image_number = 1
+
+                # ensures that if fitz/xref based dpi is available from embedded figure in the pdf - it will be used
+                # else the default DPI will be used,
+                if fig_type1 == 'xref':
+                    dpi = fig_info1['dpi']
+                elif fig_type2 == 'xref':
+                    dpi = fig_info2['dpi']
+                else:
+                    dpi_values = [d for d in [fig_info1.get('dpi'), fig_info2.get('dpi')] if d is not None]
+                    dpi = max(dpi_values) 
+
+                merged_entry = {}
+                merged_entry.update(fig_info1)
+                merged_entry.update(fig_info2)
+
+                merged_entry['pdf_fig_bbox'] = merged_bbox
+                merged_entry['pdf_fig_height'] = merged_box.height()
+                merged_entry['pdf_fig_width'] = merged_box.width()
+                merged_entry['page_number'] = page_number
+                merged_entry['image_number'] = image_number
+                merged_entry['merge_type'] = 'iou'
+                merged_entry['merged_iou'] = iou
+                merged_entry['dpi'] = dpi
+
+                merged_figures[page_number][image_number] = merged_entry
+
             except Exception as e:
                 print("\nException occured while matching and merging boxes based on IOU:", e)
             
@@ -445,7 +475,10 @@ class PDF_Figure_Search:
         self.match_by_iou(all_boxes_lookup, merged_figures, matched_box_keys, iou_threshold=0.8)
 
         # step 3: rest of the unmatched items will be added to the merged figures as individual boxes for the page 
-        # because one of the figure extraction methods could have FN's
+        # because one of the figure extraction methods could have FN's.
+        # DPI:
+        # - if figure was obtained based on fitz, you get the original DPI
+        # - if obtained using PDFigCapX, then default DPI will be used.
         for (fig_no, fig_type), fig_info in all_boxes_lookup.items():
             if (fig_no, fig_type) not in matched_box_keys:
                 matched_box_keys.add((fig_no, fig_type))
@@ -468,7 +501,7 @@ class PDF_Figure_Search:
         '''
         
         merged_pdf_info = {}
-        figure_count = 1
+        global_image_count = 1
     
         # since page_nos are the key's for xref_pdf_metadata & figcap_pdf_metadata - some page_no's may or
         # may not be present in one of the dicts based on the method used for extraction - so need to
@@ -485,9 +518,47 @@ class PDF_Figure_Search:
             if not xref_figures and not figcap_figures:
                 continue
             else:
+                # need to verify that proper image_number's are applied to each page in a sorted manner,
+                # using containment, iou and other methods sometimes messes up the ordering of images
                 merged_figures = self.merge_figures(xref_figures,figcap_figures)
-                
-                merged_pdf_info.update(merged_figures)
+
+                # get the figures for this page
+                page_figures = merged_figures.get(pg_no, {})
+
+                if not page_figures:
+                    continue
+
+                # sort figures by position on page
+                figures_list = list(page_figures.items())
+
+                def get_sort_key(item):
+                    img_num, img_info = item
+                    bbox = img_info.get('pdf_fig_bbox', [0, 0, 0, 0])
+                    
+                    if len(bbox) >= 4:
+                        x1, y1, x2, y2 = bbox[0], bbox[1], bbox[2], bbox[3]
+                        
+                        top_y = min(y1, y2)  # Top edge (smaller y = top)
+                        left_x = min(x1, x2)
+                        return (top_y, left_x)  # Ascending (smaller y = top first)
+    
+                    return (float('inf'), float('inf'))
+
+                # Sort figures by position
+                sorted_figures = sorted(figures_list, key=get_sort_key)
+
+                # Initialize page dict if not exists
+                if pg_no not in merged_pdf_info:
+                    merged_pdf_info[pg_no] = {}
+
+                # Renumber sequentially and add to merged_pdf_info
+                # Note: global_image_count persists across pages for unique numbering
+                image_number = 1    # image_number per page - so the counter refreshes for every new page
+                for old_image_number, image_info in sorted_figures:
+                    merged_pdf_info[pg_no][image_number] = image_info
+                    image_info['image_count'] = global_image_count
+                    image_number += 1
+                    global_image_count += 1
 
         return merged_pdf_info
     
