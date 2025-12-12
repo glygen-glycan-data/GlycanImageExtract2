@@ -18,7 +18,7 @@ from PDFigCapX.code import xpdf_process
 class FigCapX_Search:
     
     @staticmethod
-    def figures_info(pdf):
+    def figures_info(pdf,page_dpi):
         '''TODO accepts a pdf - use Image Manager (if multiple pdf's, folders of pdfs??)'''
 
         # pdf_full_path = os.path.join(self.input_path, pdf)
@@ -41,7 +41,7 @@ class FigCapX_Search:
             figures = {}
             while flag==0 and wrong_count<5:
                 try:
-                    figures, info = xpdf_process.figures_captions_list(pdf)
+                    figures, info = xpdf_process.figures_captions_list(pdf,page_dpi)
                     flag = 1
 
                 except Exception as exc:
@@ -138,7 +138,7 @@ class FigCapX_Search:
 
 
 class PDF_Figure_Search:
-    dpi=300
+    DPI=300
 
     def xref_figure_info(self, input_filepath):
         """
@@ -178,6 +178,9 @@ class PDF_Figure_Search:
             pdf_metadata[page_number][image_number] = {k:v for k,v in fig_metadata.items() if k in ('bbox', 'width', 'height', 'xref', 'pdf_fig_bbox', 'pdf_fig_width', 'pdf_fig_height', 'page_width', 'page_height', 'pdf_fig_height', 'image_count', 'dpi')}
             pdf_metadata[page_number][image_number].update({'page_number': page_number, 'image_number': image_number})
 
+            if 'dpi' not in pdf_metadata[page_number][image_number]:
+                pdf_metadata[page_number][image_number]['dpi'] = self.DPI       # setting a default DPI
+            
             self.log_file.write(
                 f"\nXREF: {fig_metadata.get('xref')}, Page number: {page_number}, Image number: {image_number},  bbox: {fig_metadata["pdf_fig_bbox"]}, Width: {fig_metadata['pdf_fig_width']}, Height: {fig_metadata['pdf_fig_height']}\n"
             )
@@ -207,7 +210,12 @@ class PDF_Figure_Search:
         pdf_metadata = {}
         figures_data = {}       # data obtained from PDFigCapX repository
 
-        json_data_path = FigCapX_Search.figures_info(input_filepath) 
+        # PDFigCapX - saves the pdf pages as a pixmap and processing it using openCV to identify the different components present on the page.
+        # The higher the dpi, better the resolution, the more accurate the figure detection will be.
+        # the page dpi value doesnt change the dpi of the figures in the pdf, an attempt to obtain the original dpi of the figures will be made
+        page_dpi = 300    
+
+        json_data_path = FigCapX_Search.figures_info(input_filepath,page_dpi) 
         with open(json_data_path) as f:
             figures_data = json.load(f)
 
@@ -245,7 +253,7 @@ class PDF_Figure_Search:
                     "image_number": figure_num,      # number based on per page
                     "image_count": image_count,   # cumulative count
                     **{k:v for k,v in result.items() if k in ('pdf_fig_bbox', 'pdf_fig_width', 'pdf_fig_height', 'caption_bbox', 'figure_name','caption_text', 'page_width', 'page_height')},
-                    # "dpi": dpi if dpi else None
+                    "dpi": self.DPI
                 }
 
                 pdf_metadata[page_num][figure_num] = {**figure_metadata}
@@ -318,7 +326,7 @@ class PDF_Figure_Search:
                     matched_box_keys.add(contained_key)         # so these contained_key related boxes should not appear in the merged_figure metadata anymore as have been replaced by on large container box
 
                 except Exception as e:
-                    print("\nException occuered while finding containment:", e)
+                    print("\nException occured while finding containment:", e)
 
         # finally add all the final container keys in the matched box keys
         # adding this after the for loops ends --> so that the big container is free to grab 'n' no. of contained boxes within it
@@ -399,11 +407,15 @@ class PDF_Figure_Search:
                 else:
                     image_number = 1
 
-                dpi1 = fig_info1.get('dpi')
-                dpi2 = fig_info2.get('dpi')
-
-                dpi_values = [d for d in [dpi1, dpi2] if d is not None]
-                dpi = max(dpi_values) if dpi_values else DPI   # default is 150
+                # ensures that if fitz/xref based dpi is available from embedded figure in the pdf - it will be used
+                # else the default DPI will be used,
+                if fig_type1 == 'xref':
+                    dpi = fig_info1['dpi']
+                elif fig_type2 == 'xref':
+                    dpi = fig_info2['dpi']
+                else:
+                    dpi_values = [d for d in [fig_info1.get('dpi'), fig_info2.get('dpi')] if d is not None]
+                    dpi = max(dpi_values) 
 
                 merged_entry = {}
                 merged_entry.update(fig_info1)
@@ -463,7 +475,10 @@ class PDF_Figure_Search:
         self.match_by_iou(all_boxes_lookup, merged_figures, matched_box_keys, iou_threshold=0.8)
 
         # step 3: rest of the unmatched items will be added to the merged figures as individual boxes for the page 
-        # because one of the figure extraction methods could have FN's
+        # because one of the figure extraction methods could have FN's.
+        # DPI:
+        # - if figure was obtained based on fitz, you get the original DPI
+        # - if obtained using PDFigCapX, then default DPI will be used.
         for (fig_no, fig_type), fig_info in all_boxes_lookup.items():
             if (fig_no, fig_type) not in matched_box_keys:
                 matched_box_keys.add((fig_no, fig_type))
@@ -542,8 +557,6 @@ class PDF_Figure_Search:
                 for old_image_number, image_info in sorted_figures:
                     merged_pdf_info[pg_no][image_number] = image_info
                     image_info['image_count'] = global_image_count
-                    # image_info['dpi'] = image_info.get('dpi',PDF_Figure_Search.dpi)   # dpi obtained is not doing great
-                    image_info['dpi'] = PDF_Figure_Search.dpi
                     image_number += 1
                     global_image_count += 1
 
