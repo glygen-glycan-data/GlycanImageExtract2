@@ -329,7 +329,19 @@
             `;
         });
 
-        innerdiv += `</div></td></tr>`;
+        if (figure.cleaned_caption && figure.caption_text) {
+            innerdiv += `<div style="font-size:small;">
+                            <b>${figure.label}: </b>${figure.caption_text}
+                        </div>`;
+        } else if (figure.full_caption_text) {      // if the caption couldnt be cleaned appropriately, print whatever was obtained  
+            innerdiv += `<div style="font-size:small;"">
+                            ${figure.full_caption_text}
+                        </div>`;
+        }
+
+        innerdiv += `</div>
+            </td>
+            </tr>`;
 
         if (glycans.length > 0) {
             innerdiv += "<tr style='background-color:#7c7d7d;'>";
