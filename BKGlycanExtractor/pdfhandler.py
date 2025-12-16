@@ -33,18 +33,32 @@ class PDFHandler(object):
 
     @staticmethod
     def calculate_dpi(image_info):
-        """
-        Calculate DPI from image info.
-        Uses xres/yres if available in image_info.
-        """
-        # Check if xres/yres are directly available (PyMuPDF sometimes includes this)
-        if 'xres' in image_info and 'yres' in image_info:
-            # Use average if x and y differ slightly
-            dpi_x = image_info['xres']
-            dpi_y = image_info['yres']
+
+        # original dpi - images appear blurred 
+        # if image_info.get("xres") or image_info.get("yres"):
+        #     return max(image_info.get("xres",0), image_info.get("yres",0))
+
+        # get estimated dpi   
+        width_px = image_info.get('width', 0)
+        height_px = image_info.get('height', 0)
+        
+        # Display size in points (1 point = 1/72 inch)
+        bbox = image_info.get('pdf_fig_bbox')  # (x0, y0, x1, y1)
+        if bbox:
+            width_pt = bbox[2] - bbox[0]
+            height_pt = bbox[3] - bbox[1]
+
+            # Convert points to inches (72 points = 1 inch)
+            width_in = width_pt / 72.0
+            height_in = height_pt / 72.0
+
+            # Calculate effective DPI
+            if width_in > 0 and height_in > 0:
+                dpi_x = width_px / width_in
+                dpi_y = height_px / height_in
             
             return int(max(dpi_x, dpi_y))
-        
+
         return None
         
     

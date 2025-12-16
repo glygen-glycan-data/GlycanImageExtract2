@@ -13,9 +13,59 @@ parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 # Add the parent directory to sys.path to import PDFFigCapX_mine
 sys.path.append(parent_dir)
 from PDFigCapX.code import xpdf_process
+import re
 
 
 class FigCapX_Search:
+
+    @staticmethod
+    def clean_captions(caption_text):
+
+        if not caption_text or not isinstance(caption_text, str):
+            return {
+                'label': None,
+                'full_caption_text': caption_text,
+                'cleaned_caption': False
+            }
+
+        text = caption_text.replace('\n', ' ')
+        text = text.strip()
+
+        # Match prefix (with optional period) + number, then extract caption from remainder
+        # Pattern captures: (prefix, optional_period, number, everything_after)
+        pattern = r'^(Figure|Fig|FIG)(\.?)\s+(\d+(?:[\.\-]\d+)?[a-zA-Z]?)\s*(.*)$'
+
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            prefix = match.group(1)  # "Figure", "Fig", "FIG", etc.
+            number = match.group(3)  # "1", "1a", "1.1", etc.
+            rest = match.group(4)  # Everything after the number (may include separators)
+            
+            # Construct normalized label
+            label = f"{prefix} {number}".strip()
+            
+            # Extract caption by removing common separators and whitespace
+            # Handles: ". ", ": ", "- ", "— ", "– ", ".", "-", etc.
+            caption = rest.strip()
+            # Remove leading separators (period, colon, dashes) and their whitespace
+            caption = re.sub(r'^[\.:\-—–]\s*', '', caption)  # Remove separator + optional whitespace
+            caption = re.sub(r'^\s+', '', caption)  # Remove any remaining leading whitespace
+            
+
+            return {
+                'label': label,
+                'caption_text': caption,
+                'full_caption_text': caption_text,
+                'cleaned_caption': True
+            }
+        
+        # If no pattern matched, return the full text as caption
+        return {
+            'label': None,
+            'full_caption_text': caption_text,
+            'cleaned_caption': False
+        }
+
     
     @staticmethod
     def figures_info(pdf,page_dpi):
@@ -92,6 +142,7 @@ class FigCapX_Search:
                     
                     #  clean up caption text
                     figure_caption = ''.join(caption_text)      # the text string is in a list, standardize it to be a simple clean string 
+                    caption_dict = FigCapX_Search.clean_captions(figure_caption)
                     if figure_caption is not None:
                         # Remove newlines and normalize whitespace
                         figure_caption = figure_caption.replace('\n', ' ')
@@ -119,9 +170,9 @@ class FigCapX_Search:
                         "pdf_fig_height": pdf_box.height(), 
                         "page_width": info["page_width"],
                         "page_height": info["page_height"],
-                        # "xres": info["xres"],
-                        # "yres": info["yres"],
-                        **({"caption_bbox": caption_box.bbox()} if caption_box else {}),
+                        "width": pdf_box.bbox()[2] * info['png_ratio'],
+                        "height": pdf_box.bbox()[3] * info['png_ratio'],
+                        **caption_dict
                     })
 
             with open(output_json, "w") as fh:
@@ -246,14 +297,18 @@ class PDF_Figure_Search:
                 # TODO edge case - sometimes the caption bbox encompasses the figure as well - so make sure that the
                 # caption bbox always starts below the figure
 
-                # dpi = PDFHandler.calculate_dpi(result)
-        
+                # get estimated dpi based on figure dimensions obtained from FigCapX 
+                dpi = PDFHandler.calculate_dpi(result)
+
                 figure_metadata = {
                     "page_number": page_num,
                     "image_number": figure_num,      # number based on per page
                     "image_count": image_count,   # cumulative count
-                    **{k:v for k,v in result.items() if k in ('pdf_fig_bbox', 'pdf_fig_width', 'pdf_fig_height', 'caption_bbox', 'figure_name','caption_text', 'page_width', 'page_height')},
-                    "dpi": self.DPI
+                    **{k:v for k,v in result.items() if k in ('pdf_fig_bbox', 'pdf_fig_width', 
+                    'pdf_fig_height', 'caption_bbox', 'figure_name', 
+                    'page_width', 'page_height', 'width', 'height', 'label', 'caption_text', 'full_caption_text', 
+                    'cleaned_caption')},         # figcapX brings in a lot of extra data, so some housekeeping is essential
+                    "dpi": dpi if dpi else self.DPI
                 }
 
                 pdf_metadata[page_num][figure_num] = {**figure_metadata}
@@ -265,6 +320,55 @@ class PDF_Figure_Search:
                 print("Exception occured in figCap extraction:", e)
 
         return pdf_metadata
+
+    def containment_filter(self, all_boxes_lookup, containment_groups, merged_figures):
+        '''
+        function to check:
+        - if the larger container box should be accepted - which will discard all the smaller contained boxes within in
+        - or should the smaller contained boxes be considered and the larger container box be discarded
+
+        This code uses conditions/filters to check...will probably add more filters later depending on the cases that need to be handled
+        '''
+
+        image_number = 1
+        # various different filters can be used to determine if the container (large box) should be considered or the contained boxes (individual boxes) should be considered
+        for key, val in all_boxes_lookup.items():
+            if key in containment_groups:
+
+                # check how many smaller boxes/images are contained within the container
+                if len(containment_groups[key]) <= 3:
+                    # if 2/3 images, that means it is probably good to consider the individual images i.e the contained images
+
+                    # the contained images are mostly xref/fitz based images - if this is true, you will probably get exact bbox and its easier to get the original dpi as well
+
+                    # get all the smaller boxes contained inside the big container
+                    contained_boxes = [all_boxes_lookup[contained_box_key] for contained_box_key in containment_groups[key]]
+
+                    # TODO: sort the contained_boxes_keys based on pdf_fig_bbox - to get sequential images
+                    for contained_box in contained_boxes:
+                        page_number = contained_box['page_number']
+                        contained_box['image_number'] = image_number
+
+                        if page_number not in merged_figures:
+                            merged_figures[page_number] = {}
+
+                        # if fig_type is xref based, its highly possible that the original dpi will also get included in merged_figures
+                        merged_figures[page_number][image_number] = contained_box
+                        merged_figures[page_number][image_number].update({'merge_type': 'contained'})
+
+                        image_number += 1
+                else:
+                    # add the big container, and discard all the individual smaller images
+                    page_number = val['page_number']
+                    image_number = val['image_number']
+
+                    if page_number not in merged_figures:
+                        merged_figures[page_number] = {}
+
+                    merged_figures[page_number][image_number] = val
+                    merged_figures[page_number][image_number].update({'merge_type': 'container'})
+
+                    image_number += 1
 
     def find_containment_groups(self, all_boxes_lookup, merged_figures, matched_box_keys, **kwargs):
         '''
@@ -331,18 +435,9 @@ class PDF_Figure_Search:
         # finally add all the final container keys in the matched box keys
         # adding this after the for loops ends --> so that the big container is free to grab 'n' no. of contained boxes within it
         matched_box_keys.update(all_container_keys)
-
-        # clean the data before adding it to merged_figures (i.e bring to the the standard convention followed throughout the code)
-        for key, val in all_boxes_lookup.items():
-            if key in containment_groups:
-                page_number = val['page_number']
-                image_number = val['image_number']
-
-                if page_number not in merged_figures:
-                    merged_figures[page_number] = {}
-
-                merged_figures[page_number][image_number] = val
-                merged_figures[page_number][image_number].update({'merge_type': 'containment'})
+        
+        # filters to decide which boxes/images to consider
+        self.containment_filter(all_boxes_lookup,containment_groups,merged_figures)
 
     def match_by_iou(self, all_boxes_lookup, merged_figures, matched_box_keys, iou_threshold=0.8, **kwargs):
         
