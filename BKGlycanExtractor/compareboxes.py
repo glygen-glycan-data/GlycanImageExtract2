@@ -63,11 +63,27 @@ class CompareBoxes:
         return True
 
     @staticmethod
+    def is_contained_in_with_tolerance(b1,b2, tolerance=10):   # allow a 10 point pdf bbox tolerance
+        # return true only if b1 in contained inside b2                                                                        
+        b1x1,b1y1,b1x2,b1y2 = b1.corners()                                                                
+        b2x1,b2y1,b2x2,b2y2 = b2.corners()                                                                
+        if b1x1 < b2x1 - tolerance:                                                                                   
+            return False                                                                                  
+        if b1x2 > b2x2 + tolerance:                                                                                   
+            return False                                                                                  
+        if b1y1 < b2y1 - tolerance:                                                                                   
+            return False                                                                                  
+        if b1y2 > b2y2 + tolerance:                                                                                   
+            return False      
+        # assert CompareBoxes.intersection_area(b1,b2) == b1.area()   # removed the assertion, because tolerance means the area wont match exactly                                                   
+        return True
+
+    @staticmethod
     def get_containment(b1,b2):
         # returns (contained box, container box)
-        if CompareBoxes.is_contained_in(b1,b2):
+        if CompareBoxes.is_contained_in_with_tolerance(b1,b2):
             return (b1,b2)
-        elif CompareBoxes.is_contained_in(b2,b1):
+        elif CompareBoxes.is_contained_in_with_tolerance(b2,b1):
             return (b2,b1)
         return None
 

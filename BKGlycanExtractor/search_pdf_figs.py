@@ -14,7 +14,7 @@ parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.append(parent_dir)
 from PDFigCapX.code import xpdf_process
 import re
-
+from difflib import SequenceMatcher
 
 class FigCapX_Search:
 
@@ -321,7 +321,7 @@ class PDF_Figure_Search:
 
         return pdf_metadata
 
-    def containment_filter(self, all_boxes_lookup, containment_groups, merged_figures):
+    def containment_filter(self, all_boxes_lookup, merged_figures, containment_groups):
         '''
         function to check:
         - if the larger container box should be accepted - which will discard all the smaller contained boxes within in
@@ -330,35 +330,59 @@ class PDF_Figure_Search:
         This code uses conditions/filters to check...will probably add more filters later depending on the cases that need to be handled
         '''
 
+        # FILTER 1: check if a container has atleast 1 contained box within it, if not --> drop the container FP case
+        for key in list(containment_groups.keys()):
+            if len(containment_groups[key]) >= 1:
+                continue
+
+            # drop the key-value pair
+            del containment_groups[key]
+
+        # FILTER 2: 
         image_number = 1
-        # various different filters can be used to determine if the container (large box) should be considered or the contained boxes (individual boxes) should be considered
         for key, val in all_boxes_lookup.items():
             if key in containment_groups:
+                use_container = True  # default to using container
 
-                # check how many smaller boxes/images are contained within the container
+                # check how many smaller boxes/images are contained within the container and
+                # how much area of the container they occupy,
+                # - if area occupied is less than 50%, better to consider the larger container box
+                # - else consider the smaller individual contained boxes
+
+                # if 2/3 images, that means it is probably good to consider the individual images i.e the contained images
                 if len(containment_groups[key]) <= 3:
-                    # if 2/3 images, that means it is probably good to consider the individual images i.e the contained images
+                    AREA_THRESHOLD = 0.3
+                    container_area = all_boxes_lookup[key]['box'].area()
 
-                    # the contained images are mostly xref/fitz based images - if this is true, you will probably get exact bbox and its easier to get the original dpi as well
-
-                    # get all the smaller boxes contained inside the big container
                     contained_boxes = [all_boxes_lookup[contained_box_key] for contained_box_key in containment_groups[key]]
 
-                    # TODO: sort the contained_boxes_keys based on pdf_fig_bbox - to get sequential images
+                    contained_area = 0
                     for contained_box in contained_boxes:
-                        page_number = contained_box['page_number']
-                        contained_box['image_number'] = image_number
+                        contained_area += contained_box['box'].area()
 
-                        if page_number not in merged_figures:
-                            merged_figures[page_number] = {}
+                    area_ratio = contained_area / container_area if container_area > 0 else 0
 
-                        # if fig_type is xref based, its highly possible that the original dpi will also get included in merged_figures
-                        merged_figures[page_number][image_number] = contained_box
-                        merged_figures[page_number][image_number].update({'merge_type': 'contained'})
+                    # High coverage = likely separate images; Low coverage = likely split artifact
+                    if area_ratio >= AREA_THRESHOLD:
+                        use_container = False
+                        # Use individual contained boxes
+                        # TODO: sort the contained_boxes_keys based on pdf_fig_bbox - to get sequential images
+                        for contained_box in contained_boxes:
+                            contained_box = contained_box.copy()
+                            page_number = contained_box['page_number']
+                            contained_box['image_number'] = image_number
 
-                        image_number += 1
-                else:
+                            if page_number not in merged_figures:
+                                merged_figures[page_number] = {}
+
+                            merged_figures[page_number][image_number] = contained_box
+                            merged_figures[page_number][image_number].update({'merge_type': 'contained'})
+
+                            image_number += 1
+
+                if use_container:
                     # add the big container, and discard all the individual smaller images
+                    val = val.copy()
                     page_number = val['page_number']
                     image_number = val['image_number']
 
@@ -382,7 +406,6 @@ class PDF_Figure_Search:
         '''
         # Find all containment relationships between boxes.
         containment_groups = {}
-        all_container_keys = set()
 
         # Sort keys by area (larger boxes first) for efficient processing
         sorted_figures = dict(sorted(
@@ -422,22 +445,21 @@ class PDF_Figure_Search:
                     # add to containment groups
                     if container_key not in containment_groups:
                         containment_groups[container_key] = []
-                        all_container_keys.add(container_key)
 
-                    if contained_key not in containment_groups[container_key]:
+                    if contained_key not in matched_box_keys:
                         containment_groups[container_key].append(contained_key)
                     
-                    matched_box_keys.add(contained_key)         # so these contained_key related boxes should not appear in the merged_figure metadata anymore as have been replaced by on large container box
+                        matched_box_keys.add(contained_key)         
 
                 except Exception as e:
                     print("\nException occured while finding containment:", e)
-
+        
         # finally add all the final container keys in the matched box keys
         # adding this after the for loops ends --> so that the big container is free to grab 'n' no. of contained boxes within it
-        matched_box_keys.update(all_container_keys)
-        
+        matched_box_keys.update(containment_groups.keys())
+
         # filters to decide which boxes/images to consider
-        self.containment_filter(all_boxes_lookup,containment_groups,merged_figures)
+        self.containment_filter(all_boxes_lookup, merged_figures, containment_groups)
 
     def match_by_iou(self, all_boxes_lookup, merged_figures, matched_box_keys, iou_threshold=0.8, **kwargs):
         
@@ -543,11 +565,13 @@ class PDF_Figure_Search:
         all_boxes_lookup = {}
 
         for figcap_fig_no, figcap_fig_data in figcap_figures.items():
+            figcap_fig_data = figcap_fig_data.copy()
             figcap_fig_data['box'] = PDFBoundingBox(bbox=figcap_fig_data['pdf_fig_bbox'], page_width=figcap_fig_data['page_width'], page_height=figcap_fig_data['page_height'])
             figcap_fig_data['extraction_type'] = 'figcap'
             all_boxes_lookup[(figcap_fig_no, 'figcap')] = figcap_fig_data
         
         for xref_fig_no, xref_fig_data in xref_figures.items():
+            xref_fig_data = xref_fig_data.copy()
             xref_fig_data['box'] = PDFBoundingBox(bbox=xref_fig_data['pdf_fig_bbox'], page_width=xref_fig_data['page_width'], page_height=xref_fig_data['page_height'])
             xref_fig_data['extraction_type'] = 'xref'
             all_boxes_lookup[(xref_fig_no, 'xref')] = xref_fig_data
@@ -571,9 +595,7 @@ class PDF_Figure_Search:
 
         # step 3: rest of the unmatched items will be added to the merged figures as individual boxes for the page 
         # because one of the figure extraction methods could have FN's.
-        # DPI:
-        # - if figure was obtained based on fitz, you get the original DPI
-        # - if obtained using PDFigCapX, then default DPI will be used.
+        # DPI: is estimated on the basis of figure dimensions in the pdf
         for (fig_no, fig_type), fig_info in all_boxes_lookup.items():
             if (fig_no, fig_type) not in matched_box_keys:
                 matched_box_keys.add((fig_no, fig_type))
@@ -581,6 +603,8 @@ class PDF_Figure_Search:
                 image_number = fig_info['image_number']
                 if page_number not in merged_figures:
                     merged_figures[page_number] = {}
+                
+                fig_info = fig_info.copy()
                 merged_figures[page_number][image_number] = fig_info
                 merged_figures[page_number][image_number].update({'merge_type': 'regular'})
 
@@ -595,67 +619,198 @@ class PDF_Figure_Search:
         3) Rest of the unmatched boxes from both figure identification methods are included.
         '''
         
-        merged_pdf_info = {}
-        global_image_count = 1
-    
-        # since page_nos are the key's for xref_pdf_metadata & figcap_pdf_metadata - some page_no's may or
-        # may not be present in one of the dicts based on the method used for extraction - so need to
-        # handle these cases and consider the data from both the cases and use them - get keys (page_no's from both dicts)
+        # Step 1: Collect all merged figures without assigning image_count/image_number yet
+        unsorted_merged_pdf_info = {}
+        
         all_page_nos = xref_pdf_metadata.keys() | figcap_pdf_metadata.keys()
         
         for pg_no in all_page_nos:
-            xref_figures = xref_pdf_metadata.get(pg_no, {})     # can have multiple figures on the page
-            figcap_figures = figcap_pdf_metadata.get(pg_no, {})   # can have multiple figures on the page
-
-            # if both thr dicts have data - need to process the data --> to unionize/merge their results
-            # else consider the data from whichever dict provides it
+            xref_figures = xref_pdf_metadata.get(pg_no, {})
+            figcap_figures = figcap_pdf_metadata.get(pg_no, {})
 
             if not xref_figures and not figcap_figures:
                 continue
+            
+            merged_figures = self.merge_figures(xref_figures, figcap_figures)
+            page_figures = merged_figures.get(pg_no, {})
+
+            if not page_figures:
+                continue
+
+            # Store without image_count/image_number for now
+            if pg_no not in unsorted_merged_pdf_info:
+                unsorted_merged_pdf_info[pg_no] = {}
+            
+            for old_image_number, image_info in page_figures.items():
+                unsorted_merged_pdf_info[pg_no][old_image_number] = image_info.copy()
+
+        # Step 2: Flatten all figures with page numbers for global sorting
+        all_figures = []
+        for pg_no, page_figures in unsorted_merged_pdf_info.items():
+            for img_num, img_info in page_figures.items():
+                all_figures.append((pg_no, img_num, img_info))
+
+        # Step 3: Sort globally by page_number, then by position on page
+        def get_global_sort_key(item, row_height=50):
+            pg_no, img_num, img_info = item
+            bbox = img_info.get('pdf_fig_bbox', [0, 0, 0, 0])
+            
+            # Handle page number
+            if isinstance(pg_no, (int, float)):
+                page_sort = (True, pg_no)
             else:
-                # need to verify that proper image_number's are applied to each page in a sorted manner,
-                # using containment, iou and other methods sometimes messes up the ordering of images
-                merged_figures = self.merge_figures(xref_figures,figcap_figures)
+                try:
+                    page_sort = (True, int(pg_no))
+                except (ValueError, TypeError):
+                    page_sort = (False, str(pg_no))
+            
+            if len(bbox) >= 4:
+                x1, y1, x2, y2 = bbox[0], bbox[1], bbox[2], bbox[3]
+                top_y = min(y1, y2)
+                left_x = min(x1, x2)
 
-                # get the figures for this page
-                page_figures = merged_figures.get(pg_no, {})
+                # Calculate row_height
+                if img_info.get('page_height'):
+                    # Use 5-10% of page height as row_height
+                    row_height = max(img_info['page_height'] * 0.05, 30)
+                
+                row_y = round(top_y / row_height) * row_height
+                
+                return (page_sort, row_y, left_x)  # page, then row, then x
+            
+            return (page_sort, float('inf'), float('inf'))
 
-                if not page_figures:
-                    continue
+        sorted_all_figures = sorted(all_figures, key=lambda item: get_global_sort_key(item))
 
-                # sort figures by position on page
-                figures_list = list(page_figures.items())
+        # Step 4: Build final sorted structure and assign sequential numbers
+        sorted_merged_pdf_info = {}
+        global_image_count = 1
+        current_page = None
+        image_number = None
 
-                def get_sort_key(item):
-                    img_num, img_info = item
-                    bbox = img_info.get('pdf_fig_bbox', [0, 0, 0, 0])
-                    
-                    if len(bbox) >= 4:
-                        x1, y1, x2, y2 = bbox[0], bbox[1], bbox[2], bbox[3]
-                        
-                        top_y = min(y1, y2)  # Top edge (smaller y = top)
-                        left_x = min(x1, x2)
-                        return (top_y, left_x)  # Ascending (smaller y = top first)
-    
-                    return (float('inf'), float('inf'))
+        for pg_no, old_img_num, img_info in sorted_all_figures:
+            # New page - reset image_number counter
+            if pg_no != current_page:
+                current_page = pg_no
+                image_number = 1
+                sorted_merged_pdf_info[pg_no] = {}
 
-                # Sort figures by position
-                sorted_figures = sorted(figures_list, key=get_sort_key)
+            # Assign sequential numbers
+            img_info.update({
+                'page_number': pg_no,
+                'image_number': image_number,
+                'image_count': global_image_count
+            })
+            
+            sorted_merged_pdf_info[pg_no][image_number] = img_info
+            
+            image_number += 1
+            global_image_count += 1
 
-                # Initialize page dict if not exists
-                if pg_no not in merged_pdf_info:
-                    merged_pdf_info[pg_no] = {}
+        return sorted_merged_pdf_info
 
-                # Renumber sequentially and add to merged_pdf_info
-                # Note: global_image_count persists across pages for unique numbering
-                image_number = 1    # image_number per page - so the counter refreshes for every new page
-                for old_image_number, image_info in sorted_figures:
-                    merged_pdf_info[pg_no][image_number] = image_info
-                    image_info['image_count'] = global_image_count
-                    image_number += 1
-                    global_image_count += 1
 
-        return merged_pdf_info
+    def caption_similarity(self, caption1, caption2, threshold=0.7):
+        """Calculate similarity score (0.0 to 1.0)."""
+        if not caption1 or not caption2:
+            return False
+                
+        similarity = SequenceMatcher(None, caption1, caption2).ratio()
+        return similarity >= threshold
+
+
+    def merge_figures_with_pmid_data(self, pmid_metadata):
+        '''
+        This method will only work if the PMID resorces are open access.
+
+        Find best matches between figures obtained from PDF (xref and figcapX based) VS. figures obtained based
+        on PMID submission.
+
+        Note: PMID metadata is the ground truth and information obatined from any other figure identification
+        methods (figcap, xref based methods) may have some extra or missing data.
+
+
+        Approach:
+        - Get figures information obtained from PDF (figure identification methods: xref_figure_info, figcap_figure_info).
+        - Use the merged information from the above step to compare with PMID metadata (i.e compare captions) --> to match figures and obtain related figure metadata.
+        - Unmatched PMID data (ground truth) can be matched with the rest of the data based on figure dimensions or if no match ?
+
+        # pmid_metadata = { 
+            fig_label 1: 
+                {'fig_label': '', 
+                'original_fig_name': ,
+                ....
+                }, 
+            fig_label 2: 
+                {
+                    ...
+                }
+        }
+
+        Finally processed_metadata dict will look like: 
+        (Note that the same structure exists for xref and fig_capX based extraction)
+        processed_metadata = {
+            page_number 1: {
+                image_number 1: {
+                    key-value pairs
+                },
+                image_number 2: {
+                    key-value pairs
+                }
+            },
+            page_number 2: {
+                ....
+            }
+        }
+        '''
+
+        total_figures = len(pmid_metadata)
+
+        # a) xref based figures extraction
+        xref_figures_metadata = self.xref_figure_info(self.input_filepath)
+
+        # b) Heuristics based extraction (PDFigCapX)
+        figcap_figures_metadata = self.figcap_figure_info(self.input_filepath)
+
+        # merging method (a) and method (b) metadata
+        merged_pdf_info = self.merge_pdf_fig_info(xref_figures_metadata, figcap_figures_metadata)
+
+        # Step 1: match based on captions and track unmatched ground truth boxes
+        processed_metadata = {}
+        matched_figures = set()
+        matched_pmid_figures = set()
+
+        # sort ground truth info based on the keys - this will ensure that the figures are ordered
+        pmid_metadata = dict(sorted(pmid_metadata.items()))
+
+        # TODO time complexity - O(n*m) - find a better matching strategy
+        for pmid_fig_label, pmid_fig_metadata in pmid_metadata.items():
+            pmid_fig_caption = pmid_fig_metadata['fig_caption']
+
+            for page_num, merged_figs_metadata in merged_pdf_info.items():
+                for fig_num, fig_metadata in merged_figs_metadata.items():
+                    if (page_num, fig_num) not in matched_figures:
+
+                        caption_text = fig_metadata.get('caption_text')
+
+                        if self.caption_similarity(pmid_fig_caption,caption_text, threshold=0.7):
+                            matched_figures.add((page_num, fig_num))
+                            matched_pmid_figures.add(pmid_fig_label)
+                            
+                            if page_num not in processed_metadata:
+                                processed_metadata[page_num] = {}
+
+                            processed_metadata[page_num][fig_metadata['image_number']] = {
+                                'caption_text': pmid_fig_caption,
+                                'label': pmid_fig_label,
+                                **{k:v for k,v in fig_metadata.items() if k not in ('caption_text')},
+                                'renamed_image_path': pmid_fig_metadata['renamed_image_path']  
+                            }
+        
+        # TODO - for all the remaining PMID (ground truth) images that did not get based on captions matching,
+        # what to do with them, need to think about some heuristics, matching image dimensions to check is tricky
+
+        return processed_metadata
     
 
 if __name__ == '__main__':
