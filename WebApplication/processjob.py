@@ -11,8 +11,7 @@ from BKGlycanExtractor import PDFHandler, CompoundPDFImageFilter, PDFXRefImageFi
 import numpy as np
 from shutil import copyfile
 import tarfile
-# from difflib import SequenceMatcher     # python standard library to compare textual sequences
-
+from io import BytesIO
 import xml.etree.ElementTree as ET
 
 
@@ -80,7 +79,11 @@ class JobInstance:
         submission_type = task_detail.get('submission_type')
         pmid = task_detail.get('pmid', None)
 
-        if submission_type == "Manuscript" and pmid is not None:
+        # if task_detail.get('curation_task', False) and submission_type == "Manuscript" and pmid is not None:
+        #     return PMIDAnnotatePDFJob(task_detail,*args,**kwargs) 
+        if task_detail.get('curation_task', False) and submission_type == "Manuscript":
+            return PDFJob(task_detail,*args,**kwargs) 
+        elif submission_type == "Manuscript" and pmid is not None:
             return PMIDJob(task_detail,*args,**kwargs) 
         elif submission_type == "Manuscript":
             return PDFJob(task_detail,*args,**kwargs)
@@ -538,23 +541,27 @@ class PDFJob(JobInstance,PDF_Figure_Search):
         xref_figures_metadata = self.xref_figure_info(self.input_filepath)
 
         # b) Heuristics based extraction (PDFigCapX)
-        figcap_figures_metadata = self.figcap_figure_info(self.input_filepath)
+        # figcap_figures_metadata = self.figcap_figure_info(self.input_filepath)
 
         # merging method (a) and method (b) metadata
-        merged_pdf_info = self.merge_pdf_fig_info(xref_figures_metadata, figcap_figures_metadata)
+        # merged_pdf_info = self.merge_pdf_fig_info(xref_figures_metadata, figcap_figures_metadata)
 
-        for page_num, fig_data in merged_pdf_info.items():
+        for page_num, fig_data in xref_figures_metadata.items():
             page = doc[page_num-1]
             for figure_num, figure_info in fig_data.items():
 
-                image_path = os.path.join(image_folders['figures_dir'], f"{figure_info['image_count']}.png")
+                xref = figure_info["xref"]
 
-                pix = page.get_pixmap(clip=figure_info['pdf_fig_bbox'], dpi=figure_info["dpi"])        # x1,y1,x2,y2
+                if not xref or xref < 1:
+                    continue
+
+                image_path = os.path.join(image_folders['figures_dir'], f"{figure_info['image_count']}.png")
+                # pix = page.get_pixmap(clip=figure_info['pdf_fig_bbox'], dpi=figure_info["dpi"])        # x1,y1,x2,y2
+                pix = fitz.Pixmap(doc, xref)
                 figure_info['width'] = pix.width
                 figure_info['height'] = pix.height
                 try:
                     pix.save(image_path)
-                    print("saved image", image_path)
                 except Exception as e:
                     # If save fails, convert to RGB and try again
                     pix = fitz.Pixmap(fitz.csRGB, pix)

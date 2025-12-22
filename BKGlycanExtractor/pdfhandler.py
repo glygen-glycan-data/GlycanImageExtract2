@@ -92,9 +92,9 @@ class PDFHandler(object):
                 image['page_width'] = page.rect.width
                 image['page_height'] = page.rect.height
 
-                dpi = self.calculate_dpi(image)
-                if dpi is not None:
-                    image['dpi'] = dpi
+                # dpi = self.calculate_dpi(image)
+                # if dpi is not None:
+                #     image['dpi'] = dpi
                     
                 if filter is None or filter.keep(image):
                     image['image_count'] = image_count                  # total image count so far
