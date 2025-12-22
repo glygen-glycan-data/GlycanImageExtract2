@@ -229,8 +229,8 @@ class PDF_Figure_Search:
             pdf_metadata[page_number][image_number] = {k:v for k,v in fig_metadata.items() if k in ('bbox', 'width', 'height', 'xref', 'pdf_fig_bbox', 'pdf_fig_width', 'pdf_fig_height', 'page_width', 'page_height', 'pdf_fig_height', 'image_count', 'dpi')}
             pdf_metadata[page_number][image_number].update({'page_number': page_number, 'image_number': image_number})
 
-            if 'dpi' not in pdf_metadata[page_number][image_number]:
-                pdf_metadata[page_number][image_number]['dpi'] = self.DPI       # setting a default DPI
+            # if 'dpi' not in pdf_metadata[page_number][image_number]:
+            #     pdf_metadata[page_number][image_number]['dpi'] = self.DPI       # setting a default DPI
             
             self.log_file.write(
                 f"\nXREF: {fig_metadata.get('xref')}, Page number: {page_number}, Image number: {image_number},  bbox: {fig_metadata["pdf_fig_bbox"]}, Width: {fig_metadata['pdf_fig_width']}, Height: {fig_metadata['pdf_fig_height']}\n"
