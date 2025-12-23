@@ -418,7 +418,8 @@
                 }
             },
             error: function(xhr, status, error) { 
-                // console.log('AJAX err:', status, error);
+                // Reset loading state to restore UI
+                setLoadingState(false);
                 
                 // Extract error message from Flask response
                 let errorMessage = "Upload failed: Either url is under a paywall or url format is not supported";

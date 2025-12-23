@@ -684,7 +684,7 @@ class APIFramework:
                 else:
                     return flask.jsonify({"error": f"File format not supported: {filename}"}), 400
             except requests.exceptions.RequestException as e:
-                return flask.jsonify({"error": f"Failed to download file: {str(e)}"}), 400
+                return flask.jsonify({"error": "Submitted input is invalid."}), 400
             except Exception as e:
                 return flask.jsonify({"error": f"Unexpected error: {str(e)}"}), 400
 
