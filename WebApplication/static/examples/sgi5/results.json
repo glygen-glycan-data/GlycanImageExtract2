@@ -1,0 +1,991 @@
+{
+  "id": "ookikifi3g",
+  "task_index": 15,
+  "submission_detail": {
+    "original_file_name": "G69233PF.png",
+    "submission_type": "Simple Glycan Image",
+    "id": "ookikifi3g"
+  },
+  "state": "Complete",
+  "status": "",
+  "finished": true,
+  "submission_type": "Simple Glycan Image",
+  "submit_time": 1766518897.9886703,
+  "sessionid": "udf7rfnf447dv2hv",
+  "result": {
+    "id": "ookikifi3g",
+    "start time": 1766518988.6538055,
+    "end time": 1766518990.4517162,
+    "runtime": 1.7979106903076172,
+    "error": [],
+    "original_filepath": "input/G69233PF.png",
+    "abs_original_filepath": "/data2/projects/GlyGen/GlycanImageExtract2-dev/WebApplication/static/files/ookikifi3g/input/G69233PF.png",
+    "pipeline_name": null,
+    "figure_result": [
+      {
+        "annotated_image_path": "extracted_figures/annotated_figures/G69233PF.png",
+        "file_name": "G69233PF.png",
+        "glycans": [
+          {
+            "IUPAC": "NeuAc?2-?(NeuAc?2-?(GalNAc?1-?)Gal?1-?GlcNAc?1-?(GalNAc?1-?(Fuc?1-?)Gal?1-?GlcNAc?1-?)Gal?1-?GlcNAc?1-?)GalNAc",
+            "WURCS": "WURCS=2.0/5,12,11/[a2112h-1x_1-5_2*NCC/3=O][a2122h-1x_1-5_2*NCC/3=O][a2112h-1x_1-5][a1221m-1x_1-5][Aad21122h-2x_2-6_5*NCC/3=O]/1-2-3-2-3-4-1-2-3-1-5-5/a?-b1_a?-l2_b?-c1_c?-d1_c?-h1_d?-e1_e?-f1_e?-g1_h?-i1_i?-j1_i?-k2",
+            "accession": "G63135DD",
+            "bbox": [
+              0,
+              0,
+              394,
+              238
+            ],
+            "center": [
+              197.0,
+              119.0
+            ],
+            "classid": 0,
+            "classlabel": "glycan",
+            "composition_str": "GlcNAc(3)NeuAc(2)Fuc(1)GalNAc(3)Gal(3)",
+            "extracted_image_path": "extracted_figures/extracted_images/G69233PF-1.png",
+            "fig_glycan_count": 1,
+            "file_name": "G69233PF.png",
+            "glyImage": "glymage/b338ef7a1d4cc3e50a3917af1fa92c69.svg",
+            "glycans": [],
+            "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G63135DD",
+            "height": 237,
+            "image_name": "G69233PF-1.png",
+            "image_path": "extracted_figures/images/G69233PF-1.png",
+            "linkexpl": "Extracted successfully using accession",
+            "monos": [
+              {
+                "bbox": [
+                  286,
+                  65,
+                  33,
+                  34
+                ],
+                "center": [
+                  302.5,
+                  82.0
+                ],
+                "classid": 6,
+                "classlabel": "GalNAc",
+                "confidence": 0.999964714050293,
+                "height": 34,
+                "id": 1,
+                "links": [
+                  {
+                    "bbox": [
+                      233,
+                      39,
+                      86,
+                      59
+                    ],
+                    "center": [
+                      276.0,
+                      68.5
+                    ],
+                    "child_bond": 2,
+                    "classid": 0,
+                    "classlabel": "link",
+                    "confidence": 0.9999505281448364,
+                    "from_id": 1,
+                    "height": 59,
+                    "to_id": 12,
+                    "width": 86
+                  },
+                  {
+                    "bbox": [
+                      235,
+                      66,
+                      84,
+                      58
+                    ],
+                    "center": [
+                      277.0,
+                      95.0
+                    ],
+                    "child_bond": 1,
+                    "classid": 0,
+                    "classlabel": "link",
+                    "confidence": 0.9999370574951172,
+                    "from_id": 1,
+                    "height": 58,
+                    "to_id": 2,
+                    "width": 84
+                  }
+                ],
+                "symbol": "GalNAc",
+                "width": 33
+              },
+              {
+                "bbox": [
+                  233,
+                  91,
+                  34,
+                  33
+                ],
+                "center": [
+                  250.0,
+                  107.5
+                ],
+                "classid": 3,
+                "classlabel": "GlcNAc",
+                "confidence": 0.999948263168335,
+                "height": 33,
+                "id": 2,
+                "links": [
+                  {
+                    "bbox": [
+                      182,
+                      92,
+                      84,
+                      32
+                    ],
+                    "center": [
+                      224.0,
+                      108.0
+                    ],
+                    "child_bond": 1,
+                    "classid": 0,
+                    "classlabel": "link",
+                    "confidence": 0.9999568462371826,
+                    "from_id": 2,
+                    "height": 32,
+                    "to_id": 8,
+                    "width": 84
+                  }
+                ],
+                "symbol": "GlcNAc",
+                "width": 34
+              },
+              {
+                "bbox": [
+                  24,
+                  78,
+                  33,
+                  33
+                ],
+                "center": [
+                  40.5,
+                  94.5
+                ],
+                "classid": 6,
+                "classlabel": "GalNAc",
+                "confidence": 0.9999427795410156,
+                "height": 33,
+                "id": 3,
+                "links": [],
+                "symbol": "GalNAc",
+                "width": 33
+              },
+              {
+                "bbox": [
+                  77,
+                  182,
+                  34,
+                  33
+                ],
+                "center": [
+                  94.0,
+                  198.5
+                ],
+                "classid": 4,
+                "classlabel": "Fuc",
+                "confidence": 0.9999262094497681,
+                "height": 33,
+                "id": 4,
+                "links": [],
+                "symbol": "Fuc",
+                "width": 34
+              },
+              {
+                "bbox": [
+                  130,
+                  130,
+                  33,
+                  33
+                ],
+                "center": [
+                  146.5,
+                  146.5
+                ],
+                "classid": 3,
+                "classlabel": "GlcNAc",
+                "confidence": 0.9998962879180908,
+                "height": 33,
+                "id": 5,
+                "links": [
+                  {
+                    "bbox": [
+                      77,
+                      129,
+                      86,
+                      34
+                    ],
+                    "center": [
+                      120.0,
+                      146.0
+                    ],
+                    "child_bond": 1,
+                    "classid": 0,
+                    "classlabel": "link",
+                    "confidence": 0.999993085861206,
+                    "from_id": 5,
+                    "height": 34,
+                    "to_id": 10,
+                    "width": 86
+                  }
+                ],
+                "symbol": "GlcNAc",
+                "width": 33
+              },
+              {
+                "bbox": [
+                  24,
+                  26,
+                  34,
+                  33
+                ],
+                "center": [
+                  41.0,
+                  42.5
+                ],
+                "classid": 7,
+                "classlabel": "NeuAc",
+                "confidence": 0.9998773336410522,
+                "height": 33,
+                "id": 6,
+                "links": [],
+                "symbol": "NeuAc",
+                "width": 34
+              },
+              {
+                "bbox": [
+                  24,
+                  130,
+                  33,
+                  34
+                ],
+                "center": [
+                  40.5,
+                  147.0
+                ],
+                "classid": 6,
+                "classlabel": "GalNAc",
+                "confidence": 0.9998763799667358,
+                "height": 34,
+                "id": 7,
+                "links": [],
+                "symbol": "GalNAc",
+                "width": 33
+              },
+              {
+                "bbox": [
+                  182,
+                  91,
+                  33,
+                  34
+                ],
+                "center": [
+                  198.5,
+                  108.0
+                ],
+                "classid": 1,
+                "classlabel": "Gal",
+                "confidence": 0.9998270273208618,
+                "height": 34,
+                "id": 8,
+                "links": [
+                  {
+                    "bbox": [
+                      130,
+                      52,
+                      84,
+                      73
+                    ],
+                    "center": [
+                      172.0,
+                      88.5
+                    ],
+                    "child_bond": 1,
+                    "classid": 0,
+                    "classlabel": "link",
+                    "confidence": 0.9999228715896606,
+                    "from_id": 8,
+                    "height": 73,
+                    "to_id": 11,
+                    "width": 84
+                  },
+                  {
+                    "bbox": [
+                      130,
+                      91,
+                      85,
+                      71
+                    ],
+                    "center": [
+                      172.5,
+                      126.5
+                    ],
+                    "child_bond": 1,
+                    "classid": 0,
+                    "classlabel": "link",
+                    "confidence": 0.9999185800552368,
+                    "from_id": 8,
+                    "height": 71,
+                    "to_id": 5,
+                    "width": 85
+                  }
+                ],
+                "symbol": "Gal",
+                "width": 33
+              },
+              {
+                "bbox": [
+                  78,
+                  52,
+                  33,
+                  33
+                ],
+                "center": [
+                  94.5,
+                  68.5
+                ],
+                "classid": 1,
+                "classlabel": "Gal",
+                "confidence": 0.9997723698616028,
+                "height": 33,
+                "id": 9,
+                "links": [
+                  {
+                    "bbox": [
+                      25,
+                      51,
+                      85,
+                      60
+                    ],
+                    "center": [
+                      67.5,
+                      81.0
+                    ],
+                    "child_bond": 1,
+                    "classid": 0,
+                    "classlabel": "link",
+                    "confidence": 0.9999653100967407,
+                    "from_id": 9,
+                    "height": 60,
+                    "to_id": 3,
+                    "width": 85
+                  },
+                  {
+                    "bbox": [
+                      25,
+                      25,
+                      86,
+                      60
+                    ],
+                    "center": [
+                      68.0,
+                      55.0
+                    ],
+                    "child_bond": 2,
+                    "classid": 0,
+                    "classlabel": "link",
+                    "confidence": 0.9999043941497803,
+                    "from_id": 9,
+                    "height": 60,
+                    "to_id": 6,
+                    "width": 86
+                  }
+                ],
+                "symbol": "Gal",
+                "width": 33
+              },
+              {
+                "bbox": [
+                  76,
+                  130,
+                  33,
+                  33
+                ],
+                "center": [
+                  92.5,
+                  146.5
+                ],
+                "classid": 1,
+                "classlabel": "Gal",
+                "confidence": 0.9997655749320984,
+                "height": 33,
+                "id": 10,
+                "links": [
+                  {
+                    "bbox": [
+                      24,
+                      130,
+                      85,
+                      33
+                    ],
+                    "center": [
+                      66.5,
+                      146.5
+                    ],
+                    "child_bond": 1,
+                    "classid": 0,
+                    "classlabel": "link",
+                    "confidence": 0.9999737739562988,
+                    "from_id": 10,
+                    "height": 33,
+                    "to_id": 7,
+                    "width": 85
+                  },
+                  {
+                    "bbox": [
+                      76,
+                      129,
+                      33,
+                      86
+                    ],
+                    "center": [
+                      92.5,
+                      172.0
+                    ],
+                    "child_bond": 1,
+                    "classid": 0,
+                    "classlabel": "link",
+                    "confidence": 0.999477744102478,
+                    "from_id": 10,
+                    "height": 86,
+                    "to_id": 4,
+                    "width": 33
+                  }
+                ],
+                "symbol": "Gal",
+                "width": 33
+              },
+              {
+                "bbox": [
+                  130,
+                  52,
+                  34,
+                  33
+                ],
+                "center": [
+                  147.0,
+                  68.5
+                ],
+                "classid": 3,
+                "classlabel": "GlcNAc",
+                "confidence": 0.9997585415840149,
+                "height": 33,
+                "id": 11,
+                "links": [
+                  {
+                    "bbox": [
+                      78,
+                      52,
+                      84,
+                      33
+                    ],
+                    "center": [
+                      120.0,
+                      68.5
+                    ],
+                    "child_bond": 1,
+                    "classid": 0,
+                    "classlabel": "link",
+                    "confidence": 0.9999574422836304,
+                    "from_id": 11,
+                    "height": 33,
+                    "to_id": 9,
+                    "width": 84
+                  }
+                ],
+                "symbol": "GlcNAc",
+                "width": 34
+              },
+              {
+                "bbox": [
+                  233,
+                  39,
+                  34,
+                  33
+                ],
+                "center": [
+                  250.0,
+                  55.5
+                ],
+                "classid": 7,
+                "classlabel": "NeuAc",
+                "confidence": 0.9996358156204224,
+                "height": 33,
+                "id": 12,
+                "links": [],
+                "symbol": "NeuAc",
+                "width": 34
+              }
+            ],
+            "orientation": "RL",
+            "rejected_roots": [
+              {
+                "bbox": [
+                  25,
+                  130,
+                  34,
+                  33
+                ],
+                "center": [
+                  42.0,
+                  146.5
+                ],
+                "classid": 0,
+                "classlabel": "redend",
+                "confidence": 0.0009484291076660156,
+                "height": 33,
+                "mono_id": 7,
+                "width": 34
+              },
+              {
+                "bbox": [
+                  78,
+                  183,
+                  33,
+                  33
+                ],
+                "center": [
+                  94.5,
+                  199.5
+                ],
+                "classid": 0,
+                "classlabel": "redend",
+                "confidence": 0.00039839744567871094,
+                "height": 33,
+                "mono_id": 4,
+                "width": 33
+              },
+              {
+                "bbox": [
+                  233,
+                  38,
+                  34,
+                  33
+                ],
+                "center": [
+                  250.0,
+                  54.5
+                ],
+                "classid": 0,
+                "classlabel": "redend",
+                "confidence": 0.0002530813217163086,
+                "height": 33,
+                "mono_id": 12,
+                "width": 34
+              },
+              {
+                "bbox": [
+                  233,
+                  91,
+                  35,
+                  34
+                ],
+                "center": [
+                  250.5,
+                  108.0
+                ],
+                "classid": 0,
+                "classlabel": "redend",
+                "confidence": 0.00020051002502441406,
+                "height": 34,
+                "mono_id": 2,
+                "width": 35
+              },
+              {
+                "bbox": [
+                  181,
+                  91,
+                  33,
+                  33
+                ],
+                "center": [
+                  197.5,
+                  107.5
+                ],
+                "classid": 0,
+                "classlabel": "redend",
+                "confidence": 0.00017023086547851562,
+                "height": 33,
+                "mono_id": 8,
+                "width": 33
+              },
+              {
+                "bbox": [
+                  25,
+                  78,
+                  34,
+                  33
+                ],
+                "center": [
+                  42.0,
+                  94.5
+                ],
+                "classid": 0,
+                "classlabel": "redend",
+                "confidence": 0.0001577138900756836,
+                "height": 33,
+                "mono_id": 3,
+                "width": 34
+              },
+              {
+                "bbox": [
+                  130,
+                  52,
+                  34,
+                  34
+                ],
+                "center": [
+                  147.0,
+                  69.0
+                ],
+                "classid": 0,
+                "classlabel": "redend",
+                "confidence": 0.00015413761138916016,
+                "height": 34,
+                "mono_id": 11,
+                "width": 34
+              },
+              {
+                "bbox": [
+                  130,
+                  130,
+                  34,
+                  33
+                ],
+                "center": [
+                  147.0,
+                  146.5
+                ],
+                "classid": 0,
+                "classlabel": "redend",
+                "confidence": 0.00012099742889404297,
+                "height": 33,
+                "mono_id": 5,
+                "width": 34
+              },
+              {
+                "bbox": [
+                  26,
+                  26,
+                  32,
+                  33
+                ],
+                "center": [
+                  42.0,
+                  42.5
+                ],
+                "classid": 0,
+                "classlabel": "redend",
+                "confidence": 7.843971252441406e-05,
+                "height": 33,
+                "mono_id": 6,
+                "width": 32
+              },
+              {
+                "bbox": [
+                  77,
+                  130,
+                  34,
+                  32
+                ],
+                "center": [
+                  94.0,
+                  146.0
+                ],
+                "classid": 0,
+                "classlabel": "redend",
+                "confidence": 7.605552673339844e-05,
+                "height": 32,
+                "mono_id": 10,
+                "width": 34
+              },
+              {
+                "bbox": [
+                  77,
+                  52,
+                  35,
+                  33
+                ],
+                "center": [
+                  94.5,
+                  68.5
+                ],
+                "classid": 0,
+                "classlabel": "redend",
+                "confidence": 6.890296936035156e-05,
+                "height": 33,
+                "mono_id": 9,
+                "width": 35
+              }
+            ],
+            "root": {
+              "bbox": [
+                286,
+                65,
+                32,
+                33
+              ],
+              "center": [
+                302.0,
+                81.5
+              ],
+              "classid": 0,
+              "classlabel": "redend",
+              "confidence": 0.9998843669891357,
+              "height": 33,
+              "mono_id": 1,
+              "width": 32
+            },
+            "undirected_links": [
+              {
+                "bbox": [
+                  77,
+                  129,
+                  86,
+                  34
+                ],
+                "center": [
+                  120.0,
+                  146.0
+                ],
+                "classid": 0,
+                "classlabel": "link",
+                "confidence": 0.999993085861206,
+                "height": 34,
+                "mono_ids": [
+                  5,
+                  10
+                ],
+                "width": 86
+              },
+              {
+                "bbox": [
+                  24,
+                  130,
+                  85,
+                  33
+                ],
+                "center": [
+                  66.5,
+                  146.5
+                ],
+                "classid": 0,
+                "classlabel": "link",
+                "confidence": 0.9999737739562988,
+                "height": 33,
+                "mono_ids": [
+                  7,
+                  10
+                ],
+                "width": 85
+              },
+              {
+                "bbox": [
+                  25,
+                  51,
+                  85,
+                  60
+                ],
+                "center": [
+                  67.5,
+                  81.0
+                ],
+                "classid": 0,
+                "classlabel": "link",
+                "confidence": 0.9999653100967407,
+                "height": 60,
+                "mono_ids": [
+                  3,
+                  9
+                ],
+                "width": 85
+              },
+              {
+                "bbox": [
+                  78,
+                  52,
+                  84,
+                  33
+                ],
+                "center": [
+                  120.0,
+                  68.5
+                ],
+                "classid": 0,
+                "classlabel": "link",
+                "confidence": 0.9999574422836304,
+                "height": 33,
+                "mono_ids": [
+                  9,
+                  11
+                ],
+                "width": 84
+              },
+              {
+                "bbox": [
+                  182,
+                  92,
+                  84,
+                  32
+                ],
+                "center": [
+                  224.0,
+                  108.0
+                ],
+                "classid": 0,
+                "classlabel": "link",
+                "confidence": 0.9999568462371826,
+                "height": 32,
+                "mono_ids": [
+                  2,
+                  8
+                ],
+                "width": 84
+              },
+              {
+                "bbox": [
+                  233,
+                  39,
+                  86,
+                  59
+                ],
+                "center": [
+                  276.0,
+                  68.5
+                ],
+                "classid": 0,
+                "classlabel": "link",
+                "confidence": 0.9999505281448364,
+                "height": 59,
+                "mono_ids": [
+                  1,
+                  12
+                ],
+                "width": 86
+              },
+              {
+                "bbox": [
+                  235,
+                  66,
+                  84,
+                  58
+                ],
+                "center": [
+                  277.0,
+                  95.0
+                ],
+                "classid": 0,
+                "classlabel": "link",
+                "confidence": 0.9999370574951172,
+                "height": 58,
+                "mono_ids": [
+                  1,
+                  2
+                ],
+                "width": 84
+              },
+              {
+                "bbox": [
+                  130,
+                  52,
+                  84,
+                  73
+                ],
+                "center": [
+                  172.0,
+                  88.5
+                ],
+                "classid": 0,
+                "classlabel": "link",
+                "confidence": 0.9999228715896606,
+                "height": 73,
+                "mono_ids": [
+                  8,
+                  11
+                ],
+                "width": 84
+              },
+              {
+                "bbox": [
+                  130,
+                  91,
+                  85,
+                  71
+                ],
+                "center": [
+                  172.5,
+                  126.5
+                ],
+                "classid": 0,
+                "classlabel": "link",
+                "confidence": 0.9999185800552368,
+                "height": 71,
+                "mono_ids": [
+                  5,
+                  8
+                ],
+                "width": 85
+              },
+              {
+                "bbox": [
+                  25,
+                  25,
+                  86,
+                  60
+                ],
+                "center": [
+                  68.0,
+                  55.0
+                ],
+                "classid": 0,
+                "classlabel": "link",
+                "confidence": 0.9999043941497803,
+                "height": 60,
+                "mono_ids": [
+                  6,
+                  9
+                ],
+                "width": 86
+              },
+              {
+                "bbox": [
+                  76,
+                  129,
+                  33,
+                  86
+                ],
+                "center": [
+                  92.5,
+                  172.0
+                ],
+                "classid": 0,
+                "classlabel": "link",
+                "confidence": 0.999477744102478,
+                "height": 86,
+                "mono_ids": [
+                  4,
+                  10
+                ],
+                "width": 33
+              }
+            ],
+            "width": 393,
+            "upvotes": 1,
+            "downvotes": 0
+          }
+        ],
+        "height": 238,
+        "image_path": "input/G69233PF.png",
+        "width": 394
+      }
+    ],
+    "finished": true,
+    "state": "Complete",
+    "status": ""
+  }
+}

@@ -1,0 +1,30 @@
+nnwzoqdgeh
+/data2/projects/GlyGen/GlycanImageExtract2-dev/WebApplication/static/files/nnwzoqdgeh/output/annotated_jbt.28-150.pdf
+
+XREF: 133, Page number: 2, Image number: 1,  bbox: (313.90899658203125, 58.791046142578125, 558.2780151367188, 489.5440368652344), Width: 245.3690185546875, Height: 431.75299072265625
+
+XREF: 134, Page number: 3, Image number: 1,  bbox: (313.90899658203125, 459.43902587890625, 558.2780151367188, 674.1920166015625), Width: 245.3690185546875, Height: 215.75299072265625
+
+XREF: 139, Page number: 4, Image number: 1,  bbox: (44.9010009765625, 513.0150146484375, 289.27001953125, 652.3090209960938), Width: 245.3690185546875, Height: 140.29400634765625
+
+XREF: 140, Page number: 4, Image number: 2,  bbox: (313.90899658203125, 58.79100036621094, 558.2780151367188, 198.53900146484375), Width: 245.3690185546875, Height: 140.7480010986328
+
+XREF: 141, Page number: 5, Image number: 1,  bbox: (228.41600036621094, 58.4510498046875, 556.6710205078125, 188.33404541015625), Width: 329.25502014160156, Height: 130.88299560546875
+
+XREF: 142, Page number: 5, Image number: 2,  bbox: (228.41600036621094, 478.88604736328125, 556.6710205078125, 726.1800537109375), Width: 329.25502014160156, Height: 248.29400634765625
+
+XREF: 143, Page number: 6, Image number: 1,  bbox: (46.430999755859375, 58.45103454589844, 374.6860046386719, 307.67303466796875), Width: 329.2550048828125, Height: 250.2220001220703
+
+XREF: 144, Page number: 6, Image number: 2,  bbox: (46.430999755859375, 497.59405517578125, 374.6860046386719, 726.1800537109375), Width: 329.2550048828125, Height: 229.58599853515625
+
+XREF: 146, Page number: 7, Image number: 1,  bbox: (228.41600036621094, 58.45103454589844, 556.6710205078125, 284.259033203125), Width: 329.25502014160156, Height: 226.80799865722656
+
+Saved image to /data2/projects/GlyGen/GlycanImageExtract2-dev/WebApplication/static/files/nnwzoqdgeh/extracted_figures/figures/1.png
+Saved image to /data2/projects/GlyGen/GlycanImageExtract2-dev/WebApplication/static/files/nnwzoqdgeh/extracted_figures/figures/2.png
+Saved image to /data2/projects/GlyGen/GlycanImageExtract2-dev/WebApplication/static/files/nnwzoqdgeh/extracted_figures/figures/3.png
+Saved image to /data2/projects/GlyGen/GlycanImageExtract2-dev/WebApplication/static/files/nnwzoqdgeh/extracted_figures/figures/4.png
+Saved image to /data2/projects/GlyGen/GlycanImageExtract2-dev/WebApplication/static/files/nnwzoqdgeh/extracted_figures/figures/5.png
+Saved image to /data2/projects/GlyGen/GlycanImageExtract2-dev/WebApplication/static/files/nnwzoqdgeh/extracted_figures/figures/6.png
+Saved image to /data2/projects/GlyGen/GlycanImageExtract2-dev/WebApplication/static/files/nnwzoqdgeh/extracted_figures/figures/7.png
+Saved image to /data2/projects/GlyGen/GlycanImageExtract2-dev/WebApplication/static/files/nnwzoqdgeh/extracted_figures/figures/8.png
+Saved image to /data2/projects/GlyGen/GlycanImageExtract2-dev/WebApplication/static/files/nnwzoqdgeh/extracted_figures/figures/9.png

@@ -39,6 +39,7 @@ for pat in patterns:
 def update_votes(instance):
     result = json.loads(open("static/examples/"+instance+"/results.json").read())
     correct = json.loads(open("static/answers/"+instance+"/correct.json").read())
+    correctcnt = 0; incorrectcnt = 0;
     for f1,f2 in zip(result["result"]["figure_result"],correct["result"]["figure_result"]):
         for g1 in f1["glycans"]:
             g1bb = BoundingBox(**dict(zip("xywh",g1['bbox'])))
@@ -51,20 +52,26 @@ def update_votes(instance):
                     bestiou = iou
                     bestg2 = g2
             if not bestg2:
+                incorrectcnt += 1
                 continue
             g2 = bestg2
             if g1.get("IUPAC"):
                 if g1.get("IUPAC") == g2.get("IUPAC","__XXXXXX__"):
                     g1['upvotes'] = 1; g1['downvotes'] = 0;
+                    correctcnt += 1
                 else:
                     g1['upvotes'] = 0; g1['downvotes'] = 1
+                    incorrectcnt += 1
             else:
                 if g1.get("composition_str") == g2.get("composition_str","__XXXXXX__"):
                     g1['upvotes'] = 1; g1['downvotes'] = 0;
+                    correctcnt += 1
                 else:
                     g1['upvotes'] = 0; g1['downvotes'] = 1
+                    incorrectcnt += 1
     with open("static/examples/"+instance+"/results.json",'wt') as wh:
         json.dump(result,wh,indent=2)
+    return correctcnt,(correctcnt+incorrectcnt)
 
 for exampledir,taskid in tasks:
     result = {}
@@ -76,8 +83,8 @@ for exampledir,taskid in tasks:
         shutil.rmtree("static/examples/"+exampledir)
         shutil.copytree("static/files/"+taskid,
                         "static/examples/"+exampledir)
-        update_votes(exampledir)
-        print("Example %s done (%s)."%(exampledir,taskid))
+        correct,total = update_votes(exampledir)
+        print("Example %s done, %d/%d correct (%s)."%(exampledir,correct,total,taskid))
     else:
         print("Example %s not updated (%s)."%(exampledir,taskid))
 

@@ -312,14 +312,14 @@ class APIFramework:
         # Mcleod - https://www.neb.com/en-us/-/media/nebus/files/application-notes/appnote_characterization_of_glycans_from_erbitux_rituxan_and_enbrel_using_recombinant_pngase_f.pdf?rev=581a874aebbc4351bec05e10c07f96ea&hash=C8D5EB5AF1B7D5C331DFAB13BB87F649
         example_cards = [
             {"title": "Sassi et al., 2014", "desc": "", "url": f"{self._prefix}/result/mgp1", "icon": f"{self._prefix}/static/images/pdf.svg" },
+            {"title": "Huang & Orlando, 2017", "desc": "", "url": f"{self._prefix}/result/mgp4", "icon": f"{self._prefix}/static/images/pdf.svg" },
             {"title": "Mcleod, 2024", "desc": "", "url": f"{self._prefix}/result/mgp3", "icon": f"{self._prefix}/static/images/pdf.svg"},
-            {"title": "Simple PDF", "desc": "", "url": f"{self._prefix}/result/mgp2", "icon": f"{self._prefix}/static/images/pdf.svg" },
-            {"title": "Multi Glycan Figure", "desc": "", "url": f"{self._prefix}/result/mgi1", "icon": f"{self._prefix}/static/images/multi-image.svg" },
-            {"title": "Multi Glycan Example", "desc": "", "url": f"{self._prefix}/result/mgi2", "icon": f"{self._prefix}/static/images/multi-image.svg" },
-            {"title": "Multiple Glycans", "desc": "", "url": f"{self._prefix}/result/mgi3", "icon": f"{self._prefix}/static/images/multi-image.svg" },
-            {"title": "Simple Glycan Image", "desc": "", "url": f"{self._prefix}/result/sgi1", "icon": f"{self._prefix}/static/images/single-image.svg"},
-            {"title": "Simple Glycan Page", "desc": "", "url": f"{self._prefix}/result/sgi2", "icon": f"{self._prefix}/static/images/single-image.svg" },
-            {"title": "Simple Glycan Image", "desc": "", "url": f"{self._prefix}/result/sgi3", "icon": f"{self._prefix}/static/images/single-image.svg" },
+            {"title": "Figure 1, Kri\u0161ti\u0107 et al., 2018", "desc": "", "url": f"{self._prefix}/result/mgi4", "icon": f"{self._prefix}/static/images/multi-image.svg" },
+            {"title": "Figure 2, Zhang et al., 2021", "desc": "", "url": f"{self._prefix}/result/mgi6", "icon": f"{self._prefix}/static/images/multi-image.svg" },
+            {"title": "Mass Spectrometry of Glycans Webpage, Millipore Sigma", "desc": "", "url": f"{self._prefix}/result/mgi5", "icon": f"{self._prefix}/static/images/multi-image.svg" },
+            {"title": "G16150CJ - Compact N-Glycan", "desc": "", "url": f"{self._prefix}/result/sgi4", "icon": f"{self._prefix}/static/images/single-image.svg"},
+            {"title": "G83439SR - N-Glycan Toplogy ", "desc": "", "url": f"{self._prefix}/result/sgi6", "icon": f"{self._prefix}/static/images/single-image.svg" },
+            {"title": "G69233PF - O-Glycan Fully-defined", "desc": "", "url": f"{self._prefix}/result/sgi5", "icon": f"{self._prefix}/static/images/single-image.svg" },
         ]
         
         return flask.render_template(self._examples_html, example_cards=example_cards, urlprefix=self._prefix)

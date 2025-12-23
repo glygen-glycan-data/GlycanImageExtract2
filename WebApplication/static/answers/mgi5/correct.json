@@ -1,0 +1,136 @@
+{
+  "result": {
+    "figure_result": [
+      {
+        "glycans": [
+          {
+            "IUPAC": "Man?1-?Man?1-?(Man?1-?)Man?1-?GlcNAc?1-?GlcNAc",
+            "accession": "G58858DY",
+            "bbox": [
+              0,
+              190,
+              447,
+              293
+            ],
+            "composition_str": "GlcNAc(2)Man(4)"
+          },
+          {
+            "bbox": [
+              0,
+              473,
+              490,
+              254
+            ],
+            "composition_str": "GlcNAc(3)Man(3)"
+          },
+          {
+            "IUPAC": "Man?1-?(Man?1-?)Man?1-?(Man?1-?)Man?1-?GlcNAc?1-?GlcNAc",
+            "accession": "G73636FD",
+            "bbox": [
+              0,
+              745,
+              470,
+              244
+            ],
+            "composition_str": "GlcNAc(2)Man(5)"
+          },
+          {
+            "bbox": [
+              0,
+              985,
+              471,
+              259
+            ],
+            "composition_str": "GlcNAc(4)Man(3)"
+          },
+          {
+            "IUPAC": "GlcNAc?1-?Man?1-?(GlcNAc?1-?)(GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?GlcNAc",
+            "accession": "G62257HU",
+            "bbox": [
+              0,
+              1251,
+              460,
+              314
+            ],
+            "composition_str": "GlcNAc(5)Man(3)"
+          },
+          {
+            "IUPAC": "Man?1-?(Man?1-?)Man?1-?GlcNAc?1-?GlcNAc",
+            "accession": "G03833LE",
+            "bbox": [
+              17,
+              0,
+              413,
+              211
+            ],
+            "composition_str": "GlcNAc(2)Man(3)"
+          },
+          {
+            "bbox": [
+              419,
+              1080,
+              541,
+              296
+            ],
+            "composition_str": "GlcNAc(7)Man(3)Gal(1)"
+          },
+          {
+            "IUPAC": "GlcNAc?1-?(GlcNAc?1-?)(GlcNAc?1-?)Man?1-?(GlcNAc?1-?)(GlcNAc?1-?(GlcNAc?1-?)Man?1-?)Man?1-?GlcNAc?1-?GlcNAc",
+            "accession": "G69177DS",
+            "bbox": [
+              431,
+              1355,
+              529,
+              284
+            ],
+            "composition_str": "GlcNAc(8)Man(3)"
+          },
+          {
+            "IUPAC": "GlcNAc?1-?(GlcNAc?1-?)Man?1-?(GlcNAc?1-?)(GlcNAc?1-?(GlcNAc?1-?)Man?1-?)Man?1-?GlcNAc?1-?GlcNAc",
+            "accession": "G06204HC",
+            "bbox": [
+              433,
+              811,
+              527,
+              302
+            ],
+            "composition_str": "GlcNAc(7)Man(3)"
+          },
+          {
+            "IUPAC": "Man?1-?(Man?1-?)Man?1-?(GlcNAc?1-?)(GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?GlcNAc",
+            "accession": "G72957RE",
+            "bbox": [
+              461,
+              0,
+              499,
+              297
+            ],
+            "composition_str": "GlcNAc(4)Man(5)"
+          },
+          {
+            "IUPAC": "GlcNAc?1-?Man?1-?(GlcNAc?1-?)(GlcNAc?1-?(GlcNAc?1-?)Man?1-?)Man?1-?GlcNAc?1-?GlcNAc",
+            "accession": "G20045DK",
+            "bbox": [
+              462,
+              272,
+              498,
+              279
+            ],
+            "composition_str": "GlcNAc(6)Man(3)"
+          },
+          {
+            "IUPAC": "Man?1-?(Man?1-?)Man?1-?(GlcNAc?1-?)(GlcNAc?1-?(GlcNAc?1-?)Man?1-?)Man?1-?GlcNAc?1-?GlcNAc",
+            "accession": "G54619MD",
+            "bbox": [
+              483,
+              527,
+              472,
+              326
+            ],
+            "composition_str": "GlcNAc(5)Man(5)"
+          }
+        ]
+      }
+    ]
+  }
+}

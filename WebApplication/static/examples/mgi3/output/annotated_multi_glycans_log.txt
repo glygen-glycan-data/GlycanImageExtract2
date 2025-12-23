@@ -1,2 +1,2 @@
-i3hh266caf
-/data2/projects/GlyGen/GlycanImageExtract2-dev/WebApplication/static/files/i3hh266caf/output/annotated_multi_glycans.png
+y6z3pgpfaj
+/data2/projects/GlyGen/GlycanImageExtract2-dev/WebApplication/static/files/y6z3pgpfaj/output/annotated_multi_glycans.png
