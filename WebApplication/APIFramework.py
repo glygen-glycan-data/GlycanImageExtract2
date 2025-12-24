@@ -673,18 +673,18 @@ class APIFramework:
                         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36',
                         'Accept': '*/*'
                     }
-
-                    with requests.get(file_url, headers=headers, stream=True, timeout=10) as response:
-                        response.raise_for_status()
-                        with open(file_path, "wb") as f:
-                            for chunk in response.iter_content(1024):
-                                f.write(chunk)
+                    try:
+                        with requests.get(file_url, headers=headers, stream=True, timeout=10) as response:
+                            response.raise_for_status()
+                            with open(file_path, "wb") as f:
+                                for chunk in response.iter_content(1024):
+                                    f.write(chunk)
+                    except requests.exceptions.RequestException as e:
+                        return flask.jsonify({"error": f"Can't download from provided URL."}), 400
                 elif input_file_path:
                     shutil.copyfile(input_file_path,file_path)
                 else:
                     return flask.jsonify({"error": f"File format not supported: {filename}"}), 400
-            except requests.exceptions.RequestException as e:
-                return flask.jsonify({"error": "Submitted input is invalid."}), 400
             except Exception as e:
                 return flask.jsonify({"error": f"Unexpected error: {str(e)}"}), 400
 
