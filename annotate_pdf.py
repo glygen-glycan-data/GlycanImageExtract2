@@ -8,9 +8,8 @@ import shutil
 import json
 import time
 
-
 from BKGlycanExtractor.glyomicsclient import *
-from BKGlycanExtractor.bbox import BoundingBox
+from BKGlycanExtractor.bbox import BoundingBox, PDFBoundingBox, PDFConversionContext
 
 parser = argparse.ArgumentParser(description="Annotate PDF")
 
@@ -18,8 +17,16 @@ parser.add_argument(
     '--pdf',
     type = str,
     nargs = "+",
-    required = True,
+    # required = True,
     help = 'PDF Manuscript(s). Required.'
+)
+
+parser.add_argument(
+    '--pmid',
+    type = str,
+    nargs = "+",
+    # required = True,
+    help = 'Pubmed id (Note that the Pubmed resources should be open access).'
 )
 
 parser.add_argument(
@@ -52,43 +59,113 @@ parser.add_argument(
     help = 'Resubmit analysis, even if results JSON is present.'
 )
 
+class InputItem:
+    '''
+    Stores the input item and its metadata (so that user can submit both pmid and pdf's at the same time via cmd line args)
+    Note: can also be extended to support file_url's - API framework supports the upload_file request.
+
+    This class helps in recognising the type of submission while using APIFramework/glyomics client.
+    '''
+
+    def __init__(self, input_type, value, index):
+        # validate type
+        if input_type not in ('pdf', 'pmid'):
+            raise ValueError(f"Invalid type: {input_type}. Must be 'pdf' or 'pmid'")
+
+        self.type = input_type
+        self.value = value
+        self.index = index
+
+        # get basename only for pdf's
+        if self.type == 'pdf':
+            self.basename = os.path.splitext(value)[0]
+        else:
+            self.basename = f'PMID-{value}'
+
+    def is_pdf(self):
+        return self.type == 'pdf'
+
+    def is_pmid(self):
+        return self.type == 'pmid'
+
+    def get_annotated_filename(self):
+        '''Returns the expected annotated PDF filename for this input item.'''
+        if self.type == 'pdf':
+            return f'{self.basename}.annotated.pdf'
+        elif self.type == 'pmid':
+            return f'{self.basename}.annotated.pdf'
+        return None
+
+def build_input_items(pdf_list=None, pmid_list=None):
+    '''Build InputItem list from PDF and PMID lists.'''
+    
+    input_items = []
+    
+    if pdf_list:
+        if len(pdf_list) != len(set(pdf_list)):
+            print("Provided PDF's are not unique")
+            sys.exit(1)
+        for pdf in pdf_list:
+            input_items.append(InputItem('pdf', pdf, len(input_items)))
+    
+    if pmid_list:
+        if len(pmid_list) != len(set(pmid_list)):
+            print("Provided PMID's are not unique")
+            sys.exit(1)
+        for pmid in pmid_list:
+            input_items.append(InputItem('pmid', pmid, len(input_items)))
+    
+    return input_items
 
 args = parser.parse_args()
 
-args.pdf = [ f for f in args.pdf if not f.endswith('.annotated.pdf') ]
+# Build unified input items list
+input_items = build_input_items(args.pdf, args.pmid)
 
-if len(args.pdf) != len(set(args.pdf)):
-    print("PDFs should be unique!",file=sys.stderr)
-    sys.exit(1)
-
+total_inputs = len(input_items)
 if args.json is not None:
-    assert len(args.json) == len(args.pdf)
+    assert len(args.json) == total_inputs, f"Number of JSON files ({len(args.json)}) must match number of inputs ({total_inputs})"
 if args.taskid is not None:
-    assert len(args.taskid) == len(args.pdf)
+    assert len(args.taskid) == total_inputs, f"Number of task IDs ({len(args.taskid)}) must match number of inputs ({total_inputs})"
 if args.resubmit:
-    assert not args.json
-    assert not args.taskid
+    assert not args.json, "Cannot use --resubmit with --json"
+    assert not args.taskid, "Cannot use --resubmit with --taskid"
 
 client = ExtractorClient(apiurl=args.extractorurl)
 
 needsresults = set()
 all_json_data = {}
 resultfilename = {}
-for i,pdf in enumerate(args.pdf):
-    assert os.path.exists(pdf)
-    basename = os.path.splitext(pdf)[0]
+
+for i, item in enumerate(input_items):
+    if item.is_pdf():
+        if not os.path.exists(item.value):
+            print(f"Error: PDF file not found: {item.value}")
+            sys.exit(1)
+            # assert os.path.exists(pdf)
+    if item.is_pmid():
+        # TODO: validate if pmid is Open Source, else skip and notify user
+        pass
     
     if args.json:
         resultfilename[i] = args.json[i]
         assert os.path.exists(resultfilename[i])
     else:
-        resultfilename[i] = basename+".results.json"
+        if item.is_pdf():
+            resultfilename[i] = item.basename+".results.json"
+        elif item.is_pmid():   # pmid
+            resultfilename[i] = f"PMID-{item.value}.results.json"
+
     if not os.path.exists(resultfilename[i]) or args.resubmit:
         if args.taskid:
             taskid = args.taskid[i]
+        elif item.is_pmid():
+            print(f"PMID {item.value} submitted for analysis")
+            taskid = client.submit_pmid(item.value, curation_task=True)
         else:
-            print(os.path.split(pdf)[1],"submitted for analysis.")
-            taskid = client.submit_manuscript_file(pdf)
+            print(os.path.split(item.value)[1],"PDF submitted for analysis.")
+            taskid = client.submit_manuscript_file(item.value, curation_task=True)
+
         json_data = client.retrieve_once(taskid,asis=True)
         with open(resultfilename[i],'w') as f:
             json.dump(json_data,f,indent=2)
@@ -99,8 +176,13 @@ for i,pdf in enumerate(args.pdf):
             tmp_json_data = client.retrieve_once(json_data['id'],asis=True)
             if 'submission_detail' not in tmp_json_data:
                 # result file has non-existent taskid
-                print(os.path.split(pdf)[1],"resubmitted for analysis (bad taskid).")
-                taskid = client.submit_manuscript_file(pdf)
+                if item.is_pmid():
+                    print(f"PMID {item.value} resubmitted for analysis (bad taskid).")
+                    taskid = client.submit_pmid(item.value)
+                else:
+                    print(os.path.split(item.value)[1],"resubmitted for analysis (bad taskid).")
+                    taskid = client.submit_manuscript_file(item.value, curation_task=True)
+
                 json_data = client.retrieve_once(taskid,asis=True)
                 with open(resultfilename[i],'w') as f:
                     json.dump(json_data,f,indent=2)
@@ -115,111 +197,108 @@ while True:
             continue
         taskid = all_json_data[i]['id']
         json_data = client.retrieve_once(taskid,asis=True)
-        pdf = json_data['submission_detail']['original_file_name']
+        input_item = json_data['submission_detail']['original_file_name']
         if json_data.get('finished',False):
             all_json_data[i] = json_data
             completed.add(i)
             if json_data['state'] == "Complete":
-                print(pdf,"analysis complete.")
+                print(input_item,"analysis complete.")
             elif json_data['state'] == "Error":
-                print(pdf,"analysis error.")
-            basename = os.path.splitext(args.pdf[i])[0]
+                print(input_item,"analysis error.")
+            # basename = os.path.splitext(args.pdf[i])[0]
             with open(resultfilename[i],'w') as wh:
                 wh.write(json.dumps(json_data))
             print("Wrote results JSON:",resultfilename[i])
         else:
             if json_data.get('status'):
-                print(pdf,"analysis in progress:",json_data['status'])
+                print(input_item,"analysis in progress:",json_data['status'])
             elif json_data['state'] == "Running":
-                print(pdf,"analysis in progress.")
+                print(input_item,"analysis in progress.")
             else:
                 pass # print(pdf,"analysis queued.")
     if completed == needsresults:
         break
     time.sleep(15)
 
-for i,pdf in enumerate(args.pdf):
+for i,input_item in enumerate(input_items):
 
     if all_json_data[i].get('state') == "Error":
-        print(pdf,"skipping due to analysis error.")
+        print(input_item.value,"skipping due to analysis error.")
         continue
 
-    doc = fitz.open(pdf)
-    basename = os.path.splitext(pdf)[0]
+    original_filepath = all_json_data[i]['result']['abs_original_filepath']
+    doc = fitz.open(original_filepath)
+    basename = input_item.basename
 
     if os.path.exists(basename + ".annotated.pdf") or \
         os.path.exists(basename + ".annotated.tsv"):
-        print(pdf,"skipping due to presence of output files.")
+        print(f'{basename}.pdf,skipping due to presence of output files.')
         continue
 
     image_data = []
 
     anyvotes = False
     for result in all_json_data[i]['result']['figure_result']:
-        fig_num = result["figure_num"]
+        fig_num = result["image_number"]
         taskid = all_json_data[i]['id']
 
         # page_num - 1, because semantics counts page number starting from 1
         # but fitz accesses page numbers starting from 0
-        page = doc[result["page_num"]-1]   
+        page = doc[result["page_number"]-1]   
 
-        fig_pdf_x, fig_pdf_y, fig_pdf_w, fig_pdf_h = result["pdf_fig_bbox"]
+        # add figure boxes on the pdf with a fig: <fig_number> comment
+        try:
 
-        fig_px_w = result["width"]
-        fig_px_h = result["height"]
+            fig_annot = page.add_rect_annot(result["pdf_fig_bbox"])
+            fig_annot.set_colors(stroke=(0, 0, 1)) 
+            fig_annot.set_border(width=0.5) 
+                        
+            # set fig id
+            fig_annot.set_info(content=f"fig:{result['image_count']}")
+            fig_annot.update()
 
-        # Since the original image dimensions might be scaled on the PDF page - we
-        # need to make adjustments to map these image pixels wrt the page
-        x_scale = fig_pdf_w / float(fig_px_w) 
-        y_scale = fig_pdf_h / float(fig_px_h)
+            pdf_context_instance = PDFConversionContext.from_result_dict(result)
 
-        for glycan in result["glycans"]:
-            x0, y0, w, h = glycan["bbox"]
+            for glycan in result["glycans"]:
+                pdf_gly_box = pdf_context_instance.to_pdf_bbox(glycan["bbox"])
+                gly_annot = page.add_rect_annot(pdf_gly_box.bbox())
 
-            x1 = x0 + w
-            y1 = y0 + h
+                gid = f"G{fig_num}.{glycan['fig_glycan_count']}"
+                url = client.url() + f"/result/{taskid}#glycan-{fig_num}-{glycan['fig_glycan_count']}"
+                content = (
+                    f"id: {gid}\n"
+                    f"url: {url}\n"
+                )
 
-            pdf_x0 = fig_pdf_x + x0 * x_scale
-            pdf_x1 = fig_pdf_x + x1 * x_scale
-            pdf_y0 = fig_pdf_y + y0 * y_scale
-            pdf_y1 = fig_pdf_y + y1 * y_scale
+                gly_annot.set_info(content=content)
+                gly_annot.set_border(width=0.5) 
+                gly_annot.update()
 
-            gly_box = fitz.Rect((pdf_x0, pdf_y0, pdf_x1, pdf_y1))
-            annot = page.add_rect_annot(gly_box)
+                votes = glycan.get('upvotes',0)-glycan.get('downvotes',0)
+                if votes != 0:
+                    anyvotes = True
 
-            gid = f"G{fig_num}.{glycan['fig_glycan_count']}"
-            url = client.url() + f"/result/{taskid}#glycan-{fig_num}-{glycan['fig_glycan_count']}"
-            content = (
-                f"id: {gid}\n"
-                f"url: {url}\n"
-            )
+                image_data.append({
+                    "ID": gid,
+                    "xref": result.get("xref"),
+                    "page_num": result["page_number"],
+                    "fig_num": fig_num,
+                    "accession": glycan.get('accession', ''),
+                    "iupac": glycan.get('IUPAC', ''),
+                    "composition": glycan.get('composition_str', ''),
+                    'wurcs': glycan.get('WURCS', ''),
+                    'votes': votes,
+                    "url": url,
+                    # uncomment the below if we decide to use bounding box info from the semnatics -
+                    # for now it is decided to use info that is extracted during the extarct_figures step
+                    # using the fitz model to extract co-ordinates of the annotations on the pdf
+                    # "_gly_bbox": glycan.get("bbox"),  
+                    # "_fig_width": result['width'],     
+                    # "_fig_height": result['height']    
+                })
 
-            annot.set_info(content=content)
-
-            annot.update()
-
-            votes = glycan.get('upvotes',0)-glycan.get('downvotes',0)
-            if votes != 0:
-                anyvotes = True
-
-            image_data.append({
-                "ID": gid,
-                "xref": result["xref"],
-                "page_num": result["page_num"],
-                "fig_num": fig_num,
-                "accession": glycan.get('accession', ''),
-                "iupac": glycan.get('IUPAC', ''),
-                "composition": glycan.get('composition_str', ''),
-                'wurcs': glycan.get('WURCS', ''),
-                'votes': votes,
-                "url": url,
-                # uncomment the below if we decide to use bounding box info from the semnatics -
-                # for now it is decided to use info that is extracted during the extarct_figures step
-                # using the fitz model to extract co-ordinates of the annotations on the pdf
-                # "_gly_bbox": glycan.get("bbox"),  
-                # "_fig_width": result['width'],     
-                # "_fig_height": result['height']    
-            })
+        except Exception as e:
+            print(f"\nException occured while drawing bounding box on pdf: {e}")
 
     doc.save(basename + ".annotated.pdf")
     doc.close()
