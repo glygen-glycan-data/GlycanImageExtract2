@@ -1,4 +1,3 @@
-
 import fitz, os, os.path
 
 class PDFHandler(object):
@@ -18,52 +17,23 @@ class PDFHandler(object):
     
     @staticmethod
     def image_dimensions(image_info):
-        x0,y0,x1,y1 = image_info['bbox']      # fitz based bbox is [x0,y0,x1,y1]
+        x0,y0,x1,y1 = image_info.get('bbox') or image_info.get('pdf_fig_bbox')      # fitz based bbox is [x0,y0,x1,y1]
         return abs(x0-x1)+1, abs(y0-y1)+1         # returns width, height
+
+    @staticmethod
+    def page_dimensions(image_info):
+        if image_info.get('page_width') and image_info.get('page_height'):
+            return image_info.get('page_width'), image_info.get('page_height')
+        return None, None
     
-    # TODO need to create a class which verifies or converts bbox and box version automatcailly 
     @staticmethod
     def image_bbox(image_info):
-        return image_info['bbox']       # returns fitz based bbox is [x0,y0,x1,y1]
-
-
+        return image_info.get('bbox') or image_info.get('pdf_fig_bbox')       # returns fitz based bbox is [x0,y0,x1,y1]
+    
     @staticmethod
     def create_box(bbox):
         return fitz.Rect(bbox)
-
-    @staticmethod
-    def calculate_dpi(image_info):
-        width_px = image_info.get('width', 0)
-        height_px = image_info.get('height', 0)
-
-        # If not available, extract from pixmap using xref
-        if width_px == 0 or height_px == 0:
-            xref = image_info.get('xref')
-            if xref and xref > 0:
-                try:
-                    native_pix = fitz.Pixmap(doc, xref)
-                    width_px = native_pix.width
-                    height_px = native_pix.height
-                    native_pix = None  
-                except:
-                    return None
-
-        if width_px == 0 or height_px == 0:
-            return None
-
-        # Convert points to inches (72 points = 1 inch)
-        width_in = image_info.get('pdf_fig_width') / 72.0
-        height_in = image_info.get('pdf_fig_height') / 72.0
-
-        # Calculate effective DPI
-        if width_in > 0 and height_in > 0:
-            dpi_x = width_px / width_in
-            dpi_y = height_px / height_in
-            return int((dpi_x + dpi_y) / 2)     # dpi should be an integer
-
-        return None
         
-    
     def write_image(self,image,filename=None):
         if filename is None:
             filename = self.make_figure_filename(image)
@@ -78,30 +48,31 @@ class PDFHandler(object):
             pic = fitz.Pixmap(fitz.csRGB, pic)
             pic.save(filename)
     
-    def figures(self,filter=None):
-        image_count = 1
-        for page_number,page in enumerate(self.pages(),1):
-            images = self.images_per_page(page)         # image identification is based on xrefs
-            for image_number,image in enumerate(images,1):
-                pdf_fig_width, pdf_fig_height = self.image_dimensions(image)
-                image['page_number'] = page_number
-                image['image_number'] = image_number                # image count per page
-                image['pdf_fig_bbox'] = self.image_bbox(image)      # pdf_fig_bbox - x0,y0,x1,y1
-                image['pdf_fig_width'] = pdf_fig_width
-                image['pdf_fig_height'] = pdf_fig_height
-                image['page_width'] = page.rect.width
-                image['page_height'] = page.rect.height
-
-                # dpi = self.calculate_dpi(image)
-                # if dpi is not None:
-                #     image['dpi'] = dpi
-                    
-                if filter is None or filter.keep(image):
-                    image['image_count'] = image_count                  # total image count so far
-                    image_count += 1
-                    yield image
+    def figures(self,images_data=None,filter=None):
+        if images_data is not None:         # images_data is provided by figcap 
+            '''Generator that yields image metadata when the data is already provided (images_data)'''
+            for image_info in images_data.get('figures', {}):
+                if filter is None or filter.keep(image_info):
+                    yield image_info
+        else:
+            image_count = 1
+            for page_number,page in enumerate(self.pages(),1):
+                images = self.images_per_page(page)         # image identification is based on xrefs
+                for image_number,image in enumerate(images,1):
+                    pdf_fig_width, pdf_fig_height = self.image_dimensions(image)
+                    image['page_number'] = page_number
+                    image['image_number'] = image_number                # image count per page
+                    image['pdf_fig_bbox'] = self.image_bbox(image)      # pdf_fig_bbox - x0,y0,x1,y1
+                    image['pdf_fig_width'] = pdf_fig_width
+                    image['pdf_fig_height'] = pdf_fig_height
+                    image['page_width'] = page.rect.width
+                    image['page_height'] = page.rect.height
+                        
+                    if filter is None or filter.keep(image):
+                        image['image_count'] = image_count                  # total image count so far
+                        image_count += 1
+                        yield image
                                     
-
 class PDFImageFilter(object):
     def keep(self,image):
         raise NotImplementedError
@@ -142,6 +113,26 @@ class PDFImageSizeFilter(PDFImageFilter):
         if area >= self._area:
             return True
         return False
+
+class PDFLargeImageSizeFilter(PDFImageFilter):
+    def __init__(self, page_coverage_threshold=0.80):
+        self._page_coverage_threshold = page_coverage_threshold
+
+    def keep(self, image):
+        '''Returns False if image covers more than threshold of page area.'''
+        try:
+            width, height = PDFHandler.image_dimensions(image)
+            page_width, page_height = PDFHandler.page_dimensions(image)
+            
+            page_area = page_width * page_height
+            image_area = width * height
+            coverage = image_area / page_area if page_area > 0 else 0
+            
+            # Return False to filter out full-page images
+            return coverage < self._page_coverage_threshold
+            
+        except (KeyError, ValueError, ZeroDivisionError):
+            return True 
 
 if __name__ == "__main__":
 
