@@ -62,6 +62,18 @@ class APIFramework:
     ERROR = 'Error'
     COMPLETE = 'Complete'
 
+    _image_search_type = None       # options: fitz, figcap, hybrid - this comes from the GlyImageExtractor.ini file
+
+    def set_image_search_type(self, image_search_type):
+        # Store in instance (for consistency with other attributes)
+        self._image_search_type = image_search_type
+        # Also store in class variable (for global access)
+        APIFramework._image_search_type = image_search_type
+
+    @classmethod
+    def get_image_search_type(cls):
+        return cls._image_search_type
+
     def __init__(self):
 
         self._verbose_level = 100
@@ -110,6 +122,7 @@ class APIFramework:
 
         self._file_upload_finished_html = None
 
+        self._image_search_type = None
 
     # Proper APIs for changing config
     def host(self):
@@ -264,6 +277,13 @@ class APIFramework:
 
             if "prefix" in res["basic"]:
                self.set_prefix(res["basic"]["prefix"])
+
+        if "GlyImageExtractor" in res:
+            if "image_search_type" in res["GlyImageExtractor"]:
+                self.set_image_search_type(res["GlyImageExtractor"]["image_search_type"])
+            else:
+                # options: "fitz", "figcap", "hybrid"
+                self.set_image_search_type("fitz")
 
     def makeid(self,*params,random=False,length=16,sep=":"):
         msgparts = list(params)
@@ -495,8 +515,11 @@ class APIFramework:
             res.append(self.get_result(list_id))
         return flask.jsonify(res)
 
-    # Validates is the given PMID has a PMCID and that the resources for the PMCID are Open Access (check if zip file can be retrieved)
+    
     def validate_pmid(self, pmid=None):
+        '''
+        Validates is the given PMID has a PMCID and that the resources for the PMCID are Open Access (check if zip file can be retrieved)
+        '''
         developer_email="nje5%2bextractor@georgetown.edu"
 
         if pmid is None:
@@ -569,6 +592,9 @@ class APIFramework:
             input_file_path = flask.request.form.get('filePath',task.get('filePath'))
             pmid = flask.request.form.get('pmid',task.get('pmid'))
             submission_type = flask.request.form.get('submission_type',task.get('submission_type'))
+
+            # curation_task - True --> means that annotate_pdf is being used to gather information.
+            curation_task = flask.request.form.get('curation_task',task.get('curation_task'))
 
             # Extract info using Pubmed API and get filename of the pdf based on PMID and at the same time extract figures as well - everything is present in the zipped file
             if submission_type == "Manuscript" and pmid is not None:
@@ -685,12 +711,17 @@ class APIFramework:
                     shutil.copyfile(input_file_path,file_path)
                 else:
                     return flask.jsonify({"error": f"File format not supported: {filename}"}), 400
+            except requests.exceptions.RequestException as e:
+                return flask.jsonify({"error": "Submitted input is invalid."}), 400
             except Exception as e:
                 return flask.jsonify({"error": f"Unexpected error: {str(e)}"}), 400
 
             # since we have already validated that pmcid exists and it is Open Access --> pmid and pmcid should be available at this p
             if pmid and pmcid:
                 task_detail.update({"pmid": pmid, "pmcid": pmcid})
+
+            if curation_task:
+                task_detail.update({"curation_task": curation_task})
 
             status = {
                 "id": list_id,
@@ -703,7 +734,9 @@ class APIFramework:
                 "submit_time": time.time(),
                 "sessionid": sessionid,
                 "result": {},
-                **({"pmid": pmid, "pmcid": pmcid} if pmid and pmcid else {})
+                **({"pmid": pmid, "pmcid": pmcid} if pmid and pmcid else {}),
+                "curation_task": curation_task if curation_task else None,
+                "image_search_strategy": self.get_image_search_type(),
             }
 
             if list_id in self.result_cache:
