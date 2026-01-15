@@ -108,6 +108,7 @@ class ReferenceAPIFileBased(APIFramework):
                 "abs_original_filepath": updated_task_detail['abs_original_filepath'],
                 "pipeline_name": updated_task_detail['pipeline_name'],
                 "figure_result": result,
+                "job_type": job_instance.__class__.__name__,
                 "finished": True,
                 "state": state,
                 "status": status,

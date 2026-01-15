@@ -6,13 +6,14 @@ from . model_evaluator import *
 from . debug_methods import DebugMode
 from . json_logger import log_data
 from . distproc import DistributedProcessing
-from . bbox import BoundingBox, PDFBoundingBox
+from . bbox import BoundingBox, PDFBoundingBox, PDFConversionContext
 from . object_filters import *
 from . monosaccharideid import MonoFinder
 from . glycanconnections import LinkFinder
 from . rootmonofinding import RootFinder
 from . glycanfinding import GlycanFinder
-from . search_pdf_figs import FigCapX_Search, PDF_Figure_Search
+from . pdf_image_metadata import ImageSearch, FitzImageSearch, FigCapImageSearch, HybridImageSearch
+from . pdf_image_captions_data import PDFiguesCaptionsData
 from . compareboxes import CompareBoxes
 from . pdfhandler import PDFHandler, CompoundPDFImageFilter, PDFXRefImageFilter, PDFImageSizeFilter
 # from . webapp_processjob import JobInstance
