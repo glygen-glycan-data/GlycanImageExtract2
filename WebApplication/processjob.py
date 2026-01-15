@@ -4,7 +4,7 @@ from submit import searchGlyLookup, searchGlyImage, sendToGNOme
 from PIL import Image
 from hashlib import md5
 from APIFramework import APIFramework
-from BKGlycanExtractor import PDF_Figure_Search
+from BKGlycanExtractor import ImageSearch, FitzImageSearch, FigCapImageSearch, HybridImageSearch
 from BKGlycanExtractor import Config_Manager, BoundingBox, PDFBoundingBox, CompareBoxes
 from BKGlycanExtractor import PDFHandler, CompoundPDFImageFilter, PDFXRefImageFilter, PDFImageSizeFilter
 
@@ -79,8 +79,6 @@ class JobInstance:
         submission_type = task_detail.get('submission_type')
         pmid = task_detail.get('pmid', None)
 
-        # if task_detail.get('curation_task', False) and submission_type == "Manuscript" and pmid is not None:
-        #     return PMIDAnnotatePDFJob(task_detail,*args,**kwargs) 
         if task_detail.get('curation_task', False) and submission_type == "Manuscript":
             return PDFJob(task_detail,*args,**kwargs) 
         elif submission_type == "Manuscript" and pmid is not None:
@@ -507,7 +505,7 @@ class PMIDJob(JobInstance):
                 self.find_glycans(fig_path, image_folders, **figure_metadata)
 
 
-class PDFJob(JobInstance,PDF_Figure_Search):
+class PDFJob(JobInstance):
     """
     Main processing logic for PDF files.
     Handles file verification, page/image extraction, and glycan annotation.
@@ -537,35 +535,36 @@ class PDFJob(JobInstance,PDF_Figure_Search):
         # Note - Getting figures metadata from all the different strategies, so that
         # the for loop below can use your choice of metadata (easier for testing)
 
-        # a) xref based figures extraction
-        xref_figures_metadata = self.xref_figure_info(self.input_filepath)
+        # get image_search_type from APIFramework class i.e from the ini file
+        image_search_type = APIFramework.get_image_search_type()
 
-        # b) Heuristics based extraction (PDFigCapX)
-        # figcap_figures_metadata = self.figcap_figure_info(self.input_filepath)
+        # Factory method
+        image_search_instance = ImageSearch.search_method(image_search_type)
+        pdf_images_metadata = image_search_instance.get_metadata(self.input_filepath)
 
-        # merging method (a) and method (b) metadata
-        # merged_pdf_info = self.merge_pdf_fig_info(xref_figures_metadata, figcap_figures_metadata)
-
-        for page_num, fig_data in xref_figures_metadata.items():
+        for page_num, fig_data in pdf_images_metadata.items():
             page = doc[page_num-1]
             for figure_num, figure_info in fig_data.items():
-
-                xref = figure_info["xref"]
-
-                if not xref or xref < 1:
-                    continue
-
                 image_path = os.path.join(image_folders['figures_dir'], f"{figure_info['image_count']}.png")
-                # pix = page.get_pixmap(clip=figure_info['pdf_fig_bbox'], dpi=figure_info["dpi"])        # x1,y1,x2,y2
-                pix = fitz.Pixmap(doc, xref)
+
+                xref = figure_info.get('xref')
+
+                # if not xref or xref < 1:
+                #     continue
+
+                if xref and xref > 0:
+                    # probably calculate dpi here?
+                    pix = fitz.Pixmap(doc, xref)
+                else:
+                    # if no xref, use a default dpi to extract image (we cant estimate or calculate the dpi value)
+                    standard_dpi = 300
+                    pix = page.get_pixmap(clip=figure_info['pdf_fig_bbox'], dpi=standard_dpi)        # x1,y1,x2,y2
+
+                    figure_info['dpi'] = standard_dpi
+
+                pix.save(image_path)
                 figure_info['width'] = pix.width
                 figure_info['height'] = pix.height
-                try:
-                    pix.save(image_path)
-                except Exception as e:
-                    # If save fails, convert to RGB and try again
-                    pix = fitz.Pixmap(fitz.csRGB, pix)
-                    pix.save(image_path)
 
                 self.log_file.write(f"\nSaved image to {image_path}")
 
