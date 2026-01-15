@@ -40,7 +40,7 @@ class APIFrameworkClient:
     def url(self):
         return self._apiurl
 
-    def request(self, sub, params=None, files=None):
+    def request(self, sub, params=None, files=None, pmids=None):
         for i in range(self._max_retry):
             if files is not None:
                 files1 = dict((k,open(v,'rb')) for k,v in files.items())
@@ -49,14 +49,24 @@ class APIFrameworkClient:
             params1 = params
             if params is None:
                 params1 = {}
+
+            # Add pmids to form data if provided
+            if pmids is not None:
+                # pmids is a dict like {'pmid': '12345'}
+                params1.update(pmids)       # add pmid to form data
+
             response = None
             try:
-                # print(self._apiurl + "/" + sub,params)
                 if params1 or files1:
-                    response = requests.post(self._apiurl + "/" + sub, params1, files=files1)
+                    response = requests.post(
+                        self._apiurl + "/" + sub, 
+                        data=params1,   # form data (includes pmid from pmids dict)
+                        files=files1    # files - pdf
+                    )
                 else:
                     response = requests.get(self._apiurl + "/" + sub)
-            except:
+            except Exception as e:
+                print("Exception occuered: ", e)
                 pass
             finally:
                 if files1 is not None:
@@ -150,12 +160,18 @@ class ExtractorClient(APIFrameworkClient):
         task = dict(submission_type=mode,fileURL=url)
         return self.submit(task=task,request="file_upload")
     
-    def submit_file(self,mode,filename):
+    def submit_file(self,mode,filename,curation_task=False):
         assert mode in ("Manuscript",
                         "Multi-Glycan Image",
                         "Simple Glycan Image")
-        task = dict(submission_type=mode)
+        task = dict(submission_type=mode, curation_task=curation_task)
         return self.submit(task=task,request="file_upload",files=dict(file=filename))
+
+    def submit_pmid(self, pmid, curation_task=False):
+        # type='curation' - means it will be used by annotate_pdf.py - to collect ground truth information
+        # about figures from a pdf when pmid is submitted
+        task = dict(submission_type="Manuscript", curation_task=curation_task)
+        return self.submit(task=task,request="file_upload",pmids=dict(pmid=pmid))
 
     def submit_manuscript_url(self,url):
         return self.submit_url("Manuscript",url)
@@ -164,8 +180,8 @@ class ExtractorClient(APIFrameworkClient):
         taskid = self.submit_manuscript_url(url)
         return self.retrieve(taskid)
     
-    def submit_manuscript_file(self,filename):
-        return self.submit_file("Manuscript",filename)
+    def submit_manuscript_file(self,filename,curation_task=False):
+        return self.submit_file("Manuscript",filename,curation_task)
     
     def analyze_manuscript_file(self,filename):
         taskid = self.submit_manuscript_file(filename)
