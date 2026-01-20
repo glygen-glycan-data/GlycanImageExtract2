@@ -547,21 +547,7 @@ class PDFJob(JobInstance):
             for figure_num, figure_info in fig_data.items():
                 image_path = os.path.join(image_folders['figures_dir'], f"{figure_info['image_count']}.png")
 
-                xref = figure_info.get('xref')
-
-                # if not xref or xref < 1:
-                #     continue
-
-                if xref and xref > 0:
-                    # probably calculate dpi here?
-                    pix = fitz.Pixmap(doc, xref)
-                else:
-                    # if no xref, use a default dpi to extract image (we cant estimate or calculate the dpi value)
-                    standard_dpi = 300
-                    pix = page.get_pixmap(clip=figure_info['pdf_fig_bbox'], dpi=standard_dpi)        # x1,y1,x2,y2
-
-                    figure_info['dpi'] = standard_dpi
-
+                pix = page.get_pixmap(clip=figure_info['pdf_fig_bbox'], dpi=figure_info['dpi'])        # x1,y1,x2,y2
                 pix.save(image_path)
                 figure_info['width'] = pix.width
                 figure_info['height'] = pix.height
