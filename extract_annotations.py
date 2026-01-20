@@ -69,17 +69,10 @@ def parse_comment(comment):
             comment_dict['id'] = lines[0]
     return comment_dict
 
-def save_figure(page, annot_rect, figure_path, scale):
-    """
-    Save pixmap of whatever is under the annotation rectangle (annot_rect)
-    annot_rect: annotation in pdf coordinates
-    scale: multiplier (1.0 = 72 DPI, 2.0 = 144 DPI, etc.)
-    """
-    mat = fitz.Matrix(scale, scale)
-    pix = page.get_pixmap(matrix=mat, clip=annot_rect, annots=False)
+def save_figure(page, annot_rect, figure_path, dpi):
+    pix = page.get_pixmap(clip=annot_rect, dpi=dpi, annots=False)   
     pix.save(figure_path)
     return pix.width, pix.height
-
 
 def load_tsv_data(tsv_path):
     """Load TSV into dictionary keyed by ID"""
@@ -93,38 +86,36 @@ def load_tsv_data(tsv_path):
                     tsv_data[row_id] = row
     return tsv_data
 
-def pixel_coordinates(page, annot_box, fig_box, scale):
-    # Calculate pixel dimensions directly
-    # px_fig_width = round(fig_box.width * scale)
-    # px_fig_height = round(fig_box.height * scale)
+# TODO write a static method for this in bbox class
+def pixel_coordinates(page, annot_box, fig_box, dpi):
+    pixels_per_point = int(dpi) / 72.0
 
     # Convert annotation coordinates to pixel coordinates
-    px_gly_x0 = round((annot_box.x0 - fig_box.x0) * scale)
-    px_gly_y0 = round((annot_box.y0 - fig_box.y0) * scale)
-    px_gly_w = round(annot_box.width * scale)
-    px_gly_h = round(annot_box.height * scale)
+    px_gly_x0 = round((annot_box.x0 - fig_box.x0) * pixels_per_point)
+    px_gly_y0 = round((annot_box.y0 - fig_box.y0) * pixels_per_point)
+    px_gly_w = round(annot_box.width * pixels_per_point)
+    px_gly_h = round(annot_box.height * pixels_per_point)
 
     return [px_gly_x0, px_gly_y0, px_gly_w, px_gly_h]
 
-def process_figure_annotation(annot_box, figure_box, page, tsv_data, comment_map, scale, **kwargs):
+def process_figure_annotation(annot_box, figure_box, page, tsv_data, comment_map, **kwargs):
     '''method to process information about an annotation'''
     
     # convert's pdf coordinates to pixel coordinates - output - glycan_bbox, fig_width, fig_height 
-    gly_bbox = pixel_coordinates(page, annot_box, figure_box, scale)
+    gly_bbox = pixel_coordinates(page, annot_box, figure_box, tsv_data['dpi'])
 
     return {
         'ID': comment_map['id'],
         'url': comment_map.get('url'),
         # 'xref': xref,
-        'gly_bbox': gly_bbox,
+        'gly_bbox': gly_bbox,       # pixel coordinates 
+        'pdf_fig_bbox': figure_box,
         **{k: v.strip() for k, v in tsv_data.items() 
-            if k in ['class','accession', 'iupac', 'composition', 'wurcs'] and v is not None},
-        'scale': scale,
+            if k in ['dpi','class','accession', 'iupac', 'composition', 'wurcs'] and v is not None},
         **kwargs,
     }
 
-
-def extract_annotations(output_dir, pdf_path, tsv_path, scale=1.0):
+def extract_annotations(output_dir, pdf_path, tsv_path):
     """
     Main extraction method.
     Extracts figures and associated annotation information.
@@ -147,26 +138,25 @@ def extract_annotations(output_dir, pdf_path, tsv_path, scale=1.0):
                 comment_dict = parse_comment(comment)  # annotated_comments_dict
 
                 if comment_dict.get('fig'):
-                    figure_annotations.append((annotation, comment_dict.get('fig')))
+                    figure_annotations.append((annotation, comment_dict))
                 else:
                     other_annotations.append((annotation, comment_dict))
 
 
             # Save all the figures on this page (discard if height and width is too small)
             # fig_num = 1
-            for figure_annot, fig_num in figure_annotations:
-                # pdf_fig_box = fitz.Rect(figure["bbox"])
+            for figure_annot, fig_comments in figure_annotations:
+                fig_num = fig_comments['fig']
+                dpi = int(fig_comments['dpi'])
                 pdf_fig_box = figure_annot.rect
                 
                 if (pdf_fig_box.height > 90 and pdf_fig_box.width > 90):
                     figure_filename = f"{os.path.basename(output_dir)}_p{page_num}_f{fig_num}.png"
                     figure_path = os.path.join(output_dir, figure_filename)
-                    px_fig_height, px_fig_width = save_figure(page, pdf_fig_box, figure_path, scale)
 
                     # create semantic (map) file for all the corresponding figures
                     semantics_file = figure_path.rsplit('.', 1)[0] + '_map.txt'
                     with open(semantics_file, 'w') as sem_file:
-                        sem_file.write(f'##### WHOLEIMAGE: {round(px_fig_height)} x {round(px_fig_width)} (height x width)\n')
                         
                         # verify that the other annotation intersects with current figure_annotation
                         # and only then accept it as a part of an annotation that exists on the current figure 
@@ -180,14 +170,15 @@ def extract_annotations(output_dir, pdf_path, tsv_path, scale=1.0):
                                 if glycan_id in tsv_data:
                                     tsv_row_data = tsv_data[glycan_id]
 
-                                metadata = {'fig_width': px_fig_width,'fig_height': px_fig_height,'figure_num': fig_num, 'page_num': page_num, 'figure_name': figure_filename, 'figure_path': figure_path}
-                                
-                                data = process_figure_annotation(annotation_box, pdf_fig_box, page, tsv_row_data, comment_map, scale)
+                                metadata = {'figure_num': fig_num, 'page_num': page_num, 'figure_name': figure_filename, 'figure_path': figure_path}
+                                data = process_figure_annotation(annotation_box, pdf_fig_box, page, tsv_row_data, comment_map)
                                 data.update(metadata)
-                                write_semantics(sem_file, data)
-          
-                    # fig_num += 1
 
+                                write_semantics(sem_file, data)
+
+                        px_fig_height, px_fig_width = save_figure(page, pdf_fig_box, figure_path, dpi)
+                        sem_file.write(f'##### WHOLEIMAGE: {round(px_fig_height)} x {round(px_fig_width)} (height x width)\n')
+                        sem_file.write(f'##### IMAGE_DPI: {dpi}\n')
 
 def write_semantics(semantics_file, glycan_data):
     x, y, w, h = glycan_data['gly_bbox']
@@ -228,9 +219,8 @@ for pdf_path in pdf_files:
         os.makedirs(output_dir, exist_ok=True)
 
     # main step for extraction
-    # scale 3.0 --> DPI = 216 - generallu good
-    # scale 4.0 --> DPI = 288 - if there are very small objects (glycans in manuscripts can be small)
-    extract_annotations(output_dir,pdf_path,tsv_path,scale=4.0)
+    extract_annotations(output_dir,pdf_path,tsv_path)
+
 
 
 
