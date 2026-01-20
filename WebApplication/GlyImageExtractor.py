@@ -127,8 +127,8 @@ class ReferenceAPIFileBased(APIFramework):
     # def examples(self):
     #     return flask.render_template(self._examples_html, basedir="static/examples")
 
-    def abstract(self):
-        return flask.render_template(self._abstract_html)
+    # def abstract(self):
+    #     return flask.render_template(self._abstract_html)
 
     def result(self,id=None):
         if not id:

@@ -853,12 +853,17 @@ class APIFramework:
     def allow_file_ext(self, filename):
         return '.' in filename and filename.rsplit('.', 1)[1].lower() in self.allowed_file_ext()
 
+    def robots():
+        response = flask.make_response(open("./htmls/robots.txt").read())
+        response.mimetype = 'text/plain'
+        return response
+
     # Load route and handler to flask app
     def load_route(self):
         # TODO custom route?
         self._flask_app.add_url_rule("/", "home", self.home, methods=["GET", "POST"])
         self._flask_app.add_url_rule("/retrieve", "retrieve", self.retrieve, methods=["GET", "POST"])
-        self._flask_app.add_url_rule("/abstract", "abstract", self.abstract, methods=["GET", "POST"])
+        # self._flask_app.add_url_rule("/abstract", "abstract", self.abstract, methods=["GET", "POST"])
         # self._flask_app.add_url_rule("/examples", "examples", self.examples, methods=["GET", "POST"])
         self._flask_app.add_url_rule("/result", "result", self.result, methods=["GET", "POST"])
         self._flask_app.add_url_rule("/result/<id>", "result", self.result, methods=["GET", "POST"])
