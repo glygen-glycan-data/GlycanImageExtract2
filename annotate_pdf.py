@@ -239,7 +239,7 @@ for i,input_item in enumerate(input_items):
 
     anyvotes = False
     for result in all_json_data[i]['result']['figure_result']:
-        fig_num = result["image_number"]
+        fig_num = result["image_count"]
         taskid = all_json_data[i]['id']
 
         # page_num - 1, because semantics counts page number starting from 1
@@ -254,7 +254,11 @@ for i,input_item in enumerate(input_items):
             fig_annot.set_border(width=0.5) 
                         
             # set fig id
-            fig_annot.set_info(content=f"fig:{result['image_count']}")
+            content = (
+                f"fig:{result['image_count']}\n"
+                f"dpi: {result["dpi"]}\n"
+            )
+            fig_annot.set_info(content=content)
             fig_annot.update()
 
             pdf_context_instance = PDFConversionContext.from_result_dict(result)
@@ -281,6 +285,7 @@ for i,input_item in enumerate(input_items):
                 image_data.append({
                     "ID": gid,
                     "xref": result.get("xref"),
+                    "dpi": result["dpi"],
                     "page_num": result["page_number"],
                     "fig_num": fig_num,
                     "accession": glycan.get('accession', ''),
@@ -305,7 +310,7 @@ for i,input_item in enumerate(input_items):
     print("Wrote annotated PDF:",basename + ".annotated.pdf")   
 
     wh = open(basename + ".annotated.tsv",'w')
-    headers = "ID xref page_num fig_num accession iupac composition wurcs votes url".split()
+    headers = "ID xref dpi page_num fig_num accession iupac composition wurcs votes url".split()
     if not anyvotes:
         headers.remove("votes")    
     print("\t".join(headers),file=wh)
@@ -313,3 +318,14 @@ for i,input_item in enumerate(input_items):
         print("\t".join(map(str,map(row.get,headers))),file=wh)
     wh.close()
     print("Wrote annotation table:",basename + ".annotated.tsv")
+
+
+'''
+Storing the DPI in the figures annotation - because DPI is a figure property and not an individual
+annotations property.
+Eg. for a figure with/without glycan annotations -  will still need dpi information during
+extract_annotations stage to save the image and a good place to store this information would be in the
+figures annotations information itself.
+The TSV file generated only stores information about the glycan annotations, so the dpi can be tracked via
+the figure annotation in the pdf and this ensures that the dpi remains consistent during any extraction activity.
+'''
