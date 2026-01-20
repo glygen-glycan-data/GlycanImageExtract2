@@ -26,7 +26,6 @@ class ImageSearch:
     def get_metadata(self):
         raise NotImplementedError
 
-
 class FitzImageSearch:
     def get_metadata(self, input_filepath):
         """
@@ -66,7 +65,7 @@ class FitzImageSearch:
             pdf_metadata[page_number][image_number] = {k:v for k,v in fig_metadata.items() if k in 
                 ('page_number','image_number','image_count','bbox', 
                 'width', 'height', 'xref', 'pdf_fig_bbox', 'pdf_fig_width', 
-                'pdf_fig_height', 'page_width', 'page_height'
+                'pdf_fig_height', 'page_width', 'page_height', 'dpi'
             )}
           
             # self.log_file.write(
@@ -126,7 +125,7 @@ class FigCapImageSearch:
                 'height', 'xref', 'pdf_fig_bbox', 'pdf_fig_width', 'pdf_fig_height', 
                 'page_width', 'page_height', 'caption_bbox', 'figure_name',
                 'width', 'height', 'label', 'caption_text', 'full_caption_text', 
-                'cleaned_caption'
+                'cleaned_caption', 'dpi'
             )} 
 
         try:

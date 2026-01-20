@@ -255,53 +255,6 @@ class BoundingBox(BaseBoundingBox):
         x2 = min(x2,self.imwidth-1)                                                                       
         y2 = min(y2,self.imheight-1)                                                                      
         self.update_bbox(x=x1,y=y1,w=(x2-x1+1),h=(y2-y1+1))
-    
-    # static method because - results.json doesnt store the box object.
-    # As of now it is being used to for information out of result.js - but changes can be made accordingly in the
-    # future if required.
-    # Maybe this method belongs in the PDF bbox class - not sure
-    @staticmethod
-    def to_pdf_bbox(fig_pdf_x1: float, fig_pdf_y1: float, fig_pdf_width: float, 
-                    fig_pdf_height: float, page_height, page_width, pdf_px_width: int, 
-                    pdf_px_height: int, glycan_bbox):
-        """
-        Convert to PDFBoundingBox.
-        Currently used to convert the predicted glycan bbox (on images in pixels) --> into pdf glycan bbox.
-        Helps to generate bounding boxes on pdf which are "scaled" based on the pdf and the image. 
-
-        Args:
-        fig_pdf_x1, fig_pdf_y1 - the x,y dimensions of the figure (float)
-
-        fig_pdf_width, fig_pdf_height - refers to the pdf figure's width and height (float)
-
-        pdf_px_width, pdf_px_height - figures width and height in pixels (int)
-
-        page_height, page_width - pdf's page height and width (float/int)
-
-        glycan_bbox
-                    
-        Returns: 
-        PDFBoundingBox with coordinates in PDF space
-        """
-        # important to calculate the scale
-        x_scale = fig_pdf_width / pdf_px_width
-        y_scale = fig_pdf_height / pdf_px_height
-
-        x1, y1, w, h = glycan_bbox
-
-        x2 = x1 + w - 1
-        y2 = y1 + h - 1
-        
-        pdf_x1 = fig_pdf_x1 + x1 * x_scale
-        pdf_y1 = fig_pdf_y1 + y1 * y_scale
-        pdf_x2 = fig_pdf_x1 + x2 * x_scale
-        pdf_y2 = fig_pdf_y1 + y2 * y_scale
-
-        return PDFBoundingBox(
-            page_width=page_width,
-            page_height=page_height,
-            x1=pdf_x1, y1=pdf_y1, x2=pdf_x2, y2=pdf_y2,
-        )
 
     # below here needs to be fixed, commenting for now 
     #
