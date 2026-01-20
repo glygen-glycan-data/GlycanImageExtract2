@@ -764,7 +764,7 @@ class APIFramework:
             submission_type = oldtask['submission_type']
             newtask = dict(submission_type=submission_type,filePath=input_file)
         response = self.upload_file(task=json.dumps(newtask))
-        return flask.redirect(flask.url_for('jobs'))
+        return flask.redirect(self._prefix + '/jobs')
 
     def download_file(self):
         if flask.request.method in ['GET', 'POST']:
@@ -853,8 +853,8 @@ class APIFramework:
     def allow_file_ext(self, filename):
         return '.' in filename and filename.rsplit('.', 1)[1].lower() in self.allowed_file_ext()
 
-    def robots():
-        response = flask.make_response(open("./htmls/robots.txt").read())
+    def robots(self):
+        response = flask.make_response(open("./static/robots.txt").read())
         response.mimetype = 'text/plain'
         return response
 
@@ -879,6 +879,7 @@ class APIFramework:
         self._flask_app.add_url_rule("/jobs", "jobs", self.jobs, methods=["GET"])
         self._flask_app.add_url_rule("/pmid", "validate_pmid", self.validate_pmid, methods=["POST"])
         self._flask_app.add_url_rule("/pmid/<pmid>", "validate_pmid", self.validate_pmid, methods=["GET"])
+        self._flask_app.add_url_rule("/robots.txt", "robots.txt", self.robots, methods=["GET", "POST"])
 
         if self._file_based_job:
             self._flask_app.add_url_rule("/file_upload", "upload_file", self.upload_file, methods=["GET", "POST"])
