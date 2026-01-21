@@ -165,9 +165,9 @@ class JobInstance:
 
         return True
 
-
     def get_results(self):
-        return [json.loads(s) for s in self.results]
+        results = [json.loads(s) for s in self.results]
+        return sorted(results, key=lambda x: x.get('image_count',0))
 
     def check_and_create_paths(self,subdirs):
         """Ensure that all specified subdirectories exist under the work directory."""
