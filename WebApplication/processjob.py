@@ -532,14 +532,8 @@ class PDFJob(JobInstance):
 
         doc = fitz.open(self.input_filepath)
 
-        # Note - Getting figures metadata from all the different strategies, so that
-        # the for loop below can use your choice of metadata (easier for testing)
-
-        # get image_search_type from APIFramework class i.e from the ini file
-        image_search_type = APIFramework.get_image_search_type()
-
         # Factory method
-        image_search_instance = ImageSearch.search_method(image_search_type)
+        image_search_instance = ImageSearch.search_method(self.task_detail['image_search_strategy'])
         pdf_images_metadata = image_search_instance.get_metadata(self.input_filepath)
 
         for page_num, fig_data in pdf_images_metadata.items():
