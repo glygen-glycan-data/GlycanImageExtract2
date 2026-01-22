@@ -123,8 +123,9 @@ args = parser.parse_args()
 # Using Image Manager to gets paths of all pdf's from a directory 
 # TODO Image_Manager class name - should probably be changed to File_Manager to make the class name sound more relevant, but the Image_Manager classname
 # is being used in a couple of places, so need to make these updates in the all places
-pdf_manager = Image_Manager(args.pdf, pattern='*.pdf', exclude='*.annotated.pdf')
-args.pdf = pdf_manager.images
+if args.pdf:
+    pdf_manager = Image_Manager(args.pdf, pattern='*.pdf', exclude='*.annotated.pdf')
+    args.pdf = pdf_manager.images
 
 # Build unified input items list
 input_items = build_input_items(args.pdf, args.pmid)
