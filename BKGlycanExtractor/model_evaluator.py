@@ -163,7 +163,7 @@ class CompareBase(object):
                 else:
                     FP += 1; badboxids['fp'].add(pred_id)
                     FN += 1; badboxids['fn'].add(known_id)
-                    badboxids['badlabel'].add(pred_id)
+                    badboxids['badlabel'].add((pred_id,known_id))
 
             fnboxes = gt_ids-matched_gt
             FN += len(fnboxes)
@@ -177,13 +177,16 @@ class CompareBase(object):
 
             badboxes = defaultdict(list)
             for k,ids in badboxids.items():
-                if k in ("fp","badlabel","extrapred"):
+                if k in ("fp","extrapred"):
                     if len(badboxids[k]) > 0:
                         badboxes[k] = [ pred_data[i] for i in badboxids[k] ]
                 elif k in ("fn","nopred"):
                     if len(badboxids[k]) > 0:
                         badboxes[k] = [ known_data[i] for i in badboxids[k] ]
-
+                elif k == "badlabel":
+                    if len(badboxids[k]) > 0:
+                        badboxes[k] = [ (pred_data[pred_id],known_data[known_id]) for pred_id,known_id in badboxids[k] ] 
+            
             self.update_metrics(results,threshold,gt_count,TP,FP,FN,badboxes)
 
         badboxes = defaultdict(list)
@@ -471,22 +474,12 @@ class Evaluator:
                     if mcdata['FN'] > 0 or mcdata['FP'] > 0:
                         # print(mcdata)
                         badboxes = mcdata['badboxes']
-                        badlabel = []
-                        for b1 in badboxes['badlabel']:
-                            # print(b1)
-                            for b2 in badboxes['fn']:
-                                # print(b2,b1.iou(b2))
-                                if b1.iou(b2) >= 0.8:
-                                    badlabel.append((b1,b2.get('classlabel')))
-                        # print(badlabel)
-                        # print(badboxes['badlabel'])
-                        assert len(badlabel) == len(badboxes['badlabel'])
                         for b in badboxes['nopred']:
-                            print("\t".join(map(str,[filename,curveindex,"nopred",b.get('classlabel'),b.get('bbox')])),file=file)
+                            print("\t".join(map(str,[filename,curveindex,"nopred",b.get('classlabel'),b.bbox()])),file=file)
                         for b in badboxes['extrapred']:
-                            print("\t".join(map(str,[filename,curveindex,"extrapred",b.get('classlabel'),b.get('confidence'),b.get('bbox')])),file=file)
-                        for b,kl in badlabel:
-                            print("\t".join(map(str,[filename,curveindex,"badlabel",b.get('classlabel'),b.get('confidence'),b.get('bbox'),kl])),file=file)
+                            print("\t".join(map(str,[filename,curveindex,"extrapred",b.get('classlabel'),b.get('confidence'),b.bbox()])),file=file)
+                        for pb,kb in badboxes['badlabel']:
+                            print("\t".join(map(str,[filename,curveindex,"badlabel",pb.get('classlabel'),pb.get('confidence'),pb.bbox(),kb.get('classlabel')])),file=file)
                     else:
                         print("\t".join(map(str,[filename,curveindex,"correct"])),file=file)
                     
@@ -510,7 +503,7 @@ class Evaluator:
                         sem = FigureSemantics(image_path=fullpath)
                         sem.annotate_boxes(badboxes['nopred'],color=(128, 128, 0),label="NP")
                         sem.annotate_boxes(badboxes['extrapred'],color=(128, 0, 128),label="EP",anchor="BR")
-                        sem.annotate_boxes(badboxes['badlabel'],color=(0, 100, 0),label="BL")
+                        sem.annotate_boxes([ t[0] for t in badboxes['badlabel']],color=(0, 100, 0),label="BL")
                         sem.write_image(extension="annotated-%d.png"%(curveindex,))
 
     @staticmethod
