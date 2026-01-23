@@ -208,6 +208,9 @@ class BoundingBox(BaseBoundingBox):
     def contains(self,b):
         return CompareBoxes.is_contained_in(b,self)
 
+    def iou(self,b):
+        return CompareBoxes.iou(self,b)
+
     def __str__(self):
         # should probably show [x,y,w,h] for BBOX? 
         # and [x1,y1,x2,y2] for PDfBBOX?

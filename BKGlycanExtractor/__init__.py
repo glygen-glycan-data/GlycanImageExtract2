@@ -12,10 +12,14 @@ from . monosaccharideid import MonoFinder
 from . glycanconnections import LinkFinder
 from . rootmonofinding import RootFinder
 from . glycanfinding import GlycanFinder
-from . pdf_image_metadata import ImageSearch, FitzImageSearch, FigCapImageSearch, HybridImageSearch
-from . pdf_image_captions_data import PDFiguesCaptionsData
+try:
+    from . pdf_image_metadata import ImageSearch, FitzImageSearch, FigCapImageSearch, HybridImageSearch
+    from . pdf_image_captions_data import PDFiguesCaptionsData
+    from . pdfhandler import PDFHandler, CompoundPDFImageFilter, PDFXRefImageFilter, PDFImageSizeFilter
+except ImportError:
+    pass
 from . compareboxes import CompareBoxes
-from . pdfhandler import PDFHandler, CompoundPDFImageFilter, PDFXRefImageFilter, PDFImageSizeFilter
+
 # from . webapp_processjob import JobInstance
 # from .scripts import parse_path
 # from . yolomodels import YOLOModel
