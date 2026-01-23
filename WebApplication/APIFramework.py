@@ -62,18 +62,6 @@ class APIFramework:
     ERROR = 'Error'
     COMPLETE = 'Complete'
 
-    _image_search_type = None       # options: fitz, figcap, hybrid - this comes from the GlyImageExtractor.ini file
-
-    def set_image_search_type(self, image_search_type):
-        # Store in instance (for consistency with other attributes)
-        self._image_search_type = image_search_type
-        # Also store in class variable (for global access)
-        APIFramework._image_search_type = image_search_type
-
-    @classmethod
-    def get_image_search_type(cls):
-        return cls._image_search_type
-
     def __init__(self):
 
         self._verbose_level = 100
@@ -280,10 +268,10 @@ class APIFramework:
 
         if "GlyImageExtractor" in res:
             if "image_search_type" in res["GlyImageExtractor"]:
-                self.set_image_search_type(res["GlyImageExtractor"]["image_search_type"])
+                self._image_search_type = res["GlyImageExtractor"]["image_search_type"]
             else:
                 # options: "fitz", "figcap", "hybrid"
-                self.set_image_search_type("fitz")
+                self._image_search_type = "fitz"
 
     def makeid(self,*params,random=False,length=16,sep=":"):
         msgparts = list(params)
@@ -723,6 +711,9 @@ class APIFramework:
             if curation_task:
                 task_detail.update({"curation_task": curation_task})
 
+            # add the image identification (from ini file i.e self._image_search_type or it can be hardcoded here as well)
+            task_detail['image_search_strategy'] = self._image_search_type
+
             status = {
                 "id": list_id,
                 "task_index": self.get_next_task_index(),
@@ -736,7 +727,7 @@ class APIFramework:
                 "result": {},
                 **({"pmid": pmid, "pmcid": pmcid} if pmid and pmcid else {}),
                 "curation_task": curation_task if curation_task else None,
-                "image_search_strategy": self.get_image_search_type(),
+                "image_search_strategy": self._image_search_type,   # add the image identification (from ini file i.e self._image_search_type or it can be hardcoded here as well)
             }
 
             if list_id in self.result_cache:
