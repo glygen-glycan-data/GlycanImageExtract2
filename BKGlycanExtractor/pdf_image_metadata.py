@@ -10,7 +10,7 @@ from BKGlycanExtractor.bbox import PDFBoundingBox
 from BKGlycanExtractor.pdfhandler import PDFHandler, CompoundPDFImageFilter, PDFXRefImageFilter, PDFImageSizeFilter, PDFLargeImageSizeFilter
 from BKGlycanExtractor.compareboxes import CompareBoxes
 from BKGlycanExtractor.pdf_image_captions_data import PDFiguesCaptionsData
-from BKGlycanExtractor.pdf_image_filters import ImageFilterPipeline, FilterFitzByFigcapContainers, MergeByIOU, RegularMerge
+from BKGlycanExtractor.pdf_image_filters import ImageFilterPipeline, DetectFragmentedFitz, FilterFitzByFigcapContainers, MergeByIOU, RegularMerge
 
 class ImageSearch:
 
@@ -52,7 +52,7 @@ class FitzImageSearch:
 
         filter = CompoundPDFImageFilter(
             PDFXRefImageFilter(min_xref=1),
-            PDFImageSizeFilter(width=90,height=90)
+            PDFImageSizeFilter(width=120,height=120)
         )
 
         for fig_metadata in pdf.figures(filter=filter):
@@ -198,6 +198,7 @@ class HybridImageSearch:
 
         # execute filter pipeline
         pipeline = ImageFilterPipeline([
+            DetectFragmentedFitz(),
             FilterFitzByFigcapContainers(),
             MergeByIOU(iou_threshold=0.8),
             RegularMerge(image_source='fitz'),
@@ -209,6 +210,31 @@ class HybridImageSearch:
         )
 
         return merged_figures, merged_figures_keys
+
+    # Default vertical tolerance (PDF points) for treating boxes as the same "row" when sorting L→R, T→B
+    DEFAULT_ROW_TOLERANCE = 30
+
+
+    def sort_figures_reading_order(self,
+        items,
+        row_tolerance = DEFAULT_ROW_TOLERANCE):
+        """
+        Sort figure items top-to-bottom, then left-to-right (reading order).
+
+        Boxes within `row_tolerance` vertical distance are treated as on the same row,
+        so the right-hand box is not ordered before the left-hand box when it is
+        only slightly higher.
+        """
+
+        def key(item):
+            key_tuple, figure_data = item  
+            bbox = figure_data['pdf_fig_bbox']
+            x0, y0 = bbox[0], bbox[1]
+            row = round(y0 / row_tolerance) * row_tolerance
+            return (row, x0)
+
+        return sorted(items, key=key)
+
 
     def _process_merged_figures_data(self, all_merged_figures):
         '''
@@ -222,13 +248,7 @@ class HybridImageSearch:
             merged_figures = all_merged_figures[page_no]
             image_number = 1
             
-            # TODO: check if sorting is working properly
-            # Sort figures by bbox position (L->R, T->B)
-            # Keys are now tuples (fig_no, figure_type)
-            sorted_figures = sorted(
-                merged_figures.items(),
-                key=lambda item: (item[1]['box'].bbox()[1], item[1]['box'].bbox()[0])  # Sort by y, then x
-            )
+            sorted_figures = self.sort_figures_reading_order(list(merged_figures.items()))
             
             # Rebuild with sequential image_number keys
             new_merged_figures = {}

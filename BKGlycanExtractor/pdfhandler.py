@@ -1,8 +1,10 @@
 import fitz, os, os.path
 
-class PDFHandler(object):
-    STANDARD_DPI = 300
+# if more constants are added, then create a Enum class 
+STANDARD_DPI = 300
+POINTS_PER_INCH = 72.0
 
+class PDFHandler(object):
     def __init__(self,filename):
         self.doc = fitz.open(filename)
         self.dir,self.base = os.path.split(filename)
@@ -111,13 +113,32 @@ class PDFHandler(object):
             # If save fails, try to convert to RGB and try again
             pic = fitz.Pixmap(fitz.csRGB, pic)
             pic.save(filename)
+
+    @staticmethod
+    def save_image(doc, page, pdf_fig_bbox, image_path, xref=None, dpi=STANDARD_DPI, annots=True):
+        pix = None
+
+        if xref is not None:
+            xref = int(xref)
+
+        if xref is not None and xref > 0:
+            pix = fitz.Pixmap(doc, xref)
+        else:
+            pix = page.get_pixmap(clip=pdf_fig_bbox, dpi=dpi, annots=annots)   # pdf_fig_bbox - [x0,y0,x1,y1]
+                
+        try:
+            pix.save(image_path)
+        except Exception as e:
+            pix = fitz.Pixmap(fitz.csRGB, pix)
+            pix.save(image_path)
+        return pix
     
     def figures(self,images_data=None,filter=None):
         if images_data is not None:         # images_data is provided by figcap 
             '''Generator that yields image metadata when the data is already provided (images_data)'''
             for image_info in images_data.get('figures', {}):
                 if filter is None or filter.keep(image_info):
-                    image_info['dpi'] = PDFHandler.calculate_dpi(image_info, self.doc) or self.STANDARD_DPI
+                    # image_info['dpi'] = PDFHandler.calculate_dpi(image_info, self.doc) or self.STANDARD_DPI
                     yield image_info
         else:
             image_count = 1
@@ -135,7 +156,7 @@ class PDFHandler(object):
                         
                     if filter is None or filter.keep(image):
                         image['image_count'] = image_count                  # total image count so far
-                        image['dpi'] = PDFHandler.calculate_dpi(image, self.doc) or self.STANDARD_DPI
+                        # image['dpi'] = PDFHandler.calculate_dpi(image, self.doc) or self.STANDARD_DPI
                         image_count += 1
                         yield image
                                     
