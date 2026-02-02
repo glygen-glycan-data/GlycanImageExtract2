@@ -13,8 +13,6 @@ class ImageFilter:
         raise NotImplementedError
 
 
-# But what if there are regualr images which are 2 or more --> their union might take up the entire page right?
-# this is not a proble - piece meals will be contained in a certain area
 class DetectFragmentedFitz(ImageFilter):
     '''
     Detects if fitz images are fragmented (many small pieces that should be replaced by figcap).
@@ -50,13 +48,6 @@ class DetectFragmentedFitz(ImageFilter):
             page_width = fitz_fig_data['page_width']
             page_height = fitz_fig_data['page_height']
 
-
-        # for fitz_fig_no, fitz_fig_data in sorted(fitz_figures.items(), key=lambda k: k[0]):
-        #     fitz_bbox = fitz_fig_data['pdf_fig_bbox']
-
-        #     if fitz_bbox:
-        #         bboxes.append(fitz_bbox)
-
         if len(bboxes) < self.min_fragments:
             return False
 
@@ -67,8 +58,6 @@ class DetectFragmentedFitz(ImageFilter):
         union_bbox_area = union_bbox_width * union_bbox_height
 
         # calculate the coverage of the unioned box on the page
-        # page_width = fitz_fig_data['page_width']
-        # page_height = fitz_fig_data['page_height']
         page_area = page_width * page_height
 
         width_coverage = union_bbox_width / page_width if page_width > 0 else 0
@@ -167,14 +156,13 @@ class FilterFitzByFigcapContainers(ImageFilter):
                 # was already matched earlier and priority is given to fitz.
                 if CompareBoxes.have_intersection(fitz_box, figcap_box):
                     merged_figures_keys.add(figcap_key)
+
+                    # if the figcap image has a caption - use that caption for the matched fitz image
+                    for caption_type in ('caption_text', 'full_caption_text', 'cleaned_caption'):
+                        if caption_type in figcap_fig_data:
+                            fitz_fig_data.update({caption_type: figcap_fig_data[caption_type]})      
                     break
                 
-                # Is figcap contained in fitz? (fitz = container, figcap = inner)
-                # containment = CompareBoxes.get_containment(fitz_box, figcap_box)
-                # if containment is not None:
-                #     merged_figures_keys.add(figcap_key)
-                #     break  
-
         # Step 2: Collect info about all the fitz matches contained inside the figcap box
         for figcap_fig_no, figcap_fig_data in figcap_figures.items():
             figcap_box = figcap_fig_data.get('box')
@@ -265,8 +253,12 @@ class MergeByIOU(ImageFilter):
 
                         if fitz_key in merged_figures_keys:
                             merged_figures_keys.add(figcap_key)     # mark the figcap figure as matched 
+
+                            # if the figcap image has a caption - use that caption for the matched fitz image
+                            for caption_type in ('caption_text', 'full_caption_text', 'cleaned_caption'):
+                                if caption_type in figcap_fig_data:
+                                    fitz_fig_data.update({caption_type: figcap_fig_data[caption_type]})  
                         else:
-                        
                             merged_figures_keys.add(fitz_key)
                             merged_figures_keys.add(figcap_key)
                             
