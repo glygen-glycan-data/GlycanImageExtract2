@@ -14,6 +14,8 @@ from BKGlycanExtractor.image_manager import Image_Manager
 
 parser = argparse.ArgumentParser(description="Annotate PDF")
 
+# TODO - if url path is not valid for PDF - state a warning
+
 parser.add_argument(
     '--pdf',
     type = str,
@@ -264,8 +266,11 @@ for i,input_item in enumerate(input_items):
             # set fig id
             content = (
                 f"fig:{result['image_count']}\n"
-                f"dpi: {result["dpi"]}\n"
             )
+            xref = result.get("xref", None)
+            if xref is not None and xref > 0:
+                content += f"xref: {xref}\n"
+
             fig_annot.set_info(content=content)
             fig_annot.update()
 
@@ -293,7 +298,6 @@ for i,input_item in enumerate(input_items):
                 image_data.append({
                     "ID": gid,
                     "xref": result.get("xref"),
-                    "dpi": result["dpi"],
                     "page_num": result["page_number"],
                     "fig_num": fig_num,
                     "accession": glycan.get('accession', ''),
@@ -318,7 +322,7 @@ for i,input_item in enumerate(input_items):
     print("Wrote annotated PDF:",basename + ".annotated.pdf")   
 
     wh = open(basename + ".annotated.tsv",'w')
-    headers = "ID xref dpi page_num fig_num accession iupac composition wurcs votes url".split()
+    headers = "ID xref page_num fig_num accession iupac composition wurcs votes url".split()
     if not anyvotes:
         headers.remove("votes")    
     print("\t".join(headers),file=wh)
@@ -329,11 +333,12 @@ for i,input_item in enumerate(input_items):
 
 
 '''
-Storing the DPI in the figures annotation - because DPI is a figure property and not an individual
-annotations property.
-Eg. for a figure with/without glycan annotations -  will still need dpi information during
-extract_annotations stage to save the image and a good place to store this information would be in the
+Storing the XREF in the figures annotation - because XREF is a figure property and not an individual
+annotations (eg. glycan) property.
+Eg. for a figure with/without glycan annotations -  will still need xref (if present, so that the 
+image can be extracted in its original format without having to specify a fixed dpi) information during
+extract_annotations stage to save the image (or else a default dpi will be used) and a good place to store this information would be in the
 figures annotations information itself.
-The TSV file generated only stores information about the glycan annotations, so the dpi can be tracked via
-the figure annotation in the pdf and this ensures that the dpi remains consistent during any extraction activity.
+The TSV file generated only stores information about the glycan (monos, root, links) annotations, so the xref can be tracked via
+the figure annotation in the pdf and this ensures that the dimensions of the figure remain consistent during any extraction activity.
 '''

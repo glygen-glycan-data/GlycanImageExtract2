@@ -6,7 +6,7 @@ from hashlib import md5
 from APIFramework import APIFramework
 from BKGlycanExtractor import ImageSearch, FitzImageSearch, FigCapImageSearch, HybridImageSearch
 from BKGlycanExtractor import Config_Manager, BoundingBox, PDFBoundingBox, CompareBoxes
-from BKGlycanExtractor import PDFHandler, CompoundPDFImageFilter, PDFXRefImageFilter, PDFImageSizeFilter
+from BKGlycanExtractor import STANDARD_DPI, PDFHandler, CompoundPDFImageFilter, PDFXRefImageFilter, PDFImageSizeFilter
 
 import numpy as np
 from shutil import copyfile
@@ -541,8 +541,8 @@ class PDFJob(JobInstance):
             for figure_num, figure_info in fig_data.items():
                 image_path = os.path.join(image_folders['figures_dir'], f"{figure_info['image_count']}.png")
 
-                pix = page.get_pixmap(clip=figure_info['pdf_fig_bbox'], dpi=figure_info['dpi'])        # x1,y1,x2,y2
-                pix.save(image_path)
+                pix = PDFHandler.save_image(doc, page, figure_info['pdf_fig_bbox'], image_path, xref=figure_info.get('xref'), dpi=STANDARD_DPI, annots=True)
+
                 figure_info['width'] = pix.width
                 figure_info['height'] = pix.height
 
