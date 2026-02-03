@@ -237,14 +237,17 @@ unzip -qq -j "images.zip" -d "$YOLO_DATA"
 
 # Move classes.txt out of YOLO_DATA
 mv "$YOLO_DATA/classes.txt" .
-mv "$YOLO_DATA/model.ini" .
 cp "classes.txt" "classes.names"
 cp "classes.txt" "${CONFIG}_${EXP}.labels"
-cp "model.ini" "${CONFIG}_${EXP}.model"
 
 upload "$EXPROOT/classes.txt" "$DRIVEROOT/classes.txt"
 upload "$EXPROOT/${CONFIG}_${EXP}.labels" "$DRIVEROOT/${CONFIG}_${EXP}.labels"
-upload "$EXPROOT/${CONFIG}_${EXP}.model" "$DRIVEROOT/${CONFIG}_${EXP}.model"
+
+if [ -f "$YOLO_DATA/model.ini" ]; then
+    mv "$YOLO_DATA/model.ini" .
+    cp "model.ini" "${CONFIG}_${EXP}.model"
+    upload "$EXPROOT/${CONFIG}_${EXP}.model" "$DRIVEROOT/${CONFIG}_${EXP}.model"
+fi
 
 # YOLO_CLASSES - Count the number of non-empty lines in classes.txt
 # This tells us how many classes are defined (ignoring any blank lines)
