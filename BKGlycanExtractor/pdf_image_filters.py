@@ -12,43 +12,187 @@ class ImageFilter:
                 merged_figures, merged_figures_keys):
         raise NotImplementedError
 
+
+class DetectFragmentedFitz(ImageFilter):
+    '''
+    Detects if fitz images are fragmented (many small pieces that should be replaced by figcap).
+    If no fragments on the page - add the fitz figures(s) to merged_figures.
+
+    Strategy: If there are many small fitz images (>5) that cover a large portion of the page
+    (width, height, or total area), they are likely fragments.
+
+    NOTE: This filter only FLAGS fragmentation - it doesn't drop images. Individual fragment
+    handling is done by FilterFitzByFigcapContainers, which can identify which specific fitz
+    images are fragments vs good fitz images by checking if they are contained in figcap images.
+
+    This allows good images and fragments to coexist on the same page, so good images will
+    be processed normally, while fragments will be handled by FilterFitzByFigcapContainers.
+    '''
+
+    def __init__(self, min_fragments=5, page_coverage_threshold=0.4, width_coverage_threshold=0.6, height_coverage_threshold=0.6):
+        self.min_fragments = min_fragments
+        self.page_coverage_threshold = page_coverage_threshold
+        self.width_coverage_threshold = width_coverage_threshold
+        self.height_coverage_threshold = height_coverage_threshold
+
+    def _is_fragmented(self, fitz_figures):
+        '''
+        Detect if fitz figures are fragmented.
+        '''
+        if len(fitz_figures) < self.min_fragments:
+            return False
+
+        bboxes = []
+        for fitz_fig_no, fitz_fig_data in fitz_figures.items():
+            bboxes.append(fitz_fig_data['pdf_fig_bbox'])
+            page_width = fitz_fig_data['page_width']
+            page_height = fitz_fig_data['page_height']
+
+        if len(bboxes) < self.min_fragments:
+            return False
+
+        # get union of all fitz pdf fig bboxes
+        union_bbox = CompareBoxes.union_pdf_boxes(bboxes)
+        union_bbox_width = union_bbox[2] - union_bbox[0]
+        union_bbox_height = union_bbox[3] - union_bbox[1]
+        union_bbox_area = union_bbox_width * union_bbox_height
+
+        # calculate the coverage of the unioned box on the page
+        page_area = page_width * page_height
+
+        width_coverage = union_bbox_width / page_width if page_width > 0 else 0
+        height_coverage = union_bbox_height / page_height if page_height > 0 else 0
+        area_coverage = union_bbox_area / page_area if page_area > 0 else 0
+
+        # check if coverage threhsolds are met
+        # Note: page_coverage_threshold is 0.4 (small) because the page includes margins
+        if (area_coverage >= self.page_coverage_threshold or
+            width_coverage >= self.width_coverage_threshold or
+            height_coverage >= self.height_coverage_threshold):
+            return True
+
+        return False
+
+    def apply(self, pdf_page_number, fitz_figures, figcap_figures, 
+            merged_figures, merged_figures_keys):
+        '''
+        Detect if fitz figures are fragmented piece meals.
+
+        - If NOT fragmented: Add all good fitz images are added to merged_figures.
+        - If fragmented: Don't add them (let FilterFitzByFigcapContainers handle individual
+          fragment detection by checking containment in figcap).
+          This allows good images and fragments to coexist on the same page.
+
+        '''
+
+        if pdf_page_number not in merged_figures:
+            merged_figures[pdf_page_number] = {}
+
+        is_fragmented = self._is_fragmented(fitz_figures)
+
+        if not is_fragmented:
+            for fitz_fig_no, fitz_fig_data in sorted(fitz_figures.items(), key=lambda k: k[0]):
+                fitz_key = (fitz_fig_no, 'fitz')
+                if fitz_key not in merged_figures_keys:
+                    merged_figures[pdf_page_number][fitz_key] = fitz_fig_data.copy()
+                    merged_figures[pdf_page_number][fitz_key].update({
+                        'merge_type': 'fitz'
+                    })
+
+                    merged_figures_keys.add(fitz_key)
+
+        return merged_figures, merged_figures_keys
+
 class FilterFitzByFigcapContainers(ImageFilter):
     '''
-    Filter: If fitz images are piece meal parts of a larger figcap based image, 
-    do not consider the fitz images.
+    Filter: If multiple fitz images (3+) are contained within a figcap image, use figcap because the 
+    fitz images are likely to be piece meals/fragements.
+
+    Strategy:
+    - Count how many fitz images are contained in the figcap box
+    - Only use figcap if 3+ fitz images (fragments) are contained within the figcap box 
+    - If 1-2 fitz boxes are contained within figcap box, they might be legitimate separate images, so keep fitz
+    - Mark contained fitz images as matched (so they dont get added later)
+    - If any contained fitz is already in merged_figures --> drop figcap (fitz has priority)
+
+    This ensures:
+    - Only use figcap when there are clearly multiple fragments (3+)
+    - Fitz always has priority when it's a good image (already in merged_figures)
     '''
+
+    def __init__(self, min_contained_fitz = 3):
+        '''
+        min_contained_fitz: Minimum number of fitz images/bboxes that must be contained in a figcap bbox to consider using figcap
+        '''
+        self.min_contained_fitz = min_contained_fitz
 
     def apply(self, pdf_page_number, fitz_figures, figcap_figures, 
                 merged_figures, merged_figures_keys):
-        '''Filter out fitz figures that are contained within figcap figures.'''
+        '''
+        Filter out fitz figures that are contained within figcap figures.
+        '''
 
         figcap_to_fitz_matches: dict[int, list[(int,str)]] = {}
 
         if pdf_page_number not in merged_figures:
             merged_figures[pdf_page_number] = {}
-        
+
+        # Step 1: If figcap is contained inside a fitz box or intersects with a fitz box that was already matched in the past (in merged_figures),
+        # mark the figcap as merged so it doesn't get added to merged figures later.
         for figcap_fig_no, figcap_fig_data in figcap_figures.items():
-            figcap_box = figcap_fig_data['box']
+            figcap_key = (figcap_fig_no, figcap_fig_data.get('figure_type', 'figcap'))
+            if figcap_key in merged_figures_keys:
+                continue
+            figcap_box = figcap_fig_data.get('box')
             
-            for fitz_fig_no, fitz_fig_data in sorted(fitz_figures.items(), key=lambda k: k[0]):
-                fitz_box = fitz_fig_data['box']
-                
-                containment = CompareBoxes.get_containment(figcap_box, fitz_box)
-                if containment is None:
+            for fitz_fig_no, fitz_fig_data in fitz_figures.items():
+                fitz_key = (fitz_fig_no, 'fitz')
+                # Only consider fitz that is already in merged_figures (matched)
+                if fitz_key not in merged_figures.get(pdf_page_number, {}):
                     continue
+                fitz_box = fitz_fig_data.get('box')
+
+                # if figcap intersects with fitz, drop figcap because fitz image
+                # was already matched earlier and priority is given to fitz.
+                if CompareBoxes.have_intersection(fitz_box, figcap_box):
+                    merged_figures_keys.add(figcap_key)
+
+                    # if the figcap image has a caption - use that caption for the matched fitz image
+                    for caption_type in ('caption_text', 'full_caption_text', 'cleaned_caption'):
+                        if caption_type in figcap_fig_data:
+                            fitz_fig_data.update({caption_type: figcap_fig_data[caption_type]})      
+                    break
                 
-                if figcap_fig_no not in figcap_to_fitz_matches:
-                    figcap_to_fitz_matches[figcap_fig_no] = []
-                figcap_to_fitz_matches[figcap_fig_no].append((fitz_fig_no, fitz_fig_data['figure_type']))
-        
+        # Step 2: Collect info about all the fitz matches contained inside the figcap box
+        for figcap_fig_no, figcap_fig_data in figcap_figures.items():
+            figcap_box = figcap_fig_data.get('box')
+                        
+            for fitz_fig_no, fitz_fig_data in sorted(fitz_figures.items(), key=lambda k: k[0]):
+                fitz_box = fitz_fig_data.get('box')
+                                
+                fitz_key = (fitz_fig_no, 'fitz')
+                
+                # Only check containment for fitz that haven't been matched yet
+                if fitz_key not in merged_figures_keys:                    
+                    containment = CompareBoxes.get_containment(figcap_box, fitz_box)
+
+                    if containment is not None:
+                        if figcap_fig_no not in figcap_to_fitz_matches:
+                            figcap_to_fitz_matches[figcap_fig_no] = []
+                        figcap_to_fitz_matches[figcap_fig_no].append(
+                            (fitz_fig_no, fitz_fig_data.get('figure_type', 'fitz'))
+                        )
+
+        # Step 3: Check the fitz vs figcap matches - if 3+ fitz images are contained in the same figcap box,
+        # it is likely a piece meal image, so consider taking the figcap image over the fitz fragments
         for figcap_fig_no, fitz_matches in figcap_to_fitz_matches.items():
-            if len(fitz_matches) >= 3:
+            if len(fitz_matches) >= self.min_contained_fitz:
                 # Mark fitz figures as used, in merged_figures_keys
                 for fitz_fig_no, fig_type in fitz_matches:
                     fitz_key = (fitz_fig_no, fig_type)
                     merged_figures_keys.add(fitz_key)
-
-                    # Remove from merged_figures (so that it doesnt display in the final results)
+                    
+                    # Remove from merged_figures if present (so that it doesn't display in the final results)
                     if fitz_key in merged_figures[pdf_page_number]:
                         del merged_figures[pdf_page_number][fitz_key]
                 
@@ -57,11 +201,11 @@ class FilterFitzByFigcapContainers(ImageFilter):
                 if figcap_key not in merged_figures_keys:
                     merged_figures[pdf_page_number][figcap_key] = figcap_figures[figcap_fig_no]
                     merged_figures[pdf_page_number][figcap_key].update({
-                        'merge_type': 'container'
+                        'merge_type': 'figcap_container'
                     })
                     merged_figures_keys.add(figcap_key)
             else:
-                # mark the container as merged - so that it doesnt get used later.
+                # Mark the container as merged - so that it doesn't get used later
                 merged_figures_keys.add((figcap_fig_no, 'figcap'))
         
         return merged_figures, merged_figures_keys
@@ -70,7 +214,14 @@ class MergeByIOU(ImageFilter):
     '''
     Filter: Merge by Intersection over Union (IOU), finding common matches 
     between fitz and figcap images.
+
+    Stratergy: Only merges matching pairs (IOU > threshold), prioritizes fitz.
+    - For each fitz figure, try to find matching figcap (IOU > threshold)
+    - If match found, add fitz to the merged_images (fitz has priority)
+    - Mark both fitz and figcap as matched.
+    - Does NOT add unmatched figures, thats handled by RegularMerge filter.
     '''
+
     def __init__(self, iou_threshold = 0.8):
         self.iou_threshold = iou_threshold
 
@@ -80,7 +231,6 @@ class MergeByIOU(ImageFilter):
         Find image matches between fitz and figcap images using IOU.
         Keep the matched fitz image and filter out the corresponding figcap image.
         '''
-        figure_matches: dict[int, list[int]] = {}
 
         if pdf_page_number not in merged_figures:
             merged_figures[pdf_page_number] = {}
@@ -89,35 +239,37 @@ class MergeByIOU(ImageFilter):
             for fitz_fig_no, fitz_fig_data in sorted(fitz_figures.items(), key=lambda k: k[0]):
                 fitz_key = (fitz_fig_no, fitz_fig_data['figure_type'])
                 
-                if fitz_key in merged_figures_keys:
-                    continue
-                
                 for figcap_fig_no, figcap_fig_data in figcap_figures.items():
                     figcap_key = (figcap_fig_no, figcap_fig_data['figure_type'])
-                    
-                    if figcap_key in merged_figures_keys:
-                        continue
                     
                     fitz_box = fitz_fig_data['box']
                     figcap_box = figcap_fig_data['box']
                     
                     iou = CompareBoxes.iou(fitz_box, figcap_box)
-                    if iou >= iou_threshold:
-                        if fitz_fig_no not in figure_matches:
-                            figure_matches[fitz_fig_no] = []
-                        figure_matches[fitz_fig_no].append(figcap_fig_no)
-                        
-                        merged_figures_keys.add(fitz_key)
-                        merged_figures_keys.add(figcap_key)
-                        
-                        merged_figures[pdf_page_number][fitz_key] = fitz_fig_data
-                        merged_figures[pdf_page_number][fitz_key].update({
-                            'merge_type': 'iou',
-                            'merge_iou': iou,
-                            **{k: v for k, v in figcap_fig_data.items() if k in (
-                                'label', 'caption_text', 'full_caption_text', 'cleaned_caption'
-                            )}
-                        })
+                    if iou >= self.iou_threshold:
+                        # if there is a match - check if the fitz image has already been merged before,
+                        # if true, then mark the figcap image as merged,
+                        # else, add the fitz image in merged figures and mark fitz and figcap image as merged
+
+                        if fitz_key in merged_figures_keys:
+                            merged_figures_keys.add(figcap_key)     # mark the figcap figure as matched 
+
+                            # if the figcap image has a caption - use that caption for the matched fitz image
+                            for caption_type in ('caption_text', 'full_caption_text', 'cleaned_caption'):
+                                if caption_type in figcap_fig_data:
+                                    fitz_fig_data.update({caption_type: figcap_fig_data[caption_type]})  
+                        else:
+                            merged_figures_keys.add(fitz_key)
+                            merged_figures_keys.add(figcap_key)
+                            
+                            merged_figures[pdf_page_number][fitz_key] = fitz_fig_data
+                            merged_figures[pdf_page_number][fitz_key].update({
+                                'merge_type': 'iou',
+                                'merge_iou': iou,
+                                **{k: v for k, v in figcap_fig_data.items() if k in (
+                                    'label', 'caption_text', 'full_caption_text', 'cleaned_caption'
+                                )}
+                            })
         except Exception as e:
             print("\nException occurred while matching and merging boxes based on IOU:", e)
         
@@ -131,21 +283,22 @@ class RegularMerge(ImageFilter):
 
     def __init__(self, image_source='both'):
         self.image_source = image_source
-        
+
     def _merge_figures(self, pdf_page_number, page_figures, merged_figures, merged_figures_keys):
         if pdf_page_number not in merged_figures:
             merged_figures[pdf_page_number] = {}
 
         for fig_no, fig_data in sorted(page_figures.items(), key=lambda k: k[0]):
             key = (fig_no, fig_data['figure_type'])
-            
-            if key not in merged_figures_keys:
-                # Use original key (prevents collisions, preserves info)
-                merged_figures[pdf_page_number][key] = fig_data
-                merged_figures[pdf_page_number][key].update({
-                    'merge_type': 'regular'
-                })
-                merged_figures_keys.add(key)
+
+            if key in merged_figures_keys:
+                continue
+
+            merged_figures[pdf_page_number][key] = fig_data.copy()
+            merged_figures[pdf_page_number][key].update({
+                'merge_type': 'regular_' + fig_data['figure_type']
+            })
+            merged_figures_keys.add(key)
 
         return merged_figures, merged_figures_keys
 

@@ -141,21 +141,24 @@ class CompareBoxes:
         return (x_min, y_min, x_max-x_min, y_max-y_min)     # x,y,w,h 
 
     @staticmethod
-    def union_pdf_boxes(bbox1, bbox2):
-        # IMP - this method is only meant to merge pdf boxes
-        x1, y1, x2, y2 = bbox1.bbox()
-        _x1, _y1, _x2, _y2 = bbox2.bbox()
-        
-        # finding the bbox which contains both the boxes i.e merging both boxes into one box
-        x_min = min(x1, _x1)  # leftmost x
-        y_min = min(y1, _y1)  # bottommost y (or topmost depending on coordinate system)
-        x_max = max(x2, _x2)  # rightmost x
-        y_max = max(y2, _y2)  # topmost y (or bottommost depending on coordinate system)
-        
-        return [x_min, y_min, x_max, y_max]  # x1, y1, x2, y2
+    def union_pdf_boxes(bboxes: list):
+        '''
+        This method is only meant to merge pdf bboxes.
 
-        
-    
+        Args:
+            boxes: list of bboxes
+            expects pdf_bbox format --> [x0,y0,x1,y1]
+        '''
+        if not bboxes:
+            return [0, 0, 0, 0]
+
+        min_x = min(bbox[0] for bbox in bboxes)
+        min_y = min(bbox[1] for bbox in bboxes)
+        max_x = max(bbox[2] for bbox in bboxes)
+        max_y = max(bbox[3] for bbox in bboxes)
+
+        return [min_x, min_y, max_x, max_y]     # [x0,y0,x1,y1]
+
     def is_overlapping(self, training, detected):
         if CompareBoxes.iou(training, detected) > self.overlap_threshold:
             return True

@@ -15,10 +15,12 @@ from . glycanfinding import GlycanFinder
 try:
     from . pdf_image_metadata import ImageSearch, FitzImageSearch, FigCapImageSearch, HybridImageSearch
     from . pdf_image_captions_data import PDFiguesCaptionsData
-    from . pdfhandler import PDFHandler, CompoundPDFImageFilter, PDFXRefImageFilter, PDFImageSizeFilter
+    from . pdfhandler import STANDARD_DPI, POINTS_PER_INCH, PDFHandler, CompoundPDFImageFilter, PDFXRefImageFilter, PDFImageSizeFilter
 except ImportError:
     pass
 from . compareboxes import CompareBoxes
+from . image_manager import Image_Manager
+
 
 # from . webapp_processjob import JobInstance
 # from .scripts import parse_path

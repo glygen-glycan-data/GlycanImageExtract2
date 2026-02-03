@@ -23,6 +23,7 @@ import fitz
 import glob
 import shutil
 import csv
+from BKGlycanExtractor import STANDARD_DPI, POINTS_PER_INCH, PDFHandler
 
 parser = argparse.ArgumentParser(description="Extract annotated figures and comments from PDFs")
 
@@ -42,6 +43,8 @@ parser.add_argument(
 
 args = parser.parse_args()
 
+MIN_FIGURE_SIZE = 90
+
 def parse_comment(comment):
     """Parse annotation comment into (glycan_id, url).
 
@@ -56,7 +59,7 @@ def parse_comment(comment):
     """
     comment = (comment or "").strip()
 
-    if comment is None:
+    if not comment:
         return {}
 
     comment_dict = {}
@@ -68,11 +71,6 @@ def parse_comment(comment):
         else:   # case where is single line is present - will probably be an id (id's are compulsory)
             comment_dict['id'] = lines[0]
     return comment_dict
-
-def save_figure(page, annot_rect, figure_path, dpi):
-    pix = page.get_pixmap(clip=annot_rect, dpi=dpi, annots=False)   
-    pix.save(figure_path)
-    return pix.width, pix.height
 
 def load_tsv_data(tsv_path):
     """Load TSV into dictionary keyed by ID"""
@@ -87,31 +85,39 @@ def load_tsv_data(tsv_path):
     return tsv_data
 
 # TODO write a static method for this in bbox class
-def pixel_coordinates(page, annot_box, fig_box, dpi):
-    pixels_per_point = int(dpi) / 72.0
+def pixel_coordinates(doc, page, annot_box, fig_box, xref=None, dpi=STANDARD_DPI):
+
+    # Scale: from xref image size if available, else from DPI
+    scale_x = scale_y = None
+
+    if xref is not None and xref > 0:
+        try: 
+            pix = fitz.Pixmap(doc, xref)
+            scale_x = pix.width / fig_box.width
+            scale_y = pix.height / fig_box.height
+        except Exception as e:
+            pass
+
+    if scale_x is None or scale_y is None:
+        pixels_per_point = float(dpi) / POINTS_PER_INCH
+        scale_x = scale_y = pixels_per_point
 
     # Convert annotation coordinates to pixel coordinates
-    px_gly_x0 = round((annot_box.x0 - fig_box.x0) * pixels_per_point)
-    px_gly_y0 = round((annot_box.y0 - fig_box.y0) * pixels_per_point)
-    px_gly_w = round(annot_box.width * pixels_per_point)
-    px_gly_h = round(annot_box.height * pixels_per_point)
+    px_gly_x0 = round((annot_box.x0 - fig_box.x0) * scale_x)
+    px_gly_y0 = round((annot_box.y0 - fig_box.y0) * scale_y)
+    px_gly_w = round(annot_box.width * scale_x)
+    px_gly_h = round(annot_box.height * scale_y)
 
     return [px_gly_x0, px_gly_y0, px_gly_w, px_gly_h]
 
 def process_figure_annotation(annot_box, figure_box, page, tsv_data, comment_map, **kwargs):
     '''method to process information about an annotation'''
-    
-    # convert's pdf coordinates to pixel coordinates - output - glycan_bbox, fig_width, fig_height 
-    gly_bbox = pixel_coordinates(page, annot_box, figure_box, tsv_data['dpi'])
-
     return {
         'ID': comment_map['id'],
         'url': comment_map.get('url'),
-        # 'xref': xref,
-        'gly_bbox': gly_bbox,       # pixel coordinates 
         'pdf_fig_bbox': figure_box,
         **{k: v.strip() for k, v in tsv_data.items() 
-            if k in ['dpi','class','accession', 'iupac', 'composition', 'wurcs'] and v is not None},
+            if k in ['class','accession', 'iupac', 'composition', 'wurcs'] and v is not None},
         **kwargs,
     }
 
@@ -147,10 +153,11 @@ def extract_annotations(output_dir, pdf_path, tsv_path):
             # fig_num = 1
             for figure_annot, fig_comments in figure_annotations:
                 fig_num = fig_comments['fig']
-                dpi = int(fig_comments['dpi'])
+                xref = fig_comments.get('xref', None)
+                xref = int(xref) if xref is not None else None
                 pdf_fig_box = figure_annot.rect
                 
-                if (pdf_fig_box.height > 90 and pdf_fig_box.width > 90):
+                if (pdf_fig_box.height > MIN_FIGURE_SIZE and pdf_fig_box.width > MIN_FIGURE_SIZE):
                     figure_filename = f"{os.path.basename(output_dir)}_p{page_num}_f{fig_num}.png"
                     figure_path = os.path.join(output_dir, figure_filename)
 
@@ -170,15 +177,20 @@ def extract_annotations(output_dir, pdf_path, tsv_path):
                                 if glycan_id in tsv_data:
                                     tsv_row_data = tsv_data[glycan_id]
 
-                                metadata = {'figure_num': fig_num, 'page_num': page_num, 'figure_name': figure_filename, 'figure_path': figure_path}
+                                gly_bbox = pixel_coordinates(doc, page, annotation_box, pdf_fig_box, xref=xref)
+
                                 data = process_figure_annotation(annotation_box, pdf_fig_box, page, tsv_row_data, comment_map)
-                                data.update(metadata)
+                                data.update({'figure_num': fig_num, 'page_num': page_num, 'figure_name': figure_filename, 'figure_path': figure_path})
+                                data.update({'gly_bbox': gly_bbox})
 
                                 write_semantics(sem_file, data)
 
-                        px_fig_height, px_fig_width = save_figure(page, pdf_fig_box, figure_path, dpi)
-                        sem_file.write(f'##### WHOLEIMAGE: {round(px_fig_height)} x {round(px_fig_width)} (height x width)\n')
-                        sem_file.write(f'##### IMAGE_DPI: {dpi}\n')
+                        pix = PDFHandler.save_image(doc, page, pdf_fig_box, figure_path, xref=xref, dpi=STANDARD_DPI, annots=False)
+                        sem_file.write(f'##### WHOLEIMAGE: {round(pix.height)} x {round(pix.width)} (height x width)\n')
+                        # sem_file.write(f'##### IMAGE_DPI: {dpi}\n')
+                        if xref is not None and xref > 0:
+                            sem_file.write(f'##### IMAGE_XREF: {xref}\n')
+
 
 def write_semantics(semantics_file, glycan_data):
     x, y, w, h = glycan_data['gly_bbox']
@@ -186,6 +198,8 @@ def write_semantics(semantics_file, glycan_data):
     
     # add other key-value pairs from TSV file
     for key in glycan_data.keys():
+        if key == 'gly_bbox':
+            continue
         value = glycan_data.get(key)
         if value:  # Checks: not None, not empty, not just whitespace
             semantics_file.write(f"# {key}: {value}\n")
