@@ -550,4 +550,4 @@ class PDFJob(JobInstance):
 
                 self.update_status("Processing image %d from page %d" % (figure_num, page_num))
 
-                self.find_glycans(image_path, image_folders, **figure_info)
+                self.find_glycans(image_path, image_folders, figure_num=figure_num, page_num=page_num, **figure_info)
