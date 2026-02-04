@@ -156,6 +156,9 @@ class KnownFinder(Finder):
         
         image_data = image_path.rsplit('.',1)[0] + "_map.txt"
 
+        if not os.path.exists(image_data):
+            return None
+
         map_dict = {
             'figure': {},
             'glycans': []
@@ -264,11 +267,53 @@ class KnownFinder(Finder):
         
         return map_dict
 
+    def get_yolo_known_data(self,obj):
+
+        image_path = obj.image_path()
+        yolo_boxes_file = image_path.rsplit('.',1)[0] + ".txt"
+        if not os.path.exists(yolo_boxes_file):
+            return None
+        
+        height = obj.height()
+        width = obj.width()
+        map_dict = {
+            'figure': {'height': height, 'width': width },
+            'glycans': []
+        }
+
+        imagedir = os.path.split(image_path)[0]
+        classes = open(os.path.join(imagedir,"classes.txt")).read().split()
+
+        glycan_count = 0
+        for line in open(yolo_boxes_file):
+            classid,rcx,rcy,rw,rh = map(float,line.split()[:5])
+            classid = int(classid)
+            classlabel = classes[classid]
+            bbox = BoundingBox(rcx=rcx,rcy=rcy,rw=rw,rh=rh,image_width=width,image_height=height)
+            glycan = {
+                'classlabel': classlabel,
+                'classid': classid,
+                'bbox': bbox.bbox()
+            }
+            map_dict['glycans'].append(glycan)
+            glycan_count += 1
+        
+        map_dict["SGI"] = False
+        map_dict["glycan_count"] = glycan_count
+        
+        return map_dict
+
     def find_boxes(self, obj):
         image_path = obj.image_path()
         assert image_path, f"{self.__class__.__name__} can only run on SingleGlycanImage objects"
 
         map_dict = self.get_known_data(image_path)
+        if map_dict is None:
+            # try the old-school YOLO format boxes...
+            map_dict = self.get_yolo_known_data(obj)
+        
+        if map_dict is None:
+            raise RuntimeError("Can't read known data for image %s."%(image_path,))
 
         boxes = []
         for b in self.create_boxes(map_dict):
