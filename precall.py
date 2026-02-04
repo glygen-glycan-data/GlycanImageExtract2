@@ -226,7 +226,7 @@ else:
     titlestr = "Semantics-based "
 
 images = Image_Manager(args.images)
-images.exclude("*.annotated.png")
+images.exclude("*.annotated-*.png")
 
 allitems = []
 if args.finders:
