@@ -248,6 +248,84 @@
             }
         });
     }
+    
+    function formatCitation(meta) {
+        if (!meta) return '';
+
+        function s(x) {
+            if (x != null && x !== '') {
+            return String(x).trim();
+            }
+            return null;
+        }
+
+        var authors = meta.authors;
+        var authorStr = null;
+        if (authors && authors.length) {
+            authorStr = authors.map(function (a) { return s(a && a.full_name); }).filter(Boolean).join(', ') + '.';
+        }
+
+        var year = s(meta.publication_date && meta.publication_date.year);
+        var yearStr = null;
+        if (year) {
+            yearStr = '(' + year + ').';
+        }
+
+        var titleStr = null;
+        if (s(meta.title)) {
+            titleStr = s(meta.title) + '.';
+        }
+
+        var journal = meta.journal && meta.journal.title;
+        var journalStr = null;
+        if (s(journal)) {
+            journalStr = '<i>' + s(journal) + '</i>';
+        }
+
+        var vol = s(meta.volume);
+        var iss = s(meta.issue);
+        var volIss = null;
+        if (vol) {
+            if (iss) {
+            volIss = vol + '(' + iss + ')';
+            } else {
+            volIss = vol;
+            }
+        } else if (iss) {
+            volIss = '(' + iss + ')';
+        }
+
+        var fp = s(meta.fpage);
+        var lp = s(meta.lpage);
+        var pageStr = null;
+        if (fp && lp) {
+            pageStr = fp + ' - ' + lp;
+        } else if (fp) {
+            pageStr = fp;
+        } else if (lp) {
+            pageStr = lp;
+        }
+
+        var volPage = [volIss, pageStr].filter(Boolean).join(', ');
+
+        var urlStr = s(meta.url) || s(meta.doi);
+        var urlPart = null;
+        if (urlStr) {
+            urlPart = '<a href="' + urlStr + '" target="_blank" rel="noopener noreferrer" style="text-decoration: underline; color: #ffffff;">' + urlStr + '</a>';
+        }
+
+        var parts = [authorStr, yearStr, titleStr, journalStr, volPage];
+        if (urlStr) {
+            for (var i = parts.length - 1; i >= 0; i--) {
+                if (parts[i]) {
+                    parts[i] = parts[i] + '.';
+                    break;
+                }
+            }
+            parts.push(urlPart);
+        }
+        return parts.filter(Boolean).join(' ');
+        }
 
     function addDownloadButton(result) {
         const alert_data = document.getElementById("alert_data");
@@ -256,6 +334,7 @@
         div.style.backgroundColor = "#FFFFFF";
 
         const location = result['location'] || "files";
+        const document_metadata = result['result']['document_metadata']
         const figures = result['result']['figure_result'];
         const file_extension = result['submission_detail']['original_file_name'].split('.').pop();
 
@@ -292,6 +371,13 @@
         let innerdiv = `
             <table class="table-container job-table result-table" border="1" style="border-collapse: collapse;">
             <tbody>`;
+        
+
+        const citationHtml = formatCitation(document_metadata);
+        // Single header row — only once, before the loop
+        innerdiv += `<tr style='background-color:#7c7d7d;'>`;
+        innerdiv += `<th colspan='3' style='color:#ffffff; text-align:center; font-weight:normal;'>${citationHtml}</th>`;
+        innerdiv += `</tr>`;
 
         figures.forEach(function (figure, fig_id) {
         const figure_width = figure['width'];
@@ -300,11 +386,12 @@
         if (figure_width > 550) {
             scale = 550 / figure_width;
         }
-
+        
+        console.log(result)
         // Header row (kept minimal)
-        innerdiv += "<tr style='background-color:#7c7d7d;'>";
-        innerdiv += "<th colspan='3' style='color:#ffffff; text-align:center;'></th>";
-        innerdiv += "</tr>";
+        innerdiv += `<tr style='background-color:#7c7d7d;'>`;
+        innerdiv += `<th colspan='3' style='color:#ffffff; text-align:center;'></th>`;
+        innerdiv += `</tr>`;
 
         // Annotated figure block
         innerdiv += `
@@ -333,9 +420,13 @@
             innerdiv += `<div style="font-size:small;">
                             <b>${figure.label}: </b>${figure.caption_text}
                         </div>`;
-        } else if (figure.full_caption_text) {      // if the caption couldnt be cleaned appropriately, print whatever was obtained  
+        } else if (figure.full_caption_text) {      // if the caption couldnt be cleaned appropriately, print whatever was obtained from figcap
             innerdiv += `<div style="font-size:small;"">
                             ${figure.full_caption_text}
+                        </div>`;
+        } else if (figure.extended_caption_text) {     
+            innerdiv += `<div style="font-size:small;"">
+                           <b> ${figure.label}: </b>${figure.extended_caption_text}
                         </div>`;
         }
 
@@ -507,7 +598,6 @@
 
         div.innerHTML = innerdiv;
     }
-
 
     function scrollAndHighlight(rowId, event) {
         if (event) event.preventDefault();  // Prevent default jump
