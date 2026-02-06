@@ -375,10 +375,12 @@
 
         const citationHtml = formatCitation(document_metadata);
         // Single header row — only once, before the loop
-        innerdiv += `<tr style='background-color:#7c7d7d;'>`;
-        innerdiv += `<th colspan='3' style='color:#ffffff; text-align:center; font-weight:normal;'>${citationHtml}</th>`;
-        innerdiv += `</tr>`;
-
+        if (citationHtml && citationHtml.length > 0) {
+            innerdiv += `<tr style='background-color:#7c7d7d;'>`;
+            innerdiv += `<th colspan='3' style='color:#ffffff; text-align:center; font-weight:normal;'>${citationHtml}</th>`;
+            innerdiv += `</tr>`;
+        }
+            
         figures.forEach(function (figure, fig_id) {
         const figure_width = figure['width'];
         // 550: because max-width is set to 550px for each figure below
