@@ -75,10 +75,12 @@ class ReferenceAPIFileBased(APIFramework):
             # os.makedirs(os.path.join(workdir, "output"), exist_ok=True)
 
             # Factory method - get_processor() 
+            document_metadata = None
             try:
                 job_instance = JobInstance.get_processor(task_detail, msg_queue=result_queue)
                 job_instance.process_file()
                 result = job_instance.get_results()
+                document_metadata = job_instance.get_document_metadata()
             except:
                 traceback.print_exc()
                 error.append(traceback.format_exc())
@@ -107,6 +109,7 @@ class ReferenceAPIFileBased(APIFramework):
                 "original_filepath": updated_task_detail['original_filepath'],
                 "abs_original_filepath": updated_task_detail['abs_original_filepath'],
                 "pipeline_name": updated_task_detail['pipeline_name'],
+                "document_metadata": document_metadata if document_metadata else None,
                 "figure_result": result,
                 "job_type": job_instance.__class__.__name__,
                 "finished": True,

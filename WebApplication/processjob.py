@@ -13,7 +13,7 @@ from shutil import copyfile
 import tarfile
 from io import BytesIO
 import xml.etree.ElementTree as ET
-
+from pmc_xmlparser import XMLParser
 
 class JobInstance:
 
@@ -60,6 +60,7 @@ class JobInstance:
         self.pipeline_name = None
         self.job_finished = False
         self.results = []
+        self.document_metadata = {}
 
     def update_status(self,status,state=None):
         msg = dict(id=self.id)
@@ -168,6 +169,9 @@ class JobInstance:
     def get_results(self):
         results = [json.loads(s) for s in self.results]
         return sorted(results, key=lambda x: x.get('image_count',0))
+
+    def get_document_metadata(self):
+        return self.document_metadata
 
     def check_and_create_paths(self,subdirs):
         """Ensure that all specified subdirectories exist under the work directory."""
@@ -389,43 +393,7 @@ class ImageJob(JobInstance):
 
 class PMIDJob(JobInstance):
 
-    # Helper to get tag name without namespace from xml doc
-    def get_tag_name(self, elem):
-        return elem.tag.split('}')[-1] if '}' in elem.tag else elem.tag
-
-    def find_figures(self, root):
-        for elem in root.iter():
-            if self.get_tag_name(elem) == 'fig':
-                yield elem
-
-    def extract_figure_info(self, fig):
-        XLINK_NS = "http://www.w3.org/1999/xlink"  # W3C standard - consistent for xml files
-        XLINK_HREF = f"{{{XLINK_NS}}}href"
-
-        xml_fig_label = None
-        fig_filename = None
-
-        for child in fig.iter():
-            tag = self.get_tag_name(child)
-            if tag == 'label' and child.text:
-                xml_fig_label = child.text.strip()
-                # Should match "Fig. 1" and "Figure 1" and other variations...
-                m = re.search(r'^\s*\w+\.?\s*(\d+)\.?\s*$',xml_fig_label)
-                if m:
-                    # normalize figure label
-                    xml_fig_label = "figure %s"%(m.group(1))
-
-            if tag in ('graphic', 'inline-graphic'):
-                # Check both regular href and xlink:href
-                href = child.get('href') or child.get(XLINK_HREF)
-                if href:
-                    fig_filename = os.path.basename(href)
-
-        return fig_filename, xml_fig_label
-
-
     def process_figures(self, image_folders):
-
         base_path = os.path.dirname(os.path.abspath(__file__))
 
         self.update_status("Processing image")
@@ -433,61 +401,90 @@ class PMIDJob(JobInstance):
         self.task_detail['abs_original_filepath'] = self.input_filepath
         self.task_detail['pipeline_name'] = self.pipeline_name
 
-        # zipped file location - which contains all info related to the PMID
-        # copy all the figures from the zipped file to the extracted_figures folder (the figures are renamed to match the figure labels that appear in the manuscript)
         figures_src = os.path.join(base_path, "input", self.id, f"PMID-{self.pmid}.tar.gz")
         figures_dest_dir = image_folders['figures_dir']
 
         fig_to_label_map = {}
         image_files = []
 
+        self.figure_info_by_basename = {}
+        self.figure_info_by_renamed = {}
+
         try:
             with tarfile.open(figures_src, "r:gz") as tar:
-
-                # First pass: extract *nxml file and build label mapping (i.e create a dict which will help map the figure_no/name in the pdf with the extracted figure)
-                # key - figure_name, value - figure label name from xml (that is present in the pdf)
                 for member in tar.getmembers():
                     if member.name.lower().endswith('.nxml'):
                         file_obj = tar.extractfile(member)
-                        if file_obj:
-                            nxml_content = file_obj.read().decode('utf-8', errors='ignore')
+                        if not file_obj:
+                            continue
 
-                            # Parse XML to find figure labels
-                            try:
-                                root = ET.fromstring(nxml_content)
+                        nxml_content = file_obj.read().decode('utf-8', errors='ignore')
+                        xml_obj = XMLParser(nxml_content)
 
-                                for fig in self.find_figures(root):
-                                    fig_filename, xml_fig_label = self.extract_figure_info(fig)
+                        try:
+                            xml_data = xml_obj.parse()
 
-                                    # if both exist - then this is a True figure in the pdf (so the fig_name can be renamed to reflect what appears in the pdf)
-                                    if fig_filename and xml_fig_label:
-                                        fig_to_label_map[fig_filename] = xml_fig_label
+                            # document level
+                            self.document_metadata = {
+                                k: v for k, v in xml_data.items() if k != "figure_info"
+                            }
 
-                            except ET.ParseError as e:
-                                self.log_file.write(f"Warning: Could not parse nxml: {e}")
+                            # per figure: basename --> fig_info
+                            self.figure_info_by_basename = xml_data.get("figure_info") or {}
 
+                            fig_to_label_map = {}
+                            for basename, info in self.figure_info_by_basename.items():
+                                raw_label = info.get("label")
+                                if not raw_label:
+                                    continue
+                                m = re.search(r'^\s*\w+\.?\s*(\d+)\.?\s*$', raw_label)
+                                if m:
+                                    label_normalized = f"figure {m.group(1)}"
+                                else:
+                                    label_normalized = raw_label
+                                fig_to_label_map[basename] = label_normalized
 
-                # Second pass: extract figure from the zipped location and rename them to match the figure labels in the pdf
+                        except Exception as e:
+                            self.log_file.write(f"Warning: Could not parse nxml: {e}\n")
+                            print("Parsing error", e)
+
+                        break  
+
+                # Second pass: extract figures and rename to their labels
+                seen_basenames = set()
+
                 for member in tar.getmembers():
                     filename = os.path.basename(member.name)
                     base_name, ext = os.path.splitext(filename)
-                    if ext.lower() == '.jpg':
-                        # Extract file content directly using the tar module - extraction from a tar file requires thiese steps inorder to extract files to the correct directory
-                        file_obj = tar.extractfile(member)
-                        if file_obj:
-                            # check if the figure label is officially present in pdf - only then should the figure be displayed on the website
-                            if base_name in fig_to_label_map:
-                                label_id = fig_to_label_map[base_name]
-                                renamed_file = f"{label_id}{ext}"
-                                renamed_file_path = os.path.join(figures_dest_dir, renamed_file)
+                    ext = ext.lower()
+                    if ext not in ('.jpg', '.jpeg', '.png'):
+                        continue
+                    if base_name not in fig_to_label_map:
+                        continue
+                    if base_name in seen_basenames:
+                        continue  # already chose one format for this figure
 
-                                target_path = os.path.join(figures_dest_dir, filename)
-                                with open(renamed_file_path, 'wb') as f:
-                                    f.write(file_obj.read())
+                    file_obj = tar.extractfile(member)
+                    if not file_obj:
+                        continue
 
-                                image_files.append(renamed_file)
+                    label_id = fig_to_label_map[base_name]
+                    renamed_file = f"{label_id}{ext}"
+                    renamed_file_path = os.path.join(figures_dest_dir, renamed_file)
+
+                    with open(renamed_file_path, 'wb') as f:
+                        f.write(file_obj.read())
+
+                    image_files.append(renamed_file)
+                    seen_basenames.add(base_name)
+
+                    fig_info = self.figure_info_by_basename.get(base_name, {}).copy()
+                    fig_info["label"] = label_id
+                    self.figure_info_by_renamed[renamed_file] = fig_info
+
         except Exception as e:
-            self.log_file.write(f"Error: opening tar {figures_src}: {e}")
+            self.log_file.write(f"Error: opening tar {figures_src}: {e}\n")
+            print("Error opening tar file", e)
             return
 
         # Sort to ensure correct order
@@ -498,12 +495,30 @@ class PMIDJob(JobInstance):
 
             with Image.open(fig_path) as img:
                 width, height = img.size
-                
-                base_fig_name = fig_name.rsplit('.',1)[0]
-                figure_metadata = {"fig_bbox": [0, 0, width, height], "pmid_job": True, "figure_name": base_fig_name}
-                self.update_status("Processing %s" % base_fig_name)
-                self.find_glycans(fig_path, image_folders, **figure_metadata)
 
+                base_fig_name = fig_name.rsplit('.', 1)[0]
+
+                # look up XML metadata for this renamed figure (if any)
+                fig_info = self.figure_info_by_renamed.get(fig_name, {})
+
+                caption_text = fig_info.get("caption_text")
+                figure_metadata = {
+                    "fig_bbox": [0, 0, width, height],
+                    "pmid_job": True,
+                    "figure_name": base_fig_name,
+                    # XML-derived metadata (keys match XMLParser output)
+                    "label": fig_info.get("label"),
+                    "caption_text": caption_text,
+                    "cleaned_caption": True if caption_text else False,
+                    "extended_caption_text": fig_info.get("extended_caption_text"),
+                }
+
+                self.update_status("Processing %s" % base_fig_name)
+                self.find_glycans(
+                    fig_path,
+                    image_folders,
+                    **figure_metadata,
+                )
 
 class PDFJob(JobInstance):
     """
