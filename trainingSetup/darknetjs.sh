@@ -95,14 +95,14 @@ while [ "$#" -gt 0 ]; do
             NAME="$2"
             shift 2
             ;;
-	      --config)
+	--config)
             CONFIG="$2"
-	          shift 2
-	          ;;
-	      --split)
+	    shift 2
+	    ;;
+	--split)
             SPLIT="$2"
-	          shift 2
-	          ;;
+	    shift 2
+	    ;;
         --iou)
             IOU="$2"
             shift 2
@@ -115,7 +115,7 @@ while [ "$#" -gt 0 ]; do
             SHUTDOWN=0
             shift
             ;;
-	      --clean)
+	--clean)
             CLEAN=1
             shift
             ;;
@@ -127,7 +127,6 @@ while [ "$#" -gt 0 ]; do
             echo "  --job_name       Job name for this training run"
             echo ""
             echo "Optional:"
-            echo "  --split          Proportion of images to use for training. Default: 0.8."
             echo "  --noshutdown     Do not shelve the instance when done."
             echo "  --clean          Remove local and remote job folders"
             echo ""
@@ -135,6 +134,7 @@ while [ "$#" -gt 0 ]; do
             echo "  --config         YOLO config. Default: yolov3-darknet53."
             echo "  --iou            IoU for mAP evaluation. Default: 0.5."
             echo "  --conf           Confidence threshold for mAP evaluation. Default: 0.25."
+            echo "  --split          Proportion of images to use for training. Default: 0.8."
             echo ""
             echo "YOLO config (optional, must at the end of arguments list):"
             echo "  --max_batches    Number of iterations. Default: max(#classes*2000,6000)."
@@ -208,7 +208,7 @@ fi
 
 echo "Image folder: $RESULTS"
 echo "Job name: $NAME"
-echo "Darknet parameters:" --config "$CONFIG" "$IOU" "$CONF"
+echo "Darknet parameters:" --config "$CONFIG" "$IOU" "$CONF" --split "$SPLIT"
 echo "Training parameters:" "$@"
 
 EXP="$NAME"
@@ -224,11 +224,18 @@ YOLO_CONFIG="${CONFIG}_${EXP}.cfg"
 TRAIN_CONFIG="train.data"
 TRAINING_FILE="train.txt"
 VALIDATION_FILE="valid.txt"
+PARAMS_LOG="params-log.txt"
 TRAIN_LOG="train-log.txt"
 RCLONE_LOG="rclone-log.txt"
 
 mkdir -p "$EXPROOT"
 cd "$EXPROOT"
+
+touch "$PARAMS_LOG"
+echo "Image folder: $RESULTS" >> "$PARAMS_LOG"
+echo "Job name: $NAME"  >> "$PARAMS_LOG"
+echo "Darknet parameters:" --config "$CONFIG" "$IOU" "$CONF" --split "$SPLIT" >> "$PARAMS_LOG"
+echo "Training parameters:" "$@" >> "$PARAMS_LOG"
 
 echo "INFO: Download $RESULTS/images.zip from Google Drive..."
 download "$RESULTS/images.zip" "images.zip"
@@ -253,6 +260,7 @@ fi
 # This tells us how many classes are defined (ignoring any blank lines)
 YOLO_CLASSES=$(grep -v '^\s*$' "classes.txt" | wc -l)
 echo "INFO: Total number of classes: $YOLO_CLASSES"
+echo "INFO: Total number of classes: $YOLO_CLASSES" >> "$PARAMS_LOG"
 
 YOLO_FILTERS=$(( (YOLO_CLASSES + 5) * 3 ))
 TRAIN_CONFIG="train.data"
