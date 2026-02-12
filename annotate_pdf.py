@@ -240,10 +240,10 @@ for i,input_item in enumerate(input_items):
     doc = fitz.open(original_filepath)
     basename = input_item.basename
 
-    if os.path.exists(basename + ".annotated.pdf") or \
-        os.path.exists(basename + ".annotated.tsv"):
-        print(f'{basename}.pdf,skipping due to presence of output files.')
-        continue
+    # if os.path.exists(basename + ".annotated.pdf") or \
+    #     os.path.exists(basename + ".annotated.tsv"):
+    #     print(f'{basename}.pdf,skipping due to presence of output files.')
+    #     continue
 
     image_data = []
 
