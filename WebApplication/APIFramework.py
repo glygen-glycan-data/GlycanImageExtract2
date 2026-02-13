@@ -25,6 +25,7 @@ import xml.etree.ElementTree as ET
 import shutil
 import tarfile
 
+from BKGlycanExtractor import PDFAnnotator
 
 if (not os.environ.get('PYTHONHTTPSVERIFY', '') and getattr(ssl,'_create_unverified_context', None)):
     ssl._create_default_https_context = ssl._create_unverified_context
@@ -111,6 +112,10 @@ class APIFramework:
         self._file_upload_finished_html = None
 
         self._image_search_type = None
+
+        # NOTE: by default the PDFAnnotator points to the production url, which can be overriden with 
+        # your own test/dev url, eg. PDFAnnotator(extractorurl="your_dev_url")
+        self.annotate_pdf_instance = PDFAnnotator(extractorurl=None)
 
     # Proper APIs for changing config
     def host(self):
@@ -552,6 +557,7 @@ class APIFramework:
 
         root = ET.fromstring(r.text)
         link = root.find(".//link[@format='tgz']")
+        record = root.find(".//record")
 
         if link is None:
             return flask.jsonify({
@@ -565,7 +571,8 @@ class APIFramework:
             'resource': {
                 'href': link.get('href'),
                 'format': link.get('format'),
-                'pmcid': pmcid
+                'pmcid': pmcid,
+                'pmc_publication': record.get("citation")
             }
         }), 200
 
@@ -580,6 +587,7 @@ class APIFramework:
             input_file_path = flask.request.form.get('filePath',task.get('filePath'))
             pmid = flask.request.form.get('pmid',task.get('pmid'))
             submission_type = flask.request.form.get('submission_type',task.get('submission_type'))
+            pmc_publication = None
 
             # curation_task - True --> means that annotate_pdf is being used to gather information.
             curation_task = flask.request.form.get('curation_task',task.get('curation_task'))
@@ -625,7 +633,10 @@ class APIFramework:
                     
                     pmcid = resource.get("pmcid")
 
-                    # 1) extract the href link, which is in ftp (NCBI supports both ftp and https protocols)
+                    # 1) get citation from json response - if available
+                    pmc_publication = resource.get("pmc_publication")
+
+                    # 2) extract the href link, which is in ftp (NCBI supports both ftp and https protocols)
                     href = resource.get("href")
 
                     # Convert FTP to HTTPS
@@ -725,10 +736,12 @@ class APIFramework:
                 "submit_time": time.time(),
                 "sessionid": sessionid,
                 "result": {},
-                **({"pmid": pmid, "pmcid": pmcid} if pmid and pmcid else {}),
+                **({"pmid": pmid, "pmcid": pmcid, "pmid_job": True} if pmid and pmcid else {}),
                 "curation_task": curation_task if curation_task else None,
                 "image_search_strategy": self._image_search_type,   # add the image identification (from ini file i.e self._image_search_type or it can be hardcoded here as well)
+                **({"pmc_publication": pmc_publication} if pmc_publication else {}),
             }
+            
 
             if list_id in self.result_cache:
                 pass
@@ -831,9 +844,18 @@ class APIFramework:
                     self.result_cache[res["id"]]['finished'] = True
                     self.remove_from_task_list(res["id"])    
 
-                    file_path = os.path.join("static/files/"+res["id"], "results.json")
-                    with open(file_path, 'w') as f:
+                    abs_json_path = self.abspath(os.path.join("static/files/"+res["id"], "results.json"))
+                    with open(abs_json_path, 'w') as f:
                         json.dump(self.result_cache[res["id"]],f,indent=2)
+                    
+                    # after job was completed/finished successfully and its results (json) was writtin,
+                    # it a good time to build annotated pdf and tsv results
+                    pdf_abs_path = self.result_cache[res["id"]]['result']['abs_original_filepath']
+
+                    is_pmid_job = self.result_cache[res["id"]]['result'].get("document_metadata", {}).get("pmid_job", False)
+
+                    if not is_pmid_job:
+                        self.annotate_pdf_instance.annotate(json_file=abs_json_path, webapp=True)
 
             except queue.Empty:
                 break

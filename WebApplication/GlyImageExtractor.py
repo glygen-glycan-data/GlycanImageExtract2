@@ -109,19 +109,17 @@ class ReferenceAPIFileBased(APIFramework):
                 "original_filepath": updated_task_detail['original_filepath'],
                 "abs_original_filepath": updated_task_detail['abs_original_filepath'],
                 "pipeline_name": updated_task_detail['pipeline_name'],
-                "document_metadata": document_metadata if document_metadata else None,
                 "figure_result": result,
                 "job_type": job_instance.__class__.__name__,
                 "finished": True,
                 "state": state,
                 "status": status,
             }
-            result_queue.put(res)
 
-            # res1 = dict(id=token,result=res,finished=res['finished'],state=res['state'],status=res['status'],submission_detail=task_detail)
-            # file_path = os.path.join(workdir, "results.json")
-            # with open(file_path, 'w') as f:
-            #    json.dump(res1,f,indent=2)
+            if document_metadata:
+                res["document_metadata"] = document_metadata
+
+            result_queue.put(res)
 
 
     # def home(self):
@@ -139,6 +137,7 @@ class ReferenceAPIFileBased(APIFramework):
         return flask.render_template(self._result_html, urlprefix=self._prefix, list_id=id)
 
     def mark(self):
+        # when votes are updated - the annotated pdf and tsv file will also be updated accordingly
         resultid = flask.request.args['resultid']
         glycanid = flask.request.args['glycanid']
         note = flask.request.args['note']
@@ -177,6 +176,12 @@ class ReferenceAPIFileBased(APIFramework):
                     glycan['upvotes'] = 0
                     glycan['downvotes'] = -votes
                 self.save_result(resultid,res)
+
+                # recompute annotated_pdf and tsv results
+                if res['submission_type'] == 'Manuscript' and not res.get('pmid_job', False):
+                    json_file = self.abspath(f"static/files/{resultid}/results.json")
+                    self.annotate_pdf_instance.annotate(json_file=json_file, webapp=True)
+
             else:
                 print("Status: ERROR:RESULT_TIMEOUT, ResultID: %s, GlycanID: %s, Note: %s."%(resultid,glycanid,note),file=sys.stderr)
                 return flask.jsonify(dict(status="ERROR"))
