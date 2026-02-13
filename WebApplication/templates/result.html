@@ -139,6 +139,12 @@
         display: block; 
     }
 
+    .citation-container{
+        font-size: large;
+        /* padding-top: 20px; */
+        /* padding-bottom: 10px; */
+    }
+
 </style>
 
 
@@ -156,7 +162,7 @@
         let request_URL = "{{urlprefix}}/get_job_status/" + list_id;
         jQuery.getJSON(request_URL, function (d) {
             // in ms
-            console.log(d);
+            // console.log(d);
             let time_lapsed = new Date().getTime() - start_time_stamp;
 
             if (d.state == "Complete" || d.state == "Error" || d.finished == true) {
@@ -249,48 +255,86 @@
         });
     }
     
-    function formatCitation(meta) {
+    function formatCitation(meta, pmc_publication) {
         if (!meta) return '';
 
         function s(x) {
             if (x != null && x !== '') {
-            return String(x).trim();
+                return String(x).trim();
             }
             return null;
         }
 
+        // ---- AUTHORS (AMA: Surname Initials; max 3 then "et al.") ----
         var authors = meta.authors;
         var authorStr = null;
+
         if (authors && authors.length) {
-            authorStr = authors.map(function (a) { return s(a && a.full_name); }).filter(Boolean).join(', ') + '.';
+            // var limited = authors.slice(0, 3);
+            authorStr = authors.map(function (a) {
+                if (!a) return null;
+
+                var surname = s(a.surname || (a.name && a.name.surname));
+                var given = s(a.given_names || (a.name && a.name.given_names));
+
+                var initials = null;
+                if (given) {
+                    // Strip non-letters, split on whitespace, take first letter of each part
+                    initials = given
+                        .replace(/[^A-Za-z\s]/g, ' ')
+                        .split(/\s+/)
+                        .filter(Boolean)
+                        .map(function (part) { return part.charAt(0).toUpperCase(); })
+                        .join('');
+                }
+
+                if (surname && initials) return surname + ' ' + initials;
+                if (surname) return surname;
+                if (initials) return initials;
+                return null;
+            }).filter(Boolean).join(', ');
+
+            if (authors.length > 3 && authorStr) {
+                authorStr += ', et al';
+            }
+
+            if (authorStr) {
+                authorStr += '.';
+            }
         }
 
-        var year = s(meta.publication_date && meta.publication_date.year);
-        var yearStr = null;
-        if (year) {
-            yearStr = '(' + year + ').';
-        }
-
+        // ---- TITLE (with embedded PMC URL link) ----
         var titleStr = null;
+        // var url = s(meta.pmc_url);
+        var pmid_url = s(meta.url.pmid_url)
+        
         if (s(meta.title)) {
-            titleStr = s(meta.title) + '.';
+            var titleText = s(meta.title) + '.';
+            
+            if (pmid_url) {
+                titleStr = '<a href="' + pmid_url +
+                    '" target="_blank" rel="noopener noreferrer" ' +
+                    'style="text-decoration: underline; color: inherit;">' + titleText + '</a>';
+            } else {
+                titleStr = titleText;
+            }
         }
 
-        var journal = meta.journal && meta.journal.title;
+        // ---- JOURNAL 
+        var journalTitle = meta.journal && (meta.journal.abbrev || meta.journal.title);
         var journalStr = null;
-        if (s(journal)) {
-            journalStr = '<i>' + s(journal) + '</i>';
+        if (s(journalTitle)) {
+            journalStr = '<i>' + s(journalTitle) + '</i>.';
         }
+
+        // ---- YEAR;VOLUME(ISSUE):PAGES ----
+        var year = s(meta.publication_date && meta.publication_date.year);
 
         var vol = s(meta.volume);
         var iss = s(meta.issue);
         var volIss = null;
         if (vol) {
-            if (iss) {
-            volIss = vol + '(' + iss + ')';
-            } else {
-            volIss = vol;
-            }
+            volIss = iss ? vol + '(' + iss + ')' : vol;
         } else if (iss) {
             volIss = '(' + iss + ')';
         }
@@ -299,33 +343,50 @@
         var lp = s(meta.lpage);
         var pageStr = null;
         if (fp && lp) {
-            pageStr = fp + ' - ' + lp;
+            pageStr = fp + '-' + lp; 
         } else if (fp) {
             pageStr = fp;
         } else if (lp) {
             pageStr = lp;
         }
 
-        var volPage = [volIss, pageStr].filter(Boolean).join(', ');
+        var yearVolPage = null;
+        if (year || volIss || pageStr) {
+            var seg = '';
 
-        var urlStr = s(meta.url) || s(meta.doi);
-        var urlPart = null;
-        if (urlStr) {
-            urlPart = '<a href="' + urlStr + '" target="_blank" rel="noopener noreferrer" style="text-decoration: underline; color: #ffffff;">' + urlStr + '</a>';
-        }
-
-        var parts = [authorStr, yearStr, titleStr, journalStr, volPage];
-        if (urlStr) {
-            for (var i = parts.length - 1; i >= 0; i--) {
-                if (parts[i]) {
-                    parts[i] = parts[i] + '.';
-                    break;
+            if (year) {
+                seg += year;
+            }
+            if (volIss) {
+                seg += (seg ? ';' : '') + volIss;  // "Year;Volume(Issue)"
+            }
+            if (pageStr) {
+                if (volIss) {
+                    seg += ':' + pageStr;          // "Year;Volume(Issue):Pages"
+                } else {
+                    seg += (seg ? ':' : '') + pageStr; // "Year:Pages" or just "Pages"
                 }
             }
-            parts.push(urlPart);
+
+            if (seg) {
+                seg += '.'; // Terminate this block
+                yearVolPage = seg;
+            }
         }
+
+        // if journal str or year or vol or page is null, use pmc_publication
+        
+        // ---- ASSEMBLE PARTS (AMA order) ----
+        var parts = [
+            authorStr,   // Authors.
+            titleStr,    // Article title (with embedded link if URL exists).
+            journalStr,  // Journal.
+            yearVolPage, // Year;Volume(Issue):Pages.
+            // pmc_publication
+        ];
+
         return parts.filter(Boolean).join(' ');
-        }
+    }
 
     function addDownloadButton(result) {
         const alert_data = document.getElementById("alert_data");
@@ -337,6 +398,11 @@
         const document_metadata = result['result']['document_metadata']
         const figures = result['result']['figure_result'];
         const file_extension = result['submission_detail']['original_file_name'].split('.').pop();
+        
+        let pmc_publication = null;
+        if (result && result['pmc_publication']) {
+            pmc_publication = result['pmc_publication'];
+        }
 
         let alert_str = "";
         let resstr = "";
@@ -352,9 +418,31 @@
         } else {
             resstr += "<span><a class='pill-link' target='_blank' href='" + originalHref + "'>Original Image</a> | </span>";
         }
-        resstr += "<span><a class='pill-link' href='{{urlprefix}}/resubmit_file/" + list_id  + "'>Reanalyze</a>";
 
+
+        if (result['submission_type'] == 'Manuscript' && !result['pmid_job']) {
+            const filename = result.submission_detail.original_file_name
+            const baseName = filename.replace(/\.[^/.]+$/, '')
+
+            const annotated_pdf_href = "{{urlprefix}}/static/" + location + "/" + list_id + "/annotated_files/" + encodeURIComponent(baseName + '.annotated.pdf');
+            const annotated_tsv_href = "{{urlprefix}}/static/" + location + "/" + list_id + "/annotated_files/" + encodeURIComponent(baseName + '.annotated.tsv');
+            console.log("annotated_pdf_href",annotated_pdf_href)
+            resstr += "<span><a class='pill-link' target='_blank' href='" + annotated_pdf_href + "'> Annotated PDF</a> | </span>";
+
+            resstr += "<span><a class='pill-link' target='_blank' href='" + annotated_tsv_href + "'> TSV Results</a> | </span>";  
+        } 
+
+        resstr += "<span><a class='pill-link' href='{{urlprefix}}/resubmit_file/" + list_id  + "'>Reanalyze</a> </span>";
+        
         resstr += "</h3>";
+        
+        // Paper citation - for PMID
+        const citationHtml = formatCitation(document_metadata, pmc_publication);
+        if (citationHtml && citationHtml.length > 0) {
+            resstr += `<div class="citation-container" style="padding: 20px 0 10px 0;">${citationHtml}</div>`;
+            resstr += `<div class='citation-container' style='padding: 0 0 10px 0;'>PMID: <a href='${document_metadata.url.pmid_url}'>${document_metadata.pmid}</a></div>`;
+        }
+
         if (result['state'] === "Error") {
             resstr = "";
         }
@@ -366,20 +454,11 @@
         if (extractedEl) {
             extractedEl.style.display = "block";
         }
-        
+
         // <table class='result-table' style='border-collapse: collapse; text-align: center; background-color: #FFFFFF;'>
         let innerdiv = `
-            <table class="table-container job-table result-table" border="1" style="border-collapse: collapse;">
-            <tbody>`;
-        
-
-        const citationHtml = formatCitation(document_metadata);
-        // Single header row — only once, before the loop
-        if (citationHtml && citationHtml.length > 0) {
-            innerdiv += `<tr style='background-color:#7c7d7d;'>`;
-            innerdiv += `<th colspan='3' style='color:#ffffff; text-align:center; font-weight:normal;'>${citationHtml}</th>`;
-            innerdiv += `</tr>`;
-        }
+        <table class="table-container job-table result-table" style="border-collapse: collapse;">
+        <tbody>`;
             
         figures.forEach(function (figure, fig_id) {
         const figure_width = figure['width'];
@@ -389,7 +468,7 @@
             scale = 550 / figure_width;
         }
         
-        console.log(result)
+        // console.log(result)
         // Header row (kept minimal)
         innerdiv += `<tr style='background-color:#7c7d7d;'>`;
         innerdiv += `<th colspan='3' style='color:#ffffff; text-align:center;'></th>`;
