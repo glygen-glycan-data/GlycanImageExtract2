@@ -157,7 +157,6 @@ class XMLParser:
             fig_info = {
                 'id': fig.get('id', ''),
                 'label': None,
-                'extended_caption_text': None,
                 'caption_text': None,
             }
 
@@ -168,14 +167,15 @@ class XMLParser:
             caption_elem = fig.find('caption', self.NAMESPACES)
             if caption_elem is not None:
                 title = caption_elem.find('title', self.NAMESPACES)
-                fig_info['caption_text'] = title.text if title is not None else None
-
-                caption_text = []
-                for p in caption_elem.findall('.//p', self.NAMESPACES):
-                    text = ''.join(p.itertext()).strip()
-                    if text:
-                        caption_text.append(text)
-                fig_info['extended_caption_text'] = ' '.join(caption_text) if caption_text else None
+                if title is not None:
+                    fig_info['caption_text'] = title.text 
+                else:
+                    caption_text = []
+                    for p in caption_elem.findall('.//p', self.NAMESPACES):
+                        text = ''.join(p.itertext()).strip()
+                        if text:
+                            caption_text.append(text)
+                    fig_info['caption_text'] = ' '.join(caption_text) if caption_text else None
 
             # Extract filename from graphic or inline-graphic elements
             filename = None
@@ -224,24 +224,19 @@ class XMLParser:
 
     def _extract_article_url(self):
         '''Article URL: self-uri, or doi.org, or PMC link.'''
-        XLINK_NS = "http://www.w3.org/1999/xlink"
-        XLINK_HREF = f"{{{XLINK_NS}}}href"
 
-        for self_uri in self.root.findall('.//self-uri', self.NAMESPACES):
-            href = self_uri.get('href') or self_uri.get(XLINK_HREF)
-            if href and href.startswith('http'):
-                return href.strip()
-
-        doi = self._extract_doi()
-        if doi:
-            return f"https://doi.org/{doi}"
+        url_data = {}
 
         for article_id in self.root.findall('.//article-id', self.NAMESPACES):
             if article_id.get('pub-id-type') == 'pmc' and article_id.text:
                 pmcid = article_id.text.strip()
-                return f"https://www.ncbi.nlm.nih.gov/pmc/articles/{pmcid}/"
+                url_data["pmc_url"] = f"https://www.ncbi.nlm.nih.gov/pmc/articles/{pmcid}/"
 
-        return None
+            if article_id.get('pub-id-type') == 'pmid' and article_id.text:
+                pmid = article_id.text.strip()
+                url_data["pmid_url"] = f"https://pubmed.ncbi.nlm.nih.gov/{pmid}/"
+
+        return url_data
         
 
 if __name__ == "__main__":
