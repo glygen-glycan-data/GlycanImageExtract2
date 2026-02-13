@@ -12,6 +12,7 @@ from . monosaccharideid import MonoFinder
 from . glycanconnections import LinkFinder
 from . rootmonofinding import RootFinder
 from . glycanfinding import GlycanFinder
+from . pdf_annotator import PDFAnnotator
 try:
     from . pdf_image_metadata import ImageSearch, FitzImageSearch, FigCapImageSearch, HybridImageSearch
     from . pdf_image_captions_data import PDFiguesCaptionsData
