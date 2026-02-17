@@ -6,11 +6,11 @@ import shutil
 import fitz
 import copy
 
-from BKGlycanExtractor.bbox import PDFBoundingBox
-from BKGlycanExtractor.pdfhandler import PDFHandler, CompoundPDFImageFilter, PDFXRefImageFilter, PDFImageSizeFilter, PDFLargeImageSizeFilter
-from BKGlycanExtractor.compareboxes import CompareBoxes
-from BKGlycanExtractor.pdf_image_captions_data import PDFiguesCaptionsData
-from BKGlycanExtractor.pdf_image_filters import ImageFilterPipeline, DetectFragmentedFitz, FilterFitzByFigcapContainers, MergeByIOU, RegularMerge
+from .bbox import PDFBoundingBox
+from .pdfhandler import PDFHandler, CompoundPDFImageFilter, PDFXRefImageFilter, PDFImageSizeFilter, PDFLargeImageSizeFilter
+from .compareboxes import CompareBoxes
+from .pdf_image_captions_data import PDFiguesCaptionsData
+from .pdf_image_filters import ImageFilterPipeline, DetectFragmentedFitz, FilterFitzByFigcapContainers, MergeByIOU, RegularMerge
 
 class ImageSearch:
 
@@ -279,6 +279,8 @@ class HybridImageSearch:
         return formatted_figures
 
 if __name__ == '__main__':
-    fs = FigCapX_Search()
+    # fs = FigCapX_Search()
     pdf_path = sys.argv[1]      # pdf path
-    fig_json_path = fs.figures_info(pdf_path)
+    page_dpi = 300
+    # fig_json_path = fs.figures_info(pdf_path, page_dpi)
+    fig_json_data = PDFiguesCaptionsData.figures_info(pdf_path, page_dpi)
