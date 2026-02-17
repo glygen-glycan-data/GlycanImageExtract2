@@ -4,15 +4,10 @@ import sys
 import time
 import json
 import shutil
-from difflib import SequenceMatcher
-
-parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-# Add the parent directory to sys.path to import PDFFigCapX_mine
-sys.path.append(parent_dir)
+# from difflib import SequenceMatcher
 
 from PDFigCapX.code import xpdf_process
-from BKGlycanExtractor import PDFBoundingBox
-
+from .bbox import PDFBoundingBox 
 
 class PDFiguesCaptionsData:
 
@@ -83,19 +78,11 @@ class PDFiguesCaptionsData:
         pdf_flag = 0
 
         if pdf_flag == 0:
-            flag = 0
-            wrong_count = 0
-            info = {'fig_no_est': 0}
-            figures = {}
-            while flag==0 and wrong_count<5:
-                try:
-                    figures, info = xpdf_process.figures_captions_list(pdf,page_dpi)
-                    flag = 1
-
-                except Exception as exc:
-                    wrong_count = wrong_count +1
-                    time.sleep(5)
-                    print("Retrying figures_captions_list for {} ({})".format(pdf, exc))
+            try:
+                figures, info = xpdf_process.figures_captions_list(pdf, page_dpi)
+            except Exception as exc:
+                print("figures_captions_list failed for {}: {}".format(pdf, exc))
+                raise
     
             data[pdf]['fig_no'] = info['fig_no_est']
 
@@ -103,11 +90,11 @@ class PDFiguesCaptionsData:
             # if not os.path.isdir(output_file_path):
             #     os.mkdir(output_file_path)      
 
-            if not flag:
-                # continue  # or handle failure
-                # TODO log the error
-                # TODO remove the data dict
-                pass
+            # if not flag:
+            #     # continue  # or handle failure
+            #     # TODO log the error
+            #     # TODO remove the data dict
+            #     pass
 
             summary = {
                 "filename": pdf,
