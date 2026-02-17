@@ -31,11 +31,12 @@ class PDFiguesCaptionsData:
         match = re.match(pattern, text, re.IGNORECASE)
         if match:
             prefix = match.group(1)  # "Figure", "Fig", "FIG", etc.
+            prefix_cap = (prefix[0].upper() + prefix[1:]) if prefix else ""
             number = match.group(3)  # "1", "1a", "1.1", etc.
             rest = match.group(4)  # Everything after the number (may include separators)
-            
+
             # Construct normalized label
-            label = f"{prefix} {number}".strip()
+            label = f"{prefix_cap} {number}".strip()
             
             # Extract caption by removing common separators and whitespace
             # Handles: ". ", ": ", "- ", "— ", "– ", ".", "-", etc.

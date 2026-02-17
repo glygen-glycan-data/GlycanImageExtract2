@@ -393,6 +393,15 @@ class ImageJob(JobInstance):
 
 class PMIDJob(JobInstance):
 
+    def capitalize_first_letter(self, s):
+        '''Capitalize the first alphabetic character'''
+        if not s:
+            return s
+        for i, c in enumerate(s):
+            if c.isalpha():
+                return s[:i] + c.upper() + s[i + 1:]
+        return s
+
     def process_figures(self, image_folders):
         base_path = os.path.dirname(os.path.abspath(__file__))
 
@@ -439,9 +448,9 @@ class PMIDJob(JobInstance):
                                     continue
                                 m = re.search(r'^\s*\w+\.?\s*(\d+)\.?\s*$', raw_label)
                                 if m:
-                                    label_normalized = f"figure {m.group(1)}"
+                                    label_normalized = f"Figure {m.group(1)}"
                                 else:
-                                    label_normalized = raw_label
+                                    label_normalized = self.capitalize_first_letter(raw_label.strip())
                                 fig_to_label_map[basename] = label_normalized
 
                         except Exception as e:
@@ -490,6 +499,7 @@ class PMIDJob(JobInstance):
         # Sort to ensure correct order
         image_files.sort()
 
+        image_count = 1
         for figure_num, fig_name in enumerate(image_files, 1):
             fig_path = os.path.join(figures_dest_dir, fig_name)
 
@@ -506,11 +516,11 @@ class PMIDJob(JobInstance):
                     "fig_bbox": [0, 0, width, height],
                     "pmid_job": True,
                     "figure_name": base_fig_name,
+                    "image_count": image_count,
                     # XML-derived metadata (keys match XMLParser output)
                     "label": fig_info.get("label"),
                     "caption_text": caption_text,
                     "cleaned_caption": True if caption_text else False,
-                    "extended_caption_text": fig_info.get("extended_caption_text"),
                 }
 
                 self.update_status("Processing %s" % base_fig_name)
@@ -519,6 +529,8 @@ class PMIDJob(JobInstance):
                     image_folders,
                     **figure_metadata,
                 )
+
+                image_count += 1
 
 class PDFJob(JobInstance):
     """

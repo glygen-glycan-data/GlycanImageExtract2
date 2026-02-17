@@ -374,18 +374,25 @@
             }
         }
 
-        // if journal str or year or vol or page is null, use pmc_publication
-        
+        // When building yearVolPage, you already have: year, vol, iss, fp, lp
+        var hasVolOrPages = Boolean(vol || iss || fp || lp);
+
         // ---- ASSEMBLE PARTS (AMA order) ----
+        var trailing = [journalStr, yearVolPage].filter(Boolean).join(' ');
+        var trailingComplete = Boolean(journalStr && yearVolPage && hasVolOrPages);
+
+        if (!trailingComplete && pmc_publication) {
+            trailing = pmc_publication;
+        }
+
         var parts = [
-            authorStr,   // Authors.
-            titleStr,    // Article title (with embedded link if URL exists).
-            journalStr,  // Journal.
-            yearVolPage, // Year;Volume(Issue):Pages.
-            // pmc_publication
+            authorStr,
+            titleStr,
+            trailing || null
         ];
 
         return parts.filter(Boolean).join(' ');
+
     }
 
     function addDownloadButton(result) {
@@ -504,10 +511,6 @@
         } else if (figure.full_caption_text) {      // if the caption couldnt be cleaned appropriately, print whatever was obtained from figcap
             innerdiv += `<div style="font-size:small;"">
                             ${figure.full_caption_text}
-                        </div>`;
-        } else if (figure.extended_caption_text) {     
-            innerdiv += `<div style="font-size:small;"">
-                           <b> ${figure.label}: </b>${figure.extended_caption_text}
                         </div>`;
         }
 
