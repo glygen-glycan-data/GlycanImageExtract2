@@ -13,7 +13,6 @@ sys.path.append(parent_dir)
 
 
 from APIFramework import APIFramework
-# from BKGlycanExtractor import JobInstance
 from processjob import JobInstance
 
 from shutil import copyfile
@@ -176,11 +175,6 @@ class ReferenceAPIFileBased(APIFramework):
                     glycan['upvotes'] = 0
                     glycan['downvotes'] = -votes
                 self.save_result(resultid,res)
-
-                # recompute annotated_pdf and tsv results
-                if res['submission_type'] == 'Manuscript' and not res.get('pmid_job', False):
-                    json_file = self.abspath(f"static/files/{resultid}/results.json")
-                    self.annotate_pdf_instance.annotate(json_file=json_file, webapp=True)
 
             else:
                 print("Status: ERROR:RESULT_TIMEOUT, ResultID: %s, GlycanID: %s, Note: %s."%(resultid,glycanid,note),file=sys.stderr)

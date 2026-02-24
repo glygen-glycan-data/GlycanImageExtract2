@@ -24,8 +24,9 @@ from datetime import datetime, timezone
 import xml.etree.ElementTree as ET
 import shutil
 import tarfile
+import traceback
 
-from BKGlycanExtractor import PDFAnnotator
+from BKGlycanExtractor import annotate_from_webapp
 
 if (not os.environ.get('PYTHONHTTPSVERIFY', '') and getattr(ssl,'_create_unverified_context', None)):
     ssl._create_default_https_context = ssl._create_unverified_context
@@ -107,15 +108,8 @@ class APIFramework:
         self._result_html = "result.html"
         self._jobs_html = 'jobs.html'
         self._process_html = 'process.html'      # page which lets you submit your file/url
-
-
         self._file_upload_finished_html = None
-
         self._image_search_type = None
-
-        # NOTE: by default the PDFAnnotator points to the production url, which can be overriden with 
-        # your own test/dev url, eg. PDFAnnotator(extractorurl="your_dev_url")
-        self.annotate_pdf_instance = PDFAnnotator(extractorurl=None)
 
     # Proper APIs for changing config
     def host(self):
@@ -132,6 +126,15 @@ class APIFramework:
             self._port = p
         else:
             raise APIParameterError("Port number requires integer, %s is not acceptable")
+
+    def get_base_url(self):
+        if flask.has_request_context():
+            base = flask.request.url_root.rstrip('/')
+
+            if self._prefix:
+                prefix = self._prefix.strip('/')
+                return f"{self._prefix}"
+            return f"{base}"
 
     def debug(self):
         return self._debug
@@ -823,6 +826,92 @@ class APIFramework:
         else:
             raise APIErrorBase
 
+    def annotate_results(self, resultid=None):
+        resultid = flask.request.args.get('resultid') or resultid
+        
+        if resultid is None:
+            return flask.jsonify(dict(status="ERROR"))
+
+        if self._lock.acquire(timeout=2):
+            if not hasattr(self, "_resultid_locks"):
+                self._resultid_locks = {}
+            if resultid not in self._resultid_locks:
+                self._resultid_locks[resultid] = threading.Lock()
+            self._lock.release()
+        else:
+            print("Status: ERROR:LOCK_TIMEOUT, ResultID: %s." % (resultid,), file=sys.stderr)
+            return flask.jsonify(dict(status="ERROR"))
+
+        json_file = self.abspath(f"static/files/{resultid}/results.json")
+        if not os.path.exists(json_file):
+            print("Status: ERROR:NO_JSON, ResultID: %s." % (resultid,), file=sys.stderr)
+            return flask.jsonify(dict(status="ERROR"))
+
+        try:
+            if self._resultid_locks[resultid].acquire(timeout=10):
+                with open(json_file, 'r') as f:
+                    json_data = json.load(f)
+
+                result = json_data.get('result', {})
+                pdf_path = result.get('abs_original_filepath')
+                if not pdf_path or not os.path.exists(pdf_path):
+                    print("Status: ERROR:NO_PDF, ResultID: %s." % (resultid,), file=sys.stderr)
+                    self._resultid_locks[resultid].release()
+                    return flask.jsonify(dict(status="ERROR"))
+
+                base_dir = os.path.dirname(pdf_path)
+                task_base = os.path.dirname(base_dir)
+                output_dir = os.path.join(task_base, 'annotated_files')
+                os.makedirs(output_dir, exist_ok=True)
+
+                basename = os.path.splitext(os.path.basename(pdf_path))[0]
+                annotated_pdf = os.path.join(output_dir, basename + ".annotated.pdf")
+
+                # STEPS:
+                # Check if results (annoated pdf and tsv) regeneration is needed
+                # Ensure the annotated files exist, if True --> check the 
+                # time they were updated vs the time the json file was updated
+                # if the annotated pdf and tsv are newer as comapred to json --> means the 
+                # annotated pdf doesnt require regeneration.
+                if os.path.exists(annotated_pdf):
+                    # get the last modified time of the file
+                    json_mtime = os.path.getmtime(json_file)
+                    pdf_mtime = os.path.getmtime(annotated_pdf)
+                    if pdf_mtime >= json_mtime:
+                        print("Status: OK (annotated PDF up-to-date), ResultID: %s." % (resultid,), file=sys.stderr)
+                        self._resultid_locks[resultid].release()
+                        return flask.jsonify(dict(status="OK", resultid=resultid))
+
+                # Regenerate the annotated files - because they are not in sync with the latest json
+                print("Building annotated PDF/TSV for ResultID: %s." % (resultid,), file=sys.stderr)
+
+                # creates new annotated files and replaces the outdated files with the newly built files
+                # and ensures that reads are not done from partially written files. 
+                annotate_from_webapp(json_file, self.get_base_url())
+                
+                # Small delay to ensure file system consistency after the annotation work is completed and 
+                # everything is written to the static filesystem/volume
+                time.sleep(0.1)  
+                
+                # Verify files were created
+                if not os.path.exists(annotated_pdf):
+                    print("Status: ERROR:PDF_NOT_CREATED, ResultID: %s." % (resultid,), file=sys.stderr)
+                    self._resultid_locks[resultid].release()
+                    return flask.jsonify(dict(status="ERROR"))
+
+                self._resultid_locks[resultid].release()
+                print("Status: OK, ResultID: %s." % (resultid,), file=sys.stderr)
+                return flask.jsonify(dict(status="OK", resultid=resultid))
+            else:
+                print("Status: ERROR:RESULT_TIMEOUT, ResultID: %s." % (resultid,), file=sys.stderr)
+                return flask.jsonify(dict(status="ERROR"))
+        except Exception:
+            if resultid in self._resultid_locks:
+                self._resultid_locks[resultid].release()
+            traceback.print_exc()
+            print("Status: ERROR:EXCEPTION, ResultID: %s." % (resultid,), file=sys.stderr)
+            return flask.jsonify(dict(status="ERROR"))
+
     def update_results(self, getall=False):
 
         i = 0
@@ -855,13 +944,12 @@ class APIFramework:
                     is_pmid_job = self.result_cache[res["id"]]['result'].get("document_metadata", {}).get("pmid_job", False)
 
                     if not is_pmid_job:
-                        self.annotate_pdf_instance.annotate(json_file=abs_json_path, webapp=True)
+                        self.annotate_results(resultid=res["id"])
 
             except queue.Empty:
                 break
             except KeyError:
                 self.output(1, "Job ID %s is not present" % res["id"])
-
 
     def allow_file_ext(self, filename):
         return '.' in filename and filename.rsplit('.', 1)[1].lower() in self.allowed_file_ext()
@@ -881,6 +969,8 @@ class APIFramework:
         self._flask_app.add_url_rule("/result", "result", self.result, methods=["GET", "POST"])
         self._flask_app.add_url_rule("/result/<id>", "result", self.result, methods=["GET", "POST"])
         self._flask_app.add_url_rule("/mark", "mark", self.mark, methods=["GET", "POST"])
+        self._flask_app.add_url_rule("/annotate_results", "annotate_results", self.annotate_results, methods=["GET", "POST"])
+        self._flask_app.add_url_rule("/annotate_results/<rid>", "annotate_results", self.annotate_results, methods=["GET", "POST"])
         self._flask_app.add_url_rule("/get_job_counts", "get_job_counts", self.get_job_counts, methods=["GET", "POST"])
         self._flask_app.add_url_rule("/get_job_status", "get_job_status", self.get_job_status, methods=["GET", "POST"])
         self._flask_app.add_url_rule("/get_job_status/<tid>", "get_job_status", self.get_job_status, methods=["GET", "POST"])
