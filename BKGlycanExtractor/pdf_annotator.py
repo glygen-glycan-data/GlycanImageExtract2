@@ -8,10 +8,7 @@ import json
 import time
 
 from .image_manager import Image_Manager
-from .glyomicsclient import *
-from .bbox import BoundingBox, PDFBoundingBox, PDFConversionContext
-
-
+from .bbox import PDFConversionContext
 
 class InputItem:
     '''
@@ -50,449 +47,461 @@ class InputItem:
             return f'{self.basename}.annotated.pdf'
         return None
 
-
-class PDFAnnotator:
+def annotate_from_webapp(json_path, extractorurl, output_dir='annotated_files'):
     '''
-    Main class for annotating PDF files with glycan extraction results.
+    WebApp use case: Build pdf annotations and TSV directly from JSON files.
+    No submission or polling needed.
+    The output files will be stored in annotated_files folder (located within the webapp's static files)
+    '''
     
-    Handles two main use cases:
-    1. Submit PDFs/PMIDs, get processed results (JSON result) and annotated results 
-    2. Build annotations and TSV from existing JSON results
+    # Load JSON data and create input items
+    all_json_data = {}
+    input_items = []
+
+    if not os.path.exists(json_path):
+        raise FileNotFoundError(f"JSON file not found: {json_path}")
+
+    with open(json_path, 'r') as f:
+        json_data = json.load(f)
+
+    pdf_path = json_data.get('result', {}).get('abs_original_filepath')
+    if not os.path.exists(pdf_path):
+        raise FileNotFoundError(f"Original PDF file not found: {pdf_path}")
+
+    # Task base: eg. /home/.../static/files/lgkxztyrrc/input
+    base_dir = os.path.dirname(pdf_path)          # .../lgkxztyrrc/input
+    task_base = os.path.dirname(base_dir)         # .../lgkxztyrrc
+    annotated_files_dir = os.path.join(task_base, output_dir)
+
+    os.makedirs(annotated_files_dir, exist_ok=True)
+
+    # Create input item and supporting json - for this PDF
+    # TODO - remove index values from InputItem (json dict and input_items later), if needed --> need to check the code to verify if this change should be made or not
+    input_items.append(InputItem('pdf', pdf_path, 0))
+    all_json_data[0] = json_data
+
+    # Build annotations
+    build_annotations(input_items, all_json_data, extractorurl, output_dir=annotated_files_dir)
+
+def annotate(pdf, pmid, json_file, taskid, extractorurl, resubmit):
+    '''
+    Script/CLI use case: Submit, poll for results, then annotate.
+    
+    Args:
+        pdf: List of PDF file paths or directories
+        pmid: List of PubMed IDs
+        json_file: Optional list of JSON result files (if results already exist)
+        taskid: Optional list of task IDs to retrieve
+        resubmit: Force resubmission even if results exist
     '''
 
-    def __init__(self, extractorurl=None):
-        # extractorurl - defaults to production url
-        if extractorurl is None:
-            extractorurl = 'https://extractor.glyomics.org/'
+    from .glyomicsclient import ExtractorClient
 
-        self.extractorurl = extractorurl
-        self.client = ExtractorClient(apiurl=extractorurl)
+    # Expand PDF directories
+    if pdf:
+        pdf_manager = Image_Manager(pdf, pattern='*.pdf', exclude='*.annotated.pdf')
+        pdf = pdf_manager.images
+    
+    # Build unified input items list
+    input_items = build_input_items(pdf, pmid)
+    total_inputs = len(input_items)
+    
+    # Validate inputs
+    if json_file is not None:
+        if len(json_file) != total_inputs:
+            raise ValueError(f"Number of JSON files ({len(json_file)}) must match number of inputs ({total_inputs})")
+    if taskid is not None:
+        if len(taskid) != total_inputs:
+            raise ValueError(f"Number of task IDs ({len(taskid)}) must match number of inputs ({total_inputs})")
+    if resubmit:
+        if json_file:
+            raise ValueError("Cannot use --resubmit with --json")
+        if taskid:
+            raise ValueError("Cannot use --resubmit with --taskid")
+    
+    # Validate PDF files exist
+    for item in input_items:
+        if item.is_pdf():
+            if not os.path.exists(item.value):
+                raise FileNotFoundError(f"PDF file not found: {item.value}")
+    
+    client = ExtractorClient(apiurl=extractorurl)
+    # Submit/retrieve results
+    all_json_data, resultfilename = submit_and_retrieve(
+        input_items, json_file, taskid, resubmit, client
+    )
+    
+    # Poll for incomplete results
+    needsresults = {i for i, data in all_json_data.items() if not data.get('finished', False)}
+    if needsresults:
+        poll_for_completion(needsresults, all_json_data, resultfilename, client)
+    
+    # Build annotations
+    build_annotations(input_items, all_json_data, client.url())
 
-    def annotate(self, pdf=None, pmid=None, json_file=None, taskid=None, 
-                     extractorurl=None, resubmit=None, webapp=False):
-        '''
-        Main entry point for annotating PDFs.
-        
-        Args:
-            pdf: List of PDF file paths or directories 
-            pmid: List of PubMed IDs 
-            json_file: List of JSON result files 
-            taskid: List of task IDs to retrieve 
-            extractorurl: Extractor API URL (optional, production url is used)
-            resubmit: Force resubmission even if results exist
-            webapp: If True, skip submission/polling and directly build annotations file from JSON
-
-        if webapp is True --> then it is necessary to provide json_file, and optionally extractorurl
-        '''
-
-        # Override extractorurl if provided
-        if extractorurl is not None:
-            self.extractorurl = extractorurl
-            self.client = ExtractorClient(apiurl=extractorurl)
-        
-        if webapp:
-            return self._annotate_from_webapp(json_file, output_dir='annotated_files')
+def submit_and_retrieve(input_items, json_file, taskid, resubmit, client):
+    '''
+    Submit PDFs/PMIDs or retrieve existing results.
+    
+    Returns:
+        (all_json_data dict, resultfilename dict)
+    '''
+    all_json_data = {}
+    resultfilename = {}
+    
+    for i, item in enumerate(input_items):
+        # Determine result filename
+        if json_file:
+            resultfilename[i] = json_file[i]
+            if not os.path.exists(resultfilename[i]):
+                raise FileNotFoundError(f"JSON file not found: {resultfilename[i]}")
         else:
-            return self._annotate_regularly(pdf, pmid, json_file, taskid, resubmit)
-    
-
-    def _annotate_from_webapp(self, json_path, output_dir):
-        '''
-        WebApp use case: Build annotations directly from JSON files.
-        No submission or polling needed.
-        The output_dir is annotated_files (located within the webapp's static files)
-        '''
-
-        # Load JSON data and create input items
-        all_json_data = {}
-        input_items = []
-
-        if not os.path.exists(json_path):
-            raise FileNotFoundError(f"JSON file not found: {json_path}")
-
-        with open(json_path, 'r') as f:
-            json_data = json.load(f)
-
-        pdf_path = json_data.get('result', {}).get('abs_original_filepath')
-        if not os.path.exists(pdf_path):
-            raise FileNotFoundError(f"PDF file not found: {pdf_path}")
-
-        # Task base: eg. /home/.../static/files/lgkxztyrrc
-        base_dir = os.path.dirname(pdf_path)          # .../lgkxztyrrc/input
-        task_base = os.path.dirname(base_dir)         # .../lgkxztyrrc
-        output_dir = os.path.join(task_base, output_dir)
-
-        os.makedirs(output_dir, exist_ok=True)
-
-        # Create input item and supporting json - for this PDF
-        # TODO - remove index values from InputItem (json dict and input_items later), if needed --> need to check the code to verify if this change should be made or not
-        input_items.append(InputItem('pdf', pdf_path, 0))
-        all_json_data[0] = json_data
-
-        # Build annotations
-        return self._build_annotations(input_items, all_json_data, output_dir=output_dir)
-
-    def _annotate_regularly(self, pdf, pmid, json_file, taskid, resubmit):
-        '''
-        Script/CLI use case: Submit, poll for results, then annotate.
-        
-        Args:
-            pdf: List of PDF file paths or directories
-            pmid: List of PubMed IDs
-            json_file: Optional list of JSON result files (if results already exist)
-            taskid: Optional list of task IDs to retrieve
-            resubmit: Force resubmission even if results exist
-        '''
-        # Expand PDF directories
-        if pdf:
-            pdf_manager = Image_Manager(pdf, pattern='*.pdf', exclude='*.annotated.pdf')
-            pdf = pdf_manager.images
-        
-        # Build unified input items list
-        input_items = self.build_input_items(pdf, pmid)
-        total_inputs = len(input_items)
-        
-        # Validate inputs
-        if json_file is not None:
-            if len(json_file) != total_inputs:
-                raise ValueError(f"Number of JSON files ({len(json_file)}) must match number of inputs ({total_inputs})")
-        if taskid is not None:
-            if len(taskid) != total_inputs:
-                raise ValueError(f"Number of task IDs ({len(taskid)}) must match number of inputs ({total_inputs})")
-        if resubmit:
-            if json_file:
-                raise ValueError("Cannot use --resubmit with --json")
-            if taskid:
-                raise ValueError("Cannot use --resubmit with --taskid")
-        
-        # Validate PDF files exist
-        for item in input_items:
             if item.is_pdf():
-                if not os.path.exists(item.value):
-                    raise FileNotFoundError(f"PDF file not found: {item.value}")
+                resultfilename[i] = item.basename + ".results.json"
+            else:  # pmid
+                resultfilename[i] = f"PMID-{item.value}.results.json"
         
-        # Submit/retrieve results
-        all_json_data, resultfilename = self._submit_and_retrieve(
-            input_items, json_file, taskid, resubmit
-        )
-        
-        # Poll for incomplete results
-        needsresults = {i for i, data in all_json_data.items() if not data.get('finished', False)}
-        if needsresults:
-            self._poll_for_completion(needsresults, all_json_data, resultfilename)
-        
-        # Build annotations
-        return self._build_annotations(input_items, all_json_data)
-    
-    def _submit_and_retrieve(self, input_items, json_file, taskid, resubmit):
-        '''
-        Submit PDFs/PMIDs or retrieve existing results.
-        
-        Returns:
-            (all_json_data dict, resultfilename dict)
-        '''
-        all_json_data = {}
-        resultfilename = {}
-        
-        for i, item in enumerate(input_items):
-            # Determine result filename
-            if json_file:
-                resultfilename[i] = json_file[i]
-                if not os.path.exists(resultfilename[i]):
-                    raise FileNotFoundError(f"JSON file not found: {resultfilename[i]}")
+        # Submit or load existing results
+        if not os.path.exists(resultfilename[i]) or resubmit:
+            if taskid:
+                current_taskid = taskid[i]
+            elif item.is_pmid():
+                print(f"PMID {item.value} submitted for analysis")
+                current_taskid = client.submit_pmid(item.value, curation_task=True)
             else:
-                if item.is_pdf():
-                    resultfilename[i] = item.basename + ".results.json"
-                else:  # pmid
-                    resultfilename[i] = f"PMID-{item.value}.results.json"
+                print(f"{os.path.split(item.value)[1]} PDF submitted for analysis.")
+                current_taskid = client.submit_manuscript_file(item.value, curation_task=True)
             
-            # Submit or load existing results
-            if not os.path.exists(resultfilename[i]) or resubmit:
-                if taskid:
-                    current_taskid = taskid[i]
-                elif item.is_pmid():
-                    print(f"PMID {item.value} submitted for analysis")
-                    current_taskid = self.client.submit_pmid(item.value, curation_task=True)
-                else:
-                    print(f"{os.path.split(item.value)[1]} PDF submitted for analysis.")
-                    current_taskid = self.client.submit_manuscript_file(item.value, curation_task=True)
-                
-                json_data = self.client.retrieve_once(current_taskid, asis=True)
-                with open(resultfilename[i], 'w') as f:
-                    json.dump(json_data, f, indent=2)
-            else:
-                # Load existing results
-                with open(resultfilename[i], 'r') as f:
-                    json_data = json.load(f)
-                
-                # Check if existing result is still valid
-                if not json_data.get('finished', False):
-                    tmp_json_data = self.client.retrieve_once(json_data['id'], asis=True)
-                    if 'submission_detail' not in tmp_json_data:
-                        # Bad taskid, resubmit
-                        if item.is_pmid():
-                            print(f"PMID {item.value} resubmitted for analysis (bad taskid).")
-                            current_taskid = self.client.submit_pmid(item.value, curation_task=True)
-                        else:
-                            print(f"{os.path.split(item.value)[1]} resubmitted for analysis (bad taskid).")
-                            current_taskid = self.client.submit_manuscript_file(item.value, curation_task=True)
-                        
-                        json_data = self.client.retrieve_once(current_taskid, asis=True)
-                        with open(resultfilename[i], 'w') as f:
-                            json.dump(json_data, f, indent=2)
+            json_data = client.retrieve_once(current_taskid, asis=True)
+            with open(resultfilename[i], 'w') as f:
+                json.dump(json_data, f, indent=2)
+        else:
+            # Load existing results
+            with open(resultfilename[i], 'r') as f:
+                json_data = json.load(f)
             
-            all_json_data[i] = json_data
+            # Check if existing result is still valid
+            if not json_data.get('finished', False):
+                tmp_json_data = client.retrieve_once(json_data['id'], asis=True)
+                if 'submission_detail' not in tmp_json_data:
+                    # Bad taskid, resubmit
+                    if item.is_pmid():
+                        print(f"PMID {item.value} resubmitted for analysis (bad taskid).")
+                        current_taskid = client.submit_pmid(item.value, curation_task=True)
+                    else:
+                        print(f"{os.path.split(item.value)[1]} resubmitted for analysis (bad taskid).")
+                        current_taskid = client.submit_manuscript_file(item.value, curation_task=True)
+                    
+                    json_data = client.retrieve_once(current_taskid, asis=True)
+                    with open(resultfilename[i], 'w') as f:
+                        json.dump(json_data, f, indent=2)
         
-        return all_json_data, resultfilename
+        all_json_data[i] = json_data
     
-    def _poll_for_completion(self, needsresults, all_json_data, resultfilename):
-        '''
-        Poll for incomplete analysis results until all are finished.
-        
-        Args:
-            needsresults: Set of indices that need polling
-            all_json_data: Dict of all JSON data (modified in place)
-            resultfilename: Dict mapping indices to result filenames
-        '''
-        completed = set()
-        
-        while needsresults:
-            for i in sorted(needsresults):
-                if i in completed:
-                    continue
-                
-                current_taskid = all_json_data[i]['id']
-                json_data = self.client.retrieve_once(current_taskid, asis=True)
-                
-                input_item_name = json_data.get('submission_detail', {}).get('original_file_name', f'Item {i}')
-                
-                if json_data.get('finished', False):
-                    all_json_data[i] = json_data
-                    completed.add(i)
-                    
-                    if json_data.get('state') == "Complete":
-                        print(f"{input_item_name} analysis complete.")
-                    elif json_data.get('state') == "Error":
-                        print(f"{input_item_name} analysis error.")
-                    
-                    with open(resultfilename[i], 'w') as wh:
-                        json.dump(json_data, wh, indent=2)
-                    print(f"Wrote results JSON: {resultfilename[i]}")
-                else:
-                    if json_data.get('status'):
-                        print(f"{input_item_name} analysis in progress: {json_data['status']}")
-                    elif json_data.get('state') == "Running":
-                        print(f"{input_item_name} analysis in progress.")
+    return all_json_data, resultfilename
+    
+def poll_for_completion(needsresults, all_json_data, resultfilename, client):
+    '''
+    Poll for incomplete analysis results until all are finished.
+    
+    Args:
+        needsresults: Set of indices that need polling
+        all_json_data: Dict of all JSON data (modified in place)
+        resultfilename: Dict mapping indices to result filenames
+    '''
+    completed = set()
+    
+    while needsresults:
+        for i in sorted(needsresults):
+            if i in completed:
+                continue
             
-            if completed == needsresults:
-                break
-            time.sleep(15)
+            current_taskid = all_json_data[i]['id']
+            json_data = client.retrieve_once(current_taskid, asis=True)
+            
+            input_item_name = json_data.get('submission_detail', {}).get('original_file_name', f'Item {i}')
+            
+            if json_data.get('finished', False):
+                all_json_data[i] = json_data
+                completed.add(i)
+                
+                if json_data.get('state') == "Complete":
+                    print(f"{input_item_name} analysis complete.")
+                elif json_data.get('state') == "Error":
+                    print(f"{input_item_name} analysis error.")
+                
+                with open(resultfilename[i], 'w') as wh:
+                    json.dump(json_data, wh, indent=2)
+                print(f"Wrote results JSON: {resultfilename[i]}")
+            else:
+                if json_data.get('status'):
+                    print(f"{input_item_name} analysis in progress: {json_data['status']}")
+                elif json_data.get('state') == "Running":
+                    print(f"{input_item_name} analysis in progress.")
+        
+        if completed == needsresults:
+            break
+        time.sleep(15)
 
-    def _build_annotations(self, input_items, all_json_data, output_dir=None):
-        """
-        Build annotated PDFs and TSV files from JSON results.
+def build_annotations(input_items, all_json_data, base_url, output_dir=None):
+    """
+    Build annotated PDFs and TSV files from JSON results.
 
-        Args:
-            input_items: List of InputItem objects
-            all_json_data: Dict mapping indices to JSON data
-            output_dir: Absolute dir to store annotated pdf + tsv.
-                        If None, files get saved saved in the same dir as the original PDF.
-        """
-        for i, input_item in enumerate(input_items):
-            json_data = all_json_data[i]
+    - Idea is to create temporary files (annotated pdf and tsv) with the newest version of updates (json).
 
-            # Skip error / missing-result / missing-PDF cases
-            if json_data.get('state') == "Error":
-                print(f"{input_item.value} skipping due to analysis error.")
-                continue
+    - Once completed - remove the old files and rename these temporary files to the original file name.
+    
+    - incase error/exception - remove the temporary files, clean up step.
 
-            result = json_data.get('result')
-            if not result:
-                print(f"{input_item.value} skipping: no result data.")
-                continue
+    This ensures that the users see either the old complete file or the new complete file.
+    They never see partially written files - because write happens to a temp file and then it is renamed to the original file name.
 
-            original_filepath = result.get('abs_original_filepath')
-            if not original_filepath or not os.path.exists(original_filepath):
-                print(f"{input_item.value} skipping: original PDF not found.")
-                continue
+    If process dies/exceptions midway, only the temp files are the bad/corrupted - which will be cleaned up in the finally block.
 
-            self._process_pdf(input_item, json_data, result, original_filepath, output_dir)
+    Args:
+        input_items: List of InputItem objects
+        all_json_data: Dict mapping indices to JSON data
+        output_dir: Absolute dir to store annotated pdf + tsv.
+                    If None, files get saved saved in the same dir from where the inout was provided
+    """
+    for i, input_item in enumerate(input_items):
+        json_data = all_json_data[i]
 
-        return len(input_items)
+        # Skip error / missing-result / missing-PDF cases
+        if json_data.get('state') == "Error":
+            print(f"{input_item.value} skipping due to analysis error.")
+            continue
 
+        result = json_data.get('result')
+        if not result:
+            print(f"{input_item.value} skipping: no result data.")
+            continue
 
-    def _resolve_save_dir(self, original_filepath, output_dir):
-        '''Decide where to write outputs and compute a clean basename '''
+        original_filepath = result.get('abs_original_filepath')
+        if not original_filepath or not os.path.exists(original_filepath):
+            print(f"{input_item.value} skipping: original PDF not found.")
+            continue
 
-        basename = os.path.splitext(os.path.basename(original_filepath))[0]
+        '''For the given PDF --> annotate all figures/glycans, and write annotated PDF and TSV'''
+
+        # basename may or may not include a directory
+        basename = input_item.basename
 
         if output_dir:
             save_dir = output_dir
-            os.makedirs(save_dir, exist_ok=True)
         else:
-            # Same directory as the original PDF
-            save_dir = os.path.dirname(original_filepath)
+            base_dir = os.path.dirname(basename)
 
-        return save_dir, basename
+            if base_dir:
+                save_dir = base_dir
+            else:
+                save_dir = os.getcwd()
 
+        os.makedirs(save_dir, exist_ok=True)
 
-    def _process_pdf(self, input_item, json_data, result, original_filepath, output_dir):
-        '''For the given PDF --> annotate all figures/glycans, and write annotated PDF and TSV'''
+        # Strip any directory from basename when forming filenames
+        stem = os.path.splitext(os.path.basename(basename))[0]
 
-        save_dir, basename = self._resolve_save_dir(original_filepath, output_dir)
+        # save_dir, basename = resolve_save_dir(original_filepath, output_dir)
 
-        doc = fitz.open(original_filepath)
-        image_data = []
-        anyvotes = False
+        # paths for the annotated pdf and tsv file
+        annotated_pdf_path = os.path.join(save_dir, stem + ".annotated.pdf")
+        tsv_path = os.path.join(save_dir, stem + ".annotated.tsv")
 
-        figure_results = result.get('figure_result', [])
-        taskid = json_data.get('id')
+        # each process has its own PID, so this kind of file naming avoid temp file naming collisions
+        # accross processes (although all files/submissions are stored in a unique folder which is named using a hash and avoids collision)
+        # Maybe the below step is not necessary??
+        pid = os.getpid()
+        temp_pdf = os.path.join(save_dir, f"{basename}.annotated.pdf.tmp.{pid}")
+        temp_tsv = os.path.join(save_dir, f"{basename}.annotated.tsv.tmp.{pid}")
 
-        for result_item in figure_results:
-            self._annotate_figure(doc, result_item, taskid, image_data)
-
-        # Output paths
-        annotated_pdf_path = os.path.join(save_dir, basename + ".annotated.pdf")
-        tsv_path = os.path.join(save_dir, basename + ".annotated.tsv")
-
-        # Save annotated PDF
-        doc.save(annotated_pdf_path)
-        doc.close()
-        print(f"Wrote annotated PDF: {annotated_pdf_path}")
-
-        # Save TSV
-        anyvotes = any(row.get('votes', 0) != 0 for row in image_data)
-        self._write_tsv(tsv_path, image_data, anyvotes)
-        print(f"Wrote annotation table: {tsv_path}")
-
-
-    def _annotate_figure(self, doc, result_item, taskid, image_data):
-        '''Draw figure box + glycan boxes / labels on a single page'''
-
-        fig_num = result_item.get("image_count")
-        page_num = result_item.get("page_number", 1)
-
-        # Page indices in fitz are 0 based
+        doc = None
         try:
-            page = doc[page_num - 1]
-        except IndexError:
-            print(f"Warning: Page {page_num} not found in PDF, skipping figure {fig_num}")
-            return 
+            doc = fitz.open(original_filepath)
+            image_data = []
 
-        try:
-            # Figure bounding box
-            pdf_fig_bbox = result_item.get("pdf_fig_bbox")
-            if pdf_fig_bbox:
-                fig_annot = page.add_rect_annot(pdf_fig_bbox)
-                fig_annot.set_colors(stroke=(0, 0, 1))
-                fig_annot.set_border(width=0.5)
+            figure_results = result.get('figure_result', [])
+            taskid = json_data.get('id')
 
-                content = f"fig:{fig_num}\n"
-                xref = result_item.get("xref")
-                if xref is not None and xref > 0:
-                    content += f"xref: {xref}\n"
+            for result_item in figure_results:
+                annotate_figure(doc, result_item, taskid, image_data, base_url)
 
-                fig_annot.set_info(content=content)
-                fig_annot.update()
+            # Write PDF to temp file
+            doc.save(temp_pdf)
+            doc.close()
+            doc = None
 
-            pdf_context_instance = PDFConversionContext.from_result_dict(result_item)
-            glycans = result_item.get("glycans", [])
+            # Write TSV to temp file
+            anyvotes = any(row.get('votes', 0) != 0 for row in image_data)
+            write_tsv(temp_tsv, image_data, anyvotes)
 
-            for glycan in glycans:
-                try:
-                    bbox = glycan.get("bbox")
-                    if not bbox:
-                        continue
+            # Replace old final files with new ones (this avoids partial writes)
+            # So remove old files, rename the temp files which will serve as the annoated pdf and tsv
+            if os.path.exists(annotated_pdf_path):
+                os.remove(annotated_pdf_path)
+            if os.path.exists(tsv_path):
+                os.remove(tsv_path)
 
-                    pdf_gly_box = pdf_context_instance.to_pdf_bbox(bbox)
-                    gly_annot = page.add_rect_annot(pdf_gly_box.bbox())
+            os.rename(temp_pdf, annotated_pdf_path)
+            os.rename(temp_tsv, tsv_path)
 
-                    gid = f"G{fig_num}.{glycan.get('fig_glycan_count', '?')}"
-
-                    base_url = self.client.url() or 'https://extractor.glyomics.org'
-                    url = (
-                        f"{base_url}/result/{taskid}"
-                        f"#glycan-{fig_num}-{glycan.get('fig_glycan_count', '?')}"
-                    )
-
-                    content = f"id: {gid}\nurl: {url}\n"
-
-                    gly_annot.set_info(content=content)
-                    gly_annot.set_border(width=0.5)
-                    gly_annot.update()
-
-                    votes = glycan.get('upvotes', 0) - glycan.get('downvotes', 0)
-
-                    # Add "Good"/"Bad" label near the glycan box
-                    try:
-                        if votes > 0:
-                            text = 'Good'
-                        elif votes < 0:
-                            text = 'Bad'
-                        else:
-                            text = ''
-
-                        if text:
-                            text_pt = (pdf_gly_box.x1, max(0, pdf_gly_box.y1 - 2))
-                            page.insert_text(
-                                text_pt,
-                                text,
-                                fontsize=7,
-                                fontname="helvetica",
-                                color=(0, 0, 0),
-                            )
-                    except Exception as e:
-                        print(f"insert_text failed for {gid}: {e}")
-
-                    image_data.append({
-                        "ID": gid,
-                        "xref": result_item.get("xref"),
-                        "page_num": page_num,
-                        "fig_num": fig_num,
-                        "accession": glycan.get('accession', ''),
-                        "iupac": glycan.get('IUPAC', ''),
-                        "composition": glycan.get('composition_str', ''),
-                        "wurcs": glycan.get('WURCS', ''),
-                        "votes": votes,
-                        "url": url,
-                    })
-                except Exception as e:
-                    print(f"Exception occurred while processing glycan: {e}")
-                    continue
+            print(f"Wrote annotated PDF: {annotated_pdf_path}")
+            print(f"Wrote annotation table: {tsv_path}")
 
         except Exception as e:
-            print(f"Exception occurred while drawing bounding box on PDF: {e}")
+            print(f"Error during PDF/TSV generation: {e}", file=sys.stderr)
+            raise
 
+        finally:
+            if doc is not None:
+                try:
+                    doc.close()
+                except:
+                    pass
 
-    def _write_tsv(self, tsv_path, image_data, anyvotes):
-        ''' Write the annotation TSV for the PDF'''
+            # Clean up any leftover temp files (in case of error before rename)
+            for tmp in (temp_pdf, temp_tsv):
+                if os.path.exists(tmp):
+                    try:
+                        os.remove(tmp)
+                    except:
+                        pass
 
-        headers = "ID xref page_num fig_num accession iupac composition wurcs votes url".split()
-        if not anyvotes:
-            headers.remove("votes")
+def annotate_figure(doc, result_item, taskid, image_data, base_url):
+    '''Draw figure box and glycan boxes / labels on a pdf page'''
 
-        with open(tsv_path, 'w') as wh:
-            print("\t".join(headers), file=wh)
-            for row in image_data:
-                print("\t".join(map(str, [row.get(h, '') for h in headers])), file=wh)
+    fig_num = result_item.get("image_count")
+    page_num = result_item.get("page_number", 1)
 
-    def build_input_items(self, pdf_list=None, pmid_list=None):
-        '''Build InputItem list from PDF and PMID lists.'''
-        
-        input_items = []
-        
-        if pdf_list:
-            if len(pdf_list) != len(set(pdf_list)):
-                print("Provided PDF's are not unique")
-                sys.exit(1)
-            for pdf in pdf_list:
-                input_items.append(InputItem('pdf', pdf, len(input_items)))
-        
-        if pmid_list:
-            if len(pmid_list) != len(set(pmid_list)):
-                print("Provided PMID's are not unique")
-                sys.exit(1)
-            for pmid in pmid_list:
-                input_items.append(InputItem('pmid', pmid, len(input_items)))
-        
-        return input_items
+    # Page indices in fitz are 0 based
+    try:
+        page = doc[page_num - 1]
+    except IndexError:
+        print(f"Warning: Page {page_num} not found in PDF, skipping figure {fig_num}")
+        return 
+
+    try:
+        # Figure bounding box
+        pdf_fig_bbox = result_item.get("pdf_fig_bbox")
+        if pdf_fig_bbox:
+            fig_annot = page.add_rect_annot(pdf_fig_bbox)
+            fig_annot.set_colors(stroke=(0, 0, 1))
+            fig_annot.set_border(width=0.5)
+
+            content = f"fig:{fig_num}\n"
+            xref = result_item.get("xref")
+            if xref is not None and xref > 0:
+                content += f"xref: {xref}\n"
+
+            fig_annot.set_info(content=content)
+            fig_annot.update()
+
+        pdf_context_instance = PDFConversionContext.from_result_dict(result_item)
+        glycans = result_item.get("glycans", [])
+
+        for glycan in glycans:
+            try:
+                bbox = glycan.get("bbox")
+                if not bbox:
+                    continue
+
+                pdf_gly_box = pdf_context_instance.to_pdf_bbox(bbox)
+                gly_annot = page.add_rect_annot(pdf_gly_box.bbox())
+
+                gid = f"G{fig_num}.{glycan.get('fig_glycan_count', '?')}"
+
+                url = (
+                    f"{base_url}/result/{taskid}"
+                    f"#glycan-{fig_num}-{glycan.get('fig_glycan_count', '?')}"
+                )
+
+                content = f"id: {gid}\nurl: {url}\n"
+
+                gly_annot.set_info(content=content)
+    
+                votes = glycan.get('upvotes', 0) - glycan.get('downvotes', 0)
+                color = (0, 0, 1)
+                if votes > 0:
+                    color = (0, 1, 0)       # green
+                elif votes < 0:
+                    color = (1, 0, 0)         # red
+
+                gly_annot.set_colors(stroke=color)
+
+                gly_annot.set_border(width=0.5)
+                gly_annot.update()
+
+                votes = glycan.get('upvotes', 0) - glycan.get('downvotes', 0)
+
+                # Add "Good"/"Bad" label near the glycan box
+                # try:
+                #     if votes > 0:
+                #         text = 'Good'
+                #     elif votes < 0:
+                #         text = 'Bad'
+                #     else:
+                #         text = ''
+
+                #     if text:
+                #         text_pt = (pdf_gly_box.x1, max(0, pdf_gly_box.y1 - 2))
+                #         page.insert_text(
+                #             text_pt,
+                #             text,
+                #             fontsize=7,
+                #             fontname="helvetica",
+                #             color=(0, 0, 0),
+                #         )
+                # except Exception as e:
+                #     print(f"insert_text failed for {gid}: {e}")
+
+                image_data.append({
+                    "ID": gid,
+                    "xref": result_item.get("xref"),
+                    "page_num": page_num,
+                    "fig_num": fig_num,
+                    "accession": glycan.get('accession', ''),
+                    "iupac": glycan.get('IUPAC', ''),
+                    "composition": glycan.get('composition_str', ''),
+                    "wurcs": glycan.get('WURCS', ''),
+                    "votes": votes,
+                    "url": url,
+                })
+            except Exception as e:
+                print(f"Exception occurred while processing glycan: {e}")
+                continue
+
+    except Exception as e:
+        print(f"Exception occurred while drawing bounding box on PDF: {e}")
+
+def write_tsv(tsv_path, image_data, anyvotes):
+    ''' Write the annotation TSV for the PDF'''
+
+    headers = "ID xref page_num fig_num accession iupac composition wurcs votes url".split()
+    if not anyvotes:
+        headers.remove("votes")
+
+    with open(tsv_path, 'w') as wh:
+        print("\t".join(headers), file=wh)
+        for row in image_data:
+            print("\t".join(map(str, [row.get(h, '') for h in headers])), file=wh)
+
+def build_input_items(pdf_list=None, pmid_list=None):
+    '''Build InputItem list from PDF and PMID lists.'''
+    
+    input_items = []
+    
+    if pdf_list:
+        if len(pdf_list) != len(set(pdf_list)):
+            print("Provided PDF's are not unique")
+            sys.exit(1)
+        for pdf in pdf_list:
+            input_items.append(InputItem('pdf', pdf, len(input_items)))
+    
+    if pmid_list:
+        if len(pmid_list) != len(set(pmid_list)):
+            print("Provided PMID's are not unique")
+            sys.exit(1)
+        for pmid in pmid_list:
+            input_items.append(InputItem('pmid', pmid, len(input_items)))
+    
+    return input_items

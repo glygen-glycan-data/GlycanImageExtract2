@@ -8,7 +8,7 @@ import shutil
 import json
 import time
 
-from BKGlycanExtractor.pdf_annotator import PDFAnnotator
+from BKGlycanExtractor import annotate
 
 parser = argparse.ArgumentParser(description="Annotate PDF")
 
@@ -64,8 +64,7 @@ parser.add_argument(
 
 args = parser.parse_args()
 
-annotate_pdf_instance = PDFAnnotator(args.extractorurl)
-annotate_pdf_instance.annotate(
+annotate(
     pdf = args.pdf,
     pmid = args.pmid,
     json_file = args.json,
