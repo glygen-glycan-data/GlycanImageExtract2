@@ -9,8 +9,8 @@ import copy
 from .bbox import PDFBoundingBox
 from .pdfhandler import PDFHandler, CompoundPDFImageFilter, PDFXRefImageFilter, PDFImageSizeFilter, PDFLargeImageSizeFilter
 from .compareboxes import CompareBoxes
-from .pdf_image_captions_data import PDFiguesCaptionsData
-from .pdf_image_filters import ImageFilterPipeline, DetectFragmentedFitz, FilterFitzByFigcapContainers, MergeByIOU, RegularMerge
+
+# FigCap/Hybrid-specific imports are done lazily inside those classes to avoid requiring their dependencies when using FitzImageSearch only.
 
 class ImageSearch:
 
@@ -18,9 +18,25 @@ class ImageSearch:
     def search_method(search_type='fitz'):
         if search_type == 'fitz':
             return FitzImageSearch()
+
         elif search_type == 'figcap':
+            try: 
+                from BKGlycanExtractor.pdf_image_captions_data import PDFiguesCaptionsData
+            except ImportError as e:
+                raise ImportError(
+                    "FigCapImageSearch requires pdf_image_captions_data.py and PDFigCapX repository using a symbolic link"
+                ) from e
+
             return FigCapImageSearch()
+            
         elif search_type == 'hybrid':
+            try: 
+                from BKGlycanExtractor.pdf_image_captions_data import PDFiguesCaptionsData
+            except ImportError as e:
+                raise ImportError(
+                    "FigCapImageSearch requires pdf_image_captions_data.py and PDFigCapX repository using a symbolic link"
+                ) from e
+
             return HybridImageSearch()
 
     def get_metadata(self):
@@ -94,7 +110,14 @@ class FigCapImageSearch:
             ...  
         }
         """
-        
+        try: 
+            from BKGlycanExtractor.pdf_image_captions_data import PDFiguesCaptionsData
+        except ImportError as e:
+            raise ImportError(
+                "FigCapImageSearch requires pdf_image_captions_data.py and PDFigCapX repository using a symbolic link"
+            ) from e
+
+
         pdf_metadata = {}
         figures_data = {}       # data obtained from PDFigCapX repository
 
@@ -196,7 +219,9 @@ class HybridImageSearch:
         fitz_figures = self._format_page_figs_metadata(fitz_figures, 'fitz')
         figcap_figures = self._format_page_figs_metadata(figcap_figures, 'figcap')
 
-        # execute filter pipeline
+        # execute filter pipeline (lazy import: HybridImageSearch-specific dependency)
+        from BKGlycanExtractor.pdf_image_filters import ImageFilterPipeline, DetectFragmentedFitz, FilterFitzByFigcapContainers, MergeByIOU, RegularMerge
+
         pipeline = ImageFilterPipeline([
             DetectFragmentedFitz(),
             FilterFitzByFigcapContainers(),
@@ -279,7 +304,13 @@ class HybridImageSearch:
         return formatted_figures
 
 if __name__ == '__main__':
-    # fs = FigCapX_Search()
+    try: 
+        from BKGlycanExtractor.pdf_image_captions_data import PDFiguesCaptionsData
+    except ImportError as e:
+        raise ImportError(
+            "FigCapImageSearch requires pdf_image_captions_data.py and PDFigCapX repository using a symbolic link"
+        ) from e
+
     pdf_path = sys.argv[1]      # pdf path
     page_dpi = 300
     # fig_json_path = fs.figures_info(pdf_path, page_dpi)

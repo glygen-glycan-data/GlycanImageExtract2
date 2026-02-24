@@ -12,13 +12,9 @@ from . monosaccharideid import MonoFinder
 from . glycanconnections import LinkFinder
 from . rootmonofinding import RootFinder
 from . glycanfinding import GlycanFinder
-from . pdf_annotator import PDFAnnotator
-try:
-    from . pdf_image_metadata import ImageSearch, FitzImageSearch, FigCapImageSearch, HybridImageSearch
-    from . pdf_image_captions_data import PDFiguesCaptionsData
-    from . pdfhandler import STANDARD_DPI, POINTS_PER_INCH, PDFHandler, CompoundPDFImageFilter, PDFXRefImageFilter, PDFImageSizeFilter
-except ImportError:
-    pass
+from . pdf_annotator import annotate, annotate_from_webapp
+from . pdfhandler import STANDARD_DPI, POINTS_PER_INCH, PDFHandler, CompoundPDFImageFilter, PDFXRefImageFilter, PDFImageSizeFilter
+from . pdf_image_metadata import ImageSearch
 from . compareboxes import CompareBoxes
 from . image_manager import Image_Manager
 

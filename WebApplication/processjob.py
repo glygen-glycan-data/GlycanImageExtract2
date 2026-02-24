@@ -4,9 +4,9 @@ from submit import searchGlyLookup, searchGlyImage, sendToGNOme
 from PIL import Image
 from hashlib import md5
 from APIFramework import APIFramework
-from BKGlycanExtractor import ImageSearch, FitzImageSearch, FigCapImageSearch, HybridImageSearch
+from BKGlycanExtractor import ImageSearch
 from BKGlycanExtractor import Config_Manager, BoundingBox, PDFBoundingBox, CompareBoxes
-from BKGlycanExtractor import STANDARD_DPI, PDFHandler, CompoundPDFImageFilter, PDFXRefImageFilter, PDFImageSizeFilter
+from BKGlycanExtractor import STANDARD_DPI, PDFHandler
 
 import numpy as np
 from shutil import copyfile
