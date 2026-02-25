@@ -491,8 +491,8 @@
         // Paper citation - for PMID
         const citationHtml = formatCitation(document_metadata, pmc_publication);
         if (citationHtml && citationHtml.length > 0) {
-            resstr += `<div class="citation-container" style="padding: 20px 0 10px 0;">${citationHtml}</div>`;
-            resstr += `<div class='citation-container' style='padding: 0 0 10px 0;'>PMID: <a href='${document_metadata.url.pmid_url}'>${document_metadata.pmid}</a></div>`;
+            resstr += `<div class="citation-container" style="padding: 20px 0 10px 0;">${citationHtml}. <span style="white-space:nowrap;"><b>PMID:</b> <a href='${document_metadata.url.pmid_url}'>${document_metadata.pmid}</a></span></div>`;
+            // resstr += `<div class='citation-container' style='padding: 0 0 10px 0;'>PMID: <a href='${document_metadata.url.pmid_url}'>${document_metadata.pmid}</a></div>`;
         }
 
         if (result['state'] === "Error") {
@@ -550,12 +550,12 @@
         });
 
         if (figure.cleaned_caption && figure.caption_text) {
-            innerdiv += `<div style="font-size:small;">
-                            <b>${figure.label}: </b>${figure.caption_text}
+            innerdiv += `<div class="figure-caption-block" style="display:flex; justify-content:center;">
+                            <p class="figure-caption-text" style="font-size:small; max-width:65ch; text-align:justify; text-align-last:left; margin:0;"><b>${figure.label}:</b> ${figure.caption_text}</p>
                         </div>`;
-        } else if (figure.full_caption_text) {      // if the caption couldnt be cleaned appropriately, print whatever was obtained from figcap
-            innerdiv += `<div style="font-size:small;"">
-                            ${figure.full_caption_text}
+        } else if (figure.full_caption_text) {
+            innerdiv += `<div class="figure-caption-block" style="display:flex; justify-content:center;">
+                            <p class="figure-caption-text" style="font-size:small; max-width:65ch; text-align:justify; text-align-last:left; margin:0;">${figure.full_caption_text}</p>
                         </div>`;
         }
 
