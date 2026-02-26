@@ -832,6 +832,17 @@ class APIFramework:
         if resultid is None:
             return flask.jsonify(dict(status="ERROR"))
 
+        # get the location (folder) for the static files - it could be the examples folder or regular files folder
+        if flask.request.is_json:
+            location = (flask.request.get_json(silent=True) or {}).get('location')
+        else:
+            location = flask.request.args.get('location')
+
+        if location:
+            json_file = self.abspath(f"static/{location}/{resultid}/results.json")
+        else:
+            json_file = self.abspath(f"static/files/{resultid}/results.json")
+
         if self._lock.acquire(timeout=2):
             if not hasattr(self, "_resultid_locks"):
                 self._resultid_locks = {}
@@ -842,7 +853,6 @@ class APIFramework:
             print("Status: ERROR:LOCK_TIMEOUT, ResultID: %s." % (resultid,), file=sys.stderr)
             return flask.jsonify(dict(status="ERROR"))
 
-        json_file = self.abspath(f"static/files/{resultid}/results.json")
         if not os.path.exists(json_file):
             print("Status: ERROR:NO_JSON, ResultID: %s." % (resultid,), file=sys.stderr)
             return flask.jsonify(dict(status="ERROR"))
@@ -859,22 +869,18 @@ class APIFramework:
                     self._resultid_locks[resultid].release()
                     return flask.jsonify(dict(status="ERROR"))
 
-                base_dir = os.path.dirname(pdf_path)
-                task_base = os.path.dirname(base_dir)
-                output_dir = os.path.join(task_base, 'annotated_files')
+                output_dir = self.abspath(f"static/{location or 'files'}/{resultid}/annotated_files")
                 os.makedirs(output_dir, exist_ok=True)
 
-                basename = os.path.splitext(os.path.basename(pdf_path))[0]
-                annotated_pdf = os.path.join(output_dir, basename + ".annotated.pdf")
+                pdf_basename = os.path.splitext(os.path.basename(pdf_path))[0]
+                annotated_pdf = os.path.join(output_dir, pdf_basename + ".annotated.pdf")
+                # print("Expecting annotated PDF at: %s" % (annotated_pdf,), file=sys.stderr)
 
-                # STEPS:
-                # Check if results (annoated pdf and tsv) regeneration is needed
-                # Ensure the annotated files exist, if True --> check the 
-                # time they were updated vs the time the json file was updated
-                # if the annotated pdf and tsv are newer as comapred to json --> means the 
-                # annotated pdf doesnt require regeneration.
+                # Check if the annotated results (pdf and tsv) are up to date with the json file?
+                # i.e if the annotated results were modified at the time after the json was modified - then
+                # no need to annotate files again -> serve the results directly to the user
+                # getmtime --> helps with getting the last modified time of a file
                 if os.path.exists(annotated_pdf):
-                    # get the last modified time of the file
                     json_mtime = os.path.getmtime(json_file)
                     pdf_mtime = os.path.getmtime(annotated_pdf)
                     if pdf_mtime >= json_mtime:
@@ -882,26 +888,24 @@ class APIFramework:
                         self._resultid_locks[resultid].release()
                         return flask.jsonify(dict(status="OK", resultid=resultid))
 
-                # Regenerate the annotated files - because they are not in sync with the latest json
+                # Regenerate annotated results 
                 print("Building annotated PDF/TSV for ResultID: %s." % (resultid,), file=sys.stderr)
+                annotate_from_webapp(json_file, self.get_base_url(), output_dir=output_dir)
 
-                # creates new annotated files and replaces the outdated files with the newly built files
-                # and ensures that reads are not done from partially written files. 
-                annotate_from_webapp(json_file, self.get_base_url())
-                
-                # Small delay to ensure file system consistency after the annotation work is completed and 
-                # everything is written to the static filesystem/volume
-                time.sleep(0.1)  
-                
-                # Verify files were created
-                if not os.path.exists(annotated_pdf):
-                    print("Status: ERROR:PDF_NOT_CREATED, ResultID: %s." % (resultid,), file=sys.stderr)
+                # after the results are ready and wrriten to the file system (via annotate_from_webapp), using a small delay to ensure
+                # everything is set.
+                time.sleep(0.2)     
+
+                # Verify that the annotated_pdf exists
+                if annotated_pdf and os.path.exists(annotated_pdf):
                     self._resultid_locks[resultid].release()
-                    return flask.jsonify(dict(status="ERROR"))
+                    print("Status: OK, ResultID: %s." % (resultid,), file=sys.stderr)
+                    return flask.jsonify(dict(status="OK", resultid=resultid))
 
+                print("Status: ERROR:PDF_NOT_CREATED, ResultID: %s." % (resultid,), file=sys.stderr)
                 self._resultid_locks[resultid].release()
-                print("Status: OK, ResultID: %s." % (resultid,), file=sys.stderr)
-                return flask.jsonify(dict(status="OK", resultid=resultid))
+                return flask.jsonify(dict(status="ERROR"))
+
             else:
                 print("Status: ERROR:RESULT_TIMEOUT, ResultID: %s." % (resultid,), file=sys.stderr)
                 return flask.jsonify(dict(status="ERROR"))

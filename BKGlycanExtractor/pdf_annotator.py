@@ -47,7 +47,7 @@ class InputItem:
             return f'{self.basename}.annotated.pdf'
         return None
 
-def annotate_from_webapp(json_path, extractorurl, output_dir='annotated_files'):
+def annotate_from_webapp(json_path, extractorurl, output_dir):
     '''
     WebApp use case: Build pdf annotations and TSV directly from JSON files.
     No submission or polling needed.
@@ -71,9 +71,9 @@ def annotate_from_webapp(json_path, extractorurl, output_dir='annotated_files'):
     # Task base: eg. /home/.../static/files/lgkxztyrrc/input
     base_dir = os.path.dirname(pdf_path)          # .../lgkxztyrrc/input
     task_base = os.path.dirname(base_dir)         # .../lgkxztyrrc
-    annotated_files_dir = os.path.join(task_base, output_dir)
+    # annotated_files_dir = os.path.join(task_base, output_dir)
 
-    os.makedirs(annotated_files_dir, exist_ok=True)
+    os.makedirs(output_dir, exist_ok=True)
 
     # Create input item and supporting json - for this PDF
     # TODO - remove index values from InputItem (json dict and input_items later), if needed --> need to check the code to verify if this change should be made or not
@@ -81,7 +81,7 @@ def annotate_from_webapp(json_path, extractorurl, output_dir='annotated_files'):
     all_json_data[0] = json_data
 
     # Build annotations
-    build_annotations(input_items, all_json_data, extractorurl, output_dir=annotated_files_dir)
+    build_annotations(input_items, all_json_data, extractorurl, output_dir=output_dir)
 
 def annotate(pdf, pmid, json_file, taskid, extractorurl, resubmit):
     '''
@@ -262,7 +262,6 @@ def build_annotations(input_items, all_json_data, base_url, output_dir=None):
         input_items: List of InputItem objects
         all_json_data: Dict mapping indices to JSON data
         output_dir: Absolute dir to store annotated pdf + tsv.
-                    If None, files get saved saved in the same dir from where the inout was provided
     """
     for i, input_item in enumerate(input_items):
         json_data = all_json_data[i]
@@ -282,16 +281,12 @@ def build_annotations(input_items, all_json_data, base_url, output_dir=None):
             print(f"{input_item.value} skipping: original PDF not found.")
             continue
 
-        '''For the given PDF --> annotate all figures/glycans, and write annotated PDF and TSV'''
-
-        # basename may or may not include a directory
         basename = input_item.basename
 
         if output_dir:
             save_dir = output_dir
         else:
             base_dir = os.path.dirname(basename)
-
             if base_dir:
                 save_dir = base_dir
             else:
@@ -299,14 +294,11 @@ def build_annotations(input_items, all_json_data, base_url, output_dir=None):
 
         os.makedirs(save_dir, exist_ok=True)
 
-        # Strip any directory from basename when forming filenames
-        stem = os.path.splitext(os.path.basename(basename))[0]
-
-        # save_dir, basename = resolve_save_dir(original_filepath, output_dir)
+        # pdf_basename = os.path.splitext(os.path.basename(pdf_path))[0]
 
         # paths for the annotated pdf and tsv file
-        annotated_pdf_path = os.path.join(save_dir, stem + ".annotated.pdf")
-        tsv_path = os.path.join(save_dir, stem + ".annotated.tsv")
+        annotated_pdf_path = os.path.join(output_dir, basename + ".annotated.pdf")
+        tsv_path = os.path.join(save_dir, basename + ".annotated.tsv")
 
         # each process has its own PID, so this kind of file naming avoid temp file naming collisions
         # accross processes (although all files/submissions are stored in a unique folder which is named using a hash and avoids collision)
@@ -432,27 +424,6 @@ def annotate_figure(doc, result_item, taskid, image_data, base_url):
                 gly_annot.update()
 
                 votes = glycan.get('upvotes', 0) - glycan.get('downvotes', 0)
-
-                # Add "Good"/"Bad" label near the glycan box
-                # try:
-                #     if votes > 0:
-                #         text = 'Good'
-                #     elif votes < 0:
-                #         text = 'Bad'
-                #     else:
-                #         text = ''
-
-                #     if text:
-                #         text_pt = (pdf_gly_box.x1, max(0, pdf_gly_box.y1 - 2))
-                #         page.insert_text(
-                #             text_pt,
-                #             text,
-                #             fontsize=7,
-                #             fontname="helvetica",
-                #             color=(0, 0, 0),
-                #         )
-                # except Exception as e:
-                #     print(f"insert_text failed for {gid}: {e}")
 
                 image_data.append({
                     "ID": gid,
