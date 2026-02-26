@@ -145,6 +145,19 @@
         /* padding-bottom: 10px; */
     }
 
+    .figure-caption-block {
+        display: flex;
+        justify-content: center;
+    }
+
+    .figure-caption-text {
+        font-size: small;
+        max-width: 550px;
+        text-align: justify;
+        text-align-last: left;
+        margin: 0;
+    }
+
 </style>
 
 
@@ -263,13 +276,13 @@
         const resultsUrl = `{{urlprefix}}/annotate_results?resultid=${resultid}`;
 
         // Show feedback directly on the clicked link
-        const link = event.currentTarget;
-        const originalHtml = link.innerHTML;
+        // const link = event.currentTarget;
+        // const originalHtml = link.innerHTML;
 
-        // feedback on button
-        link.innerHTML = 'Generating…';
-        link.classList.add('disabled');
-        link.style.pointerEvents = 'none';
+        // // feedback on button
+        // link.innerHTML = 'Generating…';
+        // link.classList.add('disabled');
+        // link.style.pointerEvents = 'none';
 
         jQuery.ajax({
             url: resultsUrl,
@@ -278,9 +291,9 @@
             data: JSON.stringify({ location: location }),
             dataType: 'json'
         }).done(function (d) {
-            link.innerHTML = originalHtml;
-            link.classList.remove('disabled');
-            link.style.pointerEvents = 'auto';
+            // link.innerHTML = originalHtml;
+            // link.classList.remove('disabled');
+            // link.style.pointerEvents = 'auto';
 
             if (d.status === "OK") {
                 const ts = Date.now();
@@ -306,7 +319,7 @@
             return null;
         }
 
-        // ---- AUTHORS (AMA: Surname Initials; max 3 then "et al.") ----
+        // ---- AUTHORS (show all authors) ----
         var authors = meta.authors;
         var authorStr = null;
 
@@ -334,10 +347,6 @@
                 if (initials) return initials;
                 return null;
             }).filter(Boolean).join(', ');
-
-            if (authors.length > 3 && authorStr) {
-                authorStr += ', et al';
-            }
 
             if (authorStr) {
                 authorStr += '.';
@@ -432,8 +441,14 @@
             trailing || null
         ];
 
-        return parts.filter(Boolean).join(' ');
+        var citation = parts.filter(Boolean).join(' ').trim();
 
+        // Ensure it ends with a period
+        if (!citation.endsWith('.')) {
+            citation += '.';
+        }
+
+        return citation;
     }
 
     function addDownloadButton(result) {
@@ -494,7 +509,7 @@
         // Paper citation - for PMID
         const citationHtml = formatCitation(document_metadata, pmc_publication);
         if (citationHtml && citationHtml.length > 0) {
-            resstr += `<div class="citation-container" style="padding: 20px 0 10px 0;">${citationHtml}. <span style="white-space:nowrap;"><b>PMID:</b> <a href='${document_metadata.url.pmid_url}'>${document_metadata.pmid}</a></span></div>`;
+            resstr += `<div class="citation-container" style="padding: 20px 0 10px 0;">${citationHtml}<span style="white-space:nowrap;"><b> PMID:</b> <a href='${document_metadata.url.pmid_url}'>${document_metadata.pmid}</a></span></div>`;
             // resstr += `<div class='citation-container' style='padding: 0 0 10px 0;'>PMID: <a href='${document_metadata.url.pmid_url}'>${document_metadata.pmid}</a></div>`;
         }
 
@@ -553,13 +568,13 @@
         });
 
         if (figure.cleaned_caption && figure.caption_text) {
-            innerdiv += `<div class="figure-caption-block" style="display:flex; justify-content:center;">
-                            <p class="figure-caption-text" style="font-size:small; max-width:65ch; text-align:justify; text-align-last:left; margin:0;"><b>${figure.label}:</b> ${figure.caption_text}</p>
-                        </div>`;
+            innerdiv += `<div class="figure-caption-block">
+                    <p class="figure-caption-text"><b>${figure.label}:</b> ${figure.caption_text}</p>
+                </div>`;
         } else if (figure.full_caption_text) {
-            innerdiv += `<div class="figure-caption-block" style="display:flex; justify-content:center;">
-                            <p class="figure-caption-text" style="font-size:small; max-width:65ch; text-align:justify; text-align-last:left; margin:0;">${figure.full_caption_text}</p>
-                        </div>`;
+            innerdiv += `<div class="figure-caption-block">
+                    <p class="figure-caption-text">${figure.full_caption_text}</p>
+                </div>`;
         }
 
         innerdiv += `</div>
