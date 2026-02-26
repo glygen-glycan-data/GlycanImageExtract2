@@ -68,11 +68,6 @@ def annotate_from_webapp(json_path, extractorurl, output_dir):
     if not os.path.exists(pdf_path):
         raise FileNotFoundError(f"Original PDF file not found: {pdf_path}")
 
-    # Task base: eg. /home/.../static/files/lgkxztyrrc/input
-    base_dir = os.path.dirname(pdf_path)          # .../lgkxztyrrc/input
-    task_base = os.path.dirname(base_dir)         # .../lgkxztyrrc
-    # annotated_files_dir = os.path.join(task_base, output_dir)
-
     os.makedirs(output_dir, exist_ok=True)
 
     # Create input item and supporting json - for this PDF
@@ -281,12 +276,11 @@ def build_annotations(input_items, all_json_data, base_url, output_dir=None):
             print(f"{input_item.value} skipping: original PDF not found.")
             continue
 
-        basename = input_item.basename
-
         if output_dir:
             save_dir = output_dir
         else:
-            base_dir = os.path.dirname(basename)
+            # save in the same location where the json file exists
+            base_dir = os.path.dirname(input_item.basename)
             if base_dir:
                 save_dir = base_dir
             else:
@@ -297,15 +291,16 @@ def build_annotations(input_items, all_json_data, base_url, output_dir=None):
         # pdf_basename = os.path.splitext(os.path.basename(pdf_path))[0]
 
         # paths for the annotated pdf and tsv file
-        annotated_pdf_path = os.path.join(output_dir, basename + ".annotated.pdf")
-        tsv_path = os.path.join(save_dir, basename + ".annotated.tsv")
+        pdf_basename = os.path.splitext(os.path.basename(original_filepath))[0]
+        annotated_pdf_path = os.path.join(save_dir, pdf_basename + ".annotated.pdf")
+        tsv_path = os.path.join(save_dir, pdf_basename + ".annotated.tsv")
 
         # each process has its own PID, so this kind of file naming avoid temp file naming collisions
         # accross processes (although all files/submissions are stored in a unique folder which is named using a hash and avoids collision)
         # Maybe the below step is not necessary??
         pid = os.getpid()
-        temp_pdf = os.path.join(save_dir, f"{basename}.annotated.pdf.tmp.{pid}")
-        temp_tsv = os.path.join(save_dir, f"{basename}.annotated.tsv.tmp.{pid}")
+        temp_pdf = os.path.join(save_dir, f"{pdf_basename}.annotated.pdf.tmp.{pid}")
+        temp_tsv = os.path.join(save_dir, f"{pdf_basename}.annotated.tsv.tmp.{pid}")
 
         doc = None
         try:
