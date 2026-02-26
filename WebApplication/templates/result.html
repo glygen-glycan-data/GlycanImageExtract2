@@ -256,10 +256,10 @@
     }
 
 
-    function get_annotated_results(event, resultid, fileHref) {
+    function get_annotated_results(event, resultid, fileHref, location) {
         // avoids page re-load, and opens a new page (fileHref) with the annotated results when they are ready
         event.preventDefault();    
-
+        
         const resultsUrl = `{{urlprefix}}/annotate_results?resultid=${resultid}`;
 
         // Show feedback directly on the clicked link
@@ -271,19 +271,20 @@
         link.classList.add('disabled');
         link.style.pointerEvents = 'none';
 
-        jQuery.getJSON(resultsUrl, function (d) {
-            // Restore the link state
+        jQuery.ajax({
+            url: resultsUrl,
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ location: location }),
+            dataType: 'json'
+        }).done(function (d) {
             link.innerHTML = originalHtml;
             link.classList.remove('disabled');
             link.style.pointerEvents = 'auto';
 
             if (d.status === "OK") {
-                // Cache-bust with a timestamp so the browser doesn't show stale content
                 const ts = Date.now();
-                const urlWithTs = fileHref + '?ts=' + ts;
-
-                // Now that the backend has finished, open the file in a new tab
-                window.open(urlWithTs, '_blank');
+                window.open(fileHref + '?ts=' + ts, '_blank');
             } else {
                 alert('Failed to generate annotated files. Please try again.');
             }
@@ -476,11 +477,13 @@
 
             console.log("annotated_pdf_href",annotated_pdf_href)
 
-            resstr += "<span><a class='pill-link' href='#' onclick=\"get_annotated_results(event, '" 
-                + list_id + "', '" + annotated_pdf_href + "')\"> Annotated PDF</a> | </span>";
+            resstr += `<span><a class='pill-link' href='#'
+                onclick="get_annotated_results(event, '${list_id}', '${annotated_pdf_href}', '${location}')">
+                Annotated PDF</a> | </span>`;
 
-            resstr += "<span><a class='pill-link' href='#' onclick=\"get_annotated_results(event, '" 
-                + list_id + "', '" + annotated_tsv_href + "')\"> TSV Results</a> | </span>";
+            resstr += `<span><a class='pill-link' href='#'
+                onclick="get_annotated_results(event, '${list_id}', '${annotated_tsv_href}', '${location}')">
+                TSV Results</a> | </span>`;
             
         } 
 
