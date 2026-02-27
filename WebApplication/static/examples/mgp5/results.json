@@ -20,7 +20,7 @@
     "runtime": 50.91408348083496,
     "error": [],
     "original_filepath": "input/figcap_example.pdf",
-    "abs_original_filepath": "/home/nmathias/GlycanImageExtract2/WebApplication/static/files/pzyzyb2ss2/input/figcap_example.pdf",
+    "abs_original_filepath": "/data2/projects/GlyGen/GlycanImageExtract2-dev/WebApplication/static/files/pzyzyb2ss2/input/figcap_example.pdf",
     "pipeline_name": null,
     "figure_result": [
       {
