@@ -1,6 +1,6 @@
 #!../.venv/bin/python
 
-import sys, os, glob, json
+import sys, os, glob, json, copy
 import time, shutil
 import requests
 
@@ -39,8 +39,13 @@ for pat in patterns:
 def update_votes(instance):
     result = json.loads(open("static/examples/"+instance+"/results.json").read())
     correct = json.loads(open("static/answers/"+instance+"/correct.json").read())
+    if 'document_metadata' in correct["result"]:
+        result["result"]["document_metadata"] = copy.deepcopy(correct["result"]["document_metadata"])
     correctcnt = 0; incorrectcnt = 0;
     for f1,f2 in zip(result["result"]["figure_result"],correct["result"]["figure_result"]):
+        for k in ("caption_text","cleaned_caption","figure_name","label"):
+            if f2.get(k):
+                f1[k] = f2[k]
         for g1 in f1["glycans"]:
             g1bb = BoundingBox(**dict(zip("xywh",g1['bbox'])))
             bestg2 = None
