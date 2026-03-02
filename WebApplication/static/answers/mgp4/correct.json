@@ -2,18 +2,33 @@
   "result": {
     "figure_result": [
       {
+        "caption_text": "The experimental workflow used to study the kinetics of the PNGase F deglycosylation reaction.",
+        "cleaned_caption": true,
+        "label": "FIGURE 1",
         "glycans": []
       },
       {
+        "caption_text": "The LC-SRM chromatograms show the appearance of de-glycosylated peptides and the disappearance of glycopeptide in the sample from 0 min to overnight.",
+        "cleaned_caption": true,
+        "label": "FIGURE 2",
         "glycans": []
       },
       {
+        "caption_text": "The decay profile of the IgG1 glycopeptide carrying the fucosylated glycan with 0 galactoses (H3N4F1) following the addition of PNGase F at a concentration of 2.5 U/μl. The [GP] signal was obtained by dividing the peak area of this glycopeptide by the integrated peak area of internal standard (GluFib) at each time point.",
+        "cleaned_caption": true,
+        "label": "FIGURE 3",
         "glycans": []
       },
       {
+        "caption_text": "The plot of ln[GP] vs. time for the IgG1 glycopeptide carrying the fucosylated glycan with 0 galactoses (H3N4F1). These data were obtained following the addition of PNGase F at a concentration of 2.5 U/μl. The [GP] signal was achieved by dividing the peak area of this glycopeptide by the integrated peak area of internal standard (GluFib) at each time point.",
+        "cleaned_caption": true,
+        "label": "FIGURE 4",
         "glycans": []
       },
       {
+        "caption_text": "The amino acid sequences of the tryptic glycopeptide of IgG1, IgG2/3, and IgG4 and the glycan structures investigated, which were categorized into 4 groups: fucosylated, nonfucosylated, bisecting-GlcNAc, and sialylated.",
+        "cleaned_caption": true,
+        "label": "FIGURE 5",
         "glycans": [
           {
             "IUPAC": "GlcNAc?1-?Man?1-?(GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?(Fuc?1-?)GlcNAc",
@@ -150,6 +165,9 @@
         ]
       },
       {
+        "caption_text": "Plots of ln[GP] vs. time for the fucosylated glycopeptides. These data were obtained following the addition of PNGase F at a concentration of 2.5 U/μl. The [GP] signal was achieved by dividing the peak area of this glycopeptide by the integrated peak area of internal standard (GluFib) at each time point.",
+        "cleaned_caption": true,
+        "label": "FIGURE 6",
         "glycans": [
           {
             "IUPAC": "GlcNAc?1-?Man?1-?(GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?(Fuc?1-?)GlcNAc",
@@ -187,6 +205,9 @@
         ]
       },
       {
+        "caption_text": "Plots of ln[GP] vs. time for the nonfucosylated glycopeptides. These data were obtained following the addition of PNGase F at a concentration of 2.5 U/μl. The [GP] signal was achieved by dividing the peak area of this glycopeptide by the integrated peak area of internal standard (GluFib) at each time point.",
+        "cleaned_caption": true,
+        "label": "FIGURE 7",
         "glycans": [
           {
             "IUPAC": "GlcNAc?1-?Man?1-?(GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?GlcNAc",
@@ -224,6 +245,9 @@
         ]
       },
       {
+        "caption_text": "Plots of ln[GP] vs. time for the glycopeptides whose glycans contain a bisecting-GlcNAc. These data were obtained following the addition of PNGase F at a concentration of 2.5 U/μl. The [GP] signal was obtained by dividing the peak area of this glycopeptide by the integrated peak area of internal standard (GluFib) at each time point.",
+        "cleaned_caption": true,
+        "label": "FIGURE 8",
         "glycans": [
           {
             "IUPAC": "GlcNAc?1-?Man?1-?(GlcNAc?1-?)(GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?(Fuc?1-?)GlcNAc",
@@ -261,6 +285,9 @@
         ]
       },
       {
+        "caption_text": "Plots of ln[GP] vs. time for the sialylated glycopeptides. These data were obtained following the addition of PNGase F at a concentration of 2.5 U/μl. The [GP] signal was obtained by dividing the peak area of this glycopeptide by the integrated peak area of internal standard (GluFib) at each time point.",
+        "cleaned_caption": true,
+        "label": "FIGURE 9",
         "glycans": [
           {
             "IUPAC": "GlcNAc?1-?Man?1-?(NeuAc?2-?Gal?1-?GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?(Fuc?1-?)GlcNAc",
@@ -297,6 +324,40 @@
           }
         ]
       }
-    ]
+    ],
+    "document_metadata": {
+      "pmid": "29042829",
+      "pmcid": "5632957",
+      "title": "Kinetics of N-Glycan Release from Human Immunoglobulin G (IgG) by PNGase F: All Glycans Are Not Created Equal",
+      "authors": [
+        {
+          "surname": "Huang",
+          "given_names": "Yining",
+          "full_name": "Yining Huang"
+        },
+        {
+          "surname": "Orlando",
+          "given_names": "Ron",
+          "full_name": "Ron Orlando"
+        }
+      ],
+      "journal": {
+        "title": "Journal of biomolecular techniques : JBT",
+        "publisher": "Association of Biomolecular Resource Facilities"
+      },
+      "publication_date": {
+        "year": "2017",
+        "month": "12"
+      },
+      "doi": "10.7171/jbt.17-2804-002",
+      "url": {
+        "pmid_url": "https://pubmed.ncbi.nlm.nih.gov/29042829/",
+        "pmc_url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC5632957/"
+      },
+      "volume": "28",
+      "issue": "4",
+      "fpage": "150",
+      "lpage": "157"
+    }
   }
 }
