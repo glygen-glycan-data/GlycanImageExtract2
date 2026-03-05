@@ -303,169 +303,27 @@
             }
         }).fail(function () {
             link.innerHTML = originalHtml;
-            link.classList.remove('disabled');
-            link.style.pointerEvents = 'auto';
+            // link.classList.remove('disabled');
+            // link.style.pointerEvents = 'auto';
             alert('Failed to contact server for annotated files.');
         });
     }
-    
-    function formatCitation(meta, pmc_publication) {
-        if (!meta) return '';
 
-        function s(x) {
-            if (x != null && x !== '') {
-                return String(x).trim();
-            }
-            return null;
-        }
-
-        // ---- AUTHORS (show all authors) ----
-        var authors = meta.authors;
-        var authorStr = null;
-
-        if (authors && authors.length) {
-            // var limited = authors.slice(0, 3);
-            authorStr = authors.map(function (a) {
-                if (!a) return null;
-
-                var surname = s(a.surname || (a.name && a.name.surname));
-                var given = s(a.given_names || (a.name && a.name.given_names));
-
-                var initials = null;
-                if (given) {
-                    // Strip non-letters, split on whitespace, take first letter of each part
-                    initials = given
-                        .replace(/[^A-Za-z\s]/g, ' ')
-                        .split(/\s+/)
-                        .filter(Boolean)
-                        .map(function (part) { return part.charAt(0).toUpperCase(); })
-                        .join('');
-                }
-
-                if (surname && initials) return surname + ' ' + initials;
-                if (surname) return surname;
-                if (initials) return initials;
-                return null;
-            }).filter(Boolean).join(', ');
-
-            if (authorStr) {
-                authorStr += '.';
-            }
-        }
-
-        // ---- TITLE (with embedded PMC URL link) ----
-        var titleStr = null;
-        // var url = s(meta.pmc_url);
-        var pmid_url = s(meta.url.pmid_url)
-        
-        if (s(meta.title)) {
-            var titleText = s(meta.title) + '.';
-            
-            if (pmid_url) {
-                titleStr = '<a href="' + pmid_url +
-                    '" target="_blank" rel="noopener noreferrer" ' +
-                    'style="text-decoration: underline; color: inherit;">' + titleText + '</a>';
-            } else {
-                titleStr = titleText;
-            }
-        }
-
-        // ---- JOURNAL 
-        var journalTitle = meta.journal && (meta.journal.abbrev || meta.journal.title);
-        var journalStr = null;
-        if (s(journalTitle)) {
-            journalStr = '<i>' + s(journalTitle) + '</i>.';
-        }
-
-        // ---- YEAR;VOLUME(ISSUE):PAGES ----
-        var year = s(meta.publication_date && meta.publication_date.year);
-
-        var vol = s(meta.volume);
-        var iss = s(meta.issue);
-        var volIss = null;
-        if (vol) {
-            volIss = iss ? vol + '(' + iss + ')' : vol;
-        } else if (iss) {
-            volIss = '(' + iss + ')';
-        }
-
-        var fp = s(meta.fpage);
-        var lp = s(meta.lpage);
-        var pageStr = null;
-        if (fp && lp) {
-            pageStr = fp + '-' + lp; 
-        } else if (fp) {
-            pageStr = fp;
-        } else if (lp) {
-            pageStr = lp;
-        }
-
-        var yearVolPage = null;
-        if (year || volIss || pageStr) {
-            var seg = '';
-
-            if (year) {
-                seg += year;
-            }
-            if (volIss) {
-                seg += (seg ? ';' : '') + volIss;  // "Year;Volume(Issue)"
-            }
-            if (pageStr) {
-                if (volIss) {
-                    seg += ':' + pageStr;          // "Year;Volume(Issue):Pages"
-                } else {
-                    seg += (seg ? ':' : '') + pageStr; // "Year:Pages" or just "Pages"
-                }
-            }
-
-            if (seg) {
-                seg += '.'; // Terminate this block
-                yearVolPage = seg;
-            }
-        }
-
-        // When building yearVolPage, you already have: year, vol, iss, fp, lp
-        var hasVolOrPages = Boolean(vol || iss || fp || lp);
-
-        // ---- ASSEMBLE PARTS (AMA order) ----
-        var trailing = [journalStr, yearVolPage].filter(Boolean).join(' ');
-        var trailingComplete = Boolean(journalStr && yearVolPage && hasVolOrPages);
-
-        if (!trailingComplete && pmc_publication) {
-            trailing = pmc_publication;
-        }
-
-        var parts = [
-            authorStr,
-            titleStr,
-            trailing || null
-        ];
-
-        var citation = parts.filter(Boolean).join(' ').trim();
-
-        // Ensure it ends with a period
-        if (!citation.endsWith('.')) {
-            citation += '.';
-        }
-
-        return citation;
-    }
-
-    function addDownloadButton(result) {
+    function addDownloadButton(result_doc) {
         const alert_data = document.getElementById("alert_data");
         const reselt = document.getElementById("result");
         const div = document.getElementById("list_id");
         div.style.backgroundColor = "#FFFFFF";
 
-        const location = result['location'] || "files";
-        const document_metadata = result['result']['document_metadata']
-        const figures = result['result']['figure_result'];
-        const file_extension = result['submission_detail']['original_file_name'].split('.').pop();
+        const location = result_doc['location'] || "files";
+        const document_metadata = result_doc['result']['document_metadata']
+        const figures = result_doc['result']['figure_result'];
+        const file_extension = result_doc['submission_detail']['original_file_name'].split('.').pop();
         
-        let pmc_publication = null;
-        if (result && result['pmc_publication']) {
-            pmc_publication = result['pmc_publication'];
-        }
+        // let pmc_publication = null;
+        // if (result_doc && result_doc['pmc_publication']) {
+        //     pmc_publication = result_doc['pmc_publication'];
+        // }
 
         let alert_str = "";
         let resstr = "";
@@ -475,7 +333,7 @@
         // Heading + pill links
         resstr += "<h3 class='result-heading'>Results: ";
         resstr += "<span><a class='pill-link' href='{{urlprefix}}/static/" + location + "/" + list_id + "/results.json' target='_blank'>JSON data</a> | </span> ";
-        const originalHref = "{{urlprefix}}/static/" + location + "/" + list_id + "/input/" + encodeURIComponent(result.submission_detail.original_file_name);
+        const originalHref = "{{urlprefix}}/static/" + location + "/" + list_id + "/input/" + encodeURIComponent(result_doc.submission_detail.original_file_name);
         if (file_extension === "pdf") {
             resstr += "<span><a class='pill-link' target='_blank' href='" + originalHref + "'>Original PDF</a> | </span>";
         } else {
@@ -483,14 +341,14 @@
         }
 
 
-        if (result['submission_type'] == 'Manuscript' && !result['pmid_job']) {
-            const filename = result.submission_detail.original_file_name
+        if (result_doc['submission_type'] == 'Manuscript' && !result_doc['result']['pmid_job']) {
+            const filename = result_doc.submission_detail.original_file_name
             const baseName = filename.replace(/\.[^/.]+$/, '')
 
             const annotated_pdf_href = "{{urlprefix}}/static/" + location + "/" + list_id + "/annotated_files/" + encodeURIComponent(baseName + '.annotated.pdf');
             const annotated_tsv_href = "{{urlprefix}}/static/" + location + "/" + list_id + "/annotated_files/" + encodeURIComponent(baseName + '.annotated.tsv');
 
-            console.log("annotated_pdf_href",annotated_pdf_href)
+            // console.log("annotated_pdf_href",annotated_pdf_href)
 
             resstr += `<span><a class='pill-link' href='#'
                 onclick="get_annotated_results(event, '${list_id}', '${annotated_pdf_href}', '${location}')">
@@ -507,13 +365,16 @@
         resstr += "</h3>";
         
         // Paper citation - for PMID
-        const citationHtml = formatCitation(document_metadata, pmc_publication);
-        if (citationHtml && citationHtml.length > 0) {
-            resstr += `<div class="citation-container" style="padding: 20px 0 10px 0;">${citationHtml}<span style="white-space:nowrap;"><b> PMID:</b> <a href='${document_metadata.url.pmid_url}'>${document_metadata.pmid}</a></span></div>`;
-            // resstr += `<div class='citation-container' style='padding: 0 0 10px 0;'>PMID: <a href='${document_metadata.url.pmid_url}'>${document_metadata.pmid}</a></div>`;
+        // const citationHtml = formatCitation(document_metadata, pmc_publication);
+        const citation = result_doc.result.citation
+        if (citation && citation.length > 0) {
+            resstr += `<div class="citation-container" style="padding: 20px 0 10px 0;">${citation}
+                <span style="white-space:nowrap;"><b> PMID:</b> <a target='_blank' href='${result_doc.result.pmid_url}'>${result_doc['submission_detail']['pmid']}</a></span>
+                </div>`;
+        //     // resstr += `<div class='citation-container' style='padding: 0 0 10px 0;'>PMID: <a href='${document_metadata.url.pmid_url}'>${document_metadata.pmid}</a></div>`;
         }
 
-        if (result['state'] === "Error") {
+        if (result_doc['state'] === "Error") {
             resstr = "";
         }
 
@@ -538,7 +399,7 @@
             scale = 550 / figure_width;
         }
         
-        // console.log(result)
+        // console.log(result_doc)
         // Header row (kept minimal)
         innerdiv += `<tr style='background-color:#7c7d7d;'>`;
         innerdiv += `<th colspan='3' style='color:#ffffff; text-align:center;'></th>`;
@@ -567,14 +428,17 @@
             `;
         });
 
-        if (figure.cleaned_caption && figure.caption_text) {
+        if (figure.caption) {
+            let label = '';
+            let labelHtml = '';
+            if (figure.figure_number != null && figure.figure_number !== '') {
+                label = "Figure " + figure.figure_number;
+                labelHtml = '<b>' + label + ':</b> ';
+            }
+
             innerdiv += `<div class="figure-caption-block">
-                    <p class="figure-caption-text"><b>${figure.label}:</b> ${figure.caption_text}</p>
-                </div>`;
-        } else if (figure.full_caption_text) {
-            innerdiv += `<div class="figure-caption-block">
-                    <p class="figure-caption-text">${figure.full_caption_text}</p>
-                </div>`;
+                <p class="figure-caption-text">${labelHtml}${figure.caption}</p>
+            </div>`;
         }
 
         innerdiv += `</div>
@@ -735,11 +599,11 @@
                 </table>
                 `;
 
-        if (result['state'] === "Error") {
-            if (result['status'] === "") {
+        if (result_doc['state'] === "Error") {
+            if (result_doc['status'] === "") {
                 innerdiv = "<h3>Unexpected Error! Please notify <A href=\"mailto:nje5+extractor@georgetown.edu?Subject=Glycan Image Extractor error...&Body=%0AJob ID: " + list_id + "%0A\">Nathan Edwards</A><P/><b>Job&nbsp;ID:&nbsp;" + list_id + ".</b></h3>";
             } else {
-                innerdiv = "<h3>Error: " + result['status'] + "<P/><b>Job&nbsp;ID:&nbsp;" + list_id + ".</b></h3>";
+                innerdiv = "<h3>Error: " + result_doc['status'] + "<P/><b>Job&nbsp;ID:&nbsp;" + list_id + ".</b></h3>";
             }
         }
 
