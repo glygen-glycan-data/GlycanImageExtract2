@@ -158,9 +158,8 @@ class FilterFitzByFigcapContainers(ImageFilter):
                     merged_figures_keys.add(figcap_key)
 
                     # if the figcap image has a caption - use that caption for the matched fitz image
-                    for caption_type in ('caption_text', 'full_caption_text', 'cleaned_caption'):
-                        if caption_type in figcap_fig_data:
-                            fitz_fig_data.update({caption_type: figcap_fig_data[caption_type]})      
+                    if "caption" in figcap_fig_data:
+                        fitz_fig_data.update({"caption": figcap_fig_data["caption"]})      
                     break
                 
         # Step 2: Collect info about all the fitz matches contained inside the figcap box
@@ -201,7 +200,8 @@ class FilterFitzByFigcapContainers(ImageFilter):
                 if figcap_key not in merged_figures_keys:
                     merged_figures[pdf_page_number][figcap_key] = figcap_figures[figcap_fig_no]
                     merged_figures[pdf_page_number][figcap_key].update({
-                        'merge_type': 'figcap_container'
+                        # 'merge_type': 'figcap_container'
+                        'merge_type': 'figcap'
                     })
                     merged_figures_keys.add(figcap_key)
             else:
@@ -255,19 +255,19 @@ class MergeByIOU(ImageFilter):
                             merged_figures_keys.add(figcap_key)     # mark the figcap figure as matched 
 
                             # if the figcap image has a caption - use that caption for the matched fitz image
-                            for caption_type in ('caption_text', 'full_caption_text', 'cleaned_caption'):
-                                if caption_type in figcap_fig_data:
-                                    fitz_fig_data.update({caption_type: figcap_fig_data[caption_type]})  
+                            if "caption" in figcap_fig_data:
+                                fitz_fig_data.update({"caption": figcap_fig_data["caption"]})  
                         else:
                             merged_figures_keys.add(fitz_key)
                             merged_figures_keys.add(figcap_key)
                             
                             merged_figures[pdf_page_number][fitz_key] = fitz_fig_data
                             merged_figures[pdf_page_number][fitz_key].update({
-                                'merge_type': 'iou',
-                                'merge_iou': iou,
+                                # 'merge_type': 'iou',
+                                'merge_type': 'fitz'    # means the fitz based and figcap image matched based on IOU, but we are using all the properties from the fitz image + figcap captions
+                                # 'merge_iou': iou,
                                 **{k: v for k, v in figcap_fig_data.items() if k in (
-                                    'label', 'caption_text', 'full_caption_text', 'cleaned_caption'
+                                    'label', 'caption'
                                 )}
                             })
         except Exception as e:
@@ -296,7 +296,8 @@ class RegularMerge(ImageFilter):
 
             merged_figures[pdf_page_number][key] = fig_data.copy()
             merged_figures[pdf_page_number][key].update({
-                'merge_type': 'regular_' + fig_data['figure_type']
+                # 'merge_type': 'regular_' + fig_data['figure_type']
+                'merge_type': fig_data['figure_type']
             })
             merged_figures_keys.add(key)
 
@@ -345,5 +346,11 @@ class ImageFilterPipeline:
                 pdf_page_number, fitz_figures, figcap_figures, 
                 merged_figures, merged_figures_keys
             )
-        
-        return merged_figures, merged_figures_keys
+
+        # adding a clean up step which removes (not so important keys, so that it is not carried 
+        # foward in the json results) the 'figure_type'
+        for page_num in merged_figures:
+            for fig_key in merged_figures[page_num]:
+                merged_figures[page_num][fig_key].pop('figure_type', None)
+
+        return merged_figures

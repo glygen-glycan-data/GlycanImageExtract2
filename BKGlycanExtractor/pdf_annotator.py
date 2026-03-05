@@ -357,14 +357,14 @@ def build_annotations(input_items, all_json_data, base_url, output_dir=None):
 def annotate_figure(doc, result_item, taskid, image_data, base_url):
     '''Draw figure box and glycan boxes / labels on a pdf page'''
 
-    fig_num = result_item.get("image_count")
+    image_count = result_item.get("image_count")
     page_num = result_item.get("page_number", 1)
 
     # Page indices in fitz are 0 based
     try:
         page = doc[page_num - 1]
     except IndexError:
-        print(f"Warning: Page {page_num} not found in PDF, skipping figure {fig_num}")
+        print(f"Warning: Page {page_num} not found in PDF, skipping figure {image_count}")
         return 
 
     try:
@@ -375,7 +375,7 @@ def annotate_figure(doc, result_item, taskid, image_data, base_url):
             fig_annot.set_colors(stroke=(0, 0, 1))
             fig_annot.set_border(width=0.5)
 
-            content = f"fig:{fig_num}\n"
+            content = f"fig:{image_count}\n"
             xref = result_item.get("xref")
             if xref is not None and xref > 0:
                 content += f"xref: {xref}\n"
@@ -395,11 +395,11 @@ def annotate_figure(doc, result_item, taskid, image_data, base_url):
                 pdf_gly_box = pdf_context_instance.to_pdf_bbox(bbox)
                 gly_annot = page.add_rect_annot(pdf_gly_box.bbox())
 
-                gid = f"G{fig_num}.{glycan.get('fig_glycan_count', '?')}"
+                gid = f"G{image_count}.{glycan.get('fig_glycan_count', '?')}"
 
                 url = (
                     f"{base_url}/result/{taskid}"
-                    f"#glycan-{fig_num}-{glycan.get('fig_glycan_count', '?')}"
+                    f"#glycan-{image_count}-{glycan.get('fig_glycan_count', '?')}"
                 )
 
                 content = f"id: {gid}\nurl: {url}\n"
@@ -424,7 +424,7 @@ def annotate_figure(doc, result_item, taskid, image_data, base_url):
                     "ID": gid,
                     "xref": result_item.get("xref"),
                     "page_num": page_num,
-                    "fig_num": fig_num,
+                    "fig_num": image_count,     # fig_num was used as a key in the past tsv file, so keep the same key for backward compatability
                     "accession": glycan.get('accession', ''),
                     "iupac": glycan.get('IUPAC', ''),
                     "composition": glycan.get('composition_str', ''),

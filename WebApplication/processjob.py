@@ -57,7 +57,6 @@ class JobInstance:
         # Open log file for writing
         self.log_file = open(self.log_file_path, 'w')
 
-        self.pipeline_name = None
         self.job_finished = False
         self.results = []
         self.document_metadata = {}
@@ -310,20 +309,19 @@ class JobInstance:
         if kwargs.get('stage') == "GLYCAN" and kwargs.get('checkpoint') == "DONE":
             nglycan = kwargs.get('nglycan')
             index = kwargs.get('index')
-            figure_num = kwargs.get("figure_num",0)
+            image_number = kwargs.get("image_number", 0)
             page_num = kwargs.get("page_num",0)
             pmid_job = kwargs.get("pmid_job", False)
             
             if pmid_job:    # for PMID submissions
-                self.update_status("Processing %s, analyzed %d/%d glycan(s)"%(kwargs['figure_name'],index,nglycan))
+                self.update_status("Processing image %s, analyzed %d/%d glycan(s)"%(kwargs['figure_number'],index,nglycan))
             elif page_num == 0:     # for simple/multi glycans submissions
                 self.update_status("Processing image, analyzed %d/%d glycan(s)"%(index,nglycan))
             else:   # for pdf submission
-                # self.update_status("Processing image %d from page %d, analyzed %d/%d glycan(s)"%(self.imageno,self.pageno,index,nglycan))
-                self.update_status("Processing image %d from page %d, analyzed %d/%d glycan(s)"%(figure_num,page_num,index,nglycan))
+                self.update_status("Processing image %d from page %d, analyzed %d/%d glycan(s)"%(image_number,page_num,index,nglycan))
 
 
-    def find_glycans(self, figure_path, image_folders, **kwargs):
+    def find_glycans(self, figure_path, image_folders, pmid_job = False, **kwargs):
         config = Config_Manager()
         self.pipeline_name = self.pipeline_mapping[self.submission_type]
         pipeline = config.get_pipeline(self.pipeline_name)
@@ -340,11 +338,11 @@ class JobInstance:
         nglycan = len(figure_semantics.glycans())
 
         if kwargs.get("pmid_job", False):
-            self.update_status("Processing %s, postprocessing %d glycan(s)"%(kwargs['figure_name'],nglycan))
+            self.update_status("Processing image %s, postprocessing %d glycan(s)"%(kwargs['figure_number'],nglycan))
         elif kwargs.get("page_num",0) == 0:
             self.update_status("Processing image, postprocessing %d glycan(s)" % (nglycan))
         else:
-            self.update_status("Processing image %d from page %d, postprocessing %d glycan(s)" % (kwargs["figure_num"], kwargs["page_num"], nglycan))
+            self.update_status("Processing image %d from page %d, postprocessing %d glycan(s)" % (kwargs["image_number"], kwargs["page_num"], nglycan))
 
         self.annotate_image(figure_semantics)
         self.process_glycans(figure_semantics, image_folders)
@@ -388,19 +386,9 @@ class ImageJob(JobInstance):
         self.update_status("Processing image")
         self.task_detail['original_filepath'] = self.abs_to_rel(self.input_filepath)
         self.task_detail['abs_original_filepath'] = self.input_filepath
-        self.task_detail['pipeline_name'] = self.pipeline_name
         self.find_glycans(self.input_filepath,image_folders)
 
 class PMIDJob(JobInstance):
-
-    def capitalize_first_letter(self, s):
-        '''Capitalize the first alphabetic character'''
-        if not s:
-            return s
-        for i, c in enumerate(s):
-            if c.isalpha():
-                return s[:i] + c.upper() + s[i + 1:]
-        return s
 
     def process_figures(self, image_folders):
         base_path = os.path.dirname(os.path.abspath(__file__))
@@ -408,7 +396,8 @@ class PMIDJob(JobInstance):
         self.update_status("Processing image")
         self.task_detail['original_filepath'] = self.abs_to_rel(self.input_filepath)
         self.task_detail['abs_original_filepath'] = self.input_filepath
-        self.task_detail['pipeline_name'] = self.pipeline_name
+
+        pmc_publication_info = self.task_detail.get('pmc_publication')
 
         figures_src = os.path.join(base_path, "input", self.id, f"PMID-{self.pmid}.tar.gz")
         figures_dest_dir = image_folders['figures_dir']
@@ -428,30 +417,23 @@ class PMIDJob(JobInstance):
                             continue
 
                         nxml_content = file_obj.read().decode('utf-8', errors='ignore')
-                        xml_obj = XMLParser(nxml_content)
+                        xml_obj = XMLParser(nxml_content,pmc_publication=pmc_publication_info)
 
                         try:
                             xml_data = xml_obj.parse()
 
-                            # document level
+                            # document level information
                             self.document_metadata = {
                                 k: v for k, v in xml_data.items() if k != "figure_info"
                             }
+                            self.document_metadata['citation'] = xml_data.get('citation', None)
 
                             # per figure: basename --> fig_info
                             self.figure_info_by_basename = xml_data.get("figure_info") or {}
 
                             fig_to_label_map = {}
                             for basename, info in self.figure_info_by_basename.items():
-                                raw_label = info.get("label")
-                                if not raw_label:
-                                    continue
-                                m = re.search(r'^\s*\w+\.?\s*(\d+)\.?\s*$', raw_label)
-                                if m:
-                                    label_normalized = f"Figure {m.group(1)}"
-                                else:
-                                    label_normalized = self.capitalize_first_letter(raw_label.strip())
-                                fig_to_label_map[basename] = label_normalized
+                                fig_to_label_map[basename] = info['figure_number']
 
                         except Exception as e:
                             self.log_file.write(f"Warning: Could not parse nxml: {e}\n")
@@ -477,8 +459,8 @@ class PMIDJob(JobInstance):
                     if not file_obj:
                         continue
 
-                    label_id = fig_to_label_map[base_name]
-                    renamed_file = f"{label_id}{ext}"
+                    figure_number = fig_to_label_map[base_name]
+                    renamed_file = f"{figure_number}{ext}"
                     renamed_file_path = os.path.join(figures_dest_dir, renamed_file)
 
                     with open(renamed_file_path, 'wb') as f:
@@ -488,7 +470,7 @@ class PMIDJob(JobInstance):
                     seen_basenames.add(base_name)
 
                     fig_info = self.figure_info_by_basename.get(base_name, {}).copy()
-                    fig_info["label"] = label_id
+                    fig_info["figure_number"] = figure_number
                     self.figure_info_by_renamed[renamed_file] = fig_info
 
         except Exception as e:
@@ -500,7 +482,7 @@ class PMIDJob(JobInstance):
         image_files.sort()
 
         image_count = 1
-        for figure_num, fig_name in enumerate(image_files, 1):
+        for _, fig_name in enumerate(image_files, 1):
             fig_path = os.path.join(figures_dest_dir, fig_name)
 
             with Image.open(fig_path) as img:
@@ -511,22 +493,19 @@ class PMIDJob(JobInstance):
                 # look up XML metadata for this renamed figure (if any)
                 fig_info = self.figure_info_by_renamed.get(fig_name, {})
 
-                caption_text = fig_info.get("caption_text")
                 figure_metadata = {
                     "fig_bbox": [0, 0, width, height],
-                    "pmid_job": True,
-                    "figure_name": base_fig_name,
                     "image_count": image_count,
                     # XML-derived metadata (keys match XMLParser output)
-                    "label": fig_info.get("label"),
-                    "caption_text": caption_text,
-                    "cleaned_caption": True if caption_text else False,
+                    "caption": fig_info["caption"],
+                    "figure_number": fig_info["figure_number"]
                 }
 
                 self.update_status("Processing %s" % base_fig_name)
                 self.find_glycans(
                     fig_path,
                     image_folders,
+                    pmid_job = True,
                     **figure_metadata,
                 )
 
@@ -555,7 +534,7 @@ class PDFJob(JobInstance):
         # update task_detail - with the original input_filepath
         self.task_detail['original_filepath'] = self.abs_to_rel(self.input_filepath)
         self.task_detail['abs_original_filepath'] = self.input_filepath
-        self.task_detail['pipeline_name'] = self.pipeline_name
+        # self.task_detail['pipeline_name'] = self.pipeline_name
 
         doc = fitz.open(self.input_filepath)
 
@@ -565,7 +544,7 @@ class PDFJob(JobInstance):
 
         for page_num, fig_data in pdf_images_metadata.items():
             page = doc[page_num-1]
-            for figure_num, figure_info in fig_data.items():
+            for image_number, figure_info in fig_data.items():
                 image_path = os.path.join(image_folders['figures_dir'], f"{figure_info['image_count']}.png")
 
                 pix = PDFHandler.save_image(doc, page, figure_info['pdf_fig_bbox'], image_path, xref=figure_info.get('xref'), dpi=STANDARD_DPI, annots=True)
@@ -575,6 +554,6 @@ class PDFJob(JobInstance):
 
                 self.log_file.write(f"\nSaved image to {image_path}")
 
-                self.update_status("Processing image %d from page %d" % (figure_num, page_num))
+                self.update_status("Processing image %d from page %d" % (image_number, page_num))
 
-                self.find_glycans(image_path, image_folders, figure_num=figure_num, page_num=page_num, **figure_info)
+                self.find_glycans(image_path, image_folders, page_num=page_num, **figure_info)

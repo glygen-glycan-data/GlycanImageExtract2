@@ -107,7 +107,6 @@ class ReferenceAPIFileBased(APIFramework):
                 "error": error,
                 "original_filepath": updated_task_detail['original_filepath'],
                 "abs_original_filepath": updated_task_detail['abs_original_filepath'],
-                "pipeline_name": updated_task_detail['pipeline_name'],
                 "figure_result": result,
                 "job_type": job_instance.__class__.__name__,
                 "finished": True,
@@ -116,7 +115,7 @@ class ReferenceAPIFileBased(APIFramework):
             }
 
             if document_metadata:
-                res["document_metadata"] = document_metadata
+                res.update(**document_metadata)
 
             result_queue.put(res)
 

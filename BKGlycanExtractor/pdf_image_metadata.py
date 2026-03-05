@@ -103,7 +103,7 @@ class FigCapImageSearch:
         pdf_metadata = {
 
             page_num (int): {
-                figure_number (int): {
+                image_number (int): {
                     rest other key-value pairs about the figure
                 }
             },
@@ -147,8 +147,7 @@ class FigCapImageSearch:
                 ('page_number','image_number','image_count','bbox', 'width', 
                 'height', 'xref', 'pdf_fig_bbox', 'pdf_fig_width', 'pdf_fig_height', 
                 'page_width', 'page_height', 'caption_bbox', 'figure_name',
-                'width', 'height', 'label', 'caption_text', 'full_caption_text', 
-                'cleaned_caption', 'dpi'
+                'width', 'height', 'caption', 'dpi', 'figure_number'
             )} 
 
         try:
@@ -201,7 +200,7 @@ class HybridImageSearch:
                 continue
 
             # all the merged figures on the given page number
-            merged_figures, merged_figures_keys = self._merge_figures_metadata_from_page(pg_no, fitz_figures, figcap_figures)
+            merged_figures = self._merge_figures_metadata_from_page(pg_no, fitz_figures, figcap_figures)
 
             all_merged_figures.update(merged_figures)
 
@@ -230,11 +229,11 @@ class HybridImageSearch:
             RegularMerge(image_source='figcap'),
         ])
 
-        merged_figures, merged_figures_keys = pipeline.apply(
+        merged_figures = pipeline.apply(
             pdf_page_number, fitz_figures, figcap_figures, merged_figures, merged_figures_keys
         )
 
-        return merged_figures, merged_figures_keys
+        return merged_figures
 
     # Default vertical tolerance (PDF points) for treating boxes as the same "row" when sorting L→R, T→B
     DEFAULT_ROW_TOLERANCE = 30

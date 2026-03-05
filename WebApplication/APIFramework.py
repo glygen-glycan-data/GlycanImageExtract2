@@ -637,6 +637,8 @@ class APIFramework:
                     pmcid = resource.get("pmcid")
 
                     # 1) get citation from json response - if available
+                    # pmc_publication - is the PMC publication information obtained
+                    # from hittin the PMC API (useful when publication information is only partially present in the xml document provided by pmc)
                     pmc_publication = resource.get("pmc_publication")
 
                     # 2) extract the href link, which is in ftp (NCBI supports both ftp and https protocols)
@@ -722,6 +724,9 @@ class APIFramework:
             if pmid and pmcid:
                 task_detail.update({"pmid": pmid, "pmcid": pmcid})
 
+            if pmc_publication:
+                task_detail.update({"pmc_publication": pmc_publication})
+
             if curation_task:
                 task_detail.update({"curation_task": curation_task})
 
@@ -735,14 +740,10 @@ class APIFramework:
                 "state": self.QUEUED,
                 "status": "",
                 "finished": False,
-                "submission_type": submission_type,
                 "submit_time": time.time(),
                 "sessionid": sessionid,
                 "result": {},
-                **({"pmid": pmid, "pmcid": pmcid, "pmid_job": True} if pmid and pmcid else {}),
-                "curation_task": curation_task if curation_task else None,
                 "image_search_strategy": self._image_search_type,   # add the image identification (from ini file i.e self._image_search_type or it can be hardcoded here as well)
-                **({"pmc_publication": pmc_publication} if pmc_publication else {}),
             }
             
 
@@ -1019,7 +1020,7 @@ class APIFramework:
                 data = json.loads(open(f).read())
             except json.decoder.JSONDecodeError:
                 continue
-            if 'sessionid' in data:
+            if 'sessionid' in data and 'id' in data:
                 tid = data['id']
                 sid = data['sessionid']
                 stime = data['submit_time']
