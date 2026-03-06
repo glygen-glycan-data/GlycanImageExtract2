@@ -341,7 +341,7 @@
         }
 
 
-        if (result_doc['submission_type'] == 'Manuscript' && !result_doc['result']['pmid_job']) {
+        if (result_doc['submission_detail']['submission_type'] == 'Manuscript' && !result_doc['result']['pmid_job']) {
             const filename = result_doc.submission_detail.original_file_name
             const baseName = filename.replace(/\.[^/.]+$/, '')
 

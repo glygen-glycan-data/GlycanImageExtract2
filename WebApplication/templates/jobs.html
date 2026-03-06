@@ -78,7 +78,7 @@
                     ${jobs.map((job, index) => `<tr>
                     <td>${formatSubmitTime(job.submit_time)}</td>
                     <td><a href="{{urlprefix}}/result/${job.id}">${job.submission_detail.original_file_name}</a></td>
-                    <td>${job.submission_type || job.file_type}</td>
+                    <td>${job.submission_detail.submission_type || job.file_type}</td>
                     <td class="text-truncate" title="${job.status || job.state}">${job.status || job.state}</td>
                     </tr>`).join('')}
                 </tbody>
