@@ -1,13 +1,20 @@
 {
   "result": {
+    "citation": "Sassi A, Lazaroski S, Wu G, Haslam S M, Fliegauf M, Mellouli F, Patiroglu T, Unal E, Ozdemir M A, Jouhadi Z, Khadir K, Ben-Khemis L, Ben-Ali M, Ben-Mustapha I, Borchani L, Pfeifer D, Jakob T, Khemiri M, Asplund A C, Gustafsson M O, Lundin K E, Falk-Sorqvist E, Moens L N, Gungor H E, Engelhardt K R, Dziadzio M, Stauss H, Fleckenstein B, Meier R, Prayitno K, Maul-Pavicic A, Schaffer S, Rakhmanov M, Henneke P, Kraus H, Eibel H, Kolsch U, Nadifi S, Nilsson M, Bejaoui M, Schaffer A A, Smith C I E, Dell A, Barbouche M R, Grimbacher B. Hypomorphic homozygous mutations in phosphoglucomutase 3 (PGM3) impair immunity and increase serum IgE levels. Journal of Allergy and Clinical Immunology 2014; 133(5):1410-1419.",
     "figure_result": [
       {
+        "figure_number": "1",
+        "caption": "Segregation of PGM3 mutations with disease status in families with AR-HIES. A-D, Family A,p.Glu340del; families B and D, p.Leu83Ser; and family C, p.Asp502Tyr. Circles, Female subjects; squares, male subjects; solid symbols, affected subjects with homozygous mutations; half-solid symbols, heterozygous carriers; open symbols, healthy members with wild-type PGM3; slashes, deceased subjects; double horizontal lines, consanguinity; black dots, miscarriages. Asterisks indicate mutations confirmed by using sequencing. E-H, Sequence analyses of unaffected subjects without PGM3 mutations (top), unaffected heterozygous carriers (middle in Fig 1, E-G), and homozygous affected subjects (bottom).",
         "glycans": []
       },
       {
+        "figure_number": "2",
+        "caption": "Homozygous p.Glu340del mutations within the sugar-binding domain cause reduced PGM3 expression. A, Identified mutations localize to distinct protein domains. Numbers indicate amino acid residues. B, Western blotting shows reduced PGM3 abundance in EBV-transformed B cells from both homozygous carriers of family A. Mutational status is indicated below each lane. Glyceraldehyde-3-phosphate dehydrogenase (GAPDH) confirms equal loading. HD, Healthy donor. C, Normal PGM3 expression in immortalized T cells from the patient in family C who had insufficient B-cell numbers. b-actin was used as a loading control.",
         "glycans": []
       },
       {
+        "figure_number": "4",
+        "caption": "Incomplete assembly of complex-type glycans in patients with PGM3 mutations. A, PGM3 links to N-glycosylation through UDP-GlcNAc (red). The common substrate for assembly of the complex-type N-glycans in the Golgi apparatus (vertical arrows) is used by 4 GlcNAc transferases (transferase [T] I, II, IV, and V; red arrows) with decreasing catalytic activity (increasing Km values [mmol/L UDP-GlcNAc]).27 UDP-GlcNAc produced by mutant PGM3 might be insufficient to allow for completion of N-glycan antenna formation. ER, Endoplasmic reticulum. B, Accumulation of bi-antennary N-glycans in neutrophils28 from patients with PGM3 mutations. Decreased relative abundance of tri-antennary and tetra-antennary glycans (percentage values of N-glycans detected by using glycomic profiling; see Figs E4 and E5) in affected patients B.V.7 (p.Leu83Ser; catalytic domain) and to a lesser extent in affected patient C.IV.7 (p.Asp502Tyr; phosphate-binding domain). C, The homozygous PGM3 mutation p.Glu340del causes accumulation of the hybrid-type N-glycans, with a simultaneous decrease in bi-antennary, tri-antennary, and tetra-antennary N-glycan levels in EBV B cells from patient A.V.13 (p.Glu340del; sugar-binding domain). B cells from patient B.V.7 (p.Leu83Ser; catalytic domain) have decreased tri-antennary and tetra-antennary N-glycan levels and increased bi-antennary N-glycan levels. Percentage values indicate the relative abundance of glycan types.",
         "glycans": [
           {
             "IUPAC": "Man?1-?Man?1-?(Man?1-?Man?1-?)Man?1-?(Glc?1-?Glc?1-?Glc?1-?Man?1-?Man?1-?Man?1-?)Man?1-?GlcNAc?1-?GlcNAc",
@@ -142,12 +149,18 @@
         ]
       },
       {
+        "figure_number": "E1",
+        "caption":"TH2 skewing but normal TH17 cell numbers in a patient with PGM3 mutations. Freshly isolated PBMCs from patient B.V.6 were stimulated, and cytokine profiles were determined by using FACS analysis, as indicated. Left panels: upper left gate, IL-4–producing TH2 cells; lower right gate, IFN-g–producing TH1 cells. Middle panels: upper left gate, IL-17–producing TH17 cells; lower right gate, IFN-g–producing TH1 cells. Right panels: Gate shows the proportion of CD25high/forkhead box protein 3 (FoxP3)1 regulatory T cells.",
         "glycans": []
       },
       {
+        "figure_number": "E3",
+        "caption": "Normal transferrin glycoform patterns in sera from patients with PGM3 mutations. A and B, Asialo-, mono-, di-, tri-, tetra-, and pentasialo-transferrin glycoform patterns in a control serum were analyzed by using HPLC (quality control [QC] level 1 and 2). C and D, Normal HPLC chromatograms demonstrate normal relative distribution of transferrin glycoforms in sera from patients carrying PGM3 mutations: A.V.12 (p.Glu340del) and C.IV.7 (p.Asp502Tyr). Transferrin carries 2 bi-antennary N-linked glycans with terminal sialic acid residues, which are used for diagnostic testing for CDGs. Defective transferrin glycosylation would be indicated by an increase of at least one of the asialotransferrin, mono-sialotransferrin, di-sialotransferrin, or tri-sialotransferrin glycoform levels and a decrease in tetra-sialotransferrin levels.",
         "glycans": []
       },
       {
+        "figure_number": "E4",
+        "caption": "Accumulation of bi-antennary N-glycans in neutrophils from patients with PGM3 mutations. Mass spectra of permethylated N-glycans of neutrophils from a healthy control subject and the affected subjects B.V.7 and C.IV.7. Results are summarized in Fig 4, B, with consistent color codes. Glycomic data of the control is from Babu et al.E16",
         "glycans": [
           {
             "bbox": [

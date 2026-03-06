@@ -1,10 +1,10 @@
 {
   "result": {
+    "citation": "McLeod B. Characterization of Glycans from Erbitux®, Rituxan® and Enbrel® using PNGase F (Glycerol-free), Recombinant. Application Note. New England BioLabs, Inc. 2024; 1-4.",
     "figure_result": [
       {        
-        "caption_text": "LC/MS Analyis of Enbrel Glycans released by PNGase F, Recombinant",
-        "cleaned_caption": true,
-        "label": "Figure 7",
+        "caption": "LC/MS Analyis of Enbrel Glycans released by PNGase F, Recombinant",
+        "figure_number": "7",
         "glycans": [
           {
             "bbox": [
@@ -241,9 +241,8 @@
         ]
       },
       {
-        "caption_text": "Enbrel Functional Domains",
-        "cleaned_caption": true,
-        "label": "Figure 8",
+        "caption": "Enbrel Functional Domains",
+        "figure_number": "8",
         "glycans": [
           {
             "IUPAC": "Gal?1-?GlcNAc?1-?Man?1-?(Gal?1-?GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?(Fuc?1-?)GlcNAc",
@@ -313,25 +312,6 @@
           }
         ]
       }
-    ],
-    "document_metadata": {
-      "title": "Characterization of Glycans from Erbitux®, Rituxan® and Enbrel® using PNGase F (Glycerol-free), Recombinant",
-      "authors": [
-        {
-          "surname": "McLeod",
-          "given_names": "Beth",
-          "full_name": "Beth McLeod"
-        }
-      ],
-      "journal": {
-        "title": "Application Note. New England BioLabs, Inc."
-      },
-      "publication_date":  {
-        "year": "2024",
-        "month": "4"
-      },
-      "fpage": "1",
-      "lpage": "4"
-    }
+    ]
   }
 }

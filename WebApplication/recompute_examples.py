@@ -43,9 +43,9 @@ def update_votes(instance):
         result["result"]["document_metadata"] = copy.deepcopy(correct["result"]["document_metadata"])
     correctcnt = 0; incorrectcnt = 0;
     for f1,f2 in zip(result["result"]["figure_result"],correct["result"]["figure_result"]):
-        for k in ("caption_text","cleaned_caption","figure_name","label"):
-            if f2.get(k):
-                f1[k] = f2[k]
+        # for k in ("caption","figure_number","caption_text","cleaned_caption","figure_name","label"):
+        #     if f2.get(k):
+        #         f1[k] = f2[k]
         for g1 in f1["glycans"]:
             g1bb = BoundingBox(**dict(zip("xywh",g1['bbox'])))
             bestg2 = None
@@ -78,6 +78,22 @@ def update_votes(instance):
         json.dump(result,wh,indent=2)
     return correctcnt,(correctcnt+incorrectcnt)
 
+def add_citation_captions(instance):
+    # adds Citation, for each figure --> captions and figure_number
+    result = json.loads(open("static/examples/"+instance+"/results.json").read())
+    correct = json.loads(open("static/answers/"+instance+"/correct.json").read())
+
+    if "citation" in correct["result"]:
+        result["result"]["citation"] = copy.deepcopy(correct["result"]["citation"])
+
+    for f1,f2 in zip(result["result"]["figure_result"],correct["result"]["figure_result"]):
+        for k in ('figure_number', 'caption'):
+            if f2.get(k):
+                f1[k] = copy.deepcopy(f2[k])
+
+    with open("static/examples/"+instance+"/results.json", 'wt') as wh:
+        json.dump(result, wh, indent=2)
+                
 for exampledir,taskid in tasks:
     result = {}
     try:
@@ -89,6 +105,7 @@ for exampledir,taskid in tasks:
         shutil.copytree("static/files/"+taskid,
                         "static/examples/"+exampledir)
         correct,total = update_votes(exampledir)
+        add_citation_captions(exampledir)
         print("Example %s done, %d/%d correct (%s)."%(exampledir,correct,total,taskid))
     else:
         print("Example %s not updated (%s)."%(exampledir,taskid))

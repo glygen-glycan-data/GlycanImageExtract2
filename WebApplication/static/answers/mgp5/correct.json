@@ -1,7 +1,10 @@
 {
     "result": {
+      "citation": "Subramanian S P, Wojtkiewicz M, Yu F, Castro C, Schuette E N, Rodriguez-Paar J, Churko J, Renavikar P, Anderson D, Mahr C, Gundry R L. Integrated Multiomics Reveals Alterations in Paucimannose and Complex Type N-Glycans in Cardiac Tissue of Patients with COVID-19. Molecular & Cellular Proteomics (MCP) 2025; 24(4): 6-14.",
       "figure_result": [
         {
+            "figure_number": "3",
+            "caption": "Qualitative N-glycan proﬁle of cardiac tissue and isolated cardiomyocytes.",
             "glycans": [
             {
               "IUPAC": "Man?1-?(Man?1-?)Man?1-?GlcNAc?1-?GlcNAc",
@@ -109,7 +112,9 @@
             }
           ]
         },
-        {
+        {   
+            "figure_number": 4,
+            "caption": "Quantitative differences in the N-glycome of cardiac tissues (FFPE) from COVID-19(+) and COVID-19(-) patients.",
             "glycans": [
             {
               "IUPAC": "Man?1-?Man?1-?GlcNAc?1-?GlcNAc",

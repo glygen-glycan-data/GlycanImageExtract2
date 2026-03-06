@@ -368,9 +368,11 @@
         // const citationHtml = formatCitation(document_metadata, pmc_publication);
         const citation = result_doc.result.citation
         if (citation && citation.length > 0) {
-            resstr += `<div class="citation-container" style="padding: 20px 0 10px 0;">${citation}
-                <span style="white-space:nowrap;"><b> PMID:</b> <a target='_blank' href='${result_doc.result.pmid_url}'>${result_doc['submission_detail']['pmid']}</a></span>
-                </div>`;
+            resstr += `<div class="citation-container" style="padding: 20px 0 10px 0;">${citation}`
+                if (result_doc.pmid_job){
+                    resstr += `<span style="white-space:nowrap;"><b> PMID:</b> <a target='_blank' href='${result_doc.result.pmid_url}'>${result_doc.submission_detail.pmid}</a></span>`
+                }
+                resstr += `</div>`;
         //     // resstr += `<div class='citation-container' style='padding: 0 0 10px 0;'>PMID: <a href='${document_metadata.url.pmid_url}'>${document_metadata.pmid}</a></div>`;
         }
 
