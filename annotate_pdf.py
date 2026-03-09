@@ -322,7 +322,8 @@ while True:
     if completed == needsresults:
         break
     time.sleep(15)
-
+# draw manual YOLO boxes once per figure (if provided)
+drew_manual_boxes = False
 for i,input_item in enumerate(input_items):
 
     if all_json_data[i].get('state') == "Error":
@@ -337,6 +338,8 @@ for i,input_item in enumerate(input_items):
         m = len(manual_boxes)
         # 收集所有候选 figure：预测框数量==manual数量
         candidates = []
+        
+
         for ridx, result in enumerate(all_json_data[i]['result']['figure_result']):
             pred_n = len(result.get("glycans", []))
             if pred_n == m and pred_n > 0:
@@ -346,7 +349,7 @@ for i,input_item in enumerate(input_items):
             result = all_json_data[i]['result']['figure_result'][ridx]
             pdf_context_instance = PDFConversionContext.from_result_dict(result)
 
-            # predicted boxes in figure-pixel xywh: glycan["bbox"] (你现在就是这么用的)
+            # predicted boxes in figure-pixel xywh: glycan["bbox"]
             pred_xywh = [g["bbox"] for g in result["glycans"]]
 
             fig_w = result["width"]
@@ -363,13 +366,40 @@ for i,input_item in enumerate(input_items):
 
             if best is None or mean_iou > best[0]:
                 best = (mean_iou, ridx, result["page_number"], assignment)
+        best_ridx = best[1] if best else None
+        if manual_boxes and best_ridx is not None:
 
-        if best is not None:
-            print(f"[AUTO] manual matched to figure_result index={best[1]} page={best[2]} meanIoU={best[0]:.3f}")
-            page_number_manual = best[2]   
-            
-        else:
-            print("[AUTO] No matching figure found for manual boxes (count gating failed).")
+            best_result = all_json_data[i]['result']['figure_result'][best_ridx]
+
+            fig_w = best_result["width"]
+            fig_h = best_result["height"]
+
+            new_glycans = []
+
+            for gid, (xc, yc, mw, mh) in enumerate(manual_boxes):
+
+                x0 = (xc - mw/2) * fig_w
+                y0 = (yc - mh/2) * fig_h
+                w  = mw * fig_w
+                h  = mh * fig_h
+
+                new_glycans.append({
+                    "bbox": [x0, y0, w, h],
+                    "fig_glycan_count": gid + 1,
+                    "confidence": 1.0,
+                    "source": "manual"
+                })
+
+            # 替换 prediction
+            best_result["glycans"] = new_glycans
+
+            print("[MANUAL] replaced predicted boxes with manual boxes")
+            if best is not None:
+                print(f"[AUTO] manual matched to figure_result index={best[1]} page={best[2]} meanIoU={best[0]:.3f}")
+                page_number_manual = best[2]   
+                
+            else:
+                print("[AUTO] No matching figure found for manual boxes (count gating failed).")
     doc = fitz.open(input_item.value)
     basename = input_item.basename
 
@@ -382,7 +412,7 @@ for i,input_item in enumerate(input_items):
 
     anyvotes = False
 
-    for result in all_json_data[i]['result']['figure_result']:
+    for ridx, result in enumerate(all_json_data[i]['result']['figure_result']):        
         fig_num = result["image_count"]
         taskid = all_json_data[i]['id']
 
@@ -409,8 +439,7 @@ for i,input_item in enumerate(input_items):
             fig_annot.update()
 
             pdf_context_instance = PDFConversionContext.from_result_dict(result)
-            # draw manual YOLO boxes once per figure (if provided)
-            drew_manual_boxes = False
+
             for glycan in result["glycans"]:
                 pdf_gly_box = pdf_context_instance.to_pdf_bbox(glycan["bbox"])
                 gly_annot = page.add_rect_annot(pdf_gly_box.bbox())
@@ -426,8 +455,9 @@ for i,input_item in enumerate(input_items):
                 gly_annot.set_border(width=0.5) 
                 gly_annot.update()
 
-            
-            if (not drew_manual_boxes) and manual_boxes and result["page_number"] == page_number_manual:
+            # if (not drew_manual_boxes) and manual_boxes and result["page_number"] == page_number_manual:
+
+            if manual_boxes and ridx == best_ridx:
                 fig_px_w = result["width"]
                 fig_px_h = result["height"]
 
@@ -461,12 +491,6 @@ for i,input_item in enumerate(input_items):
                     'wurcs': glycan.get('WURCS', ''),
                     'votes': votes,
                     "url": url,
-                    # uncomment the below if we decide to use bounding box info from the semnatics -
-                    # for now it is decided to use info that is extracted during the extarct_figures step
-                    # using the fitz model to extract co-ordinates of the annotations on the pdf
-                    # "_gly_bbox": glycan.get("bbox"),  
-                    # "_fig_width": result['width'],     
-                    # "_fig_height": result['height']    
                 })
 
         except Exception as e:
