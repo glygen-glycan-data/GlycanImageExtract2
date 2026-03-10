@@ -236,8 +236,7 @@ for i,input_item in enumerate(input_items):
         print(input_item.value,"skipping due to analysis error.")
         continue
 
-    original_filepath = all_json_data[i]['result']['abs_original_filepath']
-    doc = fitz.open(original_filepath)
+    doc = fitz.open(input_item.value)
     basename = input_item.basename
 
     # if os.path.exists(basename + ".annotated.pdf") or \
@@ -248,7 +247,7 @@ for i,input_item in enumerate(input_items):
     image_data = []
 
     anyvotes = False
-    for result in all_json_data[i]['result']['figure_result']:
+    for result in all_json_data[i]['result']['figures']:
         fig_num = result["image_count"]
         taskid = all_json_data[i]['id']
 
