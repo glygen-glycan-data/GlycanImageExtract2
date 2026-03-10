@@ -287,7 +287,7 @@ class APIFramework:
         msgparts = list(params)
         if random:
             msgparts.append("".join([ random_module.choice("0123456789") for i in range(16)]))
-        msg = sep.join(map(str,msgparts))
+        msg = sep.join(map(lambda p: str(p) if p is not None else "",msgparts))
         return base64.b32encode(hashlib.sha256(msg.encode()).digest()).decode()[:length].lower()
 
     def get_session(self):
