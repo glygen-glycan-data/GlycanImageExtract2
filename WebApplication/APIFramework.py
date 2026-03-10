@@ -949,32 +949,34 @@ class APIFramework:
 
             try:
                 res = self.result_queue.get_nowait()
-                if 'state' in res:
-                    self.result_cache[res["id"]]['state'] = res["state"]
-                if 'status' in res:
-                    self.result_cache[res["id"]]['status'] = res["status"]
-                if res.get("finished",False):
-                    self.result_cache[res["id"]]["result"] = res
-                    self.result_cache[res["id"]]['finished'] = True
-                    self.remove_from_task_list(res["id"])    
-
-                    abs_json_path = self.abspath(os.path.join("static/files/"+res["id"], "results.json"))
-                    with open(abs_json_path, 'w') as f:
-                        json.dump(self.result_cache[res["id"]],f,indent=2)
-                    
-                    # after job was completed/finished successfully and its results (json) was writtin,
-                    # it a good time to build annotated pdf and tsv results
-                    pdf_abs_path = self.result_cache[res["id"]]['result']['abs_original_filepath']
-
-                    is_pmid_job = self.result_cache[res["id"]]['result'].get("document_metadata", {}).get("pmid_job", False)
-
-                    if not is_pmid_job:
-                        self.annotate_results(resultid=res["id"])
-
             except queue.Empty:
                 break
-            except KeyError:
-                self.output(1, "Job ID %s is not present" % res["id"])
+            
+            assert "id" in res
+            resid = res["id"]
+
+            if 'state' in res:
+                self.result_cache[resid]['state'] = res["state"]
+            if 'status' in res:
+                self.result_cache[resid]['status'] = res["status"]
+            if res.get("finished",False):
+                for key in ("start_time","end_time","runtime","state","status","finished","error","id"):
+                    if key in res:
+                        self.result_cache[resid][key] = res[key]
+                        del res[key]
+                self.result_cache[resid]["result"] = res
+                self.remove_from_task_list(resid)    
+
+                abs_json_path = self.abspath(os.path.join("static/files/"+resid, "results.json"))
+                with open(abs_json_path, 'w') as f:
+                    json.dump(self.result_cache[resid],f,indent=2)
+                
+                # after job was completed/finished successfully and its results (json) was writtin,
+                # it a good time to build annotated pdf and tsv results
+
+                job_type = res.get("job_type")
+                if job_type == "PDFJob":
+                    self.annotate_results(resultid=resid)
 
     def allow_file_ext(self, filename):
         return '.' in filename and filename.rsplit('.', 1)[1].lower() in self.allowed_file_ext()
