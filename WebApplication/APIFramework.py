@@ -64,7 +64,10 @@ class APIFramework:
     ERROR = 'Error'
     COMPLETE = 'Complete'
 
-    def __init__(self):
+    def __init__(self,name=None):
+
+        if not name:
+            name = self.__class__.__name__
 
         self._verbose_level = 100
 
@@ -76,8 +79,7 @@ class APIFramework:
         self._clean_start = True
         self._file_based_job = False
 
-        self._app_name = "testing"
-        self._flask_app = flask.Flask(self._app_name)
+        self._app_name = name
         self._prefix = ""
 
         self._input_file_folder  = self.abspath("input")
@@ -109,7 +111,10 @@ class APIFramework:
         self._jobs_html = 'jobs.html'
         self._process_html = 'process.html'      # page which lets you submit your file/url
         self._file_upload_finished_html = None
-        self._image_search_type = None
+        self._template_render_kwargs = {'urlprefix': self._prefix}
+
+        self.parse_config(name + ".ini")
+        self.set_app_name(name)
 
     # Proper APIs for changing config
     def host(self):
@@ -167,6 +172,7 @@ class APIFramework:
 
     def set_prefix(self, prefix):
         self._prefix = "/" + prefix.strip().strip('/')
+        self.set_template_render_kwarg(urlprefix=self._prefix)
 
     def input_file_folder(self):
         return self._input_file_folder
@@ -219,67 +225,54 @@ class APIFramework:
                 if each_val != "":
                     res[each_section][each_key] = each_val
 
+        self._base_config = res.get("basic",{})
+        self._worker_config = res.get(self._app_name,{})
 
-        if "basic" in res:
+        base = self._base_config
 
-            #for k,v in res["basic"].items():
-            #    print("%s: |%s|" % (k,v))
+        #for k,v in base.items():
+        #    print("%s: |%s|" % (k,v))
 
-            if "host" in res["basic"]:
-                self.set_host(res["basic"]["host"])
+        if "host" in base:
+            self.set_host(base["host"])
 
-            if "port" in res["basic"]:
-                self.set_port(int(res["basic"]["port"]))
+        if "port" in base:
+            self.set_port(int(base["port"]))
 
-            if "debug" in res["basic"]:
-                self.set_debug(res["basic"]["debug"])
+        if "debug" in base:
+            self.set_debug(base["debug"])
 
-            if "cpu_core" in res["basic"]:
-                self.set_worker_num(int(res["basic"]["cpu_core"]))
+        if "cpu_core" in base:
+            self.set_worker_num(int(base["cpu_core"]))
 
-            if "clean_start" in res["basic"]:
-                self._clean_start = bool(res["basic"]["clean_start"])
+        # check these, string -> bool may not do what is intended
+        if "clean_start" in base:
+            self._clean_start = bool(base["clean_start"])
 
-            if "file_based_job" in res["basic"]:
-                self._file_based_job = bool(res["basic"]["file_based_job"])
+        if "file_based_job" in base:
+            self._file_based_job = bool(base["file_based_job"])
 
-            if "input_file_folder" in res["basic"]:
-                self.set_input_file_folder(res["basic"]["input_file_folder"])
+        if "input_file_folder" in base:
+            self.set_input_file_folder(base["input_file_folder"])
 
-            # if "output_file_folder" in res["basic"]:
-            #     self.set_output_file_folder(res["basic"]["output_file_folder"])
+        if "template_folder" in base:
+            self._template_folder = base["template_folder"]
 
-            if "template_folder" in res["basic"]:
-                self._template_folder = res["basic"]["template_folder"]
+        if "home_page" in base:
+            self._home_html = base["home_page"]
 
-            if "home_page" in res["basic"]:
-                self._home_html = res["basic"]["home_page"]
+        if "file_upload_finished_page" in base:
+            self._file_upload_finished_html = base["file_upload_finished_page"]
 
-            if "file_upload_finished_page" in res["basic"]:
-                self._file_upload_finished_html = res["basic"]["file_upload_finished_page"]
+        if "allowed_file_ext" in base:
+            allowed_file_ext = base["allowed_file_ext"].split(",")
+            self.clear_allowed_file_ext()
+            for ext in allowed_file_ext:
+                ext = ext.strip()
+                self.add_allowed_file_ext(ext)
 
-            if "allowed_file_ext" in res["basic"]:
-                allowed_file_ext = res["basic"]["allowed_file_ext"].split(",")
-                self.clear_allowed_file_ext()
-                for ext in allowed_file_ext:
-                    ext = ext.strip()
-                    self.add_allowed_file_ext(ext)
-
-            if "app_name" in res["basic"]:
-                self.set_app_name(res["basic"]["app_name"])
-
-                if res["basic"]["app_name"] in res:
-                    self._worker_para = res[res["basic"]["app_name"]]
-
-            if "prefix" in res["basic"]:
-               self.set_prefix(res["basic"]["prefix"])
-
-        if "GlyImageExtractor" in res:
-            if "image_search_type" in res["GlyImageExtractor"]:
-                self._image_search_type = res["GlyImageExtractor"]["image_search_type"]
-            else:
-                # options: "fitz", "figcap", "hybrid"
-                self._image_search_type = "fitz"
+        if "prefix" in base:
+            self.set_prefix(base["prefix"])
 
     def makeid(self,*params,random=False,length=16,sep=":"):
         msgparts = list(params)

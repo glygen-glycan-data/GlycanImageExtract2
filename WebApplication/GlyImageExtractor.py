@@ -28,30 +28,67 @@ import flask
 import json
 import cv2
 import traceback
-
 import threading
-
-class ReferenceAPIParaBased(APIFramework):
-    pass
-
 import subprocess
-class ReferenceAPIFileBased(APIFramework):
+
+class GlyImageExtractor(APIFramework):
+
+    default_render_kwargs = dict(
+        google_analytics_url_match = "extractor.glyomics.org",
+        google_analytics_id = "G-47WSZ1WYRZ"
+    )
 
     def __init__(self):
         super().__init__()
+        self._resultid_locks = {}
+        self._lock = threading.Lock()
+        config = self._worker_config
 
-        # self.pipeline_name = pipeline_name
+        for k,v in self.default_render_kwargs.items():
+            self.set_template_render_kwarg(**{k: config.get(k,v)})
+        
+        # default figure search type for PDF files...
+        self._image_search_type = config.get('image_search_type','fitz')
+        assert self._image_search_type in ("fitz","hybrid","figcap")
 
-    def form_task(self, p):
-        res = {}
+    task_params = ["filename",
+                   "submission_type",
+                   "submission_mode",
+                   "fileURL",
+                   "pmid",
+                   "image_search_strategy",
+                   "curation_task",
+                   ]
 
-        # Prevent name collision
-        res["original_file_name"] = p["original_file_name"]
-        res['submission_type'] = p['submission_type']
-        res["id"] = self.makeid(p["original_file_name"],p["submission_type"],random=True,length=10)
+    def form_task(self, params):
+        # set  default values, if appropriate
+        task = {}
+        if params['submission_type'] == "Manuscript" and params['submission_mode'] != 'PMID':
+            task['image_search_strategy'] = self._image_search_type
 
-        return res
+        # get these parameters from the form
+        for k in self.task_params:
+            if params.get(k):
+                task[k] = params[k]
 
+        # provide all parameter values in a predictable list to make a 
+        # reproducible id, if desired
+        task["id"]=self.makeid(*(task.get(k) for k in self.task_params),
+                               random=True,length=10)
+        return task
+
+    def lock_result(self,resultid,timeout=2):
+        if not self._lock.acquire(timeout=timeout):
+            print("Status: ERROR:LOCK_TIMEOUT, ResultID: %s"%(resultid,),file=sys.stderr)
+            return False
+        if resultid not in self._resultid_locks:
+            self._resultid_locks[resultid] = threading.Lock()
+        self._lock.release()
+        return self._resultid_locks[resultid].acquire(timeout=2)
+    
+    def release_result(self,resultid):
+        if resultid in self._resultid_locks:
+            self._resultid_locks[resultid].release()
 
     @staticmethod
     def worker(pid, task_queue, result_queue, params):
@@ -192,12 +229,8 @@ class ReferenceAPIFileBased(APIFramework):
 if __name__ == '__main__':
     multiprocessing.freeze_support()
 
-    fb_api = ReferenceAPIFileBased()
-    fb_api.parse_config("GlyImageExtractor.ini")
-
-    fb_api._resultid_locks = {}
-    fb_api._lock = threading.Lock()
-    fb_api.start()
+    extractor = GlyImageExtractor()
+    extractor.start()
 
 
 
