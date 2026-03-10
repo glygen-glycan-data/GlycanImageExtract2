@@ -132,14 +132,23 @@ class APIFramework:
         else:
             raise APIParameterError("Port number requires integer, %s is not acceptable")
 
-    def get_base_url(self):
-        if flask.has_request_context():
-            base = flask.request.url_root.rstrip('/')
-
-            if self._prefix:
-                prefix = self._prefix.strip('/')
-                return f"{self._prefix}"
-            return f"{base}"
+    # flask.request.url_root seems to work poorly with respect to proxies etc.
+    # and the proxy code (_prefix) didn't seem to work correctly either
+    # 
+    # The referer url (source of the request) is a better choice, since
+    # we know what page should be calling this. We must make sure we do not fail
+    # badly if called by another referer, but we only need this to work correctly
+    # when clicked on from the appropriate page. 
+    # 
+    # def get_base_url(self):
+    #     if flask.has_request_context():
+    #         
+    #         base = flask.request.url_root.rstrip('/')
+    #         if self._prefix:
+    #             prefix = self._prefix.strip('/')
+    #             return f"{self._prefix}"
+    #         return f"{base}"
+    #
 
     def debug(self):
         return self._debug
