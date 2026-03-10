@@ -138,13 +138,13 @@ class GlyImageExtractor(APIFramework):
             updated_task_detail = job_instance.task_detail
             res = {
                 "id": token,
-                "start time": calculation_start_time,
-                "end time": calculation_end_time,
+                "start_time": calculation_start_time,
+                "end_time": calculation_end_time,
                 "runtime": calculation_time_cost,
                 "error": error,
-                "original_filepath": updated_task_detail['original_filepath'],
-                "abs_original_filepath": updated_task_detail['abs_original_filepath'],
-                "figure_result": result,
+                # "filepath": updated_task_detail['filepath'],
+                # "abs_original_filepath": updated_task_detail['abs_original_filepath'],
+                "figures": result,
                 "job_type": job_instance.__class__.__name__,
                 "finished": True,
                 "state": state,
@@ -187,7 +187,7 @@ class GlyImageExtractor(APIFramework):
                     return flask.jsonify(dict(status="ERROR"))
     
                 figureindex,glycanindex=map(int,glycanid.split('.'))
-                glycan = res['result']['figure_result'][figureindex]['glycans'][glycanindex]
+                glycan = res['result']['figures'][figureindex]['glycans'][glycanindex]
                 votes = glycan.get('upvotes',0) - glycan.get('downvotes',0)
                 if note == "upvote":
                     votes += 1
