@@ -97,11 +97,11 @@ class ConnectYOLO(YOLOFinder,LinkFinder):
     # residues (Fuc, Xyl, NeuAc, NeuGc)
     def second_chance_boxes_to_objects(self,scboxes,obj,obj_list):
         local_obj_list = list(obj_list) # avoid modifying obj_list
-        print("number of second-chance boxes:",len(scboxes))
+        # print("number of second-chance boxes:",len(scboxes))
         resolved = set()
         anyresolved = True
         while anyresolved:
-            print("start cycle elimination pass...")
+            # print("start cycle elimination pass...")
             anyresolved = False
             for i,(box,alts) in enumerate(scboxes):
                 if i in resolved:
@@ -114,15 +114,15 @@ class ConnectYOLO(YOLOFinder,LinkFinder):
                     local_obj_list.append(keep[0])
                     resolved.add(i)
                     anyresolved = True
-                    print("resolved second-chance box",i+1)
+                    # print("resolved second-chance box",i+1)
         
-        print("number resolved:",len(resolved))
+        # print("number resolved:",len(resolved))
 
         terminal_symbols = ["Fuc", "Xyl", "NeuAc", "NeuGc"]
 
         anyresolved = True
         while anyresolved:
-            print("start terminal residue degree test pass...")
+            # print("start terminal residue degree test pass...")
             anyresolved = False
             for i,(box,alts) in enumerate(scboxes):
                 if i in resolved:
@@ -147,7 +147,7 @@ class ConnectYOLO(YOLOFinder,LinkFinder):
                     local_obj_list.append(keep[0])
                     resolved.add(i)
                     anyresolved = True
-                    print("resolved second-chance box",i+1)
+                    # print("resolved second-chance box",i+1)
 
         return local_obj_list
 
