@@ -60,8 +60,8 @@ class XMLParser:
             'figure_info': self._extract_figure_info(),  # figure label, title, caption, figure filename
             # **self._extract_metadata(),
             'citation': self.format_citation(),
-            'pmid_url': self._extract_article_url()['pmid_url'],
-            'pmid_job': True
+            # 'pmid_url': self._extract_article_url()['pmid_url'],
+            # 'pmid_job': True
         }
         
         return parsed_data
