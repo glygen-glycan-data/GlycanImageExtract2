@@ -24,11 +24,12 @@ class JobInstance:
         'Manuscript': 'MultipleGlycanImage-YOLOFinders'
     }
 
-    def __init__(self, task_detail, msg_queue = None):
+    def __init__(self, task_detail, config = {}, msg_queue = None):
         self.task_detail = task_detail
         self.id = task_detail.get('id')
         self.msg_queue = msg_queue
-        self.original_file_name = task_detail.get('original_file_name')
+        self.config = config
+        self.original_file_name = task_detail.get('filename')
         self.submission_type = task_detail.get('submission_type')
 
         self.pmid = task_detail.get('pmid')
@@ -77,7 +78,7 @@ class JobInstance:
     @staticmethod
     def get_processor(task_detail,*args,**kwargs):
         submission_type = task_detail.get('submission_type')
-        pmid = task_detail.get('pmid', None)
+        pmid = task_detail.get('pmid')
 
         if task_detail.get('curation_task', False) and submission_type == "Manuscript":
             return PDFJob(task_detail,*args,**kwargs) 
