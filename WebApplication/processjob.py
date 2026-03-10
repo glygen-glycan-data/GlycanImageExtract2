@@ -325,16 +325,23 @@ class JobInstance:
             image_number = kwargs.get("image_number", 0)
             page_num = kwargs.get("page_num",0)
             pmid_job = kwargs.get("pmid_job", False)
+            figure_number = kwargs.get("figure_number","")
+            caption = kwargs.get("caption","")
             
             if pmid_job:    # for PMID submissions
-                self.update_status("Processing image %s, analyzed %d/%d glycan(s)"%(kwargs['figure_number'],index,nglycan))
+                if figure_number:
+                    self.update_status("Processing figure %s, analyzed %d/%d glycan(s)"%(figure_number,index,nglycan))
+                elif caption:
+                    self.update_status("Processing %s, analyzed %d/%d glycan(s)"%(caption,index,nglycan))
+                else:
+                    self.update_status("Processing figure, analyzed %d/%d glycan(s)"%(index,nglycan))
             elif page_num == 0:     # for simple/multi glycans submissions
                 self.update_status("Processing image, analyzed %d/%d glycan(s)"%(index,nglycan))
             else:   # for pdf submission
                 self.update_status("Processing image %d from page %d, analyzed %d/%d glycan(s)"%(image_number,page_num,index,nglycan))
 
 
-    def find_glycans(self, figure_path, image_folders, pmid_job = False, **kwargs):
+    def find_glycans(self, figure_path, image_folders, **kwargs):
         config = Config_Manager()
         self.pipeline_name = self.pipeline_mapping[self.submission_type]
         pipeline = config.get_pipeline(self.pipeline_name)
@@ -350,12 +357,18 @@ class JobInstance:
 
         nglycan = len(figure_semantics.glycans())
 
-        if kwargs.get("pmid_job", False):
-            self.update_status("Processing image %s, postprocessing %d glycan(s)"%(kwargs['figure_number'],nglycan))
-        elif kwargs.get("page_num",0) == 0:
-            self.update_status("Processing image, postprocessing %d glycan(s)" % (nglycan))
-        else:
-            self.update_status("Processing image %d from page %d, postprocessing %d glycan(s)" % (kwargs["image_number"], kwargs["page_num"], nglycan))
+        if nglycan > 0:
+            if kwargs.get('pmid_job',False):
+                if kwargs.get('figure_number'):
+                    self.update_status("Processing figure %s, postprocessing %d glycan(s)"%(kwargs['figure_number'],nglycan))
+                elif kwargs.get('caption'):
+                    self.update_status("Processing %s, postprocessing %d glycan(s)"%(kwargs['caption'],nglycan))
+                else:
+                    self.update_status("Processing figure, postprocessing %d glycan(s)"%(nglycan))
+            elif kwargs.get("page_num",0) == 0:
+                self.update_status("Processing image, postprocessing %d glycan(s)" % (nglycan))
+            else:
+                self.update_status("Processing image %d from page %d, postprocessing %d glycan(s)" % (kwargs["image_number"], kwargs["page_num"], nglycan))
 
         self.annotate_image(figure_semantics)
         self.process_glycans(figure_semantics, image_folders)
@@ -443,10 +456,17 @@ class PMIDJob(JobInstance):
 
                             # per figure: basename --> fig_info
                             self.figure_info_by_basename = xml_data.get("figure_info") or {}
+                            # print(self.figure_info_by_basename.items())
 
                             fig_to_label_map = {}
                             for basename, info in self.figure_info_by_basename.items():
-                                fig_to_label_map[basename] = info['figure_number']
+                                # PMID 39988192 has no figure number for its title page graphic
+                                # Do we need to support it? On PubMed, it is called "Graphical Abstract"
+                                # and has no figure number. 
+                                if 'figure_number' in info:
+                                    fig_to_label_map[basename] = info['figure_number']
+                                else:
+                                    fig_to_label_map[basename] = ""
 
                         except Exception as e:
                             self.log_file.write(f"Warning: Could not parse nxml: {e}\n")
@@ -505,16 +525,23 @@ class PMIDJob(JobInstance):
 
                 # look up XML metadata for this renamed figure (if any)
                 fig_info = self.figure_info_by_renamed.get(fig_name, {})
-
+                # if the figure_number is empty, can we assume Graphical Abstract?
                 figure_metadata = {
                     "fig_bbox": [0, 0, width, height],
                     "image_count": image_count,
                     # XML-derived metadata (keys match XMLParser output)
-                    "caption": fig_info["caption"],
+                    "caption": fig_info.get("caption",""),
                     "figure_number": fig_info["figure_number"]
                 }
-
-                self.update_status("Processing %s" % base_fig_name)
+                if not figure_metadata["figure_number"] and not figure_metadata["caption"]:
+                    figure_metadata["caption"] = "Graphical Abstract"
+                
+                if figure_metadata["figure_number"]:
+                    self.update_status("Processing figure %s" % figure_metadata["figure_number"])
+                elif figure_metadata["caption"]:
+                    self.update_status("Processing %s" % figure_metadata["caption"])
+                else:
+                    self.update_status("Processing figure")
                 self.find_glycans(
                     fig_path,
                     image_folders,
