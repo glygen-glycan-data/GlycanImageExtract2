@@ -177,21 +177,12 @@ class GlyImageExtractor(APIFramework):
         glycanid = flask.request.args['glycanid']
         note = flask.request.args['note']
 
-        if self._lock.acquire(timeout=2):
-            if resultid not in self._resultid_locks:
-                self._resultid_locks[resultid] = threading.Lock()
-            self._lock.release()
-        else:
-            print("Status: ERROR:LOCK_TIMEOUT, ResultID: %s, GlycanID: %s, Note: %s."%(resultid,glycanid,note),file=sys.stderr)
-            return flask.jsonify(dict(status="ERROR"))
-
         try:
-
-            if self._resultid_locks[resultid].acquire(timeout=2):
+            if self.lock_result(resultid,timeout=2):
     
                 res = self.get_result(resultid)
                 if res.get('location') == 'examples':
-                    self._resultid_locks[resultid].release()
+                    self.release_result(resultid)
                     print("Status: ERROR:EXAMPLE, ResultID: %s, GlycanID: %s, Note: %s."%(resultid,glycanid,note),file=sys.stderr)
                     return flask.jsonify(dict(status="ERROR"))
     
@@ -217,12 +208,12 @@ class GlyImageExtractor(APIFramework):
                 return flask.jsonify(dict(status="ERROR"))
 
         except:
-            self._resultid_locks[resultid].release()
+            self.release_result(resultid)
             traceback.print_exc()
             print("Status: ERROR, ResultID: %s, GlycanID: %s, Note: %s."%(resultid,glycanid,note),file=sys.stderr)
             return flask.jsonify(dict(status="ERROR"))
         
-        self._resultid_locks[resultid].release()
+        self.release_result(resultid)
         print("Status: OK, ResultID: %s, GlycanID: %s, UpVotes: %s, DownVotes: %s, Note: %s."%(resultid,glycanid,glycan.get('upvotes',0),glycan.get('downvotes',0),glycan.get('note',"")),file=sys.stderr)
         return flask.jsonify(dict(status="OK",resultid=resultid,glycanid=glycanid,upvotes=glycan.get('upvotes',0),downvotes=glycan.get('downvotes',0),note=glycan.get('note',"")))
     
