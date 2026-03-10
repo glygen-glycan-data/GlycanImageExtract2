@@ -593,12 +593,20 @@ class APIFramework:
             task = json.loads(flask.request.form.get('task',task if task else '{}'))
 
             file = flask.request.files.get('file')
-
             file_url = flask.request.form.get('fileURL',task.get('fileURL'))
             input_file_path = flask.request.form.get('filePath',task.get('filePath'))
             pmid = flask.request.form.get('pmid',task.get('pmid'))
             submission_type = flask.request.form.get('submission_type',task.get('submission_type'))
             pmc_publication = None
+            submission_mode = None
+            if input_file_path:
+                submission_mode = "Local"
+            elif file:
+                submission_mode = "Upload"
+            elif file_url:
+                submission_mode = "URL"
+            elif pmid:
+                submission_mode = "PMID"
 
             # curation_task - True --> means that annotate_pdf is being used to gather information.
             curation_task = flask.request.form.get('curation_task',task.get('curation_task'))
@@ -608,14 +616,14 @@ class APIFramework:
                 pmid = pmid.strip()
                 # pdf file that goes in the input folder should be renamed as "PMID-<PMID>.pdf"
                 filename = 'PMID-' + pmid + ".pdf"
+            elif input_file_path:
+                filename = werkzeug.utils.secure_filename(os.path.split(input_file_path)[1])
             elif file_url:
                 filename = werkzeug.utils.secure_filename(os.path.basename(file_url.split('?')[0]))
                 if not os.path.splitext(filename)[1]:  
                     content_disposition = requests.head(file_url).headers.get('content-disposition')
                     if content_disposition:
                         filename = content_disposition.split('filename=')[-1].strip('"')
-            elif input_file_path:
-                filename = werkzeug.utils.secure_filename(os.path.split(input_file_path)[1])
             elif file:
                 filename = werkzeug.utils.secure_filename(file.filename)
             else:
@@ -624,7 +632,13 @@ class APIFramework:
             sessionid = self.get_session()
 
             # Create task details
-            task_detail = self.form_task({"original_file_name": filename, "submission_type": submission_type})
+            task_detail = self.form_task({"filename": filename, 
+                                          "fileURL": file_url,
+                                          "submission_type": submission_type,
+                                          "submission_mode": submission_mode,
+                                          "pmid": pmid,
+                                          "curation_task": curation_task,
+                                         })
             list_id = task_detail["id"]
             file_dir = os.path.join(self.input_file_folder(), list_id)
             os.makedirs(file_dir, exist_ok=True)
@@ -728,18 +742,10 @@ class APIFramework:
             except Exception as e:
                 return flask.jsonify({"error": f"Unexpected error: {str(e)}"}), 400
 
-            # since we have already validated that pmcid exists and it is Open Access --> pmid and pmcid should be available at this p
             if pmid and pmcid:
-                task_detail.update({"pmid": pmid, "pmcid": pmcid})
-
-            if pmc_publication:
-                task_detail.update({"pmc_publication": pmc_publication})
-
-            if curation_task:
-                task_detail.update({"curation_task": curation_task})
-
-            # add the image identification (from ini file i.e self._image_search_type or it can be hardcoded here as well)
-            task_detail['image_search_strategy'] = self._image_search_type
+                task_detail.update({"pmcid": pmcid})
+                if pmc_publication:
+                    task_detail.update({"pmc_publication": pmc_publication})
 
             status = {
                 "id": list_id,
@@ -751,7 +757,6 @@ class APIFramework:
                 "submit_time": time.time(),
                 "sessionid": sessionid,
                 "result": {},
-                "image_search_strategy": self._image_search_type,   # add the image identification (from ini file i.e self._image_search_type or it can be hardcoded here as well)
             }
             
 
@@ -776,10 +781,13 @@ class APIFramework:
             pmid = oldtask['pmid']
             newtask = dict(submission_type=submission_type,pmid=pmid)
         else:
-            input_file = os.path.join('static', result.get('location','files'), tid, 'input', oldtask['original_file_name'])
+            input_file = os.path.join('static', result.get('location','files'), tid, 'input', oldtask['filename'])
             submission_type = oldtask['submission_type']
-            newtask = dict(submission_type=submission_type,filePath=input_file)
+            newtask = dict(submission_type=submission_type,
+                           fileURL=oldtask.get('fileURL'),
+                           filePath=input_file)
         response = self.upload_file(task=json.dumps(newtask))
+        # print(response.get_json())
         return flask.redirect(self._prefix + '/jobs')
 
     def download_file(self):
