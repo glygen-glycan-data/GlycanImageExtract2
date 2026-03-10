@@ -1,26 +1,20 @@
 {
-  "id": "xc7ec6hnoh",
-  "task_index": 1,
+  "id": "fjkit46dbq",
+  "task_index": 11,
   "submission_detail": {
-    "original_file_name": "figcap_example.pdf",
+    "image_search_strategy": "hybrid",
+    "filename": "figcap_example.pdf",
     "submission_type": "Manuscript",
-    "id": "xc7ec6hnoh",
-    "image_search_strategy": "hybrid"
+    "submission_mode": "Upload",
+    "id": "fjkit46dbq"
   },
   "state": "Complete",
   "status": "",
   "finished": true,
-  "submit_time": 1773158175.957206,
-  "sessionid": "2od3xtrzav5ub7q3",
+  "submit_time": 1773173838.918498,
+  "sessionid": "jhtqwe5bffwp7vnm",
   "result": {
-    "id": "xc7ec6hnoh",
-    "start time": 1773158175.9583426,
-    "end time": 1773158272.7674868,
-    "runtime": 96.80914425849915,
-    "error": [],
-    "original_filepath": "input/figcap_example.pdf",
-    "abs_original_filepath": "/data2/projects/GlyGen/GlycanImageExtract2-dev/WebApplication/static/files/xc7ec6hnoh/input/figcap_example.pdf",
-    "figure_result": [
+    "figures": [
       {
         "annotated_image_path": "extracted_figures/annotated_figures/1.png",
         "bbox": [
@@ -520,7 +514,7 @@
             "extracted_image_path": "extracted_figures/extracted_images/3-2.png",
             "fig_glycan_count": 2,
             "glyImage": "glymage/68e355bd0799989c306608f0984d5aa4.svg",
-            "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?ondemandtaskid=264cf1058894ea324f93b2da099b8e8ad1507b415ee86fcf8336",
+            "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?ondemandtaskid=264cf1058894ea324f93b2da099b8e8ab9722cfa0ef29cfab2e1",
             "height": 110,
             "image_name": "3-2.png",
             "image_path": "extracted_figures/images/3-2.png",
@@ -1743,7 +1737,7 @@
             "extracted_image_path": "extracted_figures/extracted_images/3-5.png",
             "fig_glycan_count": 5,
             "glyImage": "glymage/7fcb66bfd7aea9bdd54046ff1ac08140.svg",
-            "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?ondemandtaskid=e6188fedbd21bc12233c1d4ce33e5b1dd1507b415ee86fcf8336",
+            "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?ondemandtaskid=e6188fedbd21bc12233c1d4ce33e5b1db9722cfa0ef29cfab2e1",
             "height": 121,
             "image_name": "3-5.png",
             "image_path": "extracted_figures/images/3-5.png",
@@ -2973,7 +2967,7 @@
             "extracted_image_path": "extracted_figures/extracted_images/3-7.png",
             "fig_glycan_count": 7,
             "glyImage": "glymage/1a92e3bea22dca4363ac490b67bc72af.svg",
-            "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?ondemandtaskid=b853cca5d03d61753542a592aae89c3ed1507b415ee86fcf8336",
+            "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?ondemandtaskid=b853cca5d03d61753542a592aae89c3eb9722cfa0ef29cfab2e1",
             "height": 130,
             "image_name": "3-7.png",
             "image_path": "extracted_figures/images/3-7.png",
@@ -4318,7 +4312,7 @@
             "extracted_image_path": "extracted_figures/extracted_images/3-9.png",
             "fig_glycan_count": 9,
             "glyImage": "glymage/625a0409c67a001a65859541b7d96684.svg",
-            "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?ondemandtaskid=9319fa89059d98a9d1ac060cc6f56960d1507b415ee86fcf8336",
+            "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?ondemandtaskid=9319fa89059d98a9d1ac060cc6f56960b9722cfa0ef29cfab2e1",
             "height": 161,
             "image_name": "3-9.png",
             "image_path": "extracted_figures/images/3-9.png",
@@ -14039,7 +14033,7 @@
             "extracted_image_path": "extracted_figures/extracted_images/5-3.png",
             "fig_glycan_count": 3,
             "glyImage": "glymage/50842f81777f1181ed62f24626873aa1.svg",
-            "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?ondemandtaskid=41ef5d91888ac065b8dd4f6738942af0d1507b415ee86fcf8336",
+            "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?ondemandtaskid=41ef5d91888ac065b8dd4f6738942af0b9722cfa0ef29cfab2e1",
             "height": 222,
             "image_name": "5-3.png",
             "image_path": "extracted_figures/images/5-3.png",
@@ -14830,7 +14824,7 @@
             "extracted_image_path": "extracted_figures/extracted_images/5-4.png",
             "fig_glycan_count": 4,
             "glyImage": "glymage/7f19cfd69d8538be3c900af0ff4ecc2e.svg",
-            "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?ondemandtaskid=dd6fc6821d4ec8a23065e9ea4c477254d1507b415ee86fcf8336",
+            "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?ondemandtaskid=dd6fc6821d4ec8a23065e9ea4c477254b9722cfa0ef29cfab2e1",
             "height": 217,
             "image_name": "5-4.png",
             "image_path": "extracted_figures/images/5-4.png",
@@ -23680,10 +23674,11 @@
       }
     ],
     "job_type": "PDFJob",
-    "finished": true,
-    "state": "Complete",
-    "status": "",
-    "citation": "Subramanian S P, Wojtkiewicz M, Yu F, Castro C, Schuette E N, Rodriguez-Paar J, Churko J, Renavikar P, Anderson D, Mahr C, Gundry R L. Integrated Multiomics Reveals Alterations in Paucimannose and Complex Type N-Glycans in Cardiac Tissue of Patients with COVID-19. Molecular & Cellular Proteomics (MCP) 2025; 24(4): 6-14."
+    "citation": "Subramanian S P, Wojtkiewicz M, Yu F, Castro C, Schuette E N, Rodriguez-Paar J, Churko J, Renavikar P, Anderson D, Mahr C, Gundry R L. Integrated Multiomics Reveals Alterations in Paucimannose and Complex Type N-Glycans in Cardiac Tissue of Patients with COVID-19. Molecular & Cellular Proteomics (MCP) 2025; 24(4): 6-14.",
+    "pmid": "39988192"
   },
-  "image_search_strategy": "hybrid"
+  "start_time": 1773173923.6772606,
+  "end_time": 1773174016.6760328,
+  "runtime": 92.99877214431763,
+  "error": []
 }

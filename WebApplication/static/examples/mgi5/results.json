@@ -1,27 +1,19 @@
 {
-  "id": "xex2r34rf7",
+  "id": "cklr5d3o7k",
   "task_index": 5,
   "submission_detail": {
-    "original_file_name": "mass-spectrometry-glycans-fig-2.jpg",
+    "filename": "mass-spectrometry-glycans-fig-2.jpg",
     "submission_type": "Multi-Glycan Image",
-    "id": "xex2r34rf7"
+    "submission_mode": "Upload",
+    "id": "cklr5d3o7k"
   },
   "state": "Complete",
   "status": "",
   "finished": true,
-  "submission_type": "Multi-Glycan Image",
-  "submit_time": 1766518887.746363,
-  "sessionid": "krcpn4c73rohl7t2",
+  "submit_time": 1773173832.6983159,
+  "sessionid": "zrbrfmrpo4wuk5vr",
   "result": {
-    "id": "xex2r34rf7",
-    "start time": 1766518899.7321506,
-    "end time": 1766518920.1927042,
-    "runtime": 20.460553646087646,
-    "error": [],
-    "original_filepath": "input/mass-spectrometry-glycans-fig-2.jpg",
-    "abs_original_filepath": "/data2/projects/GlyGen/GlycanImageExtract2-dev/WebApplication/static/files/xex2r34rf7/input/mass-spectrometry-glycans-fig-2.jpg",
-    "pipeline_name": null,
-    "figure_result": [
+    "figures": [
       {
         "annotated_image_path": "extracted_figures/annotated_figures/mass-spectrometry-glycans-fig-2.jpg",
         "file_name": "mass-spectrometry-glycans-fig-2.jpg",
@@ -7617,11 +7609,16 @@
         ],
         "height": 1640,
         "image_path": "input/mass-spectrometry-glycans-fig-2.jpg",
-        "width": 960
+        "width": 960,
+        "figure_number": "2",
+        "caption": "N-Linked glycan structures that correspond to MALDI MS peaks in Figure 1."
       }
     ],
-    "finished": true,
-    "state": "Complete",
-    "status": ""
-  }
+    "job_type": "ImageJob",
+    "citation": "<A target=\"_blank\" href=\"https://www.sigmaaldrich.com/US/en/technical-documents/protocol/protein-biology/protein-mass-spectrometry/mass-spectrometry-of-glycans\">Mass Spectrometry of Glycans</A>. MilliporeSigma Website."
+  },
+  "start_time": 1773173842.8883555,
+  "end_time": 1773173863.0177944,
+  "runtime": 20.129438877105713,
+  "error": []
 }

@@ -1,9 +1,0 @@
-xc7ec6hnoh
-/home/nmathias/GlycanImageExtract2/WebApplication/static/files/xc7ec6hnoh/output/annotated_figcap_example.pdf
-
-Saved image to /home/nmathias/GlycanImageExtract2/WebApplication/static/files/xc7ec6hnoh/extracted_figures/figures/1.png
-Saved image to /home/nmathias/GlycanImageExtract2/WebApplication/static/files/xc7ec6hnoh/extracted_figures/figures/2.png
-Saved image to /home/nmathias/GlycanImageExtract2/WebApplication/static/files/xc7ec6hnoh/extracted_figures/figures/3.png
-Saved image to /home/nmathias/GlycanImageExtract2/WebApplication/static/files/xc7ec6hnoh/extracted_figures/figures/4.png
-Saved image to /home/nmathias/GlycanImageExtract2/WebApplication/static/files/xc7ec6hnoh/extracted_figures/figures/5.png
-Saved image to /home/nmathias/GlycanImageExtract2/WebApplication/static/files/xc7ec6hnoh/extracted_figures/figures/6.png

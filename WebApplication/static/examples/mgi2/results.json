@@ -1,27 +1,19 @@
 {
-  "id": "hmslkjfegt",
+  "id": "r4bl7zsiw5",
   "task_index": 2,
   "submission_detail": {
-    "original_file_name": "pdf7_extra.png",
+    "filename": "pdf7_extra.png",
     "submission_type": "Multi-Glycan Image",
-    "id": "hmslkjfegt"
+    "submission_mode": "Upload",
+    "id": "r4bl7zsiw5"
   },
   "state": "Complete",
   "status": "",
   "finished": true,
-  "submission_type": "Multi-Glycan Image",
-  "submit_time": 1766518884.6955476,
-  "sessionid": "qko66wi6ya3sac77",
+  "submit_time": 1773173829.641035,
+  "sessionid": "3sbniwfewd3ltwlg",
   "result": {
-    "id": "hmslkjfegt",
-    "start time": 1766518884.6961718,
-    "end time": 1766518899.7309825,
-    "runtime": 15.034810781478882,
-    "error": [],
-    "original_filepath": "input/pdf7_extra.png",
-    "abs_original_filepath": "/data2/projects/GlyGen/GlycanImageExtract2-dev/WebApplication/static/files/hmslkjfegt/input/pdf7_extra.png",
-    "pipeline_name": null,
-    "figure_result": [
+    "figures": [
       {
         "annotated_image_path": "extracted_figures/annotated_figures/pdf7_extra.png",
         "file_name": "pdf7_extra.png",
@@ -3127,8 +3119,10 @@
         "width": 660
       }
     ],
-    "finished": true,
-    "state": "Complete",
-    "status": ""
-  }
+    "job_type": "ImageJob"
+  },
+  "start_time": 1773173829.6417534,
+  "end_time": 1773173842.8874722,
+  "runtime": 13.245718717575073,
+  "error": []
 }

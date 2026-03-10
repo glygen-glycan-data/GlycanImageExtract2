@@ -1,27 +1,19 @@
 {
-  "id": "e7bauon6za",
+  "id": "rw4pw6ovto",
   "task_index": 6,
   "submission_detail": {
-    "original_file_name": "pr1c00245_0002.jpg",
+    "filename": "pr1c00245_0002.jpg",
     "submission_type": "Multi-Glycan Image",
-    "id": "e7bauon6za"
+    "submission_mode": "Upload",
+    "id": "rw4pw6ovto"
   },
   "state": "Complete",
   "status": "",
   "finished": true,
-  "submission_type": "Multi-Glycan Image",
-  "submit_time": 1766518888.7586222,
-  "sessionid": "yh7hvznc2ravay6e",
+  "submit_time": 1773173833.709051,
+  "sessionid": "t4o7ytxrvclke72d",
   "result": {
-    "id": "e7bauon6za",
-    "start time": 1766518900.6407647,
-    "end time": 1766518910.365108,
-    "runtime": 9.724343299865723,
-    "error": [],
-    "original_filepath": "input/pr1c00245_0002.jpg",
-    "abs_original_filepath": "/data2/projects/GlyGen/GlycanImageExtract2-dev/WebApplication/static/files/e7bauon6za/input/pr1c00245_0002.jpg",
-    "pipeline_name": null,
-    "figure_result": [
+    "figures": [
       {
         "annotated_image_path": "extracted_figures/annotated_figures/pr1c00245_0002.jpg",
         "file_name": "pr1c00245_0002.jpg",
@@ -1607,11 +1599,17 @@
         ],
         "height": 284,
         "image_path": "input/pr1c00245_0002.jpg",
-        "width": 726
+        "width": 726,
+        "figure_number": "2",
+        "caption": "An example of annotated glycopeptide spectrum, where peaks annotated as b/c/y/z ions are colored as purple, and those annotated as Y ions as red."
       }
     ],
-    "finished": true,
-    "state": "Complete",
-    "status": ""
-  }
+    "job_type": "ImageJob",
+    "citation": "Zhang R, Zhu J, Lubman DM, Mechref Y, Tang H. GlycoHybridSeq: Automated Identification of N-Linked Glycopeptides Using Electron Transfer/High-Energy Collision Dissociation (EThcD). J Proteome Res. 2021;20(6):3345-3352.",
+    "pmid": "34010560"
+  },
+  "start_time": 1773173844.3304226,
+  "end_time": 1773173853.76704,
+  "runtime": 9.436617374420166,
+  "error": []
 }

@@ -1,27 +1,20 @@
 {
-  "id": "6bvzcicaap",
+  "id": "2jvms7exsi",
   "task_index": 7,
   "submission_detail": {
-    "original_file_name": "use_multi_pdf.pdf",
+    "image_search_strategy": "hybrid",
+    "filename": "use_multi_pdf.pdf",
     "submission_type": "Manuscript",
-    "id": "6bvzcicaap"
+    "submission_mode": "Upload",
+    "id": "2jvms7exsi"
   },
   "state": "Complete",
   "status": "",
   "finished": true,
-  "submission_type": "Manuscript",
-  "submit_time": 1766518889.822355,
-  "sessionid": "tm52ktpw2azjyho6",
+  "submit_time": 1773173834.7718773,
+  "sessionid": "wmdpl3sitkdh7qgm",
   "result": {
-    "id": "6bvzcicaap",
-    "start time": 1766518910.3656993,
-    "end time": 1766519002.6398327,
-    "runtime": 92.2741334438324,
-    "error": [],
-    "original_filepath": "input/use_multi_pdf.pdf",
-    "abs_original_filepath": "/data2/projects/GlyGen/GlycanImageExtract2-dev/WebApplication/static/files/6bvzcicaap/input/use_multi_pdf.pdf",
-    "pipeline_name": null,
-    "figure_result": [
+    "figures": [
       {
         "annotated_image_path": "extracted_figures/annotated_figures/1.png",
         "bbox": [
@@ -30,13 +23,19 @@
           556.1007080078125,
           316.42718505859375
         ],
+        "center": [
+          307.91745376586914,
+          196.10758209228516
+        ],
         "file_name": "1.png",
         "glycans": [],
         "height": 1021,
         "image_count": 1,
         "image_number": 1,
         "image_path": "extracted_figures/figures/1.png",
+        "merge_type": "fitz",
         "page_height": 792.0,
+        "page_num": 2,
         "page_number": 2,
         "page_width": 612.0,
         "pdf_fig_bbox": [
@@ -48,7 +47,9 @@
         "pdf_fig_height": 241.6392059326172,
         "pdf_fig_width": 497.3665084838867,
         "width": 2105,
-        "xref": 22
+        "xref": 22,
+        "figure_number": "1",
+        "caption": "Segregation of PGM3 mutations with disease status in families with AR-HIES. A-D, Family A,p.Glu340del; families B and D, p.Leu83Ser; and family C, p.Asp502Tyr. Circles, Female subjects; squares, male subjects; solid symbols, affected subjects with homozygous mutations; half-solid symbols, heterozygous carriers; open symbols, healthy members with wild-type PGM3; slashes, deceased subjects; double horizontal lines, consanguinity; black dots, miscarriages. Asterisks indicate mutations confirmed by using sequencing. E-H, Sequence analyses of unaffected subjects without PGM3 mutations (top), unaffected heterozygous carriers (middle in Fig 1, E-G), and homozygous affected subjects (bottom)."
       },
       {
         "annotated_image_path": "extracted_figures/annotated_figures/2.png",
@@ -58,13 +59,19 @@
           495.97149658203125,
           526.485595703125
         ],
+        "center": [
+          307.93309783935547,
+          466.0749969482422
+        ],
         "file_name": "2.png",
         "glycans": [],
         "height": 513,
         "image_count": 2,
         "image_number": 2,
         "image_path": "extracted_figures/figures/2.png",
+        "merge_type": "fitz",
         "page_height": 792.0,
+        "page_num": 2,
         "page_number": 2,
         "page_width": 612.0,
         "pdf_fig_bbox": [
@@ -76,7 +83,9 @@
         "pdf_fig_height": 121.82119750976562,
         "pdf_fig_width": 377.07679748535156,
         "width": 1595,
-        "xref": 25
+        "xref": 25,
+        "figure_number": "2",
+        "caption": "Homozygous p.Glu340del mutations within the sugar-binding domain cause reduced PGM3 expression. A, Identified mutations localize to distinct protein domains. Numbers indicate amino acid residues. B, Western blotting shows reduced PGM3 abundance in EBV-transformed B cells from both homozygous carriers of family A. Mutational status is indicated below each lane. Glyceraldehyde-3-phosphate dehydrogenase (GAPDH) confirms equal loading. HD, Healthy donor. C, Normal PGM3 expression in immortalized T cells from the patient in family C who had insufficient B-cell numbers. b-actin was used as a loading control."
       },
       {
         "annotated_image_path": "extracted_figures/annotated_figures/3.png",
@@ -85,6 +94,10 @@
           75.78799438476562,
           472.3315124511719,
           428.78179931640625
+        ],
+        "center": [
+          307.8664093017578,
+          252.28489685058594
         ],
         "file_name": "3.png",
         "glycans": [
@@ -8890,7 +8903,9 @@
         "image_count": 3,
         "image_number": 1,
         "image_path": "extracted_figures/figures/3.png",
+        "merge_type": "fitz",
         "page_height": 792.0,
+        "page_num": 3,
         "page_number": 3,
         "page_width": 612.0,
         "pdf_fig_bbox": [
@@ -8902,7 +8917,9 @@
         "pdf_fig_height": 353.9938049316406,
         "pdf_fig_width": 329.9302062988281,
         "width": 1395,
-        "xref": 31
+        "xref": 31,
+        "figure_number": "4",
+        "caption": "Incomplete assembly of complex-type glycans in patients with PGM3 mutations. A, PGM3 links to N-glycosylation through UDP-GlcNAc (red). The common substrate for assembly of the complex-type N-glycans in the Golgi apparatus (vertical arrows) is used by 4 GlcNAc transferases (transferase [T] I, II, IV, and V; red arrows) with decreasing catalytic activity (increasing Km values [mmol/L UDP-GlcNAc]).27 UDP-GlcNAc produced by mutant PGM3 might be insufficient to allow for completion of N-glycan antenna formation. ER, Endoplasmic reticulum. B, Accumulation of bi-antennary N-glycans in neutrophils28 from patients with PGM3 mutations. Decreased relative abundance of tri-antennary and tetra-antennary glycans (percentage values of N-glycans detected by using glycomic profiling; see Figs E4 and E5) in affected patients B.V.7 (p.Leu83Ser; catalytic domain) and to a lesser extent in affected patient C.IV.7 (p.Asp502Tyr; phosphate-binding domain). C, The homozygous PGM3 mutation p.Glu340del causes accumulation of the hybrid-type N-glycans, with a simultaneous decrease in bi-antennary, tri-antennary, and tetra-antennary N-glycan levels in EBV B cells from patient A.V.13 (p.Glu340del; sugar-binding domain). B cells from patient B.V.7 (p.Leu83Ser; catalytic domain) have decreased tri-antennary and tetra-antennary N-glycan levels and increased bi-antennary N-glycan levels. Percentage values indicate the relative abundance of glycan types."
       },
       {
         "annotated_image_path": "extracted_figures/annotated_figures/4.png",
@@ -8912,13 +8929,19 @@
           545.0548706054688,
           376.69879150390625
         ],
+        "center": [
+          304.17737579345703,
+          226.24339294433594
+        ],
         "file_name": "4.png",
         "glycans": [],
         "height": 1277,
         "image_count": 4,
         "image_number": 1,
         "image_path": "extracted_figures/figures/4.png",
+        "merge_type": "fitz",
         "page_height": 792.0,
+        "page_num": 4,
         "page_number": 4,
         "page_width": 612.0,
         "pdf_fig_bbox": [
@@ -8930,7 +8953,9 @@
         "pdf_fig_height": 301.9107971191406,
         "pdf_fig_width": 482.75498962402344,
         "width": 2043,
-        "xref": 35
+        "xref": 35,
+        "figure_number": "E1",
+        "caption": "TH2 skewing but normal TH17 cell numbers in a patient with PGM3 mutations. Freshly isolated PBMCs from patient B.V.6 were stimulated, and cytokine profiles were determined by using FACS analysis, as indicated. Left panels: upper left gate, IL-4\u2013producing TH2 cells; lower right gate, IFN-g\u2013producing TH1 cells. Middle panels: upper left gate, IL-17\u2013producing TH17 cells; lower right gate, IFN-g\u2013producing TH1 cells. Right panels: Gate shows the proportion of CD25high/forkhead box protein 3 (FoxP3)1 regulatory T cells."
       },
       {
         "annotated_image_path": "extracted_figures/annotated_figures/5.png",
@@ -8940,13 +8965,19 @@
           500.89019775390625,
           588.2053833007812
         ],
+        "center": [
+          304.12574768066406,
+          331.9966735839844
+        ],
         "file_name": "5.png",
         "glycans": [],
         "height": 2174,
         "image_count": 5,
         "image_number": 1,
         "image_path": "extracted_figures/figures/5.png",
+        "merge_type": "fitz",
         "page_height": 792.0,
+        "page_num": 5,
         "page_number": 5,
         "page_width": 612.0,
         "pdf_fig_bbox": [
@@ -8958,7 +8989,9 @@
         "pdf_fig_height": 513.4174194335938,
         "pdf_fig_width": 394.5289001464844,
         "width": 1669,
-        "xref": 40
+        "xref": 40,
+        "figure_number": "E3",
+        "caption": "Normal transferrin glycoform patterns in sera from patients with PGM3 mutations. A and B, Asialo-, mono-, di-, tri-, tetra-, and pentasialo-transferrin glycoform patterns in a control serum were analyzed by using HPLC (quality control [QC] level 1 and 2). C and D, Normal HPLC chromatograms demonstrate normal relative distribution of transferrin glycoforms in sera from patients carrying PGM3 mutations: A.V.12 (p.Glu340del) and C.IV.7 (p.Asp502Tyr). Transferrin carries 2 bi-antennary N-linked glycans with terminal sialic acid residues, which are used for diagnostic testing for CDGs. Defective transferrin glycosylation would be indicated by an increase of at least one of the asialotransferrin, mono-sialotransferrin, di-sialotransferrin, or tri-sialotransferrin glycoform levels and a decrease in tetra-sialotransferrin levels."
       },
       {
         "annotated_image_path": "extracted_figures/annotated_figures/6.png",
@@ -8967,6 +9000,10 @@
           75.7879638671875,
           497.41888427734375,
           630.094482421875
+        ],
+        "center": [
+          307.9601936340332,
+          352.94122314453125
         ],
         "file_name": "6.png",
         "glycans": [
@@ -10655,7 +10692,7 @@
             "extracted_image_path": "extracted_figures/extracted_images/6-3.png",
             "fig_glycan_count": 3,
             "glyImage": "glymage/b22ac1f5d35038d94f3f9a0179a41b52.svg",
-            "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?ondemandtaskid=36eaa50681a96e931f1d3917ec6c0adcd1507b415ee86fcf8336",
+            "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?ondemandtaskid=36eaa50681a96e931f1d3917ec6c0adcb9722cfa0ef29cfab2e1",
             "height": 366,
             "image_name": "6-3.png",
             "image_path": "extracted_figures/images/6-3.png",
@@ -45904,7 +45941,9 @@
         "image_count": 6,
         "image_number": 1,
         "image_path": "extracted_figures/figures/6.png",
+        "merge_type": "fitz",
         "page_height": 792.0,
+        "page_num": 6,
         "page_number": 6,
         "page_width": 612.0,
         "pdf_fig_bbox": [
@@ -45916,11 +45955,17 @@
         "pdf_fig_height": 555.3065185546875,
         "pdf_fig_width": 379.9173812866211,
         "width": 1607,
-        "xref": 44
+        "xref": 44,
+        "figure_number": "E4",
+        "caption": "Accumulation of bi-antennary N-glycans in neutrophils from patients with PGM3 mutations. Mass spectra of permethylated N-glycans of neutrophils from a healthy control subject and the affected subjects B.V.7 and C.IV.7. Results are summarized in Fig 4, B, with consistent color codes. Glycomic data of the control is from Babu et al.E16"
       }
     ],
-    "finished": true,
-    "state": "Complete",
-    "status": ""
-  }
+    "job_type": "PDFJob",
+    "citation": "Sassi A, Lazaroski S, Wu G, Haslam S M, Fliegauf M, Mellouli F, Patiroglu T, Unal E, Ozdemir M A, Jouhadi Z, Khadir K, Ben-Khemis L, Ben-Ali M, Ben-Mustapha I, Borchani L, Pfeifer D, Jakob T, Khemiri M, Asplund A C, Gustafsson M O, Lundin K E, Falk-Sorqvist E, Moens L N, Gungor H E, Engelhardt K R, Dziadzio M, Stauss H, Fleckenstein B, Meier R, Prayitno K, Maul-Pavicic A, Schaffer S, Rakhmanov M, Henneke P, Kraus H, Eibel H, Kolsch U, Nadifi S, Nilsson M, Bejaoui M, Schaffer A A, Smith C I E, Dell A, Barbouche M R, Grimbacher B. Hypomorphic homozygous mutations in phosphoglucomutase 3 (PGM3) impair immunity and increase serum IgE levels. Journal of Allergy and Clinical Immunology 2014; 133(5):1410-1419.",
+    "pmid": "24698316"
+  },
+  "start_time": 1773173853.7672353,
+  "end_time": 1773173949.905282,
+  "runtime": 96.1380467414856,
+  "error": []
 }

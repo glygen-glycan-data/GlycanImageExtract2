@@ -1,27 +1,20 @@
 {
-  "id": "xuzfqjtix3",
+  "id": "qpupftwbkt",
   "task_index": 8,
   "submission_detail": {
-    "original_file_name": "Example0.pdf",
+    "image_search_strategy": "hybrid",
+    "filename": "Example0.pdf",
     "submission_type": "Manuscript",
-    "id": "xuzfqjtix3"
+    "submission_mode": "Upload",
+    "id": "qpupftwbkt"
   },
   "state": "Complete",
   "status": "",
   "finished": true,
-  "submission_type": "Manuscript",
-  "submit_time": 1766518890.8389044,
-  "sessionid": "xptppxko73aa3u2u",
+  "submit_time": 1773173835.7908392,
+  "sessionid": "wbmlgx463yddvmon",
   "result": {
-    "id": "xuzfqjtix3",
-    "start time": 1766518920.192895,
-    "end time": 1766518932.8467166,
-    "runtime": 12.65382170677185,
-    "error": [],
-    "original_filepath": "input/Example0.pdf",
-    "abs_original_filepath": "/data2/projects/GlyGen/GlycanImageExtract2-dev/WebApplication/static/files/xuzfqjtix3/input/Example0.pdf",
-    "pipeline_name": null,
-    "figure_result": [
+    "figures": [
       {
         "annotated_image_path": "extracted_figures/annotated_figures/1.png",
         "bbox": [
@@ -29,6 +22,10 @@
           72.0,
           539.7000122070312,
           407.79998779296875
+        ],
+        "center": [
+          305.8500061035156,
+          239.89999389648438
         ],
         "file_name": "1.png",
         "glycans": [
@@ -1957,7 +1954,7 @@
             "extracted_image_path": "extracted_figures/extracted_images/1-3.png",
             "fig_glycan_count": 3,
             "glyImage": "glymage/0571094a74502b356c301dd95e108d46.svg",
-            "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?ondemandtaskid=7f19b11df8bdcfbd509af8b640af22b3d1507b415ee86fcf8336",
+            "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?ondemandtaskid=7f19b11df8bdcfbd509af8b640af22b3b9722cfa0ef29cfab2e1",
             "height": 150,
             "image_name": "1-3.png",
             "image_path": "extracted_figures/images/1-3.png",
@@ -5778,7 +5775,9 @@
         "image_count": 1,
         "image_number": 1,
         "image_path": "extracted_figures/figures/1.png",
+        "merge_type": "fitz",
         "page_height": 792.0,
+        "page_num": 1,
         "page_number": 1,
         "page_width": 612.0,
         "pdf_fig_bbox": [
@@ -5793,8 +5792,10 @@
         "xref": 9
       }
     ],
-    "finished": true,
-    "state": "Complete",
-    "status": ""
-  }
+    "job_type": "PDFJob"
+  },
+  "start_time": 1773173863.0180645,
+  "end_time": 1773173875.6442783,
+  "runtime": 12.626213788986206,
+  "error": []
 }

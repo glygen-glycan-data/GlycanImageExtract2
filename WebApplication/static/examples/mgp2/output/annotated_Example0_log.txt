@@ -1,6 +1,0 @@
-xuzfqjtix3
-/data2/projects/GlyGen/GlycanImageExtract2-dev/WebApplication/static/files/xuzfqjtix3/output/annotated_Example0.pdf
-
-XREF: 9, Page number: 1, Image number: 1,  bbox: (72.0, 72.0, 539.7000122070312, 407.79998779296875), Width: 468.70001220703125, Height: 336.79998779296875
-
-Saved image to /data2/projects/GlyGen/GlycanImageExtract2-dev/WebApplication/static/files/xuzfqjtix3/extracted_figures/figures/1.png
