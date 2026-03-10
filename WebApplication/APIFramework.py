@@ -852,22 +852,12 @@ class APIFramework:
         else:
             json_file = self.abspath(f"static/files/{resultid}/results.json")
 
-        if self._lock.acquire(timeout=2):
-            if not hasattr(self, "_resultid_locks"):
-                self._resultid_locks = {}
-            if resultid not in self._resultid_locks:
-                self._resultid_locks[resultid] = threading.Lock()
-            self._lock.release()
-        else:
-            print("Status: ERROR:LOCK_TIMEOUT, ResultID: %s." % (resultid,), file=sys.stderr)
-            return flask.jsonify(dict(status="ERROR"))
-
         if not os.path.exists(json_file):
             print("Status: ERROR:NO_JSON, ResultID: %s." % (resultid,), file=sys.stderr)
             return flask.jsonify(dict(status="ERROR"))
 
         try:
-            if self._resultid_locks[resultid].acquire(timeout=10):
+            if self.lock_result(resultid,timeout=10):
                 with open(json_file, 'r') as f:
                     json_data = json.load(f)
 
@@ -894,7 +884,7 @@ class APIFramework:
                     pdf_mtime = os.path.getmtime(annotated_pdf)
                     if pdf_mtime >= json_mtime:
                         print("Status: OK (annotated PDF up-to-date), ResultID: %s." % (resultid,), file=sys.stderr)
-                        self._resultid_locks[resultid].release()
+                        self.release_result(resultid)
                         return flask.jsonify(dict(status="OK", resultid=resultid))
 
                 # Regenerate annotated results 
@@ -905,22 +895,21 @@ class APIFramework:
                 # everything is set.
                 time.sleep(0.2)     
 
-                # Verify that the annotated_pdf exists
-                if annotated_pdf and os.path.exists(annotated_pdf):
-                    self._resultid_locks[resultid].release()
-                    print("Status: OK, ResultID: %s." % (resultid,), file=sys.stderr)
-                    return flask.jsonify(dict(status="OK", resultid=resultid))
+                    # Verify that the annotated_pdf exists
+                    if annotated_pdf and os.path.exists(annotated_pdf):
+                        self.release_result(resultid)
+                        print("Status: OK, ResultID: %s." % (resultid,), file=sys.stderr)
+                        return flask.jsonify(dict(status="OK", resultid=resultid))
 
                 print("Status: ERROR:PDF_NOT_CREATED, ResultID: %s." % (resultid,), file=sys.stderr)
-                self._resultid_locks[resultid].release()
+                self.release_result(resultid)
                 return flask.jsonify(dict(status="ERROR"))
 
             else:
                 print("Status: ERROR:RESULT_TIMEOUT, ResultID: %s." % (resultid,), file=sys.stderr)
                 return flask.jsonify(dict(status="ERROR"))
         except Exception:
-            if resultid in self._resultid_locks:
-                self._resultid_locks[resultid].release()
+            self.release_result(resultid)
             traceback.print_exc()
             print("Status: ERROR:EXCEPTION, ResultID: %s." % (resultid,), file=sys.stderr)
             return flask.jsonify(dict(status="ERROR"))
