@@ -113,7 +113,7 @@ class GlyImageExtractor(APIFramework):
             # Factory method - get_processor() 
             document_metadata = None
             try:
-                job_instance = JobInstance.get_processor(task_detail, msg_queue=result_queue)
+                job_instance = JobInstance.get_processor(task_detail, config=params, msg_queue=result_queue)
                 job_instance.process_file()
                 result = job_instance.get_results()
                 document_metadata = job_instance.get_document_metadata()

@@ -1056,7 +1056,7 @@ class APIFramework:
 
         self._deamon_process_pool = []
         for i in range(self._worker_num):
-            p = multiprocessing.Process(target=self.worker, args=(i, self.task_queue, self.result_queue, self._worker_para ))
+            p = multiprocessing.Process(target=self.worker, args=(i, self.task_queue, self.result_queue, self._worker_config ))
             self._deamon_process_pool.append(p)
 
         for p in self._deamon_process_pool:
