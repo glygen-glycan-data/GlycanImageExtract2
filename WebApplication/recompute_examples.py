@@ -53,6 +53,7 @@ def update_votes(instance):
                     bestg2 = g2
             if not bestg2:
                 incorrectcnt += 1
+                print("Warning: No %s figure %s answer matches to glycan %d prediction."%(instance,i,j),file=sys.stderr)
                 continue
             g2 = bestg2
             if g1.get("IUPAC"):
