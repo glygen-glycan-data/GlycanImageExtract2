@@ -1,7 +1,11 @@
 {
   "result": {
-    "figure_result": [
+    "citation": "Krištić J, Zaytseva OO, Ram R, Nguyen Q, Novokmet M, Vučković F, Vilaj M, Trbojević-Akmačić I, Pezer M, Davern KM, Morahan G, Lauc G. Profiling and genetic control of the murine immunoglobulin G glycome. Nat Chem Biol. 2018;14(5):516-524.",
+    "pmid": "29632412",
+    "figures": [
       {
+        "caption": "Representative overlaid chromatograms of mouse and human IgG glycans separated by uPLC. Mouse IgG glycans (red) were separated into 26 chromatographic glycan peaks while human IgG glycans (black) were separated into 24 chromatographic glycan peaks as in Pučić et al. Shown are structural schemes of all identified glycans of mouse and human IgG. These experiments were repeated 589 times (the number of mice studied) with similar results.",
+        "figure_number": "1",
         "glycans": [
           {
             "bbox": [

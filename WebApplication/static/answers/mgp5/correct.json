@@ -1,7 +1,8 @@
 {
     "result": {
       "citation": "Subramanian S P, Wojtkiewicz M, Yu F, Castro C, Schuette E N, Rodriguez-Paar J, Churko J, Renavikar P, Anderson D, Mahr C, Gundry R L. Integrated Multiomics Reveals Alterations in Paucimannose and Complex Type N-Glycans in Cardiac Tissue of Patients with COVID-19. Molecular & Cellular Proteomics (MCP) 2025; 24(4): 6-14.",
-      "figure_result": [
+      "pmid": "39988192",
+      "figures": [
         {
             "caption": "Summary of snRNA-seq analysis of glycogenes in heart cells from COVID-19(+/) patients. A, schematic summary of the bio- informatic analysis of 950 glycosylation-related genes from 19 pathways interrogated from previously published snRNA-seq data (19, 20). B, relative distribution of glycogenes within individual cells of the left and right ventricular regions of the heart is presented as a radial heat map. The outer circle represents the gene expression pro\ufb01le of glycogenes having log2FC > \u00b11 and FDR <0.05. The inner circle represents the percentage contribution of each glycosylation-related pathway normalized to the total abundance. Glycogenes of N-glycan biosynthesis having 15 to 20% variation are indicated within the inner circle. The color gradients for the inner and outer circles in B correspond to the legend for glycosylation- related pathways in A and gene expression fold changes, respectively. Parts of this \ufb01gure were generated with Biorender.comMultiomics Reveals N-Glycan Alterations in COVID-19 Hearts",
             "figure_number": "1",
