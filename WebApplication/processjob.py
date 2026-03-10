@@ -219,7 +219,9 @@ class JobInstance:
         uri_base = "https://gnome.glyomics.org/StructureBrowser.html?"
 
         if iupac:
-            accession,wurcs = searchGlyLookup(iupac)
+            accession,wurcs = searchGlyLookup(iupac,
+                                              baseurl=self.config.get('glylookup_url'),
+                                              devemail=self.config.get('dev_email'))
         else:
             accession = None
             wurcs = None
@@ -227,7 +229,11 @@ class JobInstance:
         if accession:
             gnome_url = uri_base + 'focus=' + accession
         elif iupac:
-            gnome_url = sendToGNOme(iupac)
+            # subsumption = searchSubsumption(iupac,
+            #                                 baseurl=self.config.get('subsumption_url'),
+            #                                 devemail=self.config.get('dev_email'))
+            # print(subsumption,file=sys.stderr)
+            gnome_url = sendToGNOme(iupac,devemail=self.config.get('dev_email'))
         else:
             # converting composition format:
             # eg: "GlcNAc(5)NeuAc(2)" to "GlcNAc=5&NeuAc=2"
@@ -241,7 +247,9 @@ class JobInstance:
                 "linkexpl": "Extracted successfully using accession",
                 "gnomeurl": gnome_url,
                 "accession": accession, 
-                "glyImage": searchGlyImage(iupac, orientation=IUPAC_data["orientation"])
+                "glyImage": searchGlyImage(iupac, orientation=IUPAC_data["orientation"],
+                                           baseurl=self.config.get('glymage_url'),
+                                           devemail=self.config.get('dev_email'))
             })
             if wurcs:
                 IUPAC_data['WURCS'] = wurcs
@@ -249,14 +257,18 @@ class JobInstance:
             IUPAC_data.update({
                 "linkexpl": "Extracted structure using IUPAC.",
                 "gnomeurl": gnome_url,
-                "glyImage": searchGlyImage(iupac, orientation=IUPAC_data["orientation"]),
+                "glyImage": searchGlyImage(iupac, orientation=IUPAC_data["orientation"],
+                                           baseurl=self.config.get('glymage_url'),
+                                           devemail=self.config.get('dev_email')),
             })
         elif compstr:
             # composition only
             IUPAC_data.update({
                 "linkexpl": "Extracted structure using Composition.",
                 "gnomeurl": gnome_url,
-                "glyImage": searchGlyImage(compstr, orientation=IUPAC_data["orientation"]),
+                "glyImage": searchGlyImage(compstr, orientation=IUPAC_data["orientation"],
+                                           baseurl=self.config.get('glymage_url'),
+                                           devemail=self.config.get('dev_email')),
             })
 
         return IUPAC_data
