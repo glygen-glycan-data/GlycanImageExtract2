@@ -7,11 +7,12 @@ from urllib.request import urlopen
 from urllib.parse import urlencode
 from urllib.error import HTTPError
 
-devemail="nje5+converter@georgetown.edu"
+default_dev_email="nje5+extractor@georgetown.edu"
 
 def request_api(baseurl, target, **kwargs):
     """Generic function to call glyomics.org APIs"""
     url = baseurl + target
+    # print(url,kwargs,file=sys.stderr)
     data = urlencode(kwargs).encode('utf8')
     attempts = 0
     while True:
@@ -26,10 +27,13 @@ def request_api(baseurl, target, **kwargs):
     return json.loads(response)
 
 
-def sendToGNOme(*seqs):
+def sendToGNOme(*seqs, baseurl=None, devemail=None):
+    if not baseurl:
+        baseurl = "https://subsumption.glyomics.org/"
+    if not devemail:
+        devemail = default_dev_email
 
     # get id (task_id) from subsumption
-    baseurl = "https://subsumption.glyomics.org/"
     tasks = [{"seq": seq.strip() if seq else ""} for seq in seqs]
     data = request_api(baseurl, "submit", tasks=json.dumps(tasks), developer_email=devemail)
 
@@ -38,10 +42,12 @@ def sendToGNOme(*seqs):
     return f"https://gnome.glyomics.org/StructureBrowser.html?ondemandtaskid={task_id}"
 
 
-def searchGlyImage(*seqs, orientation='RL',display='normal', image_format='svg', accession=False ,delay=1, maxretry=10):
+def searchGlyImage(*seqs, orientation='RL', display='normal', image_format='svg', accession=False, baseurl=None, devemail=None, delay=1, maxretry=10):
+    if not baseurl:
+        baseurl = "https://glymage.glyomics.org/"
+    if not devemail:
+        devemail = default_dev_email
 
-    baseurl = "https://glymage.glyomics.org/"
-    
     key = 'acc' if accession else 'seq'
 
     tasks = [
@@ -84,10 +90,11 @@ def searchGlyImage(*seqs, orientation='RL',display='normal', image_format='svg',
         return retval[0]
     return retval
 
-
-
-def searchGlyLookup(*seqs, delay=1, maxretry=10):
-    baseurl = "https://glylookup.glyomics.org/"
+def searchGlyLookup(*seqs, baseurl=None, devemail=None, delay=1, maxretry=10):
+    if not baseurl:
+        baseurl = "https://glylookup.glyomics.org/"
+    if not devemail:
+        devemail = default_dev_email
 
     params = []
     for seq in seqs:
@@ -96,14 +103,14 @@ def searchGlyLookup(*seqs, delay=1, maxretry=10):
         params.append(param)
 
     # print("PARAMS",params)
-    data = request_api(baseurl, "submit",tasks=json.dumps(params),developer_email=devemail)
+    data = request_api(baseurl,"submit",tasks=json.dumps(params),developer_email=devemail)
     jobids = []
     for job in data:
         jobids.append(job["id"])
 
     nretries = 0
     while True:
-        data = request_api(baseurl, "retrieve",task_ids=json.dumps(jobids))
+        data = request_api(baseurl,"retrieve",task_ids=json.dumps(jobids))
         # print("task ids",json.dumps(jobids) )
         done = True
         for job in data:
@@ -132,5 +139,52 @@ def searchGlyLookup(*seqs, delay=1, maxretry=10):
 
     if len(seqs) == 1:
         return retval[0]
+    return retval
+
+# Duplicated code from GlyLookup, should probably use the glyomics client...
+def searchSubsumption(seq, baseurl=None, devemail=None, delay=1, maxretry=10):
+    if not baseurl:
+        baseurl = "https://subsumption.glyomics.org/"
+    if not devemail:
+        devemail = default_dev_email
+
+    params = [dict(seq=seq.strip())]
+    
+    # print("PARAMS",params)
+    data = request_api(baseurl,"submit",tasks=json.dumps(params),developer_email=devemail)
+    jobids = []
+    for job in data:
+        jobids.append(job["id"])
+
+    nretries = 0
+    while True:
+        data = request_api(baseurl,"retrieve",task_ids=json.dumps(jobids))
+        # print("task ids",json.dumps(jobids) )
+        done = True
+        for job in data:
+            if not job.get('finished'):
+                done = False
+                break
+        if done:
+            break
+        if nretries >= maxretry:
+            break
+        time.sleep(delay)
+        nretries += 1
+
+    retval = None
+    for job in data:
+        # print(job,file=sys.stderr)
+        subsumedby = []
+        for k,vs in job['result']['relationship'].items():
+            if k == 'Query':
+                subsumes = list(vs)
+            elif "Query" in vs:
+                subsumedby.append(k)
+        equiv=job['result']['equivalent'].get('Query',"")
+        retval = dict(equivalent=equiv,
+                      subsumes=subsumes,
+                      subsumedby=subsumedby)
+    
     return retval
 
