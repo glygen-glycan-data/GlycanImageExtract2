@@ -82,7 +82,7 @@ class XMLParser:
             return s if s else None
 
         authors = to_str(authors)
-        title = to_str(title)
+        title = to_str(title).rstrip('.') + '.'
         journal = to_str(journal)
         year_vol_pages = to_str(year_vol_pages) if year_vol_pages is not None else None
 
