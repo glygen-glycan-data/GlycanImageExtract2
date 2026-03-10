@@ -899,13 +899,24 @@ class APIFramework:
                         self.release_result(resultid)
                         return flask.jsonify(dict(status="OK", resultid=resultid))
 
-                # Regenerate annotated results 
-                print("Building annotated PDF/TSV for ResultID: %s." % (resultid,), file=sys.stderr)
-                annotate_from_webapp(json_file, self.get_base_url(), output_dir=output_dir)
+                base_url = None
+                if flask.has_request_context():
+                    referer = flask.request.headers.get('Referer')
+                    # print("Referer:",referer)
+                    if referer:
+                        if '/result/' in referer:
+                            base_url = referer.split('/result/')[0]
+                        elif referer.endswith('/jobs'):
+                            base_url = referer.split('/jobs')[0]
 
-                # after the results are ready and wrriten to the file system (via annotate_from_webapp), using a small delay to ensure
-                # everything is set.
-                time.sleep(0.2)     
+                if base_url:
+                    # Regenerate annotated results 
+                    print("Building annotated PDF/TSV for ResultID: %s." % (resultid,), file=sys.stderr)
+                    annotate_from_webapp(json_file, pdf_path, base_url, output_dir=output_dir)
+
+                    # after the results are ready and wrriten to the file system (via annotate_from_webapp), using a small delay to ensure
+                    # everything is set.
+                    time.sleep(0.2)     
 
                     # Verify that the annotated_pdf exists
                     if annotated_pdf and os.path.exists(annotated_pdf):
