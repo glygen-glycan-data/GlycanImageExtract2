@@ -47,7 +47,7 @@ class InputItem:
             return f'{self.basename}.annotated.pdf'
         return None
 
-def annotate_from_webapp(json_path, extractorurl, output_dir):
+def annotate_from_webapp(json_path, pdf_path, extractorurl, output_dir):
     '''
     WebApp use case: Build pdf annotations and TSV directly from JSON files.
     No submission or polling needed.
@@ -64,7 +64,6 @@ def annotate_from_webapp(json_path, extractorurl, output_dir):
     with open(json_path, 'r') as f:
         json_data = json.load(f)
 
-    pdf_path = json_data.get('result', {}).get('abs_original_filepath')
     if not os.path.exists(pdf_path):
         raise FileNotFoundError(f"Original PDF file not found: {pdf_path}")
 
@@ -214,7 +213,7 @@ def poll_for_completion(needsresults, all_json_data, resultfilename, client):
             current_taskid = all_json_data[i]['id']
             json_data = client.retrieve_once(current_taskid, asis=True)
             
-            input_item_name = json_data.get('submission_detail', {}).get('original_file_name', f'Item {i}')
+            input_item_name = json_data.get('submission_detail', {}).get('filename', f'Item {i}')
             
             if json_data.get('finished', False):
                 all_json_data[i] = json_data
@@ -271,7 +270,7 @@ def build_annotations(input_items, all_json_data, base_url, output_dir=None):
             print(f"{input_item.value} skipping: no result data.")
             continue
 
-        original_filepath = result.get('abs_original_filepath')
+        original_filepath = input_item.value
         if not original_filepath or not os.path.exists(original_filepath):
             print(f"{input_item.value} skipping: original PDF not found.")
             continue
@@ -307,7 +306,7 @@ def build_annotations(input_items, all_json_data, base_url, output_dir=None):
             doc = fitz.open(original_filepath)
             image_data = []
 
-            figure_results = result.get('figure_result', [])
+            figure_results = result.get('figures', [])
             taskid = json_data.get('id')
 
             for result_item in figure_results:
