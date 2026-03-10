@@ -305,6 +305,9 @@ class APIFramework:
         # Params are key value pairs from configuration file, section app_name
         raise NotImplemented
 
+    def set_template_render_kwarg(self,**kwargs):
+        self._template_render_kwargs.update(dict(**kwargs)) 
+
     # FLASK related functions starts here
 
     # FLASK handlers, need to be overwrite for your own app
@@ -312,8 +315,8 @@ class APIFramework:
         sessionid = self.get_session()
         if self._home_html is None:
             return flask.jsonify("Hello from %s:%s" % (self.host(), self.port()))
-        else:
-            return flask.render_template(self._home_html, urlprefix=self._prefix, **kwargs)
+        kwargs.update(dict(**self._template_render_kwargs))
+        return flask.render_template(self._home_html, **kwargs)
 
     def process(self):
         submission_type = flask.request.args.get("type")
@@ -323,7 +326,8 @@ class APIFramework:
         else:
             placeholder_url = 'https://example.com/image.png'
 
-        return flask.render_template(self._process_html, submission_type=submission_type, placeholder_url=placeholder_url, urlprefix=self._prefix)
+        kwargs = dict(**self._template_render_kwargs)
+        return flask.render_template(self._process_html, submission_type=submission_type, placeholder_url=placeholder_url, **kwargs)
 
 
     def examples(self):
@@ -339,12 +343,13 @@ class APIFramework:
             {"title": "G83439SR - N-Glycan Toplogy ", "desc": "", "url": f"{self._prefix}/result/sgi6", "icon": f"{self._prefix}/static/images/single-image.svg" },
             {"title": "G69233PF - O-Glycan Fully-defined", "desc": "", "url": f"{self._prefix}/result/sgi5", "icon": f"{self._prefix}/static/images/single-image.svg" },
         ]
-        
-        return flask.render_template(self._examples_html, example_cards=example_cards, urlprefix=self._prefix)
+        kwargs = dict(**self._template_render_kwargs)
+        return flask.render_template(self._examples_html, example_cards=example_cards, **kwargs)
 
 
     def jobs(self):
-        return flask.render_template(self._jobs_html, urlprefix=self._prefix)
+        kwargs = dict(**self._template_render_kwargs)
+        return flask.render_template(self._jobs_html, **kwargs)
 
     # def about(self):
     #     return flask.render_template("about.html", urlprefix=self._prefix)
@@ -353,7 +358,8 @@ class APIFramework:
         if self._file_upload_finished_html is None:
             return flask.jsonify("Not Implemented")
         else:
-            return flask.render_template(self._file_upload_finished_html, urlprefix=self._prefix, **kwargs)
+            kwargs.update(dict(**self._template_render_kwargs))
+            return flask.render_template(self._file_upload_finished_html, **kwargs)
 
     def get_jobs_ahead(self,tid):
         tind = self.result_cache[tid].get("task_index",1e+10)
