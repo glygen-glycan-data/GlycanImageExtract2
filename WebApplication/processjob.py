@@ -384,8 +384,8 @@ class JobInstance:
 class ImageJob(JobInstance):
     def process_figures(self, image_folders):
         self.update_status("Processing image")
-        self.task_detail['original_filepath'] = self.abs_to_rel(self.input_filepath)
-        self.task_detail['abs_original_filepath'] = self.input_filepath
+        # self.task_detail['original_filepath'] = self.abs_to_rel(self.input_filepath)
+        # self.task_detail['abs_original_filepath'] = self.input_filepath
         self.find_glycans(self.input_filepath,image_folders)
 
 class PMIDJob(JobInstance):
@@ -393,9 +393,9 @@ class PMIDJob(JobInstance):
     def process_figures(self, image_folders):
         base_path = os.path.dirname(os.path.abspath(__file__))
 
-        self.update_status("Processing image")
-        self.task_detail['original_filepath'] = self.abs_to_rel(self.input_filepath)
-        self.task_detail['abs_original_filepath'] = self.input_filepath
+        self.update_status("Processing PMID manuscript")
+        # self.task_detail['original_filepath'] = self.abs_to_rel(self.input_filepath)
+        # self.task_detail['abs_original_filepath'] = self.input_filepath
 
         pmc_publication_info = self.task_detail.get('pmc_publication')
 
@@ -532,8 +532,8 @@ class PDFJob(JobInstance):
         """
 
         # update task_detail - with the original input_filepath
-        self.task_detail['original_filepath'] = self.abs_to_rel(self.input_filepath)
-        self.task_detail['abs_original_filepath'] = self.input_filepath
+        # self.task_detail['original_filepath'] = self.abs_to_rel(self.input_filepath)
+        # self.task_detail['abs_original_filepath'] = self.input_filepath
         # self.task_detail['pipeline_name'] = self.pipeline_name
 
         doc = fitz.open(self.input_filepath)

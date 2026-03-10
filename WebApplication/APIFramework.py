@@ -869,14 +869,18 @@ class APIFramework:
                 with open(json_file, 'r') as f:
                     json_data = json.load(f)
 
+                base_dir = self.abspath(f"static/{location or 'files'}/{resultid}/")
+
                 result = json_data.get('result', {})
-                pdf_path = result.get('abs_original_filepath')
-                if not pdf_path or not os.path.exists(pdf_path):
+                subdetails = json_data.get('submission_detail', {})
+                pdf_path = base_dir + "input/" + subdetails.get('filename',"")
+                # print(pdf_path)
+                if not pdf_path or not os.path.isfile(pdf_path):
                     print("Status: ERROR:NO_PDF, ResultID: %s." % (resultid,), file=sys.stderr)
-                    self._resultid_locks[resultid].release()
+                    self.release_result(resultid)
                     return flask.jsonify(dict(status="ERROR"))
 
-                output_dir = self.abspath(f"static/{location or 'files'}/{resultid}/annotated_files")
+                output_dir = base_dir + "annotated_files"
                 os.makedirs(output_dir, exist_ok=True)
 
                 pdf_basename = os.path.splitext(os.path.basename(pdf_path))[0]
