@@ -781,7 +781,7 @@ class APIFramework:
             pmid = oldtask['pmid']
             newtask = dict(submission_type=submission_type,pmid=pmid)
         else:
-            input_file = os.path.join('static', result.get('location','files'), tid, 'input', oldtask['filename'])
+            input_file = os.path.join('static', result.get('location','files'), tid, 'input', oldtask.get('filename',oldtask.get('original_file_name')))
             submission_type = oldtask['submission_type']
             newtask = dict(submission_type=submission_type,
                            fileURL=oldtask.get('fileURL'),
