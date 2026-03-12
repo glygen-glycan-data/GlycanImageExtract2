@@ -33,7 +33,6 @@ class JobInstance:
         self.submission_type = task_detail.get('submission_type')
 
         self.pmid = task_detail.get('pmid')
-        self.pmcid = task_detail.get('pmcid')
 
         # Base project directory (absolute)
         self.base_dir = os.path.abspath(os.path.dirname(__file__))

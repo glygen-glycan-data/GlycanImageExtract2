@@ -743,7 +743,6 @@ class APIFramework:
                 return flask.jsonify({"error": f"Unexpected error: {str(e)}"}), 400
 
             if pmid and pmcid:
-                task_detail.update({"pmcid": pmcid})
                 if pmc_publication:
                     task_detail.update({"pmc_publication": pmc_publication})
 
