@@ -1,4 +1,4 @@
-import fitz, os, os.path
+import fitz, os, os.path, re
 
 # if more constants are added, then create a Enum class 
 STANDARD_DPI = 300
@@ -159,7 +159,18 @@ class PDFHandler(object):
                         # image['dpi'] = PDFHandler.calculate_dpi(image, self.doc) or self.STANDARD_DPI
                         image_count += 1
                         yield image
-                                    
+
+    doi_regex = re.compile(r'(doi: *|://doi.org/|\b)(10.\d{4,9}/[-._;()/:a-zA-Z0-9]+)',re.IGNORECASE)
+    def find_doi(self):
+        doi = None
+        for page_number,page in enumerate(self.pages(),1):
+            text = page.get_text()
+            match = self.doi_regex.search(text)
+            if match:
+                doi = match.group(2)
+                break
+        return doi
+
 class PDFImageFilter(object):
     def keep(self,image):
         raise NotImplementedError
@@ -225,7 +236,11 @@ if __name__ == "__main__":
 
     import sys
 
+    # print(sys.argv[1])
     pdf = PDFHandler(sys.argv[1])
+    print("DOI:",pdf.find_doi())
+    sys.exit(0)
+
     filter = CompoundPDFImageFilter(
         PDFXRefImageFilter(min_xref=1),
         PDFImageSizeFilter(width=90,height=90)
