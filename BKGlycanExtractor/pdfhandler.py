@@ -236,7 +236,7 @@ if __name__ == "__main__":
 
     import sys
 
-    # print(sys.argv[1])
+    print(sys.argv[1])
     pdf = PDFHandler(sys.argv[1])
     print("DOI:",pdf.find_doi())
     sys.exit(0)

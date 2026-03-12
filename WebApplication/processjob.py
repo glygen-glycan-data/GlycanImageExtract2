@@ -7,6 +7,7 @@ from APIFramework import APIFramework
 from BKGlycanExtractor import ImageSearch
 from BKGlycanExtractor import Config_Manager, BoundingBox, PDFBoundingBox, CompareBoxes
 from BKGlycanExtractor import STANDARD_DPI, PDFHandler
+from BKGlycanExtractor import searchpmc
 
 import numpy as np
 from shutil import copyfile
@@ -575,8 +576,24 @@ class PDFJob(JobInstance):
         # self.task_detail['abs_original_filepath'] = self.input_filepath
         # self.task_detail['pipeline_name'] = self.pipeline_name
 
-        doc = fitz.open(self.input_filepath)
+        pdf = PDFHandler(self.input_filepath)
+        doc = pdf.doc
+        doi = pdf.find_doi()
+        pmid = None
+        citation = None
+        if doi:
+            ids = searchpmc.lookup(doi)
+            if ids:
+                pmid = ids['pmid']
+        if pmid:
+            citation = searchpmc.citation_details(pmid)
+        print("DOI:",doi,"PMID:",pmid,"Citation:",citation)
 
+        if citation:
+            self.document_metadata['citation'] = citation['citation']
+        if pmid:
+            self.document_metadata['pmid'] = pmid
+            
         # Factory method
         image_search_instance = ImageSearch.search_method(self.task_detail['image_search_strategy'])
         pdf_images_metadata = image_search_instance.get_metadata(self.input_filepath)
