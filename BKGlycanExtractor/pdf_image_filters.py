@@ -271,7 +271,7 @@ class MergeByIOU(ImageFilter):
                                 'merge_type': 'fitz'    # means the fitz based and figcap image matched based on IOU, but we are using all the properties from the fitz image + figcap captions
                                 # 'merge_iou': iou,
                                 **{k: v for k, v in figcap_fig_data.items() if k in (
-                                    'label', 'caption', 'figure_number'
+                                    'caption', 'figure_number'
                                 )}
                             })
         except Exception as e:
