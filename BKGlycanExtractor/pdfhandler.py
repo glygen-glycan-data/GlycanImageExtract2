@@ -1,4 +1,9 @@
-import fitz, os, os.path, re
+import fitz, os, os.path, re, difflib
+
+try:
+    from . import searchpmc
+except ImportError:
+    pass
 
 # if more constants are added, then create a Enum class 
 STANDARD_DPI = 300
@@ -161,16 +166,60 @@ class PDFHandler(object):
                         yield image
 
     doi_regex = re.compile(r'(doi: *|://doi.org/|\b)(10.\d{4,9}/[-._;()/:a-zA-Z0-9]+)',re.IGNORECASE)
-    def find_doi(self):
-        doi = None
+    def find_dois(self):
+        dois = {}
         for page_number,page in enumerate(self.pages(),1):
             text = page.get_text()
-            match = self.doi_regex.search(text)
-            if match:
-                doi = match.group(2)
-                break
-        return doi
+            for match in self.doi_regex.finditer(text):
+                if match:
+                    doi = match.group(2)
+                    if doi not in dois:
+                        dois[doi] = dict(doi=doi,count=1,index=len(dois)+1,page=page_number)
+                    else:
+                        dois[doi]['count'] += 1
 
+        return sorted([t for t in dois.values() ],key=lambda t: t['index'])
+
+    def find_doi(self):
+        for doi in self.find_dois():
+            return doi['doi']
+        return None
+
+    def find_text_blocks(self,page=None,pages=None):
+        if page:
+            pages = [ page ]
+        if pages:
+            pages = set(pages)
+        for page_number,thepage in enumerate(self.pages(),1):
+            if page and page_number not in pages:
+                continue
+            text = thepage.get_text('blocks')
+            for tb in thepage.get_text('blocks'):
+                yield " ".join(tb[4].split())
+
+    def get_citation(self):
+        
+        dois = self.find_dois()
+        for doi in dois:
+            title = None
+            ids = searchpmc.lookup(doi=doi['doi'])
+            if ids is not None and ids.get('pmid'):
+                pmid = ids.get('pmid')
+                cite = searchpmc.citation_details(pmid)
+                if cite and cite.get('title'):
+                    title = " ".join(cite.get('title').split()).rstrip('.')
+            
+            if title:
+                # print(title)
+                for i,tb in enumerate(self.find_text_blocks(pages=(1,2,3))):
+                    ratio = difflib.SequenceMatcher(None,title,tb).ratio()
+                    # print(ratio,tb)
+                    if ratio >= 0.8 or title in tb:
+                        cite['title_match_ratio'] = ratio
+                        return cite
+
+        return None                 
+    
 class PDFImageFilter(object):
     def keep(self,image):
         raise NotImplementedError
@@ -235,10 +284,14 @@ class PDFLargeImageSizeFilter(PDFImageFilter):
 if __name__ == "__main__":
 
     import sys
+    import searchpmc
 
     print(sys.argv[1])
     pdf = PDFHandler(sys.argv[1])
-    print("DOI:",pdf.find_doi())
+    cite = pdf.get_citation()
+    if cite:
+        print(cite['ascii_citation'])
+        # print(cite)
     sys.exit(0)
 
     filter = CompoundPDFImageFilter(

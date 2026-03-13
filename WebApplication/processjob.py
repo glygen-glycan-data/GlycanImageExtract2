@@ -584,21 +584,10 @@ class PDFJob(JobInstance):
 
         pdf = PDFHandler(self.input_filepath)
         doc = pdf.doc
-        doi = pdf.find_doi()
-        pmid = None
-        citation = None
-        if doi:
-            ids = searchpmc.lookup(doi)
-            if ids:
-                pmid = ids['pmid']
-        if pmid:
-            citation = searchpmc.citation_details(pmid)
-        print("DOI:",doi,"PMID:",pmid,"Citation:",citation)
-
-        if citation:
-            self.document_metadata['citation'] = citation['citation']
-        if pmid:
-            self.document_metadata['pmid'] = pmid
+        cite = pdf.get_citation()
+        if cite:
+            self.document_metadata['citation'] = cite['citation']
+            self.document_metadata['pmid'] = cite['pmid']
             
         # Factory method
         image_search_instance = ImageSearch.search_method(self.task_detail['image_search_strategy'])
