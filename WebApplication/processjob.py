@@ -338,7 +338,10 @@ class JobInstance:
             elif page_num == 0:     # for simple/multi glycans submissions
                 self.update_status("Processing image, analyzed %d/%d glycan(s)"%(index,nglycan))
             else:   # for pdf submission
-                self.update_status("Processing image %d from page %d, analyzed %d/%d glycan(s)"%(image_number,page_num,index,nglycan))
+                if figure_number:
+                    self.update_status("Processing figure %s, analyzed %d/%d glycan(s)"%(figure_number,index,nglycan))
+                else:
+                    self.update_status("Processing image %d from page %d, analyzed %d/%d glycan(s)"%(image_number,page_num,index,nglycan))
 
 
     def find_glycans(self, figure_path, image_folders, **kwargs):
@@ -368,7 +371,10 @@ class JobInstance:
             elif kwargs.get("page_num",0) == 0:
                 self.update_status("Processing image, postprocessing %d glycan(s)" % (nglycan))
             else:
-                self.update_status("Processing image %d from page %d, postprocessing %d glycan(s)" % (kwargs["image_number"], kwargs["page_num"], nglycan))
+                if kwargs.get('figure_number'):
+                    self.update_status("Processing figure %s, postprocessing %d glycan(s)" % (kwargs["figure_number"],nglycan))
+                else:
+                    self.update_status("Processing image %d from page %d, postprocessing %d glycan(s)" % (kwargs["image_number"], kwargs["page_num"], nglycan))
 
         self.annotate_image(figure_semantics)
         self.process_glycans(figure_semantics, image_folders)
@@ -610,6 +616,9 @@ class PDFJob(JobInstance):
 
                 self.log_file.write(f"\nSaved image to {image_path}")
 
-                self.update_status("Processing image %d from page %d" % (image_number, page_num))
+                if figure_info.get('figure_number'):
+                    self.update_status("Processing figure %s" % (figure_info['figure_number'],))
+                else:
+                    self.update_status("Processing image %d from page %d" % (image_number, page_num))
 
                 self.find_glycans(image_path, image_folders, page_num=page_num, **figure_info)
