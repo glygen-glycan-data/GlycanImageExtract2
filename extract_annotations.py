@@ -185,11 +185,14 @@ def extract_annotations(output_dir, pdf_path, tsv_path):
 
                                 write_semantics(sem_file, data)
 
-                        pix = PDFHandler.save_image(doc, page, pdf_fig_box, figure_path, xref=xref, dpi=STANDARD_DPI, annots=False)
-                        sem_file.write(f'##### WHOLEIMAGE: {round(pix.height)} x {round(pix.width)} (height x width)\n')
-                        # sem_file.write(f'##### IMAGE_DPI: {dpi}\n')
-                        if xref is not None and xref > 0:
-                            sem_file.write(f'##### IMAGE_XREF: {xref}\n')
+                        try:
+                            pix = PDFHandler.save_image(doc, page, pdf_fig_box, figure_path, xref=xref, dpi=STANDARD_DPI, annots=False)
+                            sem_file.write(f'##### WHOLEIMAGE: {round(pix.height)} x {round(pix.width)} (height x width)\n')
+                            # sem_file.write(f'##### IMAGE_DPI: {dpi}\n')
+                            if xref is not None and xref > 0:
+                                sem_file.write(f'##### IMAGE_XREF: {xref}\n')
+                        except Exception as e:
+                            print("Couldnt extract figure:", fig_num, e)
 
 
 def write_semantics(semantics_file, glycan_data):
