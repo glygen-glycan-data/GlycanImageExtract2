@@ -520,8 +520,19 @@ class PMIDJob(JobInstance):
             print("Error opening tar file", e)
             return
 
+        def image_files_sort_key(imfn):
+            fn = self.figure_info_by_renamed[imfn]['figure_number']
+            if fn == "":
+                return (0,0)
+            try:
+                int(fn)
+                return (0,int(fn))
+            except:
+                pass
+            return (ord(fn[0]),int(fn[1:]))
+
         # Sort to ensure correct order
-        image_files.sort()
+        image_files.sort(key=image_files_sort_key)
 
         image_count = 1
         for _, fig_name in enumerate(image_files, 1):
