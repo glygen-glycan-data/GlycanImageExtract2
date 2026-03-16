@@ -284,8 +284,10 @@ class XMLParser:
             label_elem = fig.find('label', self.NAMESPACES)
             if label_elem is not None:
                 label = label_elem.text
-                m = re.search(r'^\s*\w+\.?\s*(\d+)\.?\s*$', label)
-                fig_info['figure_number'] = m.group(1) 
+                # print(repr(label))
+                m = re.search(r'^\s*\w+\.?\s*(\w?\d+)\.?\s*$', label)
+                if m:
+                    fig_info['figure_number'] = m.group(1) 
 
             caption_elem = fig.find('caption', self.NAMESPACES)
             if caption_elem is not None:
