@@ -11,6 +11,7 @@ import time
 from BKGlycanExtractor.glyomicsclient import *
 from BKGlycanExtractor.bbox import BoundingBox, PDFBoundingBox, PDFConversionContext
 from BKGlycanExtractor.image_manager import Image_Manager
+from BKGlycanExtractor.compareboxes import *
 
 parser = argparse.ArgumentParser(description="Annotate PDF")
 
@@ -136,28 +137,28 @@ def build_input_items(pdf_list=None, pmid_list=None):
     
     return input_items
 
-def bbox_xywh_to_xyxy(box):
-    x, y, w, h = box
-    return (x, y, x + w, y + h)
+# def bbox_xywh_to_xyxy(box):
+#     x, y, w, h = box
+#     return (x, y, x + w, y + h)
 
-def iou_xywh(a, b):
-    ax1, ay1, ax2, ay2 = bbox_xywh_to_xyxy(a)
-    bx1, by1, bx2, by2 = bbox_xywh_to_xyxy(b)
+# def iou_xywh(a, b):
+#     ax1, ay1, ax2, ay2 = bbox_xywh_to_xyxy(a)
+#     bx1, by1, bx2, by2 = bbox_xywh_to_xyxy(b)
 
-    inter_x1 = max(ax1, bx1)
-    inter_y1 = max(ay1, by1)
-    inter_x2 = min(ax2, bx2)
-    inter_y2 = min(ay2, by2)
+#     inter_x1 = max(ax1, bx1)
+#     inter_y1 = max(ay1, by1)
+#     inter_x2 = min(ax2, bx2)
+#     inter_y2 = min(ay2, by2)
 
-    inter_w = max(0.0, inter_x2 - inter_x1)
-    inter_h = max(0.0, inter_y2 - inter_y1)
-    inter = inter_w * inter_h
+#     inter_w = max(0.0, inter_x2 - inter_x1)
+#     inter_h = max(0.0, inter_y2 - inter_y1)
+#     inter = inter_w * inter_h
 
-    area_a = max(0.0, ax2 - ax1) * max(0.0, ay2 - ay1)
-    area_b = max(0.0, bx2 - bx1) * max(0.0, by2 - by1)
+#     area_a = max(0.0, ax2 - ax1) * max(0.0, ay2 - ay1)
+#     area_b = max(0.0, bx2 - bx1) * max(0.0, by2 - by1)
 
-    union = area_a + area_b - inter
-    return 0.0 if union <= 0 else inter / union
+#     union = area_a + area_b - inter
+#     return 0.0 if union <= 0 else inter / union
 
 def best_assignment_mean_iou(manual_xywh_list, pred_xywh_list):
 
@@ -168,8 +169,8 @@ def best_assignment_mean_iou(manual_xywh_list, pred_xywh_list):
         return -1.0, []
 
     # precompute iou matrix
-    iou_mat = [[iou_xywh(manual_xywh_list[i], pred_xywh_list[j]) for j in range(n)] for i in range(n)]
-
+    # iou_mat = [[iou_xywh(manual_xywh_list[i], pred_xywh_list[j]) for j in range(n)] for i in range(n)]
+    iou_mat = [[CompareBoxes.iou(manual_xywh_list[i], pred_xywh_list[j]) for j in range(n)] for i in range(n)]
     # dp[mask] = best total iou for assigning first k manuals where k = popcount(mask)
     dp = [-1.0] * (1 << n)
     parent = [None] * (1 << n)
@@ -360,10 +361,21 @@ for manual_file in args.manual:
                 pdf_context_instance = PDFConversionContext.from_result_dict(result)
 
                 # predicted boxes in figure-pixel xywh: glycan["bbox"]
-                pred_xywh = [g["bbox"] for g in result["glycans"]]
-
+                # **************
+                # pred_xywh = [g["bbox"] for g in result["glycans"]]
                 fig_w = result["width"]
                 fig_h = result["height"]
+                pred_xywh = [
+                    BoundingBox(
+                        image_width=fig_w,
+                        image_height=fig_h,
+                        x=g["bbox"][0],
+                        y=g["bbox"][1],
+                        w=g["bbox"][2],
+                        h=g["bbox"][3]
+                    )for g in result["glycans"]
+                ]
+                
                 # manual_xywh = []
                 # for (xc, yc, mw, mh) in manual_boxes:
                 #     x0 = (xc - mw/2) * fig_w
@@ -372,15 +384,22 @@ for manual_file in args.manual:
                 #     h  = mh * fig_h
                 #     manual_xywh.append((x0, y0, w, h))
                 
+                # manual_xywh = [
+                #     BoundingBox(
+                #         image_width=fig_w,
+                #         image_height=fig_h,
+                #         rcx=xc, rcy=yc, rw=mw, rh=mh
+                #     ).bbox()
+                #     for (xc, yc, mw, mh) in manual_boxes
+                # ]
                 manual_xywh = [
                     BoundingBox(
                         image_width=fig_w,
                         image_height=fig_h,
                         rcx=xc, rcy=yc, rw=mw, rh=mh
-                    ).bbox()
+                    )
                     for (xc, yc, mw, mh) in manual_boxes
                 ]
-
                 mean_iou, assignment = best_assignment_mean_iou(manual_xywh, pred_xywh)
 
                 if best is None or mean_iou > best[0]:
