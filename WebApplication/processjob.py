@@ -499,18 +499,21 @@ class PMIDJob(JobInstance):
                         continue
 
                     figure_number = fig_to_label_map[base_name]
-                    renamed_file = f"{figure_number}{ext}"
-                    renamed_file_path = os.path.join(figures_dest_dir, renamed_file)
+
+                    # if figure_number:
+                    #     renamed_file = f"{figure_number}{ext}"
+                    
+                    renamed_file_path = os.path.join(figures_dest_dir, filename)
 
                     with open(renamed_file_path, 'wb') as f:
                         f.write(file_obj.read())
 
-                    image_files.append(renamed_file)
+                    image_files.append(filename)
                     seen_basenames.add(base_name)
 
                     fig_info = self.figure_info_by_basename.get(base_name, {}).copy()
                     fig_info["figure_number"] = figure_number
-                    self.figure_info_by_renamed[renamed_file] = fig_info
+                    self.figure_info_by_renamed[filename] = fig_info
 
         except Exception as e:
             self.log_file.write(f"Error: opening tar {figures_src}: {e}\n")
