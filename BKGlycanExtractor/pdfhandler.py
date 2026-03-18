@@ -126,38 +126,17 @@ class PDFHandler(object):
         if xref is not None:
             xref = int(xref)
 
+        if xref is not None and xref > 0:
+            pix = fitz.Pixmap(doc, xref)
+        else:
+            pix = page.get_pixmap(clip=pdf_fig_bbox, dpi=dpi, annots=annots)   # pdf_fig_bbox - [x0,y0,x1,y1]
+                
         try:
-            # 1) Try xref if we have one
-            if xref is not None and xref > 0:
-                try:
-                    pix = fitz.Pixmap(doc, xref)
-                except Exception as e:
-                    # print(f"Pixmap(doc, {xref}) failed with: {e} - falling back to get_pixmap()")
-                    # exception - if xref is valid but it still fails, then fallback to using pixmap
-                    pix = None
-
-            # 2) Fallback: always try clipped page rasterization if pix is still None
-            if pix is None and pdf_fig_bbox is not None:
-                clip = pdf_fig_bbox & page.rect
-                if clip.is_empty:
-                    raise ValueError(f"Clip {pdf_fig_bbox} has no intersection with page rect {page.rect}")
-                pix = page.get_pixmap(clip=clip, dpi=dpi, annots=annots)
-
-            if pix is None:
-                raise RuntimeError("No pixmap could be created (xref and clip both failed)")
-
-            # 3) Save
-            try:
-                pix.save(image_path)
-            except Exception:
-                pix = fitz.Pixmap(fitz.csRGB, pix)
-                pix.save(image_path)
-
-            return pix
-
+            pix.save(image_path)
         except Exception as e:
-            print("pdf handler exception in save_image:", e)
-            return None
+            pix = fitz.Pixmap(fitz.csRGB, pix)
+            pix.save(image_path)
+        return pix
     
     def figures(self,images_data=None,filter=None):
         if images_data is not None:         # images_data is provided by figcap 
