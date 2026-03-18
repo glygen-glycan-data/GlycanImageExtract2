@@ -610,12 +610,14 @@ class PDFJob(JobInstance):
         for page_num, fig_data in pdf_images_metadata.items():
             page = doc[page_num-1]
             for image_number, figure_info in fig_data.items():
-                image_path = os.path.join(image_folders['figures_dir'], f"{figure_info['image_count']}.png")
+                image_path = os.path.join(image_folders['figures_dir'], f"fig{figure_info['image_count']}.png")
 
-                pix = PDFHandler.save_image(doc, page, figure_info['pdf_fig_bbox'], image_path, xref=figure_info.get('xref'), dpi=STANDARD_DPI, annots=True)
-
-                figure_info['width'] = pix.width
-                figure_info['height'] = pix.height
+                print(figure_info)
+                figinfo = PDFHandler.save_image(doc, page, figure_info['pdf_fig_bbox'], image_path, xref=figure_info.get('xref'), dpi=STANDARD_DPI, annots=True)
+                image_path = figinfo.get('image_path',image_path)
+                if 'image_path' in figinfo:
+                    del figinfo['image_path']
+                figure_info.update(figinfo)
 
                 self.log_file.write(f"\nSaved image to {image_path}")
 

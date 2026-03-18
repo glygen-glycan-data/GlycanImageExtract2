@@ -1,4 +1,4 @@
-import fitz, os, os.path, re, difflib
+import fitz, os, os.path, re, difflib, traceback
 
 try:
     from . import searchpmc
@@ -16,7 +16,7 @@ class PDFHandler(object):
         self.base,self.extn = self.base.rsplit('.',1)
     
     def make_figure_filename(self,image):
-        return os.path.join(self.dir,self.base+"-"+str(image['xref'])+".png")
+        return os.path.join(self.dir,self.base+"-xref"+str(image['xref'])+"."+image.get("ext","png"))
 
     def pages(self):
         return self.doc.pages()
@@ -108,6 +108,11 @@ class PDFHandler(object):
     def write_image(self,image,filename=None):
         if filename is None:
             filename = self.make_figure_filename(image)
+        if 'image' in image and 'ext' in image:
+            with open(filename,'wb') as fh:
+                fh.write(image['image'])
+            return
+        
         pic = fitz.Pixmap(self.doc, image['xref'])
         failed = False
         try:
@@ -133,31 +138,53 @@ class PDFHandler(object):
         if xref is not None:
             xref = int(xref)
 
-        # 1) Try xref if we have one
-        if xref is not None and xref > 0:
-            try:
-                pix = fitz.Pixmap(doc, xref)
-            except Exception:
-                pix = None  # fall back
-
-        # 2) Fallback: clipped page rasterization
-        if pix is None and pdf_fig_bbox is not None:
-            clip = pdf_fig_bbox & page.rect
-            if clip.is_empty:
-                raise ValueError(f"Clip {pdf_fig_bbox} has no intersection with page rect {page.rect}")
-            pix = page.get_pixmap(clip=clip, dpi=dpi, annots=annots)
-
-        if pix is None:
-            raise RuntimeError("No pixmap could be created (xref and clip both failed)")
-
-        # 3) Save
         try:
-            pix.save(image_path)
-        except Exception:
-            pix = fitz.Pixmap(fitz.csRGB, pix)
-            pix.save(image_path)
+            # 1) Try xref if we have one
+            if xref is not None and xref > 0:
 
-        return pix
+                try:
+                    image_info = doc.extract_image(xref)
+                    image_path1 = image_path
+                    if not image_path.endswith("."+image_info["ext"]):
+                        image_path1 = image_path.rsplit('.',1)[0] + "." + image_info["ext"]
+                    with open(image_path1,'wb') as fh:
+                        fh.write(image_info['image'])
+                    return dict(width=image_info['width'],
+                                height=image_info['height'],
+                                image_path=image_path1)
+                except Exception as e:
+                    # traceback.print_exc()
+                    pix = None
+
+                try:
+                    pix = fitz.Pixmap(doc, xref)
+                except Exception as e:
+                    # print(f"Pixmap(doc, {xref}) failed with: {e} - falling back to get_pixmap()")
+                    # exception - if xref is valid but it still fails, then fallback to using pixmap
+                    pix = None
+
+            # 2) Fallback: always try clipped page rasterization if pix is still None
+            if pix is None and pdf_fig_bbox is not None:
+                clip = page.rect & pdf_fig_bbox
+                if clip.is_empty:
+                    raise ValueError(f"Clip {pdf_fig_bbox} has no intersection with page rect {page.rect}")
+                pix = page.get_pixmap(clip=clip, dpi=dpi, annots=annots)
+
+            if pix is None:
+                raise RuntimeError("No pixmap could be created (xref and clip both failed)")
+
+            # 3) Save
+            try:
+                pix.save(image_path)
+            except Exception:
+                pix = fitz.Pixmap(fitz.csRGB, pix)
+                pix.save(image_path)
+
+            return dict(width=pix.width,height=pix.height)
+
+        except Exception as e:
+            traceback.print_exc()
+            return None
     
     def figures(self,images_data=None,filter=None):
         if images_data is not None:         # images_data is provided by figcap 
@@ -171,6 +198,7 @@ class PDFHandler(object):
             for page_number,page in enumerate(self.pages(),1):
                 images = self.images_per_page(page)         # image identification is based on xrefs
                 for image_number,image in enumerate(images,1):
+                    image.update(self.doc.extract_image(image['xref']))
                     pdf_fig_width, pdf_fig_height = self.image_dimensions(image)
                     image['page_number'] = page_number
                     image['image_number'] = image_number                # image count per page
@@ -313,7 +341,6 @@ if __name__ == "__main__":
     if cite:
         print(cite['ascii_citation'])
         # print(cite)
-    sys.exit(0)
 
     filter = CompoundPDFImageFilter(
         PDFXRefImageFilter(min_xref=1),
