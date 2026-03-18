@@ -1,6 +1,6 @@
 import fitz, sys, os, cv2,shutil, time, ntpath, json, base64, re, urllib.request
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from submit import searchGlyLookup, searchSubsumption, searchGlyImage, sendToGNOme
+from submit import searchGlyLookup, searchGlyImage, sendToGNOme
 from PIL import Image
 from hashlib import md5
 from APIFramework import APIFramework
@@ -196,89 +196,154 @@ class JobInstance:
         self.save_image(figure_semantics.image(), annotated_image_path)
         figure_semantics.set('annotated_image_path',annotated_image_path)
 
-
-    def get_IUPAC_metadata(self,gly_semantics):
-        """
-        Process IUPAC-related metadata for a single glycan.
-        """
+    def get_glycan_metadata(self, glycan_semantics):
+        # TODO - rename this method to a better name or move it to another place. 
+        # Keeping it here for now until things get more stable.
+        iupac = glycan_semantics["iupac"]
+        compstr = glycan_semantics["compstr"]
+        orientation = glycan_semantics["orientation"]
+        accession = glycan_semantics["accession"]
+        wurcs = glycan_semantics["wurcs"]
+        glyImage = glycan_semantics["glyImage"]
 
         IUPAC_data = {
-            "composition_str": gly_semantics.compstr(),
-            "orientation": "RL",
+            "composition_str": compstr,
+            "orientation": orientation,
+            "IUPAC": iupac
         }
 
-        if len(gly_semantics.glycan_errors()) == 0:
-            IUPAC_data["IUPAC"] = gly_semantics.IUPAC()
-            # can get orienation only after the IUPAC is generated - because we access to directed links
-            IUPAC_data["orientation"] = gly_semantics.glycan_orientation()
-
-        iupac = IUPAC_data.get("IUPAC")
-        compstr = IUPAC_data.get("composition_str")
-
-        # GNOME URL
         uri_base = "https://gnome.glyomics.org/StructureBrowser.html?"
-
-        if iupac:
-            accession,wurcs = searchGlyLookup(iupac,
-                                              baseurl=self.config.get('glylookup_url'),
-                                              devemail=self.config.get('dev_email'))
-        else:
-            accession = None
-            wurcs = None
 
         if accession:
             gnome_url = uri_base + 'focus=' + accession
         elif iupac:
-            # subsumption = searchSubsumption(iupac,
-            #                                 baseurl=self.config.get('subsumption_url'),
-            #                                 devemail=self.config.get('dev_email'))
-            # print(subsumption,file=sys.stderr)
-            gnome_url = sendToGNOme(iupac,devemail=self.config.get('dev_email'))
+            gnome_url = sendToGNOme(
+                iupac,
+                devemail=self.config.get('dev_email'),
+            )
         else:
-            # converting composition format:
-            # eg: "GlcNAc(5)NeuAc(2)" to "GlcNAc=5&NeuAc=2"
-            matches = re.findall(r'([A-Za-z]+)\((\d+)\)', compstr)
+            matches = re.findall(r'([A-Za-z]+)\((\d+)\)', compstr or "")
             converted_composition = '&'.join(f"{name}={count}" for name, count in matches)
-            gnome_url = 'https://gnome.glyomics.org/StructureBrowser.html?' + converted_composition
+            gnome_url = uri_base + converted_composition
 
-        
         if accession:
             IUPAC_data.update({
                 "linkexpl": "Extracted successfully using accession",
                 "gnomeurl": gnome_url,
-                "accession": accession, 
-                "glyImage": searchGlyImage(iupac, orientation=IUPAC_data["orientation"],
-                                           baseurl=self.config.get('glymage_url'),
-                                           devemail=self.config.get('dev_email'))
+                "accession": accession,
+                "glyImage": glyImage,
             })
             if wurcs:
-                IUPAC_data['WURCS'] = wurcs
+                IUPAC_data["WURCS"] = wurcs
+
         elif iupac:
             IUPAC_data.update({
                 "linkexpl": "Extracted structure using IUPAC.",
                 "gnomeurl": gnome_url,
-                "glyImage": searchGlyImage(iupac, orientation=IUPAC_data["orientation"],
-                                           baseurl=self.config.get('glymage_url'),
-                                           devemail=self.config.get('dev_email')),
+                "glyImage": glyImage,
             })
+
         elif compstr:
-            # composition only
             IUPAC_data.update({
                 "linkexpl": "Extracted structure using Composition.",
                 "gnomeurl": gnome_url,
-                "glyImage": searchGlyImage(compstr, orientation=IUPAC_data["orientation"],
-                                           baseurl=self.config.get('glymage_url'),
-                                           devemail=self.config.get('dev_email')),
+                "glyImage": glyImage,
             })
 
         return IUPAC_data
 
+    def get_glycan_info(self, figure_semantics):
+        '''
+        figure_semantics - it includes semantics for all the glycans present on the figure.
+
+        - Goal is to make a batch submit/request to the Webservices (Glymage and GlyLookup) 
+        for all the glycans on a figure at once. (Gnome/subsumption probably doesnt need a batch request at this point).
+        (glyomicsclient.py - class BatchAPIFrameworkClient handles this)
+        '''
+        glycans = list(figure_semantics.glycans())
+
+        # Build descriptors for all the glycans on the figure - which are useful for batch requests
+        descs = []
+        for glycan in glycans:
+            has_errors = len(glycan.glycan_errors()) > 0
+            iupac = None
+            orientation = "RL"
+            if not has_errors:
+                iupac = glycan.IUPAC()
+                if iupac:
+                    orientation = glycan.glycan_orientation()
+
+            compstr = glycan.compstr()
+
+            descs.append({
+                "glycan": glycan,
+                "has_errors": has_errors,
+                "iupac": iupac,
+                "orientation": orientation,
+                "compstr": compstr,
+                "accession": None,
+                "wurcs": None,
+                "glyImage": None,
+            })
+
+        # Batch GlyLookup requests (IUPAC only)
+        lookup_batch = [d for d in descs if d["iupac"]]     # creating this so that the batched results can be mapped to the correct glycan later
+        if lookup_batch:
+            lookup_seqs = [d["iupac"] for d in lookup_batch]
+            results = searchGlyLookup(
+                *lookup_seqs,
+                baseurl=self.config.get('glylookup_url'),
+                devemail=self.config.get('dev_email'),
+            )
+            if len(lookup_seqs) == 1:
+                results = [results]
+            for d, (acc, wurcs) in zip(lookup_batch, results):
+                d["accession"] = acc
+                d["wurcs"] = wurcs
+
+
+        # Batch GlyImage request
+        # Build sequences: iupac if present, else compstr
+        img_batch = []
+        img_seqs = []
+        img_orientations = []
+
+        for d in descs:
+            seq = d["iupac"] or d["compstr"]
+            if seq:
+                img_batch.append(d)
+                img_seqs.append(seq)
+                img_orientations.append(d["orientation"])
+
+        if img_seqs:
+            urls = searchGlyImage(
+                *img_seqs,
+                orientations=img_orientations, 
+                accession=False,
+                baseurl=self.config.get('glymage_url'),
+                devemail=self.config.get('dev_email'),
+            )
+            if len(img_seqs) == 1:
+                urls = [urls]
+            
+            for d, url in zip(img_batch, urls):
+                d["glyImage"] = url
+
+        glycan_info = {}
+        # store the entire glycan object as the dictionary key, so that it is easy
+        # to retieve the glycans uniquely later from the batch of glycans present in the dict 
+        for d in descs:
+            glycan_info[d["glycan"]] = self.get_glycan_metadata(d)
+        return glycan_info
 
 
     def process_glycans(self,figure_semantics, image_folders):
         """
         Process all glycans in a figure, saving images and metadata.
         """
+
+        # Batch request - GlyImage and GlyLookup for each figure
+        figure_glycans_info = self.get_glycan_info(figure_semantics)
 
         basename = os.path.basename(figure_semantics.image_path()).split('.')[0]
 
@@ -304,19 +369,24 @@ class JobInstance:
             gly_semantics.set('extracted_image_path',extracted_image_url)  
             gly_semantics.set('image_name', image_name)
             gly_semantics.set('fig_glycan_count', i+1)
-
-            for key, val in self.get_IUPAC_metadata(gly_semantics).items():
+            
+            glycan_metadata = figure_glycans_info[gly_semantics]
+            for key, val in glycan_metadata.items():
                 if key != "glyImage":
-                    gly_semantics.set(key,val)
+                    gly_semantics.set(key, val)
                 else:
-                   rest,imgfilename = val.rsplit('/',1)
-                   glymage_image = os.path.join(image_folders['glymage_images_dir'], imgfilename)
-                   wh = open(glymage_image,'wb')
-                   with urllib.request.urlopen(val) as h:
-                        wh.write(h.read())
-                   wh.close()
-                   gly_semantics.set(key,glymage_image)
-
+                    if val:  
+                        try:
+                            rest, imgfilename = val.rsplit('/', 1)
+                            glymage_image = os.path.join(image_folders['glymage_images_dir'], imgfilename)
+                            with open(glymage_image, 'wb') as wh:
+                                with urllib.request.urlopen(val, timeout=30) as h:
+                                    wh.write(h.read())
+                            gly_semantics.set(key, glymage_image)
+                        except (urllib.error.URLError, ValueError, OSError) as e:
+                            print(f"Warning: Failed to download glyImage from {val}: {e}", file=sys.stderr)
+                            # Set to None or empty string, or skip setting it
+                            gly_semantics.set(key, None)
 
     def progress_callback(self,**kwargs):
         if kwargs.get('stage') == "GLYCAN" and kwargs.get('checkpoint') == "DONE":
@@ -423,6 +493,7 @@ class ImageJob(JobInstance):
 class PMIDJob(JobInstance):
 
     def process_figures(self, image_folders):
+        # print("PMIDJOB")
         base_path = os.path.dirname(os.path.abspath(__file__))
 
         self.update_status("Processing PMID manuscript")
@@ -595,6 +666,7 @@ class PDFJob(JobInstance):
         # self.task_detail['original_filepath'] = self.abs_to_rel(self.input_filepath)
         # self.task_detail['abs_original_filepath'] = self.input_filepath
         # self.task_detail['pipeline_name'] = self.pipeline_name
+        # print("PDFJOB")
 
         pdf = PDFHandler(self.input_filepath)
         doc = pdf.doc
@@ -612,7 +684,7 @@ class PDFJob(JobInstance):
             for image_number, figure_info in fig_data.items():
                 image_path = os.path.join(image_folders['figures_dir'], f"fig{figure_info['image_count']}.png")
 
-                print(figure_info)
+                # print(figure_info)
                 figinfo = PDFHandler.save_image(doc, page, figure_info['pdf_fig_bbox'], image_path, xref=figure_info.get('xref'), dpi=STANDARD_DPI, annots=True)
                 image_path = figinfo.get('image_path',image_path)
                 if 'image_path' in figinfo:
