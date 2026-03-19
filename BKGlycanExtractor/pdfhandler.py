@@ -198,7 +198,10 @@ class PDFHandler(object):
             for page_number,page in enumerate(self.pages(),1):
                 images = self.images_per_page(page)         # image identification is based on xrefs
                 for image_number,image in enumerate(images,1):
-                    image.update(self.doc.extract_image(image['xref']))
+                    try:
+                        image.update(self.doc.extract_image(image['xref']))
+                    except ValueError:
+                        pass
                     pdf_fig_width, pdf_fig_height = self.image_dimensions(image)
                     image['page_number'] = page_number
                     image['image_number'] = image_number                # image count per page
