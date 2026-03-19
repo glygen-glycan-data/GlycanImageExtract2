@@ -140,6 +140,79 @@ class APIFrameworkClient:
     def status(self,task_id):
         return self.retreive_once(task_id)
 
+class BatchAPIFrameworkClient(APIFrameworkClient):
+    """
+    Extends APIFrameworkClient to support batch submit/retrieve operations.
+    """
+
+    def submit_batch(self, tasks, request="submit", **kwargs):
+        param = {"tasks": json.dumps(tasks), "developer_email": self._email}
+        if self._nocache:
+            param["nocache"] = 'true'
+        param.update(kwargs)
+        
+        res = self.request(request, param)
+
+        try:
+            submit_result = res.json()
+        except ValueError as e:
+            raise APISubmitError(
+                f"Invalid JSON response from API: {res.text[:500]}"
+            ) from e
+
+        try:
+            return [job["id"] for job in submit_result]
+        except (TypeError, KeyError, IndexError) as e:
+            raise APISubmitError(
+                f"Unexpected submit response format: {submit_result}"
+            ) from e
+
+
+    def retrieve_batch(self, jobids, delay=None, maxretry=None):
+        delay = delay or self._interval
+        maxretry = maxretry or self._max_retry_for_unfinished_task
+        
+        nretries = 0
+        while True:
+            param = {"task_ids": json.dumps(jobids)}
+            try:
+                res = self.request("retrieve", param)
+                if res is None:
+                    raise ValueError("No response")
+                if res.status_code != 200:
+                    raise ValueError(
+                        f"Retrieve failed with status {res.status_code}: {res.text[:500]}"
+                    )
+                try:
+                    results = res.json()
+                except ValueError as e:
+                    raise ValueError(
+                        f"Invalid JSON response. Status: {res.status_code}"
+                    ) from e
+            except Exception as e:
+                if nretries >= maxretry:
+                    raise APIUnfinishedError(
+                        f"Failed to retrieve batch after {maxretry} retries: {e}"
+                    ) from e
+                time.sleep(delay)
+                nretries += 1
+                continue
+            
+            all_done = all(job.get('finished', False) for job in results)
+            if all_done:
+                return results
+            
+            if nretries >= maxretry:
+                raise APIUnfinishedError(
+                    f"Batch jobs not finished after {maxretry} retries"
+                )
+            
+            if self._statusfn is not None:
+                self._statusfn("batch", f"Waiting for {len(jobids)} jobs", True)
+            
+            time.sleep(delay)
+            nretries += 1
+        
 class GlyLookupClient(APIFrameworkClient):
     apiurl="http://glylookup.glyomics.org"
     request_interval=1
