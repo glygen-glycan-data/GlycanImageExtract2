@@ -1,0 +1,66 @@
+{
+  "result": {
+    "figures": [
+      {
+        "glycans": []
+      },
+      {
+        "glycans": []
+      },
+      {
+        "glycans": [
+          {
+            "IUPAC": "Man?1-?GlcNAc?1-?GlcNAc",
+            "accession": "G64017CW",
+            "bbox": [
+              728,
+              278,
+              74,
+              173
+            ],
+            "composition_str": "GlcNAc(2)Man(1)"
+          },
+          {
+            "IUPAC": "Man?1-?Man?1-?GlcNAc?1-?GlcNAc",
+            "accession": "G86427WL",
+            "bbox": [
+              827,
+              102,
+              95,
+              263
+            ],
+            "composition_str": "GlcNAc(2)Man(2)"
+          },
+          {
+            "IUPAC": "Man?1-?(GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?GlcNAc",
+            "accession": "G59325ZF",
+            "bbox": [
+              933,
+              0,
+              129,
+              329
+            ],
+            "composition_str": "GlcNAc(3)Man(3)"
+          },
+          {
+            "IUPAC": "GlcNAc?1-?Man?1-?(GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?GlcNAc",
+            "accession": "G78607HP",
+            "bbox": [
+              1017,
+              101,
+              151,
+              303
+            ],
+            "composition_str": "GlcNAc(4)Man(3)"
+          }
+        ]
+      },
+      {
+        "glycans": []
+      },
+      {
+        "glycans": []
+      }
+    ]
+  }
+}
