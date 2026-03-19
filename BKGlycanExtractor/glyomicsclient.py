@@ -3,6 +3,7 @@ __all__ = [ "ExtractorClient", "ExtractorDevClient", "BadTaskIDError", "GlyLooku
 
 import sys, os, glob, json
 import requests, time
+import traceback
 
 class APISubmitError(RuntimeError):
     pass
@@ -106,11 +107,15 @@ class APIFrameworkClient:
             param["nocache"] = 'true'
         res1 = self.request(request, param, **kwargs)
         submit_result = res1.json()
+        if isinstance(submit_result,dict) and submit_result.get('error'):
+            raise APISubmitError(submit_result)
         try:
             task_id = submit_result[0][u"id"]
             return task_id
-        except TypeError:
+        except (TypeError,KeyError):
             pass
+        except:
+            traceback.print_exc()
         raise APISubmitError(submit_result)
 
     def get_job_status(self, task_id):
@@ -150,9 +155,26 @@ class ExtractorClient(APIFrameworkClient):
     max_retrieve_wait = 1200
     apiurl="https://extractor.glyomics.org"
 
+    def makeurl(self,path):
+        return self.url() + '/' + path.lstrip('/')
+    
     def status(self,taskid):
         return self.get_job_status(taskid)
 
+    def submit_pmid(self,mode,pmid,aspdf=False):
+        assert mode in ("Manuscript",)
+        if aspdf:
+            pmid = str(pmid) + ".pdf"
+        task = dict(submission_type=mode,pmid=pmid)
+        return self.submit(task=task,request="file_upload")
+    
+    def submit_local(self,mode,filepath):
+        assert mode in ("Manuscript",
+                        "Multi-Glycan Image",
+                        "Simple Glycan Image")
+        task = dict(submission_type=mode,filePath=filepath)
+        return self.submit(task=task,request="file_upload")
+    
     def submit_url(self,mode,url):
         assert mode in ("Manuscript",
                         "Multi-Glycan Image",
@@ -160,19 +182,27 @@ class ExtractorClient(APIFrameworkClient):
         task = dict(submission_type=mode,fileURL=url)
         return self.submit(task=task,request="file_upload")
     
-    def submit_file(self,mode,filename,curation_task=False):
+    def submit_file(self,mode,filename):
         assert mode in ("Manuscript",
                         "Multi-Glycan Image",
                         "Simple Glycan Image")
-        task = dict(submission_type=mode, curation_task=curation_task)
+        task = dict(submission_type=mode)
         return self.submit(task=task,request="file_upload",files=dict(file=filename))
 
-    def submit_pmid(self, pmid, curation_task=False):
-        # type='curation' - means it will be used by annotate_pdf.py - to collect ground truth information
-        # about figures from a pdf when pmid is submitted
-        task = dict(submission_type="Manuscript", curation_task=curation_task)
-        return self.submit(task=task,request="file_upload",pmids=dict(pmid=pmid))
+    def submit_manuscript_local(self,filepath):
+        return self.submit_local("Manuscript",filepath)
 
+    def analyze_manuscript_local(self,filepath):
+        taskid = self.submit_manuscript_local(filepath)
+        return self.retrieve(taskid)
+    
+    def submit_manuscript_pmid(self,pmid,aspdf=False):
+        return self.submit_pmid("Manuscript",pmid,aspdf)
+
+    def analyze_manuscript_pmid(self,pmid,aspdf=False):
+        taskid = self.submit_manuscript_pmid(pmid,aspdf)
+        return self.retrieve(taskid)
+    
     def submit_manuscript_url(self,url):
         return self.submit_url("Manuscript",url)
 
@@ -180,8 +210,8 @@ class ExtractorClient(APIFrameworkClient):
         taskid = self.submit_manuscript_url(url)
         return self.retrieve(taskid)
     
-    def submit_manuscript_file(self,filename,curation_task=False):
-        return self.submit_file("Manuscript",filename,curation_task)
+    def submit_manuscript_file(self,filename):
+        return self.submit_file("Manuscript",filename)
     
     def analyze_manuscript_file(self,filename):
         taskid = self.submit_manuscript_file(filename)
