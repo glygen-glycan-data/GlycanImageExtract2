@@ -23,6 +23,8 @@ class APIFrameworkClient:
     port = None
     developer_email="nje5+glyomicsclient_module@georgetown.edu"
     max_retrieve_wait = 300
+    request_interval = 5
+    max_request_retry = 3
     nocache = False
     status_callback = None
 
@@ -33,15 +35,15 @@ class APIFrameworkClient:
             self._apiurl += ":%s"%(port,)
         self._email = kwargs.get('developer_email',self.developer_email)
         self._nocache = kwargs.get('nocache',self.nocache)
-        self._max_retry = kwargs.get('max_request_retry',3)
-        self._interval = kwargs.get('request_interval',5)
+        self._max_retry = kwargs.get('max_request_retry',self.max_request_retry)
+        self._interval = kwargs.get('request_interval',self.request_interval)
         self._max_retry_for_unfinished_task = kwargs.get('max_retrieve_wait',self.max_retrieve_wait)
         self._statusfn = kwargs.get('status_callback',self.status_callback)
 
     def url(self):
         return self._apiurl
 
-    def request(self, sub, params=None, files=None, pmids=None):
+    def request(self, sub, params=None, files=None):
         for i in range(self._max_retry):
             if files is not None:
                 files1 = dict((k,open(v,'rb')) for k,v in files.items())
@@ -50,11 +52,6 @@ class APIFrameworkClient:
             params1 = params
             if params is None:
                 params1 = {}
-
-            # Add pmids to form data if provided
-            if pmids is not None:
-                # pmids is a dict like {'pmid': '12345'}
-                params1.update(pmids)       # add pmid to form data
 
             response = None
             try:
@@ -78,7 +75,7 @@ class APIFrameworkClient:
         raise APINoResponse
 
     def retrieve(self, task_id):
-        for i in range(self._max_retry_for_unfinished_task):
+        for i in range(self._max_retry_for_unfinished_task//self._interval + 1):
             time.sleep(self._interval)
             try:
                 res = self.status(task_id)
@@ -97,22 +94,32 @@ class APIFrameworkClient:
         raise APIUnfinishedError("The task %s is not finished yet" % task_id)
 
     def get(self, **kwargs):
-        task_id = self.submit(**kwargs)
+        task_id = self.submit(**kwargs)[0]
         resjson = self.retrieve(task_id)
         return resjson
+    
+    def getmany(self, **kwargs):
+        task_ids = self.submit(**kwargs)
+        for resjson in self.retrieve_many(*task_ids):
+            yield resjson
 
-    def submit(self, task={}, request="submit", **kwargs):
-        param = {"task": json.dumps(task), "developer_email": self._email}
+    def submit(self, task=None, tasks=None, request="submit", **kwargs):
+        if tasks:
+            param = {"tasks": json.dumps(tasks), "developer_email": self._email}    
+        elif task:
+            param = {"task": json.dumps(task), "developer_email": self._email}
         if self.nocache:
             param["nocache"] = 'true'
-        res1 = self.request(request, param, **kwargs)
-        submit_result = res1.json()
-        if isinstance(submit_result,dict) and submit_result.get('error'):
-            raise APISubmitError(submit_result)
+        res = self.request(request, param, **kwargs)
         try:
-            task_id = submit_result[0][u"id"]
-            return task_id
-        except (TypeError,KeyError):
+            submit_result = res.json()
+        except ValueError as e:
+            raise APISubmitError(
+                f"Invalid JSON response from API: {res.text[:500]}"
+            ) from e
+        try:
+            return [job["id"] for job in submit_result]
+        except (ValueError,TypeError,KeyError):
             pass
         except:
             traceback.print_exc()
@@ -136,6 +143,44 @@ class APIFrameworkClient:
         if not res2json.get("finished",False) and not asis:
             raise APIUnfinishedError(task_id,"NotComplete","The task %s is not finished yet" % task_id)
         return res2json
+
+    def retrieve_many(self, *task_ids, asis=False):
+        taskid2index = {}
+        for i,t in enumerate(task_ids):
+            if t not in taskid2index:
+                taskid2index[t] = []
+            taskid2index[t].append(i)
+        dict((i,t) for i,t in enumerate(task_ids))
+        seen = set()
+        while len(seen) < len(taskid2index):
+            param = { "task_ids": json.dumps([ tid for tid in taskid2index if tid not in seen ]) }
+            for i in range(self._max_retry_for_unfinished_task//self._interval + 1):
+                time.sleep(self._interval)
+                try:
+                    res = self.request("retrieve", param)
+                    resjson = res.json()
+                except APINoResponse:
+                    # traceback.print_exc()
+                    continue
+                except ValueError:
+                    # traceback.print_exc()
+                    continue
+                except KeyError:
+                    # traceback.print_exc()
+                    continue
+                any = False
+                for res in resjson:
+                    if res.get('finished',False) and res['id'] not in seen:
+                        for index in taskid2index[res['id']]:
+                            yield index,res
+                        any = True
+                        seen.add(res['id'])
+                if any:
+                    break
+
+        if len(seen) < len(taskid2index):
+            taskid = [ tid for tid in taskid2index if tid not in seen ][0]
+            raise APIUnfinishedError(task_id,"NotComplete","The task %s is not finished yet" % task_id)
     
     def status(self,task_id):
         return self.retreive_once(task_id)
@@ -222,6 +267,17 @@ class GlyLookupClient(APIFrameworkClient):
         if len(data['result']) == 0:
             return None
         return data['result'][0]['accession']
+    
+    def get_accessions_for_sequences(self,*seqs):
+        if len(seqs) == 1 and not isinstance(seqs[0],str):
+            # detect list passed in as first argument
+            seqs = seqs[0]
+        tasks = [dict(seq=seq) for seq in seqs]
+        for index,data in glylookup.getmany(tasks=tasks):
+            if len(data['result']) > 0:
+                yield index,data['result'][0]['accession']
+            else:
+                yield index,None
 
 class ExtractorClient(APIFrameworkClient):
     request_interval=5
@@ -239,28 +295,28 @@ class ExtractorClient(APIFrameworkClient):
         if aspdf:
             pmid = str(pmid) + ".pdf"
         task = dict(submission_type=mode,pmid=pmid)
-        return self.submit(task=task,request="file_upload")
+        return self.submit(task=task,request="file_upload")[0]
     
     def submit_local(self,mode,filepath):
         assert mode in ("Manuscript",
                         "Multi-Glycan Image",
                         "Simple Glycan Image")
         task = dict(submission_type=mode,filePath=filepath)
-        return self.submit(task=task,request="file_upload")
+        return self.submit(task=task,request="file_upload")[0]
     
     def submit_url(self,mode,url):
         assert mode in ("Manuscript",
                         "Multi-Glycan Image",
                         "Simple Glycan Image")
         task = dict(submission_type=mode,fileURL=url)
-        return self.submit(task=task,request="file_upload")
+        return self.submit(task=task,request="file_upload")[0]
     
     def submit_file(self,mode,filename):
         assert mode in ("Manuscript",
                         "Multi-Glycan Image",
                         "Simple Glycan Image")
         task = dict(submission_type=mode)
-        return self.submit(task=task,request="file_upload",files=dict(file=filename))
+        return self.submit(task=task,request="file_upload",files=dict(file=filename))[0]
 
     def submit_manuscript_local(self,filepath):
         return self.submit_local("Manuscript",filepath)
@@ -329,3 +385,10 @@ class ExtractorDevClient(ExtractorClient):
     apiurl="http://localhost"
     port = 10982
 
+if __name__ == "__main__":
+
+    import sys
+
+    glylookup = GlyLookupClient()
+    for ind,acc in glylookup.get_accessions_for_sequences(sys.argv[1:]):
+        print(ind,acc)
