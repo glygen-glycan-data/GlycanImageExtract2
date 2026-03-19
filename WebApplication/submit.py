@@ -7,7 +7,7 @@ from urllib.request import urlopen
 from urllib.parse import urlencode
 from urllib.error import HTTPError
 
-from BKGlycanExtractor import BatchAPIFrameworkClient
+from BKGlycanExtractor.glyomicsclient import BatchAPIFrameworkClient
 
 default_dev_email="nje5+extractor@georgetown.edu"
 

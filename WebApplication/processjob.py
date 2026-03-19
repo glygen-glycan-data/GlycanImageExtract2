@@ -1,6 +1,6 @@
 import fitz, sys, os, cv2,shutil, time, ntpath, json, base64, re, urllib.request
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from submit import searchGlyLookup, searchSubsumption, searchGlyImage, sendToGNOme
+from submit import searchGlyLookup, searchGlyImage, sendToGNOme
 from PIL import Image
 from hashlib import md5
 from APIFramework import APIFramework
