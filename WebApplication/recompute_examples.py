@@ -22,6 +22,7 @@ if len(sys.argv) > 1:
     patterns = sys.argv[1:]
 
 tasks = []
+filetasks=0
 for pat in patterns:
   for resultfile in sorted(glob.glob("static/examples/%s/results.json"%(pat,))):
     basedir = os.path.split(resultfile)[0]
@@ -32,7 +33,19 @@ for pat in patterns:
     if mode == "Single-Glycan Image":
         mode = "Simple Glycan Image"
     exampledir = os.path.split(basedir)[1]
-    tasks.append((exampledir,extractor.submit_file(mode,inputpath)))
+    if result['submission_detail'].get('pmid'):
+        pmid = result['submission_detail']['pmid']
+        aspdf = (result['submission_detail']['submission_mode'] == "PMID-PDF")
+        tasks.append((exampledir,extractor.submit_pmid(mode,pmid,aspdf)))
+    else:
+        if filetasks % 3 == 0:
+            tasks.append((exampledir,extractor.submit_file(mode,inputpath)))
+        elif filetasks % 3 == 1:
+            tasks.append((exampledir,extractor.submit_local(mode,inputpath)))
+        else:
+            url = extractor.makeurl(inputpath)
+            tasks.append((exampledir,extractor.submit_url(mode,url)))
+        filetasks += 1
     print("Example %s submitted (%s). "%(exampledir,tasks[-1][1]))
     time.sleep(1)
 
