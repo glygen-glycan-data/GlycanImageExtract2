@@ -57,13 +57,12 @@ class GlyImageExtractor(APIFramework):
                    "fileURL",
                    "pmid",
                    "image_search_strategy",
-                   "curation_task",
                    ]
 
     def form_task(self, params):
         # set  default values, if appropriate
         task = {}
-        if params['submission_type'] == "Manuscript" and params['submission_mode'] != 'PMID':
+        if params['submission_mode'] != 'PMID':
             task['image_search_strategy'] = self._image_search_type
 
         # get these parameters from the form

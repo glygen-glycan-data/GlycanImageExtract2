@@ -1,6 +1,6 @@
 import fitz, sys, os, cv2,shutil, time, ntpath, json, base64, re, urllib.request
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from submit import searchGlyLookup, searchGlyImage, sendToGNOme
+from submit import searchGlyLookup, searchSubsumption, searchGlyImage, sendToGNOme
 from PIL import Image
 from hashlib import md5
 from APIFramework import APIFramework
@@ -78,11 +78,9 @@ class JobInstance:
     @staticmethod
     def get_processor(task_detail,*args,**kwargs):
         submission_type = task_detail.get('submission_type')
-        pmid = task_detail.get('pmid')
+        submission_mode = task_detail.get('submission_mode')
 
-        if task_detail.get('curation_task', False) and submission_type == "Manuscript":
-            return PDFJob(task_detail,*args,**kwargs) 
-        elif submission_type == "Manuscript" and pmid is not None:
+        if submission_mode == "PMID":
             return PMIDJob(task_detail,*args,**kwargs) 
         elif submission_type == "Manuscript":
             return PDFJob(task_detail,*args,**kwargs)
@@ -496,7 +494,7 @@ class PMIDJob(JobInstance):
         # print("PMIDJOB")
         base_path = os.path.dirname(os.path.abspath(__file__))
 
-        self.update_status("Processing PMID manuscript")
+        self.update_status("Processing PMID manuscript figures")
         # self.task_detail['original_filepath'] = self.abs_to_rel(self.input_filepath)
         # self.task_detail['abs_original_filepath'] = self.input_filepath
 

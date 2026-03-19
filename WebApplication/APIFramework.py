@@ -530,6 +530,9 @@ class APIFramework:
             pmid = flask.request.json.get('pmid')
 
         pmid = pmid.strip()
+        if pmid.endswith(".pdf"):
+            pmid = pmid.rsplit('.',1)[0]
+            
         pmid_to_pmc_converter_api = f'https://pmc.ncbi.nlm.nih.gov/tools/idconv/api/v1/articles/?ids={pmid}&tool=extract&email={developer_email}&idtype=pmid&format=json'
 
         try:
@@ -596,7 +599,9 @@ class APIFramework:
             file_url = flask.request.form.get('fileURL',task.get('fileURL'))
             input_file_path = flask.request.form.get('filePath',task.get('filePath'))
             pmid = flask.request.form.get('pmid',task.get('pmid'))
+            
             submission_type = flask.request.form.get('submission_type',task.get('submission_type'))
+            
             pmc_publication = None
             submission_mode = None
             if input_file_path:
@@ -605,15 +610,16 @@ class APIFramework:
                 submission_mode = "Upload"
             elif file_url:
                 submission_mode = "URL"
-            elif pmid:
-                submission_mode = "PMID"
-
-            # curation_task - True --> means that annotate_pdf is being used to gather information.
-            curation_task = flask.request.form.get('curation_task',task.get('curation_task'))
-
-            # Extract info using Pubmed API and get filename of the pdf based on PMID and at the same time extract figures as well - everything is present in the zipped file
-            if submission_type == "Manuscript" and pmid is not None:
+            elif submission_type == "Manuscript" and pmid:
                 pmid = pmid.strip()
+                if pmid.endswith(".pdf"):
+                    submission_mode = "PMID-PDF"
+                    pmid = pmid.split('.',1)[0]
+                else:
+                    submission_mode = "PMID"
+                
+            # Extract info using Pubmed API and get filename of the pdf based on PMID and at the same time extract figures as well - everything is present in the zipped file
+            if submission_mode in ("PMID","PMID-PDF"):
                 # pdf file that goes in the input folder should be renamed as "PMID-<PMID>.pdf"
                 filename = 'PMID-' + pmid + ".pdf"
             elif input_file_path:
@@ -632,12 +638,11 @@ class APIFramework:
             sessionid = self.get_session()
 
             # Create task details
-            task_detail = self.form_task({"filename": filename, 
+            task_detail = self.form_task({"filename": filename, # derived
                                           "fileURL": file_url,
                                           "submission_type": submission_type,
-                                          "submission_mode": submission_mode,
+                                          "submission_mode": submission_mode, # derived
                                           "pmid": pmid,
-                                          "curation_task": curation_task,
                                          })
             list_id = task_detail["id"]
             file_dir = os.path.join(self.input_file_folder(), list_id)
@@ -645,7 +650,7 @@ class APIFramework:
             file_path = os.path.join(file_dir, filename)
 
             try:
-                if submission_type == "Manuscript" and pmid is not None:
+                if submission_mode in ("PMID","PMID-PDF"):
                     
                     # validate if PMCID resources are Open Access before proceeding
                     pmc_resp, pmc_status = self.validate_pmid(pmid)
