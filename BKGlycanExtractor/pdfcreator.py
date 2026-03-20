@@ -1,15 +1,20 @@
 
 import fitz  # PyMuPDF
 import os
+from . searchpmc import citation_details
 
 class PDFCreator(object):
     PAGE_WIDTH = 612.0
     PAGE_HEIGHT = 792.0
     MARGIN = 72.0  
     CAPTION_SPACE = 60.0 
+    TITLE_SPACE = 50.0
 
-    def __init__(self):
+    def __init__(self,pmid=None):
         self.clear()
+        self.citation = {}
+        if pmid:
+            self.citation = citation_details(pmid)
 
     def clear(self):
         self.images = []
@@ -37,6 +42,48 @@ class PDFCreator(object):
 
             scale = min(avail_w / img_w, avail_h / img_h, scale)
 
+        if self.citation.get('title'):
+            page = doc.new_page(width=self.PAGE_WIDTH, height=self.PAGE_HEIGHT)
+            title_rect = fitz.Rect(self.MARGIN, 
+                                   self.MARGIN,
+                                   self.PAGE_WIDTH-self.MARGIN,
+                                   self.MARGIN+2*self.TITLE_SPACE)
+        
+            rc = page.insert_textbox(
+                title_rect, 
+                self.citation['title'], 
+                fontsize=16, 
+                fontname="helv", 
+                align=fitz.TEXT_ALIGN_CENTER
+            )
+        
+            if self.citation.get('citation'):
+                author_rect = fitz.Rect(self.MARGIN, 
+                       self.MARGIN+2*self.TITLE_SPACE,
+                       self.PAGE_WIDTH-self.MARGIN,
+                       self.MARGIN+4*self.TITLE_SPACE)
+                rc = page.insert_textbox(
+                    author_rect, 
+                    self.citation['citation'],
+                    fontsize=12, 
+                    fontname="helv", 
+                    align=fitz.TEXT_ALIGN_LEFT
+                )
+
+            if self.citation.get('doi'):
+                doi_rect = fitz.Rect(self.MARGIN, 
+                                     self.MARGIN+4*self.TITLE_SPACE,
+                                     self.PAGE_WIDTH-self.MARGIN,
+                                     self.MARGIN+5*self.TITLE_SPACE)
+
+                rc = page.insert_textbox(
+                    doi_rect, 
+                    "PMID:"+str(self.citation["pmid"]) + " doi:"+self.citation['doi'], 
+                    fontsize=12, 
+                    fontname="helv", 
+                    align=fitz.TEXT_ALIGN_CENTER
+                )
+
         for img_path, caption in self.images:
 
             img_doc = fitz.open(img_path)
@@ -59,6 +106,12 @@ class PDFCreator(object):
             # Insert the image losslessly. Passing 'filename' prevents PyMuPDF from 
             # re-encoding the JPEG, storing the exact raw binary stream inside the PDF.
             page.insert_image(img_rect, filename=img_path)
+            
+            # outlining the figures doesn't seem to help. 
+            # fig_annot = page.add_rect_annot([ x0-1, y0-1, x1+1, y1+1 ])
+            # fig_annot.set_colors(stroke=(0, 0, 0))
+            # fig_annot.set_border(width=1)
+            # fig_annot.update()
 
             if caption:
                 # Define a bounding box for the caption text just below the image
@@ -87,7 +140,7 @@ if __name__ == "__main__":
 
     import sys
 
-    pdfwriter = PDFCreator()
+    pdfwriter = PDFCreator(28186137)
 
     pdffile = sys.argv[1]
     imagefiles = sys.argv[2:]

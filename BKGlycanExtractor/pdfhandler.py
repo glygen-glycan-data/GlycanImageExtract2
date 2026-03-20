@@ -197,6 +197,15 @@ class PDFHandler(object):
             image_count = 1
             for page_number,page in enumerate(self.pages(),1):
                 images = self.images_per_page(page)         # image identification is based on xrefs
+                figure_number = None
+                caption = None
+                if len(images) == 1:
+                    blocks = list(self.find_text_blocks(page=page_number))
+                    # print(blocks)
+                    if len(blocks) == 1:
+                        label,caption = blocks[0].split(". ",1)
+                        figure_number = label.split()[1]
+                        # print(figure_number,caption)
                 for image_number,image in enumerate(images,1):
                     try:
                         image.update(self.doc.extract_image(image['xref']))
@@ -210,6 +219,9 @@ class PDFHandler(object):
                     image['pdf_fig_height'] = pdf_fig_height
                     image['page_width'] = page.rect.width
                     image['page_height'] = page.rect.height
+                    if figure_number:
+                        image['figure_number'] = figure_number
+                        image['caption'] = caption
                         
                     if filter is None or filter.keep(image):
                         image['image_count'] = image_count                  # total image count so far
