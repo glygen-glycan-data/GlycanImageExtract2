@@ -1,6 +1,5 @@
 import fitz, sys, os, cv2,shutil, time, ntpath, json, base64, re, urllib.request
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from submit import searchGlyLookup, searchGlyImage, sendToGNOme
 from PIL import Image
 from hashlib import md5
 from APIFramework import APIFramework
@@ -8,6 +7,8 @@ from BKGlycanExtractor import ImageSearch
 from BKGlycanExtractor import Config_Manager, BoundingBox, PDFBoundingBox, CompareBoxes
 from BKGlycanExtractor import STANDARD_DPI, PDFHandler
 from BKGlycanExtractor import searchpmc
+from BKGlycanExtractor.glyomicsclient import GlyLookupClient
+from submit import searchGlyImage, sendToGNOme
 
 import numpy as np
 from shutil import copyfile
@@ -284,21 +285,22 @@ class JobInstance:
                 "glyImage": None,
             })
 
+        glylookup = GlyLookupClient(apiurl=self.config.get('glylookup_url'),
+                                    developer_email=self.config.get('dev_email'))
+
         # Batch GlyLookup requests (IUPAC only)
         lookup_batch = [d for d in descs if d["iupac"]]     # creating this so that the batched results can be mapped to the correct glycan later
         if lookup_batch:
             lookup_seqs = [d["iupac"] for d in lookup_batch]
-            results = searchGlyLookup(
-                *lookup_seqs,
-                baseurl=self.config.get('glylookup_url'),
-                devemail=self.config.get('dev_email'),
-            )
-            if len(lookup_seqs) == 1:
-                results = [results]
-            for d, (acc, wurcs) in zip(lookup_batch, results):
-                d["accession"] = acc
-                d["wurcs"] = wurcs
-
+            for index,result in glylookup.getmany(lookup_seqs):
+                if result.get('accession'):
+                    lookup_batch[index]["accession"] = result.get("accession")
+                    for seqrec in result.get("sequences",[]):
+                        if seqrec['format'] == 'WURCS':
+                            lookup_batch[index]["wurcs"] = seqrec["seq"]
+                            break
+                # At this point we can submit individual GlyImage and GNOme requests for the glycan
+                # and then go back to retrieve_many as needed...
 
         # Batch GlyImage request
         # Build sequences: iupac if present, else compstr
