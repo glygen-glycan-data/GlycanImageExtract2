@@ -1,5 +1,5 @@
 
-__all__ = [ "ExtractorClient", "ExtractorDevClient", "BadTaskIDError", "GlyLookupClient" ]
+__all__ = [ "ExtractorClient", "ExtractorDevClient", "GlyLookupClient" ]
 
 import sys, os, glob, json
 import requests, time
@@ -29,12 +29,13 @@ class APIFrameworkClient:
     status_callback = None
 
     def __init__(self,**kwargs):
-        self._apiurl= kwargs.get('apiurl',self.apiurl)
-        port = kwargs.get('port',self.port)
+        self._apiurl = kwargs.get('apiurl') or self.apiurl
+        port = kwargs.get('port') or self.port
         if port is not None:
             self._apiurl += ":%s"%(port,)
-        self._email = kwargs.get('developer_email',self.developer_email)
-        self._nocache = kwargs.get('nocache',self.nocache)
+        self._email = kwargs.get('developer_email') or self.developer_email
+        
+        self._nocache = kwargs.get('nocache',self.nocache) 
         self._max_retry = kwargs.get('max_request_retry',self.max_request_retry)
         self._interval = kwargs.get('request_interval',self.request_interval)
         self._max_retry_for_unfinished_task = kwargs.get('max_retrieve_wait',self.max_retrieve_wait)
@@ -64,7 +65,7 @@ class APIFrameworkClient:
                 else:
                     response = requests.get(self._apiurl + "/" + sub)
             except Exception as e:
-                print("Exception occuered: ", e)
+                # print("Exception occuered: ", e)
                 pass
             finally:
                 if files1 is not None:
@@ -73,6 +74,38 @@ class APIFrameworkClient:
                 return response
             time.sleep(self._interval)
         raise APINoResponse
+
+    def submit(self, *, task=None, tasks=[], request="submit", **kwargs):
+    
+        assert task or tasks, APISubmitError("No tasks submitted.")
+        assert not task or not tasks, APISubmitError("Both single task and tasks submitted.")
+    
+        if task:
+            param = {"task": json.dumps(task), "developer_email": self._email} 
+            singletask = True
+        else:
+            param = {"tasks": json.dumps(tasks), "developer_email": self._email}    
+            singletask = False
+    
+        if self.nocache:
+            param["nocache"] = 'true'
+            
+        res = self.request(request, param, **kwargs)
+        try:
+            submit_result = res.json()
+        except ValueError as e:
+            raise APISubmitError(
+                f"Invalid JSON response from API: {res.text[:500]}"
+            ) from e
+        try:
+            if singletask:
+                return submit_result[0]["id"]
+            return [job["id"] for job in submit_result]
+        except (IndexError,ValueError,TypeError,KeyError):
+            pass
+        except:
+            traceback.print_exc()
+        raise APISubmitError(submit_result)
 
     def retrieve(self, task_id):
         for i in range(self._max_retry_for_unfinished_task//self._interval + 1):
@@ -84,73 +117,35 @@ class APIFrameworkClient:
                 if self._statusfn is not None:
                     self._statusfn(*e.args) 
                 continue
-            except APINoResponse:
-                continue
             except KeyError:
                 raise BadTaskIDError(task_id) from None
-            except ValueError:
-                continue
+            except (APINoResponse,ValueError):
+               continue
                 
         raise APIUnfinishedError("The task %s is not finished yet" % task_id)
 
-    def get(self, **kwargs):
-        task_id = self.submit(**kwargs)[0]
-        resjson = self.retrieve(task_id)
-        return resjson
-    
-    def getmany(self, **kwargs):
-        task_ids = self.submit(**kwargs)
-        for resjson in self.retrieve_many(*task_ids):
-            yield resjson
+    def status(self,task_id):
+        return self.retreive_nowait(task_id)
 
-    def submit(self, task=None, tasks=None, request="submit", **kwargs):
-        if tasks:
-            param = {"tasks": json.dumps(tasks), "developer_email": self._email}    
-        elif task:
-            param = {"task": json.dumps(task), "developer_email": self._email}
-        if self.nocache:
-            param["nocache"] = 'true'
-        res = self.request(request, param, **kwargs)
-        try:
-            submit_result = res.json()
-        except ValueError as e:
-            raise APISubmitError(
-                f"Invalid JSON response from API: {res.text[:500]}"
-            ) from e
-        try:
-            return [job["id"] for job in submit_result]
-        except (ValueError,TypeError,KeyError):
-            pass
-        except:
-            traceback.print_exc()
-        raise APISubmitError(submit_result)
-
-    def get_job_status(self, task_id):
-        res = self.request("get_job_status/"+task_id).json()
-        if not res[u"finished"]:
-            raise APIUnfinishedError(task_id,res["state"],res["status"])
-        return self.retrieve_once(task_id)
-
-    def retrieve_once(self, task_id, asis=False):
+    def retrieve_nowait(self, task_id, raise_unfinished=False):
         param = {"task_id": task_id }
         try:
             res2 = self.request("retrieve", param)
             if res2 is None:
-                raise ValueError("No response")
+                raise APINoResponse
             res2json = res2.json()[0]
         except:
             raise
-        if not res2json.get("finished",False) and not asis:
+        if not res2json.get("finished",False) and raise_unfinished:
             raise APIUnfinishedError(task_id,"NotComplete","The task %s is not finished yet" % task_id)
         return res2json
 
-    def retrieve_many(self, *task_ids, asis=False):
+    def retrieve_many(self, *task_ids):
         taskid2index = {}
         for i,t in enumerate(task_ids):
             if t not in taskid2index:
                 taskid2index[t] = []
             taskid2index[t].append(i)
-        dict((i,t) for i,t in enumerate(task_ids))
         seen = set()
         while len(seen) < len(taskid2index):
             param = { "task_ids": json.dumps([ tid for tid in taskid2index if tid not in seen ]) }
@@ -159,13 +154,7 @@ class APIFrameworkClient:
                 try:
                     res = self.request("retrieve", param)
                     resjson = res.json()
-                except APINoResponse:
-                    # traceback.print_exc()
-                    continue
-                except ValueError:
-                    # traceback.print_exc()
-                    continue
-                except KeyError:
+                except (ValueError,KeyError,APINoResponse):
                     # traceback.print_exc()
                     continue
                 any = False
@@ -181,9 +170,33 @@ class APIFrameworkClient:
         if len(seen) < len(taskid2index):
             taskid = [ tid for tid in taskid2index if tid not in seen ][0]
             raise APIUnfinishedError(task_id,"NotComplete","The task %s is not finished yet" % task_id)
+
+    def getone(self, task, **kwargs):
+        task_id = self.submit(task=task,**kwargs)
+        resjson = self.retrieve(task_id)
+        return resjson
     
-    def status(self,task_id):
-        return self.retreive_once(task_id)
+    def getmany(self, tasks, **kwargs):
+        task_ids = self.submit(tasks=tasks,**kwargs)
+        for index,resjson in self.retrieve_many(*task_ids):
+            yield index,resjson
+
+    def getmany_inorder(self,tasks,**kwargs):
+        task_ids = self.submit(tasks=tasks,**kwargs)
+        nextindex = 0
+        store = dict()
+        for index,resjson in self.retrieve_many(*task_ids):
+            if index == nextindex:
+                yield index,resjson
+                nextindex += 1
+                while nextindex in store:
+                    yield nextindex,store[nextindex]
+                    del store[nextindex]
+                    nextindex += 1
+            else:
+                store[index] = resjson
+
+
 
 class BatchAPIFrameworkClient(APIFrameworkClient):
     """
@@ -262,22 +275,34 @@ class GlyLookupClient(APIFrameworkClient):
     apiurl="http://glylookup.glyomics.org"
     request_interval=1
 
-    def get_accession_for_sequence(self,seq):
-        data = self.get(task=dict(seq=seq))
-        if len(data['result']) == 0:
-            return None
-        return data['result'][0]['accession']
-    
-    def get_accessions_for_sequences(self,*seqs):
+    def tolist(self,seqs):
         if len(seqs) == 1 and not isinstance(seqs[0],str):
-            # detect list passed in as first argument
-            seqs = seqs[0]
+            # detect iterable
+            return list(seqs[0])
+        return seqs
+
+    def getmany(self,seqs):
         tasks = [dict(seq=seq) for seq in seqs]
-        for index,data in glylookup.getmany(tasks=tasks):
-            if len(data['result']) > 0:
-                yield index,data['result'][0]['accession']
+        for index,result in super().getmany(tasks):
+            if len(result['result']) == 1:
+                yield index,result['result'][0]
             else:
-                yield index,None
+                yield index,{}
+
+    def get_accessions(self,*seqs):
+        seqs = self.tolist(seqs)
+        for index,data in self.getmany(seqs):
+            yield index,seqs[index],data.get('accession')
+    
+    def get_accession(self,seq):
+        for index,seq,accession in self.get_accessions(seq):
+            return accession
+
+
+
+
+
+
 
 class ExtractorClient(APIFrameworkClient):
     request_interval=5
@@ -287,36 +312,43 @@ class ExtractorClient(APIFrameworkClient):
     def makeurl(self,path):
         return self.url() + '/' + path.lstrip('/')
     
-    def status(self,taskid):
-        return self.get_job_status(taskid)
-
+    def status(self, task_id):
+        res = self.request("get_job_status/"+task_id).json()
+        if not res[u"finished"]:
+            raise APIUnfinishedError(task_id,res["state"],res["status"])
+        return self.retrieve_nowait(task_id)
+    
+    def submit(self, **kwargs):
+        assert not kwargs.get('tasks'), "ExtractorClient requires single task per submission"
+        return super().submit(**kwargs)
+    
     def submit_pmid(self,mode,pmid,aspdf=False):
         assert mode in ("Manuscript",)
         if aspdf:
             pmid = str(pmid) + ".pdf"
         task = dict(submission_type=mode,pmid=pmid)
-        return self.submit(task=task,request="file_upload")[0]
+        return self.submit(task=task,request="file_upload")
     
     def submit_local(self,mode,filepath):
         assert mode in ("Manuscript",
                         "Multi-Glycan Image",
                         "Simple Glycan Image")
         task = dict(submission_type=mode,filePath=filepath)
-        return self.submit(task=task,request="file_upload")[0]
+        return self.submit(task=task,request="file_upload")
     
     def submit_url(self,mode,url):
         assert mode in ("Manuscript",
                         "Multi-Glycan Image",
                         "Simple Glycan Image")
         task = dict(submission_type=mode,fileURL=url)
-        return self.submit(task=task,request="file_upload")[0]
+        return self.submit(task=task,request="file_upload")
     
     def submit_file(self,mode,filename):
         assert mode in ("Manuscript",
                         "Multi-Glycan Image",
                         "Simple Glycan Image")
         task = dict(submission_type=mode)
-        return self.submit(task=task,request="file_upload",files=dict(file=filename))[0]
+        return self.submit(task=task,request="file_upload",files=dict(file=filename))
 
     def submit_manuscript_local(self,filepath):
         return self.submit_local("Manuscript",filepath)
@@ -390,5 +422,7 @@ if __name__ == "__main__":
     import sys
 
     glylookup = GlyLookupClient()
-    for ind,acc in glylookup.get_accessions_for_sequences(sys.argv[1:]):
-        print(ind,acc)
+    acc = glylookup.get_accession(sys.argv[1])
+    print(sys.argv[1],acc)
+    for ind,seq,acc in glylookup.get_accessions(sys.argv[1:]):
+        print(ind,seq,acc)
