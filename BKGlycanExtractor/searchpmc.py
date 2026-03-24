@@ -50,6 +50,11 @@ def get_unicode_italic(text):
     # Translate the characters, leaving non-alphabet characters untouched
     return "".join(italic_map.get(c, c) for c in text)
 
+def toascii(s):
+    nfkd_form = unicodedata.normalize('NFKD', s)
+    ascii_text = nfkd_form.encode('ascii', 'ignore')
+    return ascii_text.decode('utf-8')
+
 def extract_full_text(element):
     """Reconstructs the full text from an ElementTree element, italicizing <i> tags."""
     # 1. Start with the text before any child tags
@@ -109,7 +114,7 @@ def citation_details(pmid):
 
     # Deal with italicized text in the titles
     title = extract_full_text(article.find("ArticleTitle"))
-    ascii_title = unicodedata.normalize('NFKC', title)
+    ascii_title = toascii(title)
 
     page = article.findtext("Pagination/MedlinePgn")
     authors = []
@@ -123,7 +128,7 @@ def citation_details(pmid):
             if not authordict.get(k):
                 authordict[k] = None
             else:
-                authordict['ascii_'+k] = unicodedata.normalize('NFKC', authordict[k])
+                authordict['ascii_'+k] = toascii(authordict[k])
         authors.append(authordict)
 
     details = dict(title=title,ascii_title=ascii_title,
@@ -133,7 +138,7 @@ def citation_details(pmid):
 
     citation = format_citation(details)
     details['citation'] = citation
-    details['ascii_citation'] = unicodedata.normalize('NFKC', citation)
+    details['ascii_citation'] = toascii(citation)
 
     for k in list(details):
         if not details.get(k):
