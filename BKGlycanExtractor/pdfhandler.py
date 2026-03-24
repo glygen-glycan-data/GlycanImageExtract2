@@ -202,7 +202,7 @@ class PDFHandler(object):
                 if len(images) == 1:
                     blocks = list(self.find_text_blocks(page=page_number))
                     # print(blocks)
-                    if len(blocks) == 1:
+                    if len(blocks) == 1 and re.search(r'^Figure \w+. ',blocks[0]):
                         label,caption = blocks[0].split(". ",1)
                         figure_number = label.split()[1]
                         # print(figure_number,caption)
