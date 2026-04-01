@@ -1,5 +1,5 @@
 
-__all__ = [ "ExtractorClient", "ExtractorDevClient", "GlyLookupClient" ]
+__all__ = [ "ExtractorClient", "ExtractorDevClient", "GlyLookupClient" , "GlyLookupClient", "GlymageClient", "GnomeClient"]
 
 import sys, os, glob, json
 import requests, time
@@ -87,7 +87,7 @@ class APIFrameworkClient:
             param = {"tasks": json.dumps(tasks), "developer_email": self._email}    
             singletask = False
     
-        if self.nocache:
+        if self._nocache:
             param["nocache"] = 'true'
             
         res = self.request(request, param, **kwargs)
@@ -125,7 +125,7 @@ class APIFrameworkClient:
         raise APIUnfinishedError("The task %s is not finished yet" % task_id)
 
     def status(self,task_id):
-        return self.retreive_nowait(task_id)
+        return self.retrieve_nowait(task_id)
 
     def retrieve_nowait(self, task_id, raise_unfinished=False):
         param = {"task_id": task_id }
@@ -196,90 +196,15 @@ class APIFrameworkClient:
             else:
                 store[index] = resjson
 
-
-
-class BatchAPIFrameworkClient(APIFrameworkClient):
-    """
-    Extends APIFrameworkClient to support batch submit/retrieve operations.
-    """
-
-    def submit_batch(self, tasks, request="submit", **kwargs):
-        param = {"tasks": json.dumps(tasks), "developer_email": self._email}
-        if self._nocache:
-            param["nocache"] = 'true'
-        param.update(kwargs)
-        
-        res = self.request(request, param)
-
-        try:
-            submit_result = res.json()
-        except ValueError as e:
-            raise APISubmitError(
-                f"Invalid JSON response from API: {res.text[:500]}"
-            ) from e
-
-        try:
-            return [job["id"] for job in submit_result]
-        except (TypeError, KeyError, IndexError) as e:
-            raise APISubmitError(
-                f"Unexpected submit response format: {submit_result}"
-            ) from e
-
-
-    def retrieve_batch(self, jobids, delay=None, maxretry=None):
-        delay = delay or self._interval
-        maxretry = maxretry or self._max_retry_for_unfinished_task
-        
-        nretries = 0
-        while True:
-            param = {"task_ids": json.dumps(jobids)}
-            try:
-                res = self.request("retrieve", param)
-                if res is None:
-                    raise ValueError("No response")
-                if res.status_code != 200:
-                    raise ValueError(
-                        f"Retrieve failed with status {res.status_code}: {res.text[:500]}"
-                    )
-                try:
-                    results = res.json()
-                except ValueError as e:
-                    raise ValueError(
-                        f"Invalid JSON response. Status: {res.status_code}"
-                    ) from e
-            except Exception as e:
-                if nretries >= maxretry:
-                    raise APIUnfinishedError(
-                        f"Failed to retrieve batch after {maxretry} retries: {e}"
-                    ) from e
-                time.sleep(delay)
-                nretries += 1
-                continue
-            
-            all_done = all(job.get('finished', False) for job in results)
-            if all_done:
-                return results
-            
-            if nretries >= maxretry:
-                raise APIUnfinishedError(
-                    f"Batch jobs not finished after {maxretry} retries"
-                )
-            
-            if self._statusfn is not None:
-                self._statusfn("batch", f"Waiting for {len(jobids)} jobs", True)
-            
-            time.sleep(delay)
-            nretries += 1
-        
-class GlyLookupClient(APIFrameworkClient):
-    apiurl="http://glylookup.glyomics.org"
-    request_interval=1
-
     def tolist(self,seqs):
         if len(seqs) == 1 and not isinstance(seqs[0],str):
             # detect iterable
             return list(seqs[0])
         return seqs
+        
+class GlyLookupClient(APIFrameworkClient):
+    apiurl="https://glylookup.glyomics.org/"
+    request_interval=1
 
     def getmany(self,seqs):
         tasks = [dict(seq=seq) for seq in seqs]
@@ -298,11 +223,76 @@ class GlyLookupClient(APIFrameworkClient):
         for index,seq,accession in self.get_accessions(seq):
             return accession
 
+class GlymageClient(APIFrameworkClient):
+    apiurl = 'https://glymage.glyomics.org/'
+    # default_orientation = 'RL'
+    display = 'normal'
+    image_format = 'svg'
+    use_accession = False
 
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        # self._orientation = kwargs.get("orientation") or self.default_orientation
+        self._display = kwargs.get("display") or self.display
+        self._image_format = kwargs.get("image_format") or self.image_format
+        self._use_accession = kwargs.get("use_accession") or self.use_accession
 
+    def submit_glymage(self, glycan, orientation='RL'):
+        # priority order - if accession (self._use_accession), iupac, composition
 
+        task = {'orientation': glycan.glycan_orientation() or orientation, 
+                    'display': self._display, 
+                    'image_format': self._image_format,
+                }
 
+        if self._use_accession and glycan.has('accession'):
+            task.update({'acc': glycan.get('accession')})
+        elif glycan.has('IUPAC'):
+            task.update({'seq': glycan.get('IUPAC')})
+        elif glycan.has('composition_str'):
+            task.update({'seq': glycan.get("composition_str")})
 
+        return self.submit(task=task)
+    
+
+    # def getmany(self, seqs, image_orientations=[]):
+    #     # every sequence can request a specific orientation for the image
+
+    #     if len(seqs) != len(image_orientations):
+    #         # use the default orientation
+    #         image_orientations = [self._orientation] * len(seqs)
+        
+    #     # build tasks for submission
+    #     key = 'acc' if self._use_accession else 'seq'
+    #     tasks = [
+    #         {key: seq, 'orientation': image_orientations[idx], 'display': self._display, 'image_format': self._image_format}
+    #         for idx, seq in enumerate(seqs)
+    #     ]
+
+    #     # submits and retrieves many
+    #     for index,result in super().getmany(tasks):
+    #         if len(result['result']) == 1:
+    #             yield index,result['result'][0]
+    #         else:
+    #             yield index,{}
+    
+    # def get_glymages(self, *seqs, image_orientations=[]):
+    #     seqs = self.tolist(seqs)
+    #     for index, data in self.getmany(seqs, image_orientations=image_orientations):
+    #         yield index, seqs[index], data
+
+    # def get_glymage(self, seq, orientation=None):
+    #     orientation = [] if orientation is None else [orientation]
+    #     for index, data in self.getmany([seq], image_orientations=orientation):
+    #         return data
+
+class GnomeClient(APIFrameworkClient):
+  apiurl = 'https://subsumption.glyomics.org/'
+
+  def submit_subsumption(self, glycan):
+      if glycan.has('IUPAC'):
+          return self.submit(task=dict(seq=glycan.get('IUPAC')), request="submit")      # return task_id
+      return None
 
 class ExtractorClient(APIFrameworkClient):
     request_interval=5
