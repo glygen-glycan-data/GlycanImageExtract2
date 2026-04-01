@@ -747,7 +747,7 @@ class APIFramework:
             except Exception as e:
                 return flask.jsonify({"error": f"Unexpected error: {str(e)}"}), 400
 
-            if pmid and pmcid:
+            if pmid:
                 if pmc_publication:
                     task_detail.update({"pmc_publication": pmc_publication})
 
@@ -978,8 +978,8 @@ class APIFramework:
                 # after job was completed/finished successfully and its results (json) was writtin,
                 # it a good time to build annotated pdf and tsv results
 
-                job_type = res.get("job_type")
-                if job_type == "PDFJob":
+                job_type = res["job_type"]
+                if job_type != "ImageJob":
                     self.annotate_results(resultid=resid)
 
     def allow_file_ext(self, filename):
