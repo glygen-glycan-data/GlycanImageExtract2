@@ -62,8 +62,21 @@ class GlyImageExtractor(APIFramework):
     def form_task(self, params):
         # set  default values, if appropriate
         task = {}
-        if params['submission_mode'] != 'PMID':
-            task['image_search_strategy'] = self._image_search_type
+
+        submission_type = params['submission_type']
+        submission_mode = params['submission_mode']
+        has_pmid = bool(params.get('pmid'))
+
+        # you need image_search_strategy only for PDF/PMID-PDF based jobs
+        if submission_type not in ("Simple Glycan Image", "Multi-Glycan Image"):
+            # if submission mode if local and for instance if analysis was done on a synethic pdf ealier
+            # then its good to do re-analysis over the same pdf using fitz, so for reanalyze optinally pass the image_search_strategy as well
+            if params.get('image_search_strategy'):
+                task['image_search_strategy'] = params['image_search_strategy']
+            if submission_mode == 'PMID-PDF':
+                task['image_search_strategy'] = 'fitz'
+            elif submission_mode != 'PMID' and not (submission_mode == 'Local' and has_pmid):   # use the image_search_strategy from either config file (if present) or defaults to 'fitz
+                task['image_search_strategy'] = self._image_search_type
 
         # get these parameters from the form
         for k in self.task_params:

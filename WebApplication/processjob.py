@@ -92,10 +92,15 @@ class JobInstance:
     def get_processor(task_detail,*args,**kwargs):
         submission_type = task_detail.get('submission_type')
         submission_mode = task_detail.get('submission_mode')
-
-        if submission_type in ("Simple Glycan Image", "Multi-Glycan Image"):
+        
+        if submission_mode == 'Local' and submission_type not in ("Simple Glycan Image", "Multi-Glycan Image"):
+            if task_detail.get('pmid'):
+                cls = PMIDJob
+            else:
+                cls = PDFJob
+        elif submission_type in ("Simple Glycan Image", "Multi-Glycan Image"):  
             cls = ImageJob
-        elif submission_mode in ('Upload', 'URL', 'Local') and submission_type == 'Manuscript':
+        elif submission_mode in ('Upload', 'URL') and submission_type == 'Manuscript':
             cls = PDFJob
         elif submission_mode == "PMID-PDF":
             cls = PMIDPDFJob
@@ -601,6 +606,16 @@ class PMIDBaseJob(JobInstance):
 class PMIDJob(PMIDBaseJob):
 
     def process_pmid_figures(self, image_files, image_folders):
+        # copy over the tar.gz file to the static input file because --> if re-analyze is used, the job should have
+        # access to the zipped file for figure extraction and analysis in Local mode.
+        base_path = os.path.dirname(os.path.abspath(__file__))
+        figures_src = os.path.join(base_path, "input", self.id, f"PMID-{self.pmid}.tar.gz")
+        if os.path.isfile(figures_src):
+            shutil.copy2(figures_src, self.input_dir)
+        else:
+            self.log_file.write(f"Warning: tar not found for copy: {figures_src}\n")
+            return 
+
         for image_count, fig_name in enumerate(image_files, 1):
             fig_path = os.path.join(image_folders["figures_dir"], fig_name)
 
@@ -667,7 +682,7 @@ class PMIDPDFJob(PMIDBaseJob):
 # PMID's original pdf + pdfJob
 class PMIDOriginalPDFJob(JobInstance):
     def process_figures(self, image_folders):
-      self.run_pdf_pipeline(image_folders)
+        self.run_pdf_pipeline(image_folders)
 
 
 class PDFJob(JobInstance):
@@ -677,4 +692,4 @@ class PDFJob(JobInstance):
     """
     
     def process_figures(self, image_folders):
-      self.run_pdf_pipeline(image_folders)
+        self.run_pdf_pipeline(image_folders)
