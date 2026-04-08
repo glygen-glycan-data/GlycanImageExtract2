@@ -605,6 +605,16 @@
         }
 
         div.innerHTML = innerdiv;
+
+        var rowid = window.location.hash.substring(1);
+        // console.log(rowid,document.getElementById(rowid));
+        if (rowid) {
+            // Wait a second before initiating scroll, hopefully
+            // the page has rendered by then...
+            setTimeout(() => {
+                scrollAndHighlight(rowid);
+            }, 1000);
+        }
     }
 
     function scrollAndHighlight(rowId, event) {
