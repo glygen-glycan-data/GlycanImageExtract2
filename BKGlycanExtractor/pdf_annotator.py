@@ -429,7 +429,7 @@ def annotate_figure(doc, result_item, taskid, image_data, base_url):
 
                 url = (
                     f"{base_url}/result/{taskid}"
-                    f"#glycan-{image_count}-{glycan.get('fig_glycan_count', '?')}"
+                    f"#glycan-{image_count-1}-{glycan.get('fig_glycan_count', '?')}"
                 )
 
                 content = f"id: {gid}\nurl: {url}\n"
