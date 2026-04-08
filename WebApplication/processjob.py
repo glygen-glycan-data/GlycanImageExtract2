@@ -233,7 +233,10 @@ class JobInstance:
         gnome_uri_base = "https://gnome.glyomics.org/StructureBrowser.html?"
         
         for idx, glycan in enumerate(glycans):
-            if not glycan.has('composition_str'):
+            # for key in ('composition_str','IUPAC',):
+            #     print(idx,key,glycan.get(key))
+            # composition_str might be empty string, even if it is present
+            if not glycan.get('composition_str'):
                 continue
             elif not glycan.has('IUPAC'):
                 glycan.set('glymage_source', 'composition')
