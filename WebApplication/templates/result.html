@@ -317,7 +317,7 @@
 
         const location = result_doc['location'] || "files";
         const document_metadata = result_doc['result']['document_metadata']
-        const figures = (result_doc['result']['figures'] || result_doc['result']['figure_result']);
+        const figures = (result_doc['result']['figures'] || result_doc['result']['figure_result'] || []);
         const file_extension = (result_doc['submission_detail']['filename'] || result_doc['submission_detail']['original_file_name']).split('.').pop();
         
         // let pmc_publication = null;
