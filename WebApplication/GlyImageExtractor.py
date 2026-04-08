@@ -181,7 +181,7 @@ class GlyImageExtractor(APIFramework):
     def result(self,id=None):
         if not id:
             id = flask.request.args['id']
-        return flask.render_template(self._result_html, urlprefix=self._prefix, list_id=id)
+        return flask.render_template(self._result_html, list_id=id, **self._template_render_kwargs)
 
     def mark(self):
         # when votes are updated - the annotated pdf and tsv file will also be updated accordingly
