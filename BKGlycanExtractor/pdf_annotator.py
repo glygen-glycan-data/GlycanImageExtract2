@@ -330,6 +330,13 @@ def build_annotations(input_items, all_json_data, base_url, output_dir=None):
         doc = None
         try:
             doc = fitz.open(original_filepath)
+            
+            # remove any links in the document, these can make it
+            # difficult to edit the boxes on figures...
+            for page in doc:
+                for link in page.links():
+                    page.delete_link(link)
+
             image_data = []
 
             figure_results = result.get('figures', [])
@@ -428,6 +435,15 @@ def annotate_figure(doc, result_item, taskid, image_data, base_url):
                 content = f"id: {gid}\nurl: {url}\n"
 
                 gly_annot.set_info(content=content)
+
+                link_info = {
+                    "kind": fitz.LINK_URI,
+                    "from": gly_annot.rect,
+                    "uri": url
+                }
+        
+                # Insert the link on the page
+                page.insert_link(link_info)
     
                 votes = glycan.get('upvotes', 0) - glycan.get('downvotes', 0)
                 color = (0, 0, 1)
