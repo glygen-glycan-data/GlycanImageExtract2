@@ -586,7 +586,7 @@ class APIFramework:
                 'href': link.get('href'),
                 'format': link.get('format'),
                 'pmcid': pmcid,
-                'pmc_publication': record.get("citation")
+                # 'pmc_publication': record.get("citation")
             }
         }), 200
 
@@ -682,7 +682,7 @@ class APIFramework:
         # 1) get citation from json response - if available
         # pmc_publication - is the PMC publication information obtained
         # from hittin the PMC API (useful when publication information is only partially present in the xml document provided by pmc)
-        pmc_publication = resource.get("pmc_publication")
+        # pmc_publication = resource.get("pmc_publication")
 
         # 2) extract the href link, which is in ftp (NCBI supports both ftp and https protocols)
         href = resource.get("href")
@@ -732,7 +732,7 @@ class APIFramework:
             shutil.rmtree(pmc_folder_path)
         except FileNotFoundError:
             pass
-        return None, None, pmc_publication
+        return None, None
 
     def _save_file(self, upload_params):
         file = upload_params['file']
@@ -776,7 +776,7 @@ class APIFramework:
         # image_search_strategy = upload_params["image_search_strategy"]
         submission_type = upload_params["submission_type"]
         
-        pmc_publication = None
+        # pmc_publication = None
 
         submission_mode = self._get_submission_mode(upload_params)
         if not submission_mode:
@@ -809,7 +809,7 @@ class APIFramework:
                 self._handle_local_copy(input_file_path, file_dir)
             elif submission_mode in ("PMID", "PMID-PDF"):
                 pmid = upload_params['pmid']
-                pmc_resp, pmc_status, pmc_publication = self._download_and_prepare_pmid_data(pmid, file_dir)
+                pmc_resp, pmc_status = self._download_and_prepare_pmid_data(pmid, file_dir)
                 if pmc_resp is not None:
                     return pmc_resp, pmc_status
             else:
@@ -821,8 +821,8 @@ class APIFramework:
         except Exception as e:
             return flask.jsonify({"error": f"Unexpected error: {str(e)}"}), 400
         # TODO: remove pmc_publication and use e-utils method of getting the citation
-        if upload_params.get('pmid') and pmc_publication:
-            task_detail.update({"pmc_publication": pmc_publication})
+        # if upload_params.get('pmid') and pmc_publication:
+        #     task_detail.update({"pmc_publication": pmc_publication})
         status = {
             "id": list_id,
             "task_index": self.get_next_task_index(),
@@ -862,8 +862,6 @@ class APIFramework:
 
         submission_mode = oldtask['submission_mode']
         submission_type = oldtask['submission_type']
-        # TODO - I thin recompute examples is not getting the location for re-analyze and hence it is not able to
-        # build annoated pdf, because it doesnt have the correct path
         input_file = os.path.join('static', result.get('location','files'), tid, 'input', oldtask.get('filename',oldtask.get('original_file_name')))
 
         newtask = {
