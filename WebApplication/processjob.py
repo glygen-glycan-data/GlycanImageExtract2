@@ -283,8 +283,8 @@ class JobInstance:
             glycan = glycans[glymage_jobs[j][0]]
             try:
                 glyImage_path = result['result']
-                rest, imgfilename = glyImage_path.rsplit('/', 1)
-                
+                rest, imgfilename = os.path.split(glyImage_path)
+
                 glymage_image = os.path.join(image_folders['glymage_images_dir'], imgfilename)
 
                 with open(glymage_image, 'wb') as wh:
