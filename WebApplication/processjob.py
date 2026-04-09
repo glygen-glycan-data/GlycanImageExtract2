@@ -239,7 +239,7 @@ class JobInstance:
             if not glycan.get('composition_str'):
                 continue
             elif not glycan.has('IUPAC'):
-                glycan.set('glymage_source', 'composition')
+                glycan.set('linkexpl', 'Extracted structure using Composition.')
                 glymage_jobs.append((idx, self.glymage_client.submit_glymage(glycan)))
 
                 # if no iupac - build gnome_url using composition
@@ -267,11 +267,11 @@ class JobInstance:
                     # build gnome_url using accession
                     glycan.set('gnomeurl', gnome_uri_base + 'focus=' + glycan.get('accession'))
 
-                    glycan.set('glymage_source', 'accession')
+                    glycan.set('linkexpl', 'Extracted successfully using accession')
                     glymage_jobs.append((glycan_idx, self.glymage_client.submit_glymage(glycan)))
                 else:
                     # submit iupac - for glymage and gnome
-                    glycan.set('glymage_source', 'iupac')
+                    glycan.set('linkexpl', 'Extracted structure using IUPAC.')
                     glymage_jobs.append((glycan_idx, self.glymage_client.submit_glymage(glycan)))
 
                     # if no accession - gnome_url should be created using iupac
@@ -294,14 +294,7 @@ class JobInstance:
                         wh.write(h.read())
                     glycan.set('glyImage', glymage_image)
 
-                    source = glycan.get('glymage_source')
-                    if source == 'accession':
-                        glycan.set('linkexpl', 'Extracted successfully using accession')
-                    elif source == 'iupac':
-                        glycan.set('linkexpl', 'Extracted structure using IUPAC.')
-                    elif source == 'composition':
-                        glycan.set('linkexpl', 'Extracted structure using Composition.')
-                    else:
+                    if not glycan.get('linkexpl'):
                         glycan.set('linkexpl', 'Extracted structure.')
 
             except (urllib.error.URLError, ValueError, OSError) as e:
