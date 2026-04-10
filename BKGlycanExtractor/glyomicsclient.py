@@ -237,20 +237,22 @@ class GlymageClient(APIFrameworkClient):
         self._image_format = kwargs.get("image_format") or self.image_format
         self._use_accession = kwargs.get("use_accession") or self.use_accession
 
-    def submit_glymage(self, glycan, orientation='RL'):
+    def submit_glymage(self, *, accession=None, IUPAC=None, composition=None, **kwargs):
         # priority order - if accession (self._use_accession), iupac, composition
 
-        task = {'orientation': glycan.glycan_orientation() or orientation, 
+        task = {'orientation': kwargs.get('orientation') or 'RL', 
                     'display': self._display, 
                     'image_format': self._image_format,
                 }
 
-        if self._use_accession and glycan.has('accession'):
-            task.update({'acc': glycan.get('accession')})
-        elif glycan.has('IUPAC'):
-            task.update({'seq': glycan.get('IUPAC')})
-        elif glycan.has('composition_str'):
-            task.update({'seq': glycan.get("composition_str")})
+        if self._use_accession and accession:
+            task.update({'acc': accession})
+        elif IUPAC:
+            task.update({'seq': IUPAC})
+        elif composition:
+            task.update({'seq': composition})
+        else:
+            raise ValueError("Provide a sequence: accession, IUPAC or composition")
 
         return self.submit(task=task)
     
@@ -287,12 +289,12 @@ class GlymageClient(APIFrameworkClient):
     #         return data
 
 class GnomeClient(APIFrameworkClient):
-  apiurl = 'https://subsumption.glyomics.org/'
+    apiurl = 'https://subsumption.glyomics.org/'
 
-  def submit_subsumption(self, glycan):
-      if glycan.has('IUPAC'):
-          return self.submit(task=dict(seq=glycan.get('IUPAC')), request="submit")      # return task_id
-      return None
+    def submit_subsumption(self, IUPAC=None):
+        if IUPAC:
+            return self.submit(task=dict(seq=kwargs['IUPAC']), request="submit")    # return task_id
+        raise ValueError("Provide IUPAC string")
 
 class ExtractorClient(APIFrameworkClient):
     request_interval=5
