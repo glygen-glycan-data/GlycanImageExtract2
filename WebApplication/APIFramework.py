@@ -686,6 +686,8 @@ class APIFramework:
 
         # 2) extract the href link, which is in ftp (NCBI supports both ftp and https protocols)
         href = resource.get("href")
+        # temporary PMC deprecation fix...
+        href = href.replace('pub/pmc/','pub/pmc/deprecated/')
         # Convert FTP to HTTPS
         download_url = href.replace("ftp://ftp.ncbi.nlm.nih.gov", "https://ftp.ncbi.nlm.nih.gov")
 
