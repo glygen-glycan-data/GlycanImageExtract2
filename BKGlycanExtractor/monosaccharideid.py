@@ -41,7 +41,9 @@ class MonoFinder:
     def log_error(self, obj, accepeted, rejected):
         pass
 
-    def finder_pipeline(self,config_manager):
+    def finder_pipeline(self,config_manager=None):
+        if config_manager is None:
+            config_manager = self._cfgmgr
         pipeline = GlycanExtractorPipeline()
         pipeline.set_steps('figure', config_manager.get_finders("SingleGlycanImage"))
         pipeline.set_steps('glycan', [self])

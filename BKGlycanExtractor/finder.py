@@ -12,7 +12,9 @@ class Finder(object):
 
     filters = []
 
-    def __init__(self,labels=[]):
+    def __init__(self,name=None,cfgmgr=None,labels=[]):
+        self._name = name
+        self._cfgmgr = cfgmgr
         self._labels = list(labels)
         self.params = {}
       
@@ -94,7 +96,8 @@ class KnownFinder(Finder):
     }
 
     def __init__(self,**kwargs):
-        super().__init__()
+        super().__init__(name=kwargs.get('name'),
+                         cfgmgr=kwargs.get('cfgmgr'))
         self.params.update(dict(
             boxpadding = Config.get_param('boxpadding', Config.FLOAT, kwargs, self.defaults),
         ))
@@ -104,9 +107,9 @@ class KnownFinder(Finder):
         # based on cmd line args (which is optional) during the activity of buildign training data
         self.label_type = None
 
-    def write_model(self, finder_name, filename):
+    def write_model(self, filename):
         with open(filename, 'w') as wh:
-            print(f"[Finder:{finder_name}]",file=wh)
+            print(f"[Finder:{self._name}]",file=wh)
             print(f"class={self.__class__.__name__}",file=wh)
             # might need something more sophistocated if we have
             # params that are not easily output as strings...
@@ -349,7 +352,7 @@ class YOLOFinder(YOLOModel,Finder):
         assert weights_file is not None
         labels_file = weights_file.replace("weights","labels")
         labels = [ s.strip() for s in open(labels_file).read().split() ]
-        Finder.__init__(self,labels)
+        Finder.__init__(self,name=kwargs.get('name'),cfgmgr=kwargs.get('cfgmgr'),labels=labels)
         self.params.update(dict(
             config = Config.get_param('config', Config.CONFIGFILE, kwargs, self.defaults),
             weights = weights_file,

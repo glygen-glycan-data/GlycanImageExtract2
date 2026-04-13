@@ -245,10 +245,10 @@ for i,(ptype,name) in enumerate(allitems):
         # ------------------------------
 
         f = cm.get_finder(name)
-        pred_pipeline = f.finder_pipeline(cm)
+        pred_pipeline = f.finder_pipeline()
 
         kf = f.known_finder()
-        known_pipeline = kf.finder_pipeline(cm)
+        known_pipeline = kf.finder_pipeline()
 
         pipelines[name] = (pred_pipeline,known_pipeline)
 

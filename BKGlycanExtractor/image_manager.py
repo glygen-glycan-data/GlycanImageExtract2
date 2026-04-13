@@ -13,6 +13,8 @@ import shutil
 from fnmatch import fnmatch
 from . svg_parse_path import get_points
 import glob
+import zipfile
+from collections import defaultdict
 
 class Image_Manager:
     '''
@@ -21,16 +23,23 @@ class Image_Manager:
     2) Take multiple folders and explore each of them
     3) Take multiple files
     '''
-    def __init__(self, inputs, pattern='*.png,*.jpg', exclude=None):
+    def __init__(self, inputs, pattern='*.png,*.jpg,*.jpeg', exclude=None, strategy=None):
         self.globs = [p.strip() for p in pattern.split(',') if p.strip()]
-        self.images = self.get_images(inputs)
+        self.inputs = []
+        for input in inputs:
+            self.inputs.extend(glob.glob(input))
+        self.images = self.get_images(self.inputs)
         if exclude:
             self.exclude(exclude)
+        if strategy:
+            self.strategy = strategy
+        else:
+            self.strategy = UniformSampling()
 
     def __iter__(self):
         return iter(self.images)
 
-    def exclude(self, pattern="*.annotated.*"):
+    def exclude(self, pattern="*.annotated*.{png,jpg,jpeg}"):
         self.images = [fn for fn in self.images if not fnmatch(os.path.basename(fn), pattern)]
 
     def match_glob(self, path):
@@ -44,6 +53,18 @@ class Image_Manager:
         images = set()
 
         for base in inputs:
+
+            # create unpacked dir if it doesn't exist or if the zip file is newer
+            if os.path.isfile(base) and base.lower().endswith('.zip'):
+                unpackdir = "."+base.rsplit('.',1)[0]
+                if os.path.exists(unpackdir):
+                    if os.path.getmtime(unpackdir) < os.path.getmtime(base):
+                        shutil.rmtree(unpackdir)
+                if not os.path.exists(unpackdir):
+                    with zipfile.ZipFile(base, 'r') as zf:
+                        zf.extractall(unpackdir)
+                base = unpackdir
+
             if os.path.isfile(base):
                 if self.match_glob(base):
                     images.add(os.path.abspath(base))
@@ -59,6 +80,62 @@ class Image_Manager:
                 continue  # ignore missing
 
         return sorted(images)
+
+    def train_test_split(self, test_frac):
+        if test_frac in (0.0, None):
+            return self.images, []
+
+        groups = defaultdict(lambda:defaultdict(list))
+        train_images = []
+        test_images = []
+
+        for base in self.inputs:
+            base = os.path.abspath(base)
+            for image_path in self.get_images([base]):
+                group1,group2 = self.strategy.grouping(base,image_path)
+                groups[group1][group2].append(image_path)
+
+        for grp1 in groups:
+            n = len(groups[grp1])
+            k = max(1,int(math.floor(test_frac*n)))
+            # print(grp1,n,k,k/n)
+            testgrp2 = set(random.choices(list(groups[grp1]),k=k))
+            for grp2 in groups[grp1]:
+                if grp2 in testgrp2:
+                    test_images.extend(groups[grp1][grp2])
+                else:
+                    train_images.extend(groups[grp1][grp2])
+        
+        train_images.sort()
+        test_images.sort()
+        return train_images, test_images
+
+class TrainTestSplitStrategy(object):
+
+   def grouping(self, root, image_path):
+        raise NotImplementedError
+
+class UniformSampling(TrainTestSplitStrategy):
+    # one group, images selected independently...
+    def grouping(self, root, image_path):
+        return None,image_path
+
+class StructuredSampling(TrainTestSplitStrategy):
+    # assumes first level directory (base) is to be divided to test/train
+    # second level directory, if present, represents images that should be sampled together.
+    # if not second-level directory, images are randomly selected independently.
+
+    def grouping(self, root, image_path):
+        if not os.path.isdir(root):
+            return None,image_path # no grouping
+        assert image_path.startswith(root)
+        image_path = image_path[len(root):]
+        split_path = image_path.strip(os.sep).split(os.sep)
+        return root,split_path[0]
+
+class Manuscript_Manager(Image_Manager):
+    def __init__(self,inputs,pattern="*.pdf",exclude=None,**kwargs):
+        super().__init__(inputs,pattern=pattern,exclude=exclude,**kwargs)
 
 class Image_Data:
 

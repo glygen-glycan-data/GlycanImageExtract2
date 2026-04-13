@@ -117,6 +117,7 @@ class GlycanExtractorPipeline():
             final_step = self.steps['figure'][-1]
 
             result = final_step.execute(figure_semantics,boxesonly=boxesonly)
+            # Why does this function have inconsistent return values?
             return result,figure_semantics
         
         # typical case
@@ -189,7 +190,7 @@ class Config_Manager(object):
         assert conf.has("class"), "Finder %s: class not specified"
         findercls = getattr(module,conf.get("class"))
         new_conf = copy.deepcopy(conf)
-        return findercls(__config__=new_conf)
+        return findercls(__config__=new_conf,name=finder_name,cfgmgr=self)
 
     # add get_finders - for comma seperated finders
     def get_finders(self,finder_names):

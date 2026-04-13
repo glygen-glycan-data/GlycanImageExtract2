@@ -38,7 +38,9 @@ class LinkFinder:
             obj.add_glycan_error(f"Count of monos: {monos_count}, count of links: {len(accepted)}")
 
     
-    def finder_pipeline(self,config_manager):
+    def finder_pipeline(self,config_manager=None):
+        if config_manager is None:
+            config_manager = self._cfgmgr
         pipeline = GlycanExtractorPipeline()
         pipeline.set_steps('figure', config_manager.get_finders("SingleGlycanImage"))
         pipeline.set_steps('glycan', config_manager.get_finders("KnownMono")+[self])

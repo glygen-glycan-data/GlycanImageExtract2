@@ -25,22 +25,31 @@ import glob
 import shutil
 import csv
 import traceback
-from BKGlycanExtractor import STANDARD_DPI, POINTS_PER_INCH, PDFHandler
+from BKGlycanExtractor.pdfhandler import STANDARD_DPI, POINTS_PER_INCH, PDFHandler
+from BKGlycanExtractor.image_manager import Manuscript_Manager
 
 parser = argparse.ArgumentParser(description="Extract annotated figures and comments from PDFs")
 
 parser.add_argument(
-    "-f", "--folder", 
+    "-m", "--manuscripts", 
     type=str, 
+    nargs="+",
     required=True,
-    help="Folder containing PDFs and matching TSV files"
+    help="Folder(s) containing PDFs with matching TSV files"
 )
     
 parser.add_argument(
-    "-o", "--output_dir", 
+    "-o", "--output", 
     type=str, 
     required=True, 
-    help="Provide folder name to store output" 
+    help="Folder name to store output images with semantics" 
+)
+
+parser.add_argument(
+    "-F", "--force",
+    action = 'store_true',
+    default = False,
+    help = 'Reprocess PDFs and overwrite output images and semantics.'
 )
 
 args = parser.parse_args()
@@ -83,6 +92,7 @@ def load_tsv_data(tsv_path):
             for row in reader:
                 row_id = row.get('ID')
                 if row_id:
+                    assert row_id not in tsv_data
                     tsv_data[row_id] = row
     return tsv_data
 
@@ -209,36 +219,39 @@ def write_semantics(semantics_file, glycan_data):
         if value:  # Checks: not None, not empty, not just whitespace
             semantics_file.write(f"# {key}: {value}\n")
 
-input_folder = args.folder
-output_folder = args.output_dir
-pdf_files = glob.glob(os.path.join(input_folder, "*.pdf")) 
-
-
-if os.path.exists(output_folder):
+output_folder = args.output
+if os.path.isdir(output_folder) and args.force:
+    # ensure everything is computed again
     shutil.rmtree(output_folder)
-os.mkdir(output_folder)
 
-print("\nStarting Process...")
+if not os.path.isdir(output_folder):
+    os.mkdir(output_folder)
+
+pdf_files = Manuscript_Manager(args.manuscripts)
 for pdf_path in pdf_files:
-    pdf_basename = os.path.basename(pdf_path).rsplit('.',1)[0]
+
+    pdf_dir,pdf_file = os.path.split(pdf_path)
+    pdf_basename,pdf_extn = pdf_file.rsplit('.',1)
 
     # check if a corresponding tsv file exists for the pdf
-    tsv_path = os.path.join(input_folder, pdf_basename + '.tsv')
+    tsv_path = os.path.join(pdf_dir,pdf_basename + '.tsv')
 
     if not os.path.exists(tsv_path):
-        print(f"\nSkipping PDF: {pdf_path} - no matching TSV found.")
+        print(f"  Skipping:   {pdf_file} - no matching TSV found.")
         continue
-
-    print("\nProcessing PDF:", pdf_path)
 
     if pdf_basename.endswith(".annotated"):
         pdf_basename = pdf_basename.rsplit(".",1)[0]
 
     output_dir = os.path.join(output_folder, pdf_basename)
 
-    if not os.path.exists(output_dir):
-        # shutil.rmtree(output_dir)
-        os.makedirs(output_dir, exist_ok=True)
+    if os.path.exists(output_dir):
+        print(f"  Skipping: {pdf_file} - already processed.")
+        continue
+    
+    os.makedirs(output_dir)
+
+    print("Processing:", os.path.split(pdf_path)[1])
 
     # main step for extraction
     extract_annotations(output_dir,pdf_path,tsv_path)
