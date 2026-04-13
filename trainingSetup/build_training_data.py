@@ -78,6 +78,14 @@ parser.add_argument(
     help = 'Overwrite output zip files, if they exist.'
 )
 
+parser.add_argument(
+    '-q',
+    '--quiet',
+    action = 'store_true',
+    default = False,
+    help = 'Run without extra output.'
+)
+
 args = parser.parse_args()
 
 if args.out.endswith('.zip'):
@@ -114,5 +122,6 @@ build_training(
     finder = finder,
     images = images,
     outname= args.out,
-    test_frac=args.test_percent/100.0
+    test_frac=args.test_percent/100.0,
+    quiet = args.quiet
 )

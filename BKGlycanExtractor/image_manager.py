@@ -39,6 +39,9 @@ class Image_Manager:
     def __iter__(self):
         return iter(self.images)
 
+    def count(self):
+        return len(self.images)
+
     def exclude(self, pattern="*.annotated*.{png,jpg,jpeg}"):
         self.images = [fn for fn in self.images if not fnmatch(os.path.basename(fn), pattern)]
 
@@ -81,7 +84,7 @@ class Image_Manager:
 
         return sorted(images)
 
-    def train_test_split(self, test_frac):
+    def train_test_split(self, test_frac, quiet=False):
         if test_frac in (0.0, None):
             return self.images, []
 
@@ -95,16 +98,34 @@ class Image_Manager:
                 group1,group2 = self.strategy.grouping(base,image_path)
                 groups[group1][group2].append(image_path)
 
+        if not quiet:
+            for grp1 in groups:
+                print("%s: %d sample groups, %d images."%(os.path.split(grp1)[1],
+                                                                len(groups[grp1]), 
+                                                                sum(len(groups[grp1][grp2]) for grp2 in groups[grp1])))
+
         for grp1 in groups:
             n = len(groups[grp1])
             k = max(1,int(math.floor(test_frac*n)))
             # print(grp1,n,k,k/n)
             testgrp2 = set(random.choices(list(groups[grp1]),k=k))
+            ntesti = 0
+            ntraini = 0
             for grp2 in groups[grp1]:
                 if grp2 in testgrp2:
                     test_images.extend(groups[grp1][grp2])
+                    ntesti += len(groups[grp1][grp2])
                 else:
                     train_images.extend(groups[grp1][grp2])
+                    ntraini += len(groups[grp1][grp2])
+            
+            if not quiet:
+                print("%s: %d train groups, %d train images. "%(os.path.split(grp1)[1],
+                                                             len(groups[grp1])-len(testgrp2),
+                                                             ntraini))
+                print("%s: %d test groups, %d test images. "%(os.path.split(grp1)[1],
+                                                              len(testgrp2),
+                                                              ntesti))
         
         train_images.sort()
         test_images.sort()
@@ -127,7 +148,7 @@ class StructuredSampling(TrainTestSplitStrategy):
 
     def grouping(self, root, image_path):
         if not os.path.isdir(root):
-            return None,image_path # no grouping
+            return root,image_path # no grouping
         assert image_path.startswith(root)
         image_path = image_path[len(root):]
         split_path = image_path.strip(os.sep).split(os.sep)

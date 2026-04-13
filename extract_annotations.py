@@ -240,7 +240,7 @@ for pdf_path in pdf_files:
         print(f"  Skipping:   {pdf_file} - no matching TSV found.")
         continue
 
-    if pdf_basename.endswith(".annotated"):
+    if pdf_basename.rsplit('.',1)[-1] in ("annotated","annotated_Manual"):
         pdf_basename = pdf_basename.rsplit(".",1)[0]
 
     output_dir = os.path.join(output_folder, pdf_basename)
