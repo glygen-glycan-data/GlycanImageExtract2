@@ -5,8 +5,6 @@ from .finder import Finder
 from .glycanannotator import Config
 from .model_evaluator import GlycanCompare
 
-# check if links == monos -1 , etc all the details for logging can be added here
-
 class Glycan_Base(Finder):
     finder_class = 'Glycan_Semantics'
     
@@ -15,27 +13,40 @@ class Glycan_Base(Finder):
 
     def get_label(self,obj):
         iupac = obj.IUPAC()
-        if iupac:
+        if iupac and not obj.has_glycan_errors():
             obj.set('IUPAC',iupac)
         compstr = obj.compstr()
         if compstr is not None:
             obj.set('composition_str',compstr)
-        if self.label_type == 'composition':
+            
+        if self.label_type == 'none':
+            return None
+        elif self.label_type == 'composition':
             return obj.get('composition_str',"")
         return obj.get('IUPAC',"")
+
+    # add other metadata and lgging details about the glycan
+    def add_metadata(self, obj):
+        if obj.has_glycan_errors():
+            obj.set('glycan_errors', obj.glycan_errors())
+            obj.set('log', obj.get_logs())  # maybe keep only glycan errors or logs in the json - currently there are some else checks 
+
+        obj.set('orientation', obj.glycan_orientation())
 
     def semantic_compare(self,**kwargs):
         return GlycanCompare(**kwargs)
 
 
-# create two different class for IUPAC AND COMPOSITION - not like this 
+# TODO create two different class for IUPAC AND COMPOSITION - not like this 
 # defaults = {
 #         'label_type': 'composition'
 #     }
+# TODO - move iupac() implementation from semnatics.py to this place and set iupac, composition and other
+# details here 
 class YOLO_Glycan(Glycan_Base):
 
     defaults = {
-        'label_type': 'composition'
+        'label_type': 'none'
     }
 
     def __init__(self,**kwargs):
@@ -55,10 +66,18 @@ class YOLO_Glycan(Glycan_Base):
             default=1.1  # or any appropriate fallback confidence
         )
     
-    # this should also add IUPAC/COMPOSITION in the semnatics - it should be in the pipeline
     def find_objects(self, obj):
-        if len(obj.glycan_errors()) == 0 and self.get_label(obj):
-            obj.set('classlabel',self.get_label(obj) )
+        # IUPAC and composition are set via Glycan_Base class, when get_label function is used
+
+        self.add_metadata(obj)
+        
+        label = self.get_label(obj)
+
+        if obj.has_glycan_errors():
+            return []
+
+        if label:    
+            obj.set('classlabel',label)
             obj.set('center',obj.center())     # helps for proximity
             obj.set('confidence', self.get_confidence(obj))
             return [ obj ]

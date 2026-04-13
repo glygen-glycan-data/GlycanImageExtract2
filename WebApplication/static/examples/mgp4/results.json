@@ -1,27 +1,20 @@
 {
-  "id": "nnwzoqdgeh",
-  "task_index": 10,
+  "id": "kyiiogbirc",
+  "task_index": 18,
   "submission_detail": {
-    "original_file_name": "jbt.28-150.pdf",
+    "image_search_strategy": "hybrid",
+    "filename": "jbt.28-150.pdf",
     "submission_type": "Manuscript",
-    "id": "nnwzoqdgeh"
+    "submission_mode": "Upload",
+    "id": "kyiiogbirc"
   },
   "state": "Complete",
   "status": "",
   "finished": true,
-  "submission_type": "Manuscript",
-  "submit_time": 1766518892.8972166,
-  "sessionid": "yx6zuujsk3ipk3y3",
+  "submit_time": 1773174301.6239219,
+  "sessionid": "j3gthhjt3xxlolbx",
   "result": {
-    "id": "nnwzoqdgeh",
-    "start time": 1766518950.2528353,
-    "end time": 1766519018.1644871,
-    "runtime": 67.9116518497467,
-    "error": [],
-    "original_filepath": "input/jbt.28-150.pdf",
-    "abs_original_filepath": "/data2/projects/GlyGen/GlycanImageExtract2-dev/WebApplication/static/files/nnwzoqdgeh/input/jbt.28-150.pdf",
-    "pipeline_name": null,
-    "figure_result": [
+    "figures": [
       {
         "annotated_image_path": "extracted_figures/annotated_figures/1.png",
         "bbox": [
@@ -30,13 +23,19 @@
           558.2780151367188,
           489.5440368652344
         ],
+        "center": [
+          436.093505859375,
+          274.16754150390625
+        ],
         "file_name": "1.png",
         "glycans": [],
         "height": 1197,
         "image_count": 1,
         "image_number": 1,
         "image_path": "extracted_figures/figures/1.png",
+        "merge_type": "fitz",
         "page_height": 782.9860229492188,
+        "page_num": 2,
         "page_number": 2,
         "page_width": 602.9860229492188,
         "pdf_fig_bbox": [
@@ -48,7 +47,9 @@
         "pdf_fig_height": 431.75299072265625,
         "pdf_fig_width": 245.3690185546875,
         "width": 679,
-        "xref": 133
+        "xref": 133,
+        "figure_number": "1",
+        "caption": "The experimental workflow used to study the kinetics of the PNGase F deglycosylation reaction."
       },
       {
         "annotated_image_path": "extracted_figures/annotated_figures/2.png",
@@ -58,13 +59,19 @@
           558.2780151367188,
           674.1920166015625
         ],
+        "center": [
+          436.093505859375,
+          566.8155212402344
+        ],
         "file_name": "2.png",
         "glycans": [],
         "height": 597,
         "image_count": 2,
         "image_number": 1,
         "image_path": "extracted_figures/figures/2.png",
+        "merge_type": "fitz",
         "page_height": 782.9860229492188,
+        "page_num": 3,
         "page_number": 3,
         "page_width": 602.9860229492188,
         "pdf_fig_bbox": [
@@ -76,51 +83,31 @@
         "pdf_fig_height": 215.75299072265625,
         "pdf_fig_width": 245.3690185546875,
         "width": 679,
-        "xref": 134
+        "xref": 134,
+        "figure_number": "2",
+        "caption": "The LC-SRM chromatograms show the appearance of de-glycosylated peptides and the disappearance of glycopeptide in the sample from 0 min to overnight."
       },
       {
         "annotated_image_path": "extracted_figures/annotated_figures/3.png",
-        "bbox": [
-          44.9010009765625,
-          513.0150146484375,
-          289.27001953125,
-          652.3090209960938
-        ],
-        "file_name": "3.png",
-        "glycans": [],
-        "height": 387,
-        "image_count": 3,
-        "image_number": 1,
-        "image_path": "extracted_figures/figures/3.png",
-        "page_height": 782.9860229492188,
-        "page_number": 4,
-        "page_width": 602.9860229492188,
-        "pdf_fig_bbox": [
-          44.9010009765625,
-          513.0150146484375,
-          289.27001953125,
-          652.3090209960938
-        ],
-        "pdf_fig_height": 140.29400634765625,
-        "pdf_fig_width": 245.3690185546875,
-        "width": 679,
-        "xref": 139
-      },
-      {
-        "annotated_image_path": "extracted_figures/annotated_figures/4.png",
         "bbox": [
           313.90899658203125,
           58.79100036621094,
           558.2780151367188,
           198.53900146484375
         ],
-        "file_name": "4.png",
+        "center": [
+          436.093505859375,
+          128.66500091552734
+        ],
+        "file_name": "3.png",
         "glycans": [],
         "height": 389,
-        "image_count": 4,
-        "image_number": 2,
-        "image_path": "extracted_figures/figures/4.png",
+        "image_count": 3,
+        "image_number": 1,
+        "image_path": "extracted_figures/figures/3.png",
+        "merge_type": "fitz",
         "page_height": 782.9860229492188,
+        "page_num": 4,
         "page_number": 4,
         "page_width": 602.9860229492188,
         "pdf_fig_bbox": [
@@ -132,7 +119,45 @@
         "pdf_fig_height": 140.7480010986328,
         "pdf_fig_width": 245.3690185546875,
         "width": 679,
-        "xref": 140
+        "xref": 140,
+        "figure_number": "3",
+        "caption": "The decay profile of the IgG1 glycopeptide carrying the fucosylated glycan with 0 galactoses (H3N4F1) following the addition of PNGase F at a concentration of 2.5 U/\u03bcl. The [GP] signal was obtained by dividing the peak area of this glycopeptide by the integrated peak area of internal standard (GluFib) at each time point."
+      },
+      {
+        "annotated_image_path": "extracted_figures/annotated_figures/4.png",
+        "bbox": [
+          44.9010009765625,
+          513.0150146484375,
+          289.27001953125,
+          652.3090209960938
+        ],
+        "center": [
+          167.08551025390625,
+          582.6620178222656
+        ],
+        "file_name": "4.png",
+        "glycans": [],
+        "height": 387,
+        "image_count": 4,
+        "image_number": 2,
+        "image_path": "extracted_figures/figures/4.png",
+        "merge_type": "fitz",
+        "page_height": 782.9860229492188,
+        "page_num": 4,
+        "page_number": 4,
+        "page_width": 602.9860229492188,
+        "pdf_fig_bbox": [
+          44.9010009765625,
+          513.0150146484375,
+          289.27001953125,
+          652.3090209960938
+        ],
+        "pdf_fig_height": 140.29400634765625,
+        "pdf_fig_width": 245.3690185546875,
+        "width": 679,
+        "xref": 139,
+        "figure_number": "4",
+        "caption": "The plot of ln[GP] vs. time for the IgG1 glycopeptide carrying the fucosylated glycan with 0 galactoses (H3N4F1). These data were obtained following the addition of PNGase F at a concentration of 2.5 U/\u03bcl. The [GP] signal was achieved by dividing the peak area of this glycopeptide by the integrated peak area of internal standard (GluFib) at each time point."
       },
       {
         "annotated_image_path": "extracted_figures/annotated_figures/5.png",
@@ -141,6 +166,10 @@
           58.4510498046875,
           556.6710205078125,
           188.33404541015625
+        ],
+        "center": [
+          392.5435104370117,
+          123.39254760742188
         ],
         "file_name": "5.png",
         "glycans": [
@@ -9210,7 +9239,9 @@
         "image_count": 5,
         "image_number": 1,
         "image_path": "extracted_figures/figures/5.png",
+        "merge_type": "fitz",
         "page_height": 782.9860229492188,
+        "page_num": 5,
         "page_number": 5,
         "page_width": 602.9860229492188,
         "pdf_fig_bbox": [
@@ -9222,7 +9253,9 @@
         "pdf_fig_height": 130.88299560546875,
         "pdf_fig_width": 329.25502014160156,
         "width": 912,
-        "xref": 141
+        "xref": 141,
+        "figure_number": "5",
+        "caption": "The amino acid sequences of the tryptic glycopeptide of IgG1, IgG2/3, and IgG4 and the glycan structures investigated, which were categorized into 4 groups: fucosylated, nonfucosylated, bisecting-GlcNAc, and sialylated."
       },
       {
         "annotated_image_path": "extracted_figures/annotated_figures/6.png",
@@ -9231,6 +9264,10 @@
           478.88604736328125,
           556.6710205078125,
           726.1800537109375
+        ],
+        "center": [
+          392.5435104370117,
+          602.5330505371094
         ],
         "file_name": "6.png",
         "glycans": [
@@ -11378,7 +11415,9 @@
         "image_count": 6,
         "image_number": 2,
         "image_path": "extracted_figures/figures/6.png",
+        "merge_type": "fitz",
         "page_height": 782.9860229492188,
+        "page_num": 5,
         "page_number": 5,
         "page_width": 602.9860229492188,
         "pdf_fig_bbox": [
@@ -11390,7 +11429,9 @@
         "pdf_fig_height": 248.29400634765625,
         "pdf_fig_width": 329.25502014160156,
         "width": 912,
-        "xref": 142
+        "xref": 142,
+        "figure_number": "6",
+        "caption": "Plots of ln[GP] vs. time for the fucosylated glycopeptides. These data were obtained following the addition of PNGase F at a concentration of 2.5 U/\u03bcl. The [GP] signal was achieved by dividing the peak area of this glycopeptide by the integrated peak area of internal standard (GluFib) at each time point."
       },
       {
         "annotated_image_path": "extracted_figures/annotated_figures/7.png",
@@ -11399,6 +11440,10 @@
           58.45103454589844,
           374.6860046386719,
           307.67303466796875
+        ],
+        "center": [
+          210.55850219726562,
+          183.0620346069336
         ],
         "file_name": "7.png",
         "glycans": [
@@ -13309,7 +13354,9 @@
         "image_count": 7,
         "image_number": 1,
         "image_path": "extracted_figures/figures/7.png",
+        "merge_type": "fitz",
         "page_height": 782.9860229492188,
+        "page_num": 6,
         "page_number": 6,
         "page_width": 602.9860229492188,
         "pdf_fig_bbox": [
@@ -13321,7 +13368,9 @@
         "pdf_fig_height": 250.2220001220703,
         "pdf_fig_width": 329.2550048828125,
         "width": 912,
-        "xref": 143
+        "xref": 143,
+        "figure_number": "7",
+        "caption": "Plots of ln[GP] vs. time for the nonfucosylated glycopeptides. These data were obtained following the addition of PNGase F at a concentration of 2.5 U/\u03bcl. The [GP] signal was achieved by dividing the peak area of this glycopeptide by the integrated peak area of internal standard (GluFib) at each time point."
       },
       {
         "annotated_image_path": "extracted_figures/annotated_figures/8.png",
@@ -13330,6 +13379,10 @@
           497.59405517578125,
           374.6860046386719,
           726.1800537109375
+        ],
+        "center": [
+          210.55850219726562,
+          611.8870544433594
         ],
         "file_name": "8.png",
         "glycans": [
@@ -15714,7 +15767,9 @@
         "image_count": 8,
         "image_number": 2,
         "image_path": "extracted_figures/figures/8.png",
+        "merge_type": "fitz",
         "page_height": 782.9860229492188,
+        "page_num": 6,
         "page_number": 6,
         "page_width": 602.9860229492188,
         "pdf_fig_bbox": [
@@ -15726,7 +15781,9 @@
         "pdf_fig_height": 229.58599853515625,
         "pdf_fig_width": 329.2550048828125,
         "width": 912,
-        "xref": 144
+        "xref": 144,
+        "figure_number": "8",
+        "caption": "Plots of ln[GP] vs. time for the glycopeptides whose glycans contain a bisecting-GlcNAc. These data were obtained following the addition of PNGase F at a concentration of 2.5 U/\u03bcl. The [GP] signal was obtained by dividing the peak area of this glycopeptide by the integrated peak area of internal standard (GluFib) at each time point."
       },
       {
         "annotated_image_path": "extracted_figures/annotated_figures/9.png",
@@ -15735,6 +15792,10 @@
           58.45103454589844,
           556.6710205078125,
           284.259033203125
+        ],
+        "center": [
+          392.5435104370117,
+          171.35503387451172
         ],
         "file_name": "9.png",
         "glycans": [
@@ -18361,7 +18422,9 @@
         "image_count": 9,
         "image_number": 1,
         "image_path": "extracted_figures/figures/9.png",
+        "merge_type": "fitz",
         "page_height": 782.9860229492188,
+        "page_num": 7,
         "page_number": 7,
         "page_width": 602.9860229492188,
         "pdf_fig_bbox": [
@@ -18373,11 +18436,17 @@
         "pdf_fig_height": 226.80799865722656,
         "pdf_fig_width": 329.25502014160156,
         "width": 912,
-        "xref": 146
+        "xref": 146,
+        "figure_number": "9",
+        "caption": "Plots of ln[GP] vs. time for the sialylated glycopeptides. These data were obtained following the addition of PNGase F at a concentration of 2.5 U/\u03bcl. The [GP] signal was obtained by dividing the peak area of this glycopeptide by the integrated peak area of internal standard (GluFib) at each time point."
       }
     ],
-    "finished": true,
-    "state": "Complete",
-    "status": ""
-  }
+    "job_type": "PDFJob",
+    "citation": "Huang Y, Orlando R. Kinetics of N-Glycan Release from Human Immunoglobulin G (IgG) by PNGase F: All Glycans Are Not Created Equal. Journal of biomolecular techniques : JBT; 28(4):150-157.",
+    "pmid": "29042829"
+  },
+  "start_time": 1773174301.6242418,
+  "end_time": 1773174410.229334,
+  "runtime": 108.6050922870636,
+  "error": []
 }

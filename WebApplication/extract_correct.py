@@ -9,10 +9,10 @@ for k in list(result):
         del result[k]
 
 for k in list(result["result"]):
-    if k not in ("figure_result",):
+    if k not in ("figures",):
         del result["result"][k]
 
-for f in result["result"]["figure_result"]:
+for f in result["result"]["figures"]:
     for k in list(f):
         if k not in ("glycans",):
             del f[k]

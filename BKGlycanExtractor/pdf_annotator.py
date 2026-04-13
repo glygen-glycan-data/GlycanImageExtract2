@@ -10,6 +10,10 @@ import time
 from .image_manager import Image_Manager
 from .bbox import PDFConversionContext
 
+# TODO - some methods were added/updated in the glyomics client code - and I still need to make those updates which
+# currently impact local pipeline submissions. WebApp submissions are working.
+# Need to revisit things...
+
 class InputItem:
     '''
     Stores the input item and its metadata (so that user can submit both pmid and pdf's at the same time via cmd line args)
@@ -18,20 +22,20 @@ class InputItem:
     This class helps in recognising the type of submission while using APIFramework/glyomics client.
     '''
 
-    def __init__(self, input_type, value, index):
+    # TODO - remove generic names from this class or find a way to hide the generic class
+    # or how to make it useful as a data class? especially remove the use of input/input_items, it is nit intuitive
+    def __init__(self, input_type, file_path, index, pmid=None):
         # validate type
         if input_type not in ('pdf', 'pmid'):
             raise ValueError(f"Invalid type: {input_type}. Must be 'pdf' or 'pmid'")
 
         self.type = input_type
-        self.value = value
+        self.file_path = file_path
         self.index = index
 
-        # get basename only for pdf's
-        if self.type == 'pdf':
-            self.basename = os.path.splitext(value)[0]
-        else:
-            self.basename = f'PMID-{value}'
+        self.pmid = pmid
+        self.basename = os.path.splitext(file_path)[0]
+        self.filename = os.path.basename(file_path)                   
 
     def is_pdf(self):
         return self.type == 'pdf'
@@ -41,13 +45,11 @@ class InputItem:
 
     def get_annotated_filename(self):
         '''Returns the expected annotated PDF filename for this input item.'''
-        if self.type == 'pdf':
-            return f'{self.basename}.annotated.pdf'
-        elif self.type == 'pmid':
+        if self.type in ('pdf', 'pmid'):
             return f'{self.basename}.annotated.pdf'
         return None
 
-def annotate_from_webapp(json_path, extractorurl, output_dir):
+def annotate_from_webapp(json_path, pdf_path, extractorurl, output_dir):
     '''
     WebApp use case: Build pdf annotations and TSV directly from JSON files.
     No submission or polling needed.
@@ -64,7 +66,6 @@ def annotate_from_webapp(json_path, extractorurl, output_dir):
     with open(json_path, 'r') as f:
         json_data = json.load(f)
 
-    pdf_path = json_data.get('result', {}).get('abs_original_filepath')
     if not os.path.exists(pdf_path):
         raise FileNotFoundError(f"Original PDF file not found: {pdf_path}")
 
@@ -117,8 +118,8 @@ def annotate(pdf, pmid, json_file, taskid, extractorurl, resubmit):
     # Validate PDF files exist
     for item in input_items:
         if item.is_pdf():
-            if not os.path.exists(item.value):
-                raise FileNotFoundError(f"PDF file not found: {item.value}")
+            if not os.path.exists(item.file_path):
+                raise FileNotFoundError(f"PDF file not found: {item.file_path}")
     
     client = ExtractorClient(apiurl=extractorurl)
     # Submit/retrieve results
@@ -154,18 +155,19 @@ def submit_and_retrieve(input_items, json_file, taskid, resubmit, client):
             if item.is_pdf():
                 resultfilename[i] = item.basename + ".results.json"
             else:  # pmid
-                resultfilename[i] = f"PMID-{item.value}.results.json"
-        
+                resultfilename[i] = f"PMID-{item.pmid}.results.json"
+                    
         # Submit or load existing results
         if not os.path.exists(resultfilename[i]) or resubmit:
             if taskid:
                 current_taskid = taskid[i]
             elif item.is_pmid():
-                print(f"PMID {item.value} submitted for analysis")
-                current_taskid = client.submit_pmid(item.value, curation_task=True)
+                print(f"PMID {item.pmid} submitted for analysis")
+                # refer to EXTRACTORCLient method - submit_manuscript_pmid
+                current_taskid = client.submit_pmid(item.pmid)
             else:
-                print(f"{os.path.split(item.value)[1]} PDF submitted for analysis.")
-                current_taskid = client.submit_manuscript_file(item.value, curation_task=True)
+                print(f"{item.basename} PDF submitted for analysis.")
+                current_taskid = client.submit_manuscript_file(item.file_path)
             
             json_data = client.retrieve_once(current_taskid, asis=True)
             with open(resultfilename[i], 'w') as f:
@@ -181,11 +183,11 @@ def submit_and_retrieve(input_items, json_file, taskid, resubmit, client):
                 if 'submission_detail' not in tmp_json_data:
                     # Bad taskid, resubmit
                     if item.is_pmid():
-                        print(f"PMID {item.value} resubmitted for analysis (bad taskid).")
-                        current_taskid = client.submit_pmid(item.value, curation_task=True)
+                        print(f"PMID {item.pmid} resubmitted for analysis (bad taskid).")
+                        current_taskid = client.submit_pmid(item.pmid)
                     else:
-                        print(f"{os.path.split(item.value)[1]} resubmitted for analysis (bad taskid).")
-                        current_taskid = client.submit_manuscript_file(item.value, curation_task=True)
+                        print(f"{item.basename} resubmitted for analysis (bad taskid).")
+                        current_taskid = client.submit_manuscript_file(item.file_path)
                     
                     json_data = client.retrieve_once(current_taskid, asis=True)
                     with open(resultfilename[i], 'w') as f:
@@ -214,7 +216,7 @@ def poll_for_completion(needsresults, all_json_data, resultfilename, client):
             current_taskid = all_json_data[i]['id']
             json_data = client.retrieve_once(current_taskid, asis=True)
             
-            input_item_name = json_data.get('submission_detail', {}).get('original_file_name', f'Item {i}')
+            input_item_name = json_data.get('submission_detail', {}).get('filename', f'Item {i}')
             
             if json_data.get('finished', False):
                 all_json_data[i] = json_data
@@ -263,41 +265,64 @@ def build_annotations(input_items, all_json_data, base_url, output_dir=None):
 
         # Skip error / missing-result / missing-PDF cases
         if json_data.get('state') == "Error":
-            print(f"{input_item.value} skipping due to analysis error.")
+            print(f"{input_item.basename} skipping due to analysis error.")
             continue
 
         result = json_data.get('result')
         if not result:
-            print(f"{input_item.value} skipping: no result data.")
+            print(f"{input_item.basename} skipping: no result data.")
             continue
 
-        original_filepath = result.get('abs_original_filepath')
-        if not original_filepath or not os.path.exists(original_filepath):
-            print(f"{input_item.value} skipping: original PDF not found.")
-            continue
-
+        # Decide where to save annotated files
         if output_dir:
             save_dir = output_dir
         else:
-            # save in the same location where the json file exists
             base_dir = os.path.dirname(input_item.basename)
-            if base_dir:
-                save_dir = base_dir
-            else:
-                save_dir = os.getcwd()
+            save_dir = base_dir if base_dir else os.getcwd()
 
         os.makedirs(save_dir, exist_ok=True)
 
-        # pdf_basename = os.path.splitext(os.path.basename(pdf_path))[0]
+        # Start from the input item's file path
+        original_filepath = input_item.file_path
+
+        # For CLI PMIDs, reconstruct from WebApplication static/files/... and copy locally
+        if input_item.is_pmid():
+            submission_detail = json_data.get("submission_detail", {})
+            task_id = submission_detail.get("id")
+            filename = submission_detail.get("filename") or input_item.filename
+
+            webapp_root = None
+            cwd = os.getcwd()
+
+            # Case 1: running inside WebApplication (Docker: /code/WebApplication)
+            if os.path.isdir(os.path.join(cwd, "static", "files")):
+                webapp_root = cwd
+            # Case 2: running from repo root with a WebApplication subdir
+            elif os.path.isdir(os.path.join(cwd, "WebApplication", "static", "files")):
+                webapp_root = os.path.abspath(os.path.join(cwd, "WebApplication"))
+
+            if webapp_root and task_id and filename:
+                # For CLI jobs --> location is generally 'files', but if recompute examples is run - location is examples??
+                webapp_pdf = os.path.join(webapp_root, "static", "files", task_id, "input", filename)
+                # print("webapp_pdf", webapp_pdf)
+
+                if os.path.exists(webapp_pdf):
+                    local_pdf = os.path.join(save_dir, filename)
+                    if not os.path.exists(local_pdf):
+                        shutil.copy2(webapp_pdf, local_pdf)
+                    original_filepath = local_pdf
+
+        # print("original_filepath", original_filepath)
+
+        if not original_filepath or not os.path.exists(original_filepath):
+            print(f"{input_item.basename} skipping: original PDF not found.")
+            continue
 
         # paths for the annotated pdf and tsv file
         pdf_basename = os.path.splitext(os.path.basename(original_filepath))[0]
         annotated_pdf_path = os.path.join(save_dir, pdf_basename + ".annotated.pdf")
         tsv_path = os.path.join(save_dir, pdf_basename + ".annotated.tsv")
 
-        # each process has its own PID, so this kind of file naming avoid temp file naming collisions
-        # accross processes (although all files/submissions are stored in a unique folder which is named using a hash and avoids collision)
-        # Maybe the below step is not necessary??
         pid = os.getpid()
         temp_pdf = os.path.join(save_dir, f"{pdf_basename}.annotated.pdf.tmp.{pid}")
         temp_tsv = os.path.join(save_dir, f"{pdf_basename}.annotated.tsv.tmp.{pid}")
@@ -305,9 +330,16 @@ def build_annotations(input_items, all_json_data, base_url, output_dir=None):
         doc = None
         try:
             doc = fitz.open(original_filepath)
+            
+            # remove any links in the document, these can make it
+            # difficult to edit the boxes on figures...
+            for page in doc:
+                for link in page.links():
+                    page.delete_link(link)
+
             image_data = []
 
-            figure_results = result.get('figure_result', [])
+            figure_results = result.get('figures', [])
             taskid = json_data.get('id')
 
             for result_item in figure_results:
@@ -323,7 +355,6 @@ def build_annotations(input_items, all_json_data, base_url, output_dir=None):
             write_tsv(temp_tsv, image_data, anyvotes)
 
             # Replace old final files with new ones (this avoids partial writes)
-            # So remove old files, rename the temp files which will serve as the annoated pdf and tsv
             if os.path.exists(annotated_pdf_path):
                 os.remove(annotated_pdf_path)
             if os.path.exists(tsv_path):
@@ -346,7 +377,6 @@ def build_annotations(input_items, all_json_data, base_url, output_dir=None):
                 except:
                     pass
 
-            # Clean up any leftover temp files (in case of error before rename)
             for tmp in (temp_pdf, temp_tsv):
                 if os.path.exists(tmp):
                     try:
@@ -399,12 +429,21 @@ def annotate_figure(doc, result_item, taskid, image_data, base_url):
 
                 url = (
                     f"{base_url}/result/{taskid}"
-                    f"#glycan-{image_count}-{glycan.get('fig_glycan_count', '?')}"
+                    f"#glycan-{image_count-1}-{glycan.get('fig_glycan_count', '?')}"
                 )
 
                 content = f"id: {gid}\nurl: {url}\n"
 
                 gly_annot.set_info(content=content)
+
+                link_info = {
+                    "kind": fitz.LINK_URI,
+                    "from": gly_annot.rect,
+                    "uri": url
+                }
+        
+                # Insert the link on the page
+                page.insert_link(link_info)
     
                 votes = glycan.get('upvotes', 0) - glycan.get('downvotes', 0)
                 color = (0, 0, 1)
@@ -460,14 +499,16 @@ def build_input_items(pdf_list=None, pmid_list=None):
         if len(pdf_list) != len(set(pdf_list)):
             print("Provided PDF's are not unique")
             sys.exit(1)
-        for pdf in pdf_list:
-            input_items.append(InputItem('pdf', pdf, len(input_items)))
+        for pdf_path in pdf_list:
+            input_items.append(InputItem('pdf', pdf_path, len(input_items)))
     
     if pmid_list:
         if len(pmid_list) != len(set(pmid_list)):
             print("Provided PMID's are not unique")
             sys.exit(1)
         for pmid in pmid_list:
-            input_items.append(InputItem('pmid', pmid, len(input_items)))
+            # create a 'PDF' file_path for the pdf provided by PubMed
+            file_path = os.path.join(os.getcwd(), f'PMID-{pmid}.pdf')   
+            input_items.append(InputItem('pmid', file_path, len(input_items),pmid=pmid))
     
     return input_items

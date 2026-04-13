@@ -1,27 +1,20 @@
 {
-  "id": "mlzkowa7lz",
+  "id": "q6lwp6olqn",
   "task_index": 9,
   "submission_detail": {
-    "original_file_name": "Example4_use.pdf",
+    "image_search_strategy": "hybrid",
+    "filename": "Example4_use.pdf",
     "submission_type": "Manuscript",
-    "id": "mlzkowa7lz"
+    "submission_mode": "Upload",
+    "id": "q6lwp6olqn"
   },
   "state": "Complete",
   "status": "",
   "finished": true,
-  "submission_type": "Manuscript",
-  "submit_time": 1766518891.8633506,
-  "sessionid": "ynrme4dkewkwnuem",
+  "submit_time": 1773173836.8205855,
+  "sessionid": "fxhaktk4jicwnfn4",
   "result": {
-    "id": "mlzkowa7lz",
-    "start time": 1766518932.848226,
-    "end time": 1766518982.4035115,
-    "runtime": 49.55528545379639,
-    "error": [],
-    "original_filepath": "input/Example4_use.pdf",
-    "abs_original_filepath": "/data2/projects/GlyGen/GlycanImageExtract2-dev/WebApplication/static/files/mlzkowa7lz/input/Example4_use.pdf",
-    "pipeline_name": null,
-    "figure_result": [
+    "figures": [
       {
         "annotated_image_path": "extracted_figures/annotated_figures/1.png",
         "bbox": [
@@ -29,6 +22,10 @@
           177.5998992919922,
           387.3490905761719,
           413.0372009277344
+        ],
+        "center": [
+          216.47453498840332,
+          295.3185501098633
         ],
         "file_name": "1.png",
         "glycans": [
@@ -5770,7 +5767,7 @@
             "extracted_image_path": "extracted_figures/extracted_images/1-11.png",
             "fig_glycan_count": 11,
             "glyImage": "glymage/bd4298f40bce5af827d3c267a8c13499.svg",
-            "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?ondemandtaskid=87c26e2136bf541a2090362c5a8bc207d1507b415ee86fcf8336",
+            "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?ondemandtaskid=87c26e2136bf541a2090362c5a8bc207b9722cfa0ef29cfab2e1",
             "height": 192,
             "image_name": "1-11.png",
             "image_path": "extracted_figures/images/1-11.png",
@@ -15242,7 +15239,9 @@
         "image_count": 1,
         "image_number": 1,
         "image_path": "extracted_figures/figures/1.png",
+        "merge_type": "fitz",
         "page_height": 792.0,
+        "page_num": 2,
         "page_number": 2,
         "page_width": 612.0,
         "pdf_fig_bbox": [
@@ -15254,7 +15253,9 @@
         "pdf_fig_height": 236.4373016357422,
         "pdf_fig_width": 342.7491111755371,
         "width": 1424,
-        "xref": 33
+        "xref": 33,
+        "figure_number": "7",
+        "caption": "LC/MS Analyis of Enbrel Glycans released by PNGase F, Recombinant"
       },
       {
         "annotated_image_path": "extracted_figures/annotated_figures/2.png",
@@ -15263,6 +15264,10 @@
           165.3000946044922,
           570.4603881835938,
           383.2847900390625
+        ],
+        "center": [
+          497.93409729003906,
+          274.29244232177734
         ],
         "file_name": "2.png",
         "glycans": [
@@ -15974,7 +15979,7 @@
             "extracted_image_path": "extracted_figures/extracted_images/2-2.png",
             "fig_glycan_count": 2,
             "glyImage": "glymage/df1bdac6da9ec9524cf1e51c4f426a6d.svg",
-            "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?ondemandtaskid=2e5c52f307c284ebc80802cc49169a32d1507b415ee86fcf8336",
+            "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?ondemandtaskid=2e5c52f307c284ebc80802cc49169a32b9722cfa0ef29cfab2e1",
             "height": 52,
             "image_name": "2-2.png",
             "image_path": "extracted_figures/images/2-2.png",
@@ -19393,7 +19398,9 @@
         "image_count": 2,
         "image_number": 2,
         "image_path": "extracted_figures/figures/2.png",
+        "merge_type": "fitz",
         "page_height": 792.0,
+        "page_num": 2,
         "page_number": 2,
         "page_width": 612.0,
         "pdf_fig_bbox": [
@@ -19405,11 +19412,16 @@
         "pdf_fig_height": 218.9846954345703,
         "pdf_fig_width": 146.05258178710938,
         "width": 605,
-        "xref": 34
+        "xref": 34,
+        "figure_number": "8",
+        "caption": "Enbrel Functional Domains"
       }
     ],
-    "finished": true,
-    "state": "Complete",
-    "status": ""
-  }
+    "job_type": "PDFJob",
+    "citation": "McLeod B. <A target=\"_blank\" href=\"https://www.neb.com/en/-/media/nebus/files/application-notes/appnote_characterization_of_glycans_from_erbitux_rituxan_and_enbrel_using_recombinant_pngase_f.pdf?rev=581a874aebbc4351bec05e10c07f96ea&hash=F7F41C4E1158B1421DCF1FE6AE5126AB\">Characterization of Glycans from Erbitux\u00ae, Rituxan\u00ae and Enbrel\u00ae using PNGase F (Glycerol-free), Recombinant.</A> Application Note. New England BioLabs, Inc. 2024; 1-4."
+  },
+  "start_time": 1773173875.6446798,
+  "end_time": 1773173923.676945,
+  "runtime": 48.032265186309814,
+  "error": []
 }

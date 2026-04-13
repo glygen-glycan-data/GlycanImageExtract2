@@ -585,12 +585,71 @@ for manual_file in args.manual:
         if os.path.exists(annotated_path):
             doc = fitz.open(annotated_path)
         else:
-            doc = fitz.open(input_item.value)
+            if json_data.get('status'):
+                print(input_item,"analysis in progress:",json_data['status'])
+            elif json_data['state'] == "Running":
+                print(input_item,"analysis in progress.")
+            else:
+                pass # print(pdf,"analysis queued.")
+    if completed == needsresults:
+        break
+    time.sleep(15)
 
-        # if os.path.exists(basename + ".annotated.pdf") or \
-        #     os.path.exists(basename + ".annotated.tsv"):
-        #     print(f'{basename}.pdf,skipping due to presence of output files.')
-        #     continue
+for i,input_item in enumerate(input_items):
+
+    if all_json_data[i].get('state') == "Error":
+        print(input_item.value,"skipping due to analysis error.")
+        continue
+
+    doc = fitz.open(input_item.value)
+    basename = input_item.basename
+
+    # if os.path.exists(basename + ".annotated.pdf") or \
+    #     os.path.exists(basename + ".annotated.tsv"):
+    #     print(f'{basename}.pdf,skipping due to presence of output files.')
+    #     continue
+
+    image_data = []
+
+    anyvotes = False
+    for result in all_json_data[i]['result']['figures']:
+        fig_num = result["image_count"]
+        taskid = all_json_data[i]['id']
+
+        # page_num - 1, because semantics counts page number starting from 1
+        # but fitz accesses page numbers starting from 0
+        page = doc[result["page_number"]-1]   
+
+        # add figure boxes on the pdf with a fig: <fig_number> comment
+        try:
+
+            fig_annot = page.add_rect_annot(result["pdf_fig_bbox"])
+            fig_annot.set_colors(stroke=(0, 0, 1)) 
+            fig_annot.set_border(width=0.5) 
+                        
+            # set fig id
+            content = (
+                f"fig:{result['image_count']}\n"
+            )
+            xref = result.get("xref", None)
+            if xref is not None and xref > 0:
+                content += f"xref: {xref}\n"
+
+            fig_annot.set_info(content=content)
+            fig_annot.update()
+
+            pdf_context_instance = PDFConversionContext.from_result_dict(result)
+
+            for glycan in result["glycans"]:
+                pdf_gly_box = pdf_context_instance.to_pdf_bbox(glycan["bbox"])
+                gly_annot = page.add_rect_annot(pdf_gly_box.bbox())
+
+                gid = f"G{fig_num}.{glycan['fig_glycan_count']}"
+                url = client.url() + f"/result/{taskid}#glycan-{fig_num}-{glycan['fig_glycan_count']}"
+                content = (
+                    f"id: {gid}\n"
+                    f"url: {url}\n"
+                )
 
         image_data = []
 

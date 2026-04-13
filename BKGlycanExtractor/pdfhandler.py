@@ -1,4 +1,9 @@
-import fitz, os, os.path
+import fitz, os, os.path, re, difflib, traceback
+
+try:
+    from . import searchpmc
+except ImportError:
+    pass
 
 # if more constants are added, then create a Enum class 
 STANDARD_DPI = 300
@@ -11,7 +16,7 @@ class PDFHandler(object):
         self.base,self.extn = self.base.rsplit('.',1)
     
     def make_figure_filename(self,image):
-        return os.path.join(self.dir,self.base+"-"+str(image['xref'])+".png")
+        return os.path.join(self.dir,self.base+"-xref"+str(image['xref'])+"."+image.get("ext","png"))
 
     def pages(self):
         return self.doc.pages()
@@ -103,6 +108,11 @@ class PDFHandler(object):
     def write_image(self,image,filename=None):
         if filename is None:
             filename = self.make_figure_filename(image)
+        if 'image' in image and 'ext' in image:
+            with open(filename,'wb') as fh:
+                fh.write(image['image'])
+            return
+        
         pic = fitz.Pixmap(self.doc, image['xref'])
         failed = False
         try:
@@ -118,20 +128,63 @@ class PDFHandler(object):
     def save_image(doc, page, pdf_fig_bbox, image_path, xref=None, dpi=STANDARD_DPI, annots=True):
         pix = None
 
+        # Normalize bbox: list/tuple -> fitz.Rect
+        if pdf_fig_bbox is not None and isinstance(pdf_fig_bbox, (list, tuple)):
+            try:
+                pdf_fig_bbox = fitz.Rect(*pdf_fig_bbox)
+            except Exception:
+                pdf_fig_bbox = None  # bad bbox; will fall back or error later
+
         if xref is not None:
             xref = int(xref)
 
-        if xref is not None and xref > 0:
-            pix = fitz.Pixmap(doc, xref)
-        else:
-            pix = page.get_pixmap(clip=pdf_fig_bbox, dpi=dpi, annots=annots)   # pdf_fig_bbox - [x0,y0,x1,y1]
-                
         try:
-            pix.save(image_path)
+            # 1) Try xref if we have one
+            if xref is not None and xref > 0:
+
+                try:
+                    image_info = doc.extract_image(xref)
+                    image_path1 = image_path
+                    if not image_path.endswith("."+image_info["ext"]):
+                        image_path1 = image_path.rsplit('.',1)[0] + "." + image_info["ext"]
+                    with open(image_path1,'wb') as fh:
+                        fh.write(image_info['image'])
+                    return dict(width=image_info['width'],
+                                height=image_info['height'],
+                                image_path=image_path1)
+                except Exception as e:
+                    # traceback.print_exc()
+                    pix = None
+
+                try:
+                    pix = fitz.Pixmap(doc, xref)
+                except Exception as e:
+                    # print(f"Pixmap(doc, {xref}) failed with: {e} - falling back to get_pixmap()")
+                    # exception - if xref is valid but it still fails, then fallback to using pixmap
+                    pix = None
+
+            # 2) Fallback: always try clipped page rasterization if pix is still None
+            if pix is None and pdf_fig_bbox is not None:
+                clip = page.rect & pdf_fig_bbox
+                if clip.is_empty:
+                    raise ValueError(f"Clip {pdf_fig_bbox} has no intersection with page rect {page.rect}")
+                pix = page.get_pixmap(clip=clip, dpi=dpi, annots=annots)
+
+            if pix is None:
+                raise RuntimeError("No pixmap could be created (xref and clip both failed)")
+
+            # 3) Save
+            try:
+                pix.save(image_path)
+            except Exception:
+                pix = fitz.Pixmap(fitz.csRGB, pix)
+                pix.save(image_path)
+
+            return dict(width=pix.width,height=pix.height)
+
         except Exception as e:
-            pix = fitz.Pixmap(fitz.csRGB, pix)
-            pix.save(image_path)
-        return pix
+            traceback.print_exc()
+            return None
     
     def figures(self,images_data=None,filter=None):
         if images_data is not None:         # images_data is provided by figcap 
@@ -144,7 +197,20 @@ class PDFHandler(object):
             image_count = 1
             for page_number,page in enumerate(self.pages(),1):
                 images = self.images_per_page(page)         # image identification is based on xrefs
+                figure_number = None
+                caption = None
+                if len(images) == 1:
+                    blocks = list(self.find_text_blocks(page=page_number))
+                    # print(blocks)
+                    if len(blocks) == 1 and re.search(r'^Figure \w+. ',blocks[0]):
+                        label,caption = blocks[0].split(". ",1)
+                        figure_number = label.split()[1]
+                        # print(figure_number,caption)
                 for image_number,image in enumerate(images,1):
+                    try:
+                        image.update(self.doc.extract_image(image['xref']))
+                    except ValueError:
+                        pass
                     pdf_fig_width, pdf_fig_height = self.image_dimensions(image)
                     image['page_number'] = page_number
                     image['image_number'] = image_number                # image count per page
@@ -153,13 +219,71 @@ class PDFHandler(object):
                     image['pdf_fig_height'] = pdf_fig_height
                     image['page_width'] = page.rect.width
                     image['page_height'] = page.rect.height
+                    if figure_number:
+                        image['figure_number'] = figure_number
+                        image['caption'] = caption
                         
                     if filter is None or filter.keep(image):
                         image['image_count'] = image_count                  # total image count so far
                         # image['dpi'] = PDFHandler.calculate_dpi(image, self.doc) or self.STANDARD_DPI
                         image_count += 1
                         yield image
-                                    
+
+    doi_regex = re.compile(r'(doi: *|://doi.org/|\b)(10.\d{4,9}/[-._;()/:a-zA-Z0-9]+)',re.IGNORECASE)
+    def find_dois(self):
+        dois = {}
+        for page_number,page in enumerate(self.pages(),1):
+            text = page.get_text()
+            for match in self.doi_regex.finditer(text):
+                if match:
+                    doi = match.group(2)
+                    if doi not in dois:
+                        dois[doi] = dict(doi=doi,count=1,index=len(dois)+1,page=page_number)
+                    else:
+                        dois[doi]['count'] += 1
+
+        return sorted([t for t in dois.values() ],key=lambda t: t['index'])
+
+    def find_doi(self):
+        for doi in self.find_dois():
+            return doi['doi']
+        return None
+
+    def find_text_blocks(self,page=None,pages=None):
+        if page:
+            pages = [ page ]
+        if pages:
+            pages = set(pages)
+        for page_number,thepage in enumerate(self.pages(),1):
+            if page and page_number not in pages:
+                continue
+            text = thepage.get_text('blocks')
+            for tb in thepage.get_text('blocks'):
+                yield " ".join(tb[4].split())
+
+    def get_citation(self):
+        
+        dois = self.find_dois()
+        for doi in dois:
+            title = None
+            ids = searchpmc.lookup(doi=doi['doi'])
+            if ids is not None and ids.get('pmid'):
+                pmid = ids.get('pmid')
+                cite = searchpmc.citation_details(pmid)
+                if cite and cite.get('title'):
+                    title = " ".join(cite.get('title').split()).rstrip('.')
+            
+            if title:
+                # print(title)
+                for i,tb in enumerate(self.find_text_blocks(pages=(1,2,3))):
+                    ratio = difflib.SequenceMatcher(None,title,tb).ratio()
+                    # print(ratio,tb)
+                    if ratio >= 0.8 or title in tb:
+                        cite['title_match_ratio'] = ratio
+                        return cite
+
+        return None                 
+    
 class PDFImageFilter(object):
     def keep(self,image):
         raise NotImplementedError
@@ -224,8 +348,15 @@ class PDFLargeImageSizeFilter(PDFImageFilter):
 if __name__ == "__main__":
 
     import sys
+    import searchpmc
 
+    print(sys.argv[1])
     pdf = PDFHandler(sys.argv[1])
+    cite = pdf.get_citation()
+    if cite:
+        print(cite['ascii_citation'])
+        # print(cite)
+
     filter = CompoundPDFImageFilter(
         PDFXRefImageFilter(min_xref=1),
         PDFImageSizeFilter(width=90,height=90)

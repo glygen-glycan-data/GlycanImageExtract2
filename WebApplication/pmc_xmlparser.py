@@ -60,8 +60,8 @@ class XMLParser:
             'figure_info': self._extract_figure_info(),  # figure label, title, caption, figure filename
             # **self._extract_metadata(),
             'citation': self.format_citation(),
-            'pmid_url': self._extract_article_url()['pmid_url'],
-            'pmid_job': True
+            # 'pmid_url': self._extract_article_url()['pmid_url'],
+            # 'pmid_job': True
         }
         
         return parsed_data
@@ -82,7 +82,7 @@ class XMLParser:
             return s if s else None
 
         authors = to_str(authors)
-        title = to_str(title)
+        title = to_str(title).rstrip('.') + '.'
         journal = to_str(journal)
         year_vol_pages = to_str(year_vol_pages) if year_vol_pages is not None else None
 
@@ -284,8 +284,10 @@ class XMLParser:
             label_elem = fig.find('label', self.NAMESPACES)
             if label_elem is not None:
                 label = label_elem.text
-                m = re.search(r'^\s*\w+\.?\s*(\d+)\.?\s*$', label)
-                fig_info['figure_number'] = m.group(1) 
+                # print(repr(label))
+                m = re.search(r'^\s*\w+\.?\s*(\w?\d+)\.?\s*$', label)
+                if m:
+                    fig_info['figure_number'] = m.group(1) 
 
             caption_elem = fig.find('caption', self.NAMESPACES)
             if caption_elem is not None:

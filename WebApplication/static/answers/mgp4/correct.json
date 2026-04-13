@@ -1,7 +1,8 @@
 {
   "result": {
     "citation": "Huang Y, Orlando R. Kinetics of N-Glycan Release from Human Immunoglobulin G (IgG) by PNGase F: All Glycans Are Not Created Equal. Journal of biomolecular techniques : JBT; 28(4):150-157.",
-    "figure_result": [
+    "pmid": "29042829",
+    "figures": [
       {
         "caption": "The experimental workflow used to study the kinetics of the PNGase F deglycosylation reaction.",
         "figure_number": "1",

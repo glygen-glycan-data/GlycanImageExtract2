@@ -1,7 +1,11 @@
 {
   "result": {
-    "figure_result": [
+    "citation": "Zhang R, Zhu J, Lubman DM, Mechref Y, Tang H. GlycoHybridSeq: Automated Identification of N-Linked Glycopeptides Using Electron Transfer/High-Energy Collision Dissociation (EThcD). J Proteome Res. 2021;20(6):3345-3352.",
+    "pmid": "34010560",
+    "figures": [
       {
+        "caption": "An example of annotated glycopeptide spectrum, where peaks annotated as b/c/y/z ions are colored as purple, and those annotated as Y ions as red.",
+        "figure_number": "2",
         "glycans": [
           {
             "IUPAC": "Man?1-?GlcNAc?1-?GlcNAc",

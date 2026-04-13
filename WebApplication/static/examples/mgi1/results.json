@@ -1,27 +1,19 @@
 {
-  "id": "j4idzs2nfy",
+  "id": "ejcfuedzno",
   "task_index": 1,
   "submission_detail": {
-    "original_file_name": "2_glycans.png",
+    "filename": "2_glycans.png",
     "submission_type": "Multi-Glycan Image",
-    "id": "j4idzs2nfy"
+    "submission_mode": "Upload",
+    "id": "ejcfuedzno"
   },
   "state": "Complete",
   "status": "",
   "finished": true,
-  "submission_type": "Multi-Glycan Image",
-  "submit_time": 1766518883.678638,
-  "sessionid": "3h6uphjfih26t7xo",
+  "submit_time": 1773173828.6254241,
+  "sessionid": "zdw7qjrfpnxmg66v",
   "result": {
-    "id": "j4idzs2nfy",
-    "start time": 1766518883.6801264,
-    "end time": 1766518896.8202085,
-    "runtime": 13.140082120895386,
-    "error": [],
-    "original_filepath": "input/2_glycans.png",
-    "abs_original_filepath": "/data2/projects/GlyGen/GlycanImageExtract2-dev/WebApplication/static/files/j4idzs2nfy/input/2_glycans.png",
-    "pipeline_name": null,
-    "figure_result": [
+    "figures": [
       {
         "annotated_image_path": "extracted_figures/annotated_figures/2_glycans.png",
         "file_name": "2_glycans.png",
@@ -1859,8 +1851,10 @@
         "width": 1176
       }
     ],
-    "finished": true,
-    "state": "Complete",
-    "status": ""
-  }
+    "job_type": "ImageJob"
+  },
+  "start_time": 1773173828.6264353,
+  "end_time": 1773173841.33007,
+  "runtime": 12.70363473892212,
+  "error": []
 }

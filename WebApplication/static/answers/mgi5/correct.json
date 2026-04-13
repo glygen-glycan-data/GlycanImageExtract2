@@ -1,7 +1,10 @@
 {
   "result": {
-    "figure_result": [
+    "citation": "<A target=\"_blank\" href=\"https://www.sigmaaldrich.com/US/en/technical-documents/protocol/protein-biology/protein-mass-spectrometry/mass-spectrometry-of-glycans\">Mass Spectrometry of Glycans</A>. MilliporeSigma Website.",
+    "figures": [
       {
+        "caption": "N-Linked glycan structures that correspond to MALDI MS peaks in Figure 1.",
+        "figure_number": "2",
         "glycans": [
           {
             "IUPAC": "Man?1-?Man?1-?(Man?1-?)Man?1-?GlcNAc?1-?GlcNAc",

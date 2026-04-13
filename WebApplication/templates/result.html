@@ -317,8 +317,8 @@
 
         const location = result_doc['location'] || "files";
         const document_metadata = result_doc['result']['document_metadata']
-        const figures = result_doc['result']['figure_result'];
-        const file_extension = result_doc['submission_detail']['original_file_name'].split('.').pop();
+        const figures = (result_doc['result']['figures'] || result_doc['result']['figure_result'] || []);
+        const file_extension = (result_doc['submission_detail']['filename'] || result_doc['submission_detail']['original_file_name']).split('.').pop();
         
         // let pmc_publication = null;
         // if (result_doc && result_doc['pmc_publication']) {
@@ -333,32 +333,25 @@
         // Heading + pill links
         resstr += "<h3 class='result-heading'>Results: ";
         resstr += "<span><a class='pill-link' href='{{urlprefix}}/static/" + location + "/" + list_id + "/results.json' target='_blank'>JSON data</a> | </span> ";
-        const originalHref = "{{urlprefix}}/static/" + location + "/" + list_id + "/input/" + encodeURIComponent(result_doc.submission_detail.original_file_name);
+        const originalHref = "{{urlprefix}}/static/" + location + "/" + list_id + "/input/" + encodeURIComponent(result_doc.submission_detail.filename || result_doc.submission_detail.original_file_name);
         if (file_extension === "pdf") {
             resstr += "<span><a class='pill-link' target='_blank' href='" + originalHref + "'>Original PDF</a> | </span>";
         } else {
             resstr += "<span><a class='pill-link' target='_blank' href='" + originalHref + "'>Original Image</a> | </span>";
         }
 
-
-        if (result_doc['submission_detail']['submission_type'] == 'Manuscript' && !result_doc['result']['pmid_job']) {
-            const filename = result_doc.submission_detail.original_file_name
-            const baseName = filename.replace(/\.[^/.]+$/, '')
-
-            const annotated_pdf_href = "{{urlprefix}}/static/" + location + "/" + list_id + "/annotated_files/" + encodeURIComponent(baseName + '.annotated.pdf');
-            const annotated_tsv_href = "{{urlprefix}}/static/" + location + "/" + list_id + "/annotated_files/" + encodeURIComponent(baseName + '.annotated.tsv');
-
-            // console.log("annotated_pdf_href",annotated_pdf_href)
+        if (result_doc.result.annotated_pdf_file && result_doc.result.annotated_tsv_file) {
+            const annotated_pdf_path = "{{urlprefix}}/static/" + location + "/" + list_id + "/annotated_files/" + encodeURIComponent(result_doc.result.annotated_pdf_file);
+            const annotated_tsv_path = "{{urlprefix}}/static/" + location + "/" + list_id + "/annotated_files/" + encodeURIComponent(result_doc.result.annotated_tsv_file);
 
             resstr += `<span><a class='pill-link' href='#'
-                onclick="get_annotated_results(event, '${list_id}', '${annotated_pdf_href}', '${location}')">
+                onclick="get_annotated_results(event, '${list_id}', '${annotated_pdf_path}', '${location}')">
                 Annotated PDF</a> | </span>`;
 
             resstr += `<span><a class='pill-link' href='#'
-                onclick="get_annotated_results(event, '${list_id}', '${annotated_tsv_href}', '${location}')">
+                onclick="get_annotated_results(event, '${list_id}', '${annotated_tsv_path}', '${location}')">
                 TSV Results</a> | </span>`;
-            
-        } 
+        }
 
         resstr += "<span><a class='pill-link' href='{{urlprefix}}/resubmit_file/" + list_id  + "'>Reanalyze</a> </span>";
         
@@ -369,9 +362,11 @@
         const citation = result_doc.result.citation
         if (citation && citation.length > 0) {
             resstr += `<div class="citation-container" style="padding: 20px 0 10px 0;">${citation}`
-                if (result_doc.pmid_job){
-                    resstr += `<span style="white-space:nowrap;"><b> PMID:</b> <a target='_blank' href='${result_doc.result.pmid_url}'>${result_doc.submission_detail.pmid}</a></span>`
-                }
+            if (result_doc.submission_detail.pmid){
+                resstr += ` <span style="white-space:nowrap;"><b>PMID:</b> <a target='_blank' href='https://pubmed.ncbi.nlm.nih.gov/${result_doc.submission_detail.pmid}/'>${result_doc.submission_detail.pmid}</a></span>`
+            } else if (result_doc.result.pmid) {
+                resstr += ` <span style="white-space:nowrap;"><b>PMID:</b> <a target='_blank' href='https://pubmed.ncbi.nlm.nih.gov/${result_doc.result.pmid}/'>${result_doc.result.pmid}</a></span>`
+            }
                 resstr += `</div>`;
         //     // resstr += `<div class='citation-container' style='padding: 0 0 10px 0;'>PMID: <a href='${document_metadata.url.pmid_url}'>${document_metadata.pmid}</a></div>`;
         }
@@ -610,6 +605,16 @@
         }
 
         div.innerHTML = innerdiv;
+
+        var rowid = window.location.hash.substring(1);
+        // console.log(rowid,document.getElementById(rowid));
+        if (rowid) {
+            // Wait a second before initiating scroll, hopefully
+            // the page has rendered by then...
+            setTimeout(() => {
+                scrollAndHighlight(rowid);
+            }, 1000);
+        }
     }
 
     function scrollAndHighlight(rowId, event) {

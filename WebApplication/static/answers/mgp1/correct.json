@@ -1,7 +1,8 @@
 {
   "result": {
     "citation": "Sassi A, Lazaroski S, Wu G, Haslam S M, Fliegauf M, Mellouli F, Patiroglu T, Unal E, Ozdemir M A, Jouhadi Z, Khadir K, Ben-Khemis L, Ben-Ali M, Ben-Mustapha I, Borchani L, Pfeifer D, Jakob T, Khemiri M, Asplund A C, Gustafsson M O, Lundin K E, Falk-Sorqvist E, Moens L N, Gungor H E, Engelhardt K R, Dziadzio M, Stauss H, Fleckenstein B, Meier R, Prayitno K, Maul-Pavicic A, Schaffer S, Rakhmanov M, Henneke P, Kraus H, Eibel H, Kolsch U, Nadifi S, Nilsson M, Bejaoui M, Schaffer A A, Smith C I E, Dell A, Barbouche M R, Grimbacher B. Hypomorphic homozygous mutations in phosphoglucomutase 3 (PGM3) impair immunity and increase serum IgE levels. Journal of Allergy and Clinical Immunology 2014; 133(5):1410-1419.",
-    "figure_result": [
+    "pmid": "24698316",
+    "figures": [
       {
         "figure_number": "1",
         "caption": "Segregation of PGM3 mutations with disease status in families with AR-HIES. A-D, Family A,p.Glu340del; families B and D, p.Leu83Ser; and family C, p.Asp502Tyr. Circles, Female subjects; squares, male subjects; solid symbols, affected subjects with homozygous mutations; half-solid symbols, heterozygous carriers; open symbols, healthy members with wild-type PGM3; slashes, deceased subjects; double horizontal lines, consanguinity; black dots, miscarriages. Asterisks indicate mutations confirmed by using sequencing. E-H, Sequence analyses of unaffected subjects without PGM3 mutations (top), unaffected heterozygous carriers (middle in Fig 1, E-G), and homozygous affected subjects (bottom).",

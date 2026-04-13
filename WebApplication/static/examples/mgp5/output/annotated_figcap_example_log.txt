@@ -1,5 +1,0 @@
-pzyzyb2ss2
-/home/nmathias/GlycanImageExtract2/WebApplication/static/files/pzyzyb2ss2/output/annotated_figcap_example.pdf
-
-Saved image to /home/nmathias/GlycanImageExtract2/WebApplication/static/files/pzyzyb2ss2/extracted_figures/figures/1.png
-Saved image to /home/nmathias/GlycanImageExtract2/WebApplication/static/files/pzyzyb2ss2/extracted_figures/figures/2.png

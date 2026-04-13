@@ -589,6 +589,12 @@ class GlycanSemantics(ImageSemantics):
     def glycan_errors(self):
         return self.get('glycan_errors',[])
 
+    def has_glycan_errors(self):
+        return bool(len(self.glycan_errors()) > 0)
+
+    def get_logs(self):
+        return self.get('log',[])
+
     def build_adjacency_list(self):
         adj = defaultdict(list)
 
@@ -685,6 +691,9 @@ class GlycanSemantics(ImageSemantics):
     def image_path(self):
         # for single glycan images, the glycan image "has" a path
         return self.get('image_path',None)
+            
+    def semantic_compare(self,**kwargs):
+        return GlycanCompare(**kwargs)
 
     def composition(self):
         count = defaultdict(int)

@@ -1,3 +1,4 @@
+#!.venv/bin/python
 """
 Extracts figures and annotation information present on them.
 
@@ -23,6 +24,7 @@ import fitz
 import glob
 import shutil
 import csv
+import traceback
 from BKGlycanExtractor import STANDARD_DPI, POINTS_PER_INCH, PDFHandler
 
 parser = argparse.ArgumentParser(description="Extract annotated figures and comments from PDFs")
@@ -165,6 +167,16 @@ def extract_annotations(output_dir, pdf_path, tsv_path):
                     semantics_file = figure_path.rsplit('.', 1)[0] + '_map.txt'
                     with open(semantics_file, 'w') as sem_file:
                         
+                        try:
+                            imgdata = PDFHandler.save_image(doc, page, pdf_fig_box, figure_path, xref=xref, dpi=STANDARD_DPI, annots=False)
+                            sem_file.write(f'##### WHOLEIMAGE: {round(imgdata['height'])} x {round(imgdata['width'])} (height x width)\n')
+                            # sem_file.write(f'##### IMAGE_DPI: {dpi}\n')
+                            if xref is not None and xref > 0:
+                                sem_file.write(f'##### IMAGE_XREF: {xref}\n')
+                        except Exception as e:
+                            # traceback.print_exc()
+                            print("Couldnt extract figure:", fig_num, e)
+
                         # verify that the other annotation intersects with current figure_annotation
                         # and only then accept it as a part of an annotation that exists on the current figure 
                         for annotation, comment_map in other_annotations:
@@ -184,13 +196,6 @@ def extract_annotations(output_dir, pdf_path, tsv_path):
                                 data.update({'gly_bbox': gly_bbox})
 
                                 write_semantics(sem_file, data)
-
-                        pix = PDFHandler.save_image(doc, page, pdf_fig_box, figure_path, xref=xref, dpi=STANDARD_DPI, annots=False)
-                        sem_file.write(f'##### WHOLEIMAGE: {round(pix.height)} x {round(pix.width)} (height x width)\n')
-                        # sem_file.write(f'##### IMAGE_DPI: {dpi}\n')
-                        if xref is not None and xref > 0:
-                            sem_file.write(f'##### IMAGE_XREF: {xref}\n')
-
 
 def write_semantics(semantics_file, glycan_data):
     x, y, w, h = glycan_data['gly_bbox']
@@ -225,6 +230,9 @@ for pdf_path in pdf_files:
         continue
 
     print("\nProcessing PDF:", pdf_path)
+
+    if pdf_basename.endswith(".annotated"):
+        pdf_basename = pdf_basename.rsplit(".",1)[0]
 
     output_dir = os.path.join(output_folder, pdf_basename)
 

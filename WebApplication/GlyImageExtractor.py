@@ -28,30 +28,79 @@ import flask
 import json
 import cv2
 import traceback
-
 import threading
-
-class ReferenceAPIParaBased(APIFramework):
-    pass
-
 import subprocess
-class ReferenceAPIFileBased(APIFramework):
+
+class GlyImageExtractor(APIFramework):
+
+    default_render_kwargs = dict(
+        google_analytics_url_match = "extractor.glyomics.org",
+        google_analytics_id = "G-47WSZ1WYRZ"
+    )
 
     def __init__(self):
         super().__init__()
+        self._resultid_locks = {}
+        self._lock = threading.Lock()
+        config = self._worker_config
 
-        # self.pipeline_name = pipeline_name
+        for k,v in self.default_render_kwargs.items():
+            self.set_template_render_kwarg(**{k: config.get(k,v)})
+        
+        # default figure search type for PDF files...
+        self._image_search_type = config.get('image_search_type','fitz')
+        assert self._image_search_type in ("fitz","hybrid","figcap")
 
-    def form_task(self, p):
-        res = {}
+    task_params = ["filename",
+                   "submission_type",
+                   "submission_mode",
+                   "fileURL",
+                   "pmid",
+                   "image_search_strategy",
+                   ]
 
-        # Prevent name collision
-        res["original_file_name"] = p["original_file_name"]
-        res['submission_type'] = p['submission_type']
-        res["id"] = self.makeid(p["original_file_name"],p["submission_type"],random=True,length=10)
+    def form_task(self, params):
+        # set  default values, if appropriate
+        task = {}
 
-        return res
+        submission_type = params['submission_type']
+        submission_mode = params['submission_mode']
+        has_pmid = bool(params.get('pmid'))
 
+        # you need image_search_strategy only for PDF/PMID-PDF based jobs
+        if submission_type not in ("Simple Glycan Image", "Multi-Glycan Image"):
+            # if submission mode if local and for instance if analysis was done on a synethic pdf ealier
+            # then its good to do re-analysis over the same pdf using fitz, so for reanalyze optinally pass the image_search_strategy as well
+            if params.get('image_search_strategy'):
+                task['image_search_strategy'] = params['image_search_strategy']
+            if submission_mode == 'PMID-PDF':
+                task['image_search_strategy'] = 'fitz'
+            elif submission_mode != 'PMID' and not (submission_mode == 'Local' and has_pmid):   # use the image_search_strategy from either config file (if present) or defaults to 'fitz
+                task['image_search_strategy'] = self._image_search_type
+
+        # get these parameters from the form
+        for k in self.task_params:
+            if params.get(k):
+                task[k] = params[k]
+
+        # provide all parameter values in a predictable list to make a 
+        # reproducible id, if desired
+        task["id"]=self.makeid(*(task.get(k) for k in self.task_params),
+                               random=True,length=10)
+        return task
+
+    def lock_result(self,resultid,timeout=2):
+        if not self._lock.acquire(timeout=timeout):
+            print("Status: ERROR:LOCK_TIMEOUT, ResultID: %s"%(resultid,),file=sys.stderr)
+            return False
+        if resultid not in self._resultid_locks:
+            self._resultid_locks[resultid] = threading.Lock()
+        self._lock.release()
+        return self._resultid_locks[resultid].acquire(timeout=2)
+    
+    def release_result(self,resultid):
+        if resultid in self._resultid_locks:
+            self._resultid_locks[resultid].release()
 
     @staticmethod
     def worker(pid, task_queue, result_queue, params):
@@ -76,7 +125,7 @@ class ReferenceAPIFileBased(APIFramework):
             # Factory method - get_processor() 
             document_metadata = None
             try:
-                job_instance = JobInstance.get_processor(task_detail, msg_queue=result_queue)
+                job_instance = JobInstance.get_processor(task_detail, config=params, msg_queue=result_queue)
                 job_instance.process_file()
                 result = job_instance.get_results()
                 document_metadata = job_instance.get_document_metadata()
@@ -101,13 +150,13 @@ class ReferenceAPIFileBased(APIFramework):
             updated_task_detail = job_instance.task_detail
             res = {
                 "id": token,
-                "start time": calculation_start_time,
-                "end time": calculation_end_time,
+                "start_time": calculation_start_time,
+                "end_time": calculation_end_time,
                 "runtime": calculation_time_cost,
                 "error": error,
-                "original_filepath": updated_task_detail['original_filepath'],
-                "abs_original_filepath": updated_task_detail['abs_original_filepath'],
-                "figure_result": result,
+                # "filepath": updated_task_detail['filepath'],
+                # "abs_original_filepath": updated_task_detail['abs_original_filepath'],
+                "figures": result,
                 "job_type": job_instance.__class__.__name__,
                 "finished": True,
                 "state": state,
@@ -132,7 +181,7 @@ class ReferenceAPIFileBased(APIFramework):
     def result(self,id=None):
         if not id:
             id = flask.request.args['id']
-        return flask.render_template(self._result_html, urlprefix=self._prefix, list_id=id)
+        return flask.render_template(self._result_html, list_id=id, **self._template_render_kwargs)
 
     def mark(self):
         # when votes are updated - the annotated pdf and tsv file will also be updated accordingly
@@ -140,26 +189,17 @@ class ReferenceAPIFileBased(APIFramework):
         glycanid = flask.request.args['glycanid']
         note = flask.request.args['note']
 
-        if self._lock.acquire(timeout=2):
-            if resultid not in self._resultid_locks:
-                self._resultid_locks[resultid] = threading.Lock()
-            self._lock.release()
-        else:
-            print("Status: ERROR:LOCK_TIMEOUT, ResultID: %s, GlycanID: %s, Note: %s."%(resultid,glycanid,note),file=sys.stderr)
-            return flask.jsonify(dict(status="ERROR"))
-
         try:
-
-            if self._resultid_locks[resultid].acquire(timeout=2):
+            if self.lock_result(resultid,timeout=2):
     
                 res = self.get_result(resultid)
                 if res.get('location') == 'examples':
-                    self._resultid_locks[resultid].release()
+                    self.release_result(resultid)
                     print("Status: ERROR:EXAMPLE, ResultID: %s, GlycanID: %s, Note: %s."%(resultid,glycanid,note),file=sys.stderr)
                     return flask.jsonify(dict(status="ERROR"))
     
                 figureindex,glycanindex=map(int,glycanid.split('.'))
-                glycan = res['result']['figure_result'][figureindex]['glycans'][glycanindex]
+                glycan = res['result']['figures'][figureindex]['glycans'][glycanindex]
                 votes = glycan.get('upvotes',0) - glycan.get('downvotes',0)
                 if note == "upvote":
                     votes += 1
@@ -180,24 +220,20 @@ class ReferenceAPIFileBased(APIFramework):
                 return flask.jsonify(dict(status="ERROR"))
 
         except:
-            self._resultid_locks[resultid].release()
+            self.release_result(resultid)
             traceback.print_exc()
             print("Status: ERROR, ResultID: %s, GlycanID: %s, Note: %s."%(resultid,glycanid,note),file=sys.stderr)
             return flask.jsonify(dict(status="ERROR"))
         
-        self._resultid_locks[resultid].release()
+        self.release_result(resultid)
         print("Status: OK, ResultID: %s, GlycanID: %s, UpVotes: %s, DownVotes: %s, Note: %s."%(resultid,glycanid,glycan.get('upvotes',0),glycan.get('downvotes',0),glycan.get('note',"")),file=sys.stderr)
         return flask.jsonify(dict(status="OK",resultid=resultid,glycanid=glycanid,upvotes=glycan.get('upvotes',0),downvotes=glycan.get('downvotes',0),note=glycan.get('note',"")))
     
 if __name__ == '__main__':
     multiprocessing.freeze_support()
 
-    fb_api = ReferenceAPIFileBased()
-    fb_api.parse_config("GlyImageExtractor.ini")
-
-    fb_api._resultid_locks = {}
-    fb_api._lock = threading.Lock()
-    fb_api.start()
+    extractor = GlyImageExtractor()
+    extractor.start()
 
 
 

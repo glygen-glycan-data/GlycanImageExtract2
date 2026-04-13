@@ -22,31 +22,39 @@ if len(sys.argv) > 1:
     patterns = sys.argv[1:]
 
 tasks = []
+filetasks=0
 for pat in patterns:
   for resultfile in sorted(glob.glob("static/examples/%s/results.json"%(pat,))):
     basedir = os.path.split(resultfile)[0]
     result = json.loads(open(resultfile).read())
-    inputfilename = result['submission_detail']['original_file_name']
+    inputfilename = result['submission_detail']['filename']
     inputpath = basedir+"/input/"+inputfilename
     mode = result['submission_detail']['submission_type']
     if mode == "Single-Glycan Image":
         mode = "Simple Glycan Image"
     exampledir = os.path.split(basedir)[1]
-    tasks.append((exampledir,extractor.submit_file(mode,inputpath)))
+    if result['submission_detail'].get('pmid'):
+        pmid = result['submission_detail']['pmid']
+        aspdf = (result['submission_detail']['submission_mode'] == "PMID-PDF")
+        tasks.append((exampledir,extractor.submit_pmid(mode,pmid,aspdf)))
+    else:
+        if filetasks % 3 == 0:
+            tasks.append((exampledir,extractor.submit_file(mode,inputpath)))
+        elif filetasks % 3 == 1:
+            tasks.append((exampledir,extractor.submit_local(mode,inputpath)))
+        else:
+            url = extractor.makeurl(inputpath)
+            tasks.append((exampledir,extractor.submit_url(mode,url)))
+        filetasks += 1
     print("Example %s submitted (%s). "%(exampledir,tasks[-1][1]))
     time.sleep(1)
 
 def update_votes(instance):
     result = json.loads(open("static/examples/"+instance+"/results.json").read())
     correct = json.loads(open("static/answers/"+instance+"/correct.json").read())
-    if 'document_metadata' in correct["result"]:
-        result["result"]["document_metadata"] = copy.deepcopy(correct["result"]["document_metadata"])
     correctcnt = 0; incorrectcnt = 0;
-    for f1,f2 in zip(result["result"]["figure_result"],correct["result"]["figure_result"]):
-        # for k in ("caption","figure_number","caption_text","cleaned_caption","figure_name","label"):
-        #     if f2.get(k):
-        #         f1[k] = f2[k]
-        for g1 in f1["glycans"]:
+    for i,(f1,f2) in enumerate(zip(result["result"]["figures"],correct["result"]["figures"])):
+        for j,g1 in enumerate(f1["glycans"]):
             g1bb = BoundingBox(**dict(zip("xywh",g1['bbox'])))
             bestg2 = None
             bestiou = -1
@@ -58,6 +66,7 @@ def update_votes(instance):
                     bestg2 = g2
             if not bestg2:
                 incorrectcnt += 1
+                print("Warning: No %s figure %s answer matches to glycan %d prediction."%(instance,i,j),file=sys.stderr)
                 continue
             g2 = bestg2
             if g1.get("IUPAC"):
@@ -83,13 +92,14 @@ def add_citation_captions(instance):
     result = json.loads(open("static/examples/"+instance+"/results.json").read())
     correct = json.loads(open("static/answers/"+instance+"/correct.json").read())
 
-    if "citation" in correct["result"]:
-        result["result"]["citation"] = copy.deepcopy(correct["result"]["citation"])
+    for key in ("citation","pmid"):
+        if key in correct["result"]:
+            result["result"][key] = correct["result"][key]
 
-    for f1,f2 in zip(result["result"]["figure_result"],correct["result"]["figure_result"]):
+    for f1,f2 in zip(result["result"]["figures"],correct["result"]["figures"]):
         for k in ('figure_number', 'caption'):
             if f2.get(k):
-                f1[k] = copy.deepcopy(f2[k])
+                f1[k] = f2[k]
 
     with open("static/examples/"+instance+"/results.json", 'wt') as wh:
         json.dump(result, wh, indent=2)

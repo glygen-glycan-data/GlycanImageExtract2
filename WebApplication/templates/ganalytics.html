@@ -1,14 +1,14 @@
 <script>
-if (window.document.location.toString().includes("extractor.glyomics.org")) {
+if (window.document.location.toString().includes("{{google_analytics_url_match}}")) {
   const script = window.document.createElement('script');
   window.document.head.appendChild(script);
   script.async = true;
-  script.src = 'https://www.googletagmanager.com/gtag/js?id=G-47WSZ1WYRZ';
+  script.src = 'https://www.googletagmanager.com/gtag/js?id={{google_analytics_id}}';
   window.dataLayer = window.dataLayer || [];
   function gtag() {
     dataLayer.push(arguments);
   }
   gtag("js", new Date());
-  gtag("config", "G-47WSZ1WYRZ");
+  gtag("config", "{{google_analytics_id}}");
 }
 </script>

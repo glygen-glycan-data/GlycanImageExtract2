@@ -1,21 +1,36 @@
 #!/bin/env python3
 #Reference: https://stackoverflow.com/questions/38511444/python-download-files-from-google-drive-using-url
 
-import requests, re, json, os, glob, os.path
+import requests, re, json, os, glob, os.path, configparser
 
-def download_fileids_from_google_drive(fid, destination_dir, path, configs, extns, rmlocal=False, level=0):
+def download_fileids_from_google_drive(fid, destination_dir, path, configs, extns, pipelines, rmlocal=False, level=0):
 
     if isinstance(configs,str):
+        
         configfiles = set()
-        with open(configs) as configfile:
-            for l in configfile:
-                if '=' not in l:
-                    continue
-                key,value = [ s.strip() for s in l.split('=',1) ]
-                if key in ("weights","config"):
-                     configfiles.add(value)
-                     base = value.rsplit('.',1)[0]
-                     if key == "weights":
+        config = configparser.ConfigParser()
+        config.read(configs)
+
+        finders = set()
+        for sec in config.sections():
+            if pipelines is None:
+                if sec.startswith("Finder:"):
+                    finders.add(sec.split(':',1)[1])
+                continue
+            if not sec.startswith("Pipeline:"):
+                continue
+            name = sec.split(':',1)[1]
+            if pipelines == "*" or name in pipelines:
+                finders.update(config.get(sec,'figure_steps',fallback='').split(','))
+                finders.update(config.get(sec,'glycan_steps',fallback='').split(','))
+        # print(finders)
+        for f in finders:
+            for key in ("weights","config"):
+                value = config.get("Finder:"+f,key,fallback='')
+                if value:
+                    configfiles.add(value)
+                    if key == "weights":
+                         base = value.rsplit('.',1)[0]
                          configfiles.add(base + ".labels")
                          configfiles.add(base + ".model")
         configs = configfiles
@@ -56,7 +71,7 @@ def download_fileids_from_google_drive(fid, destination_dir, path, configs, extn
             newpath = os.path.join(path,dirs[k]['name'])
         else:
             newpath = dirs[k]['name']
-        download_fileids_from_google_drive(dirs[k]['id'],destination_dir,newpath,configs,extns,rmlocal,level=level+1)
+        download_fileids_from_google_drive(dirs[k]['id'],destination_dir,newpath,configs,extns,pipelines,rmlocal,level=level+1)
 
     for k in sorted(files):
         f = files[k]
@@ -121,15 +136,33 @@ if __name__ == "__main__":
     folder_id = '1cK7xwAKl5jwezDBZRUDyYVltVHv1NsRf'
     configs = 'configs.ini'
     rmlocal = False
+    pipelines = "*"
     
-    if len(sys.argv) >= 2 and sys.argv[1] == "--clean":
-        rmlocal = True
-        sys.argv.pop(1)
-    if len(sys.argv) >= 2:
-        dest_dir = sys.argv[1]
-    if len(sys.argv) >= 3:
-        folder_id = sys.argv[2]
-    if len(sys.argv) >= 4:
-        configs = sys.argv[3]
+    while len(sys.argv) > 1:
+        if sys.argv[1] == "--clean":
+            rmlocal = True
+            sys.argv.pop(1)
+        elif sys.argv[1] == "--destdir":
+            dest_dir = sys.argv[2]
+            sys.argv.pop(1)
+            sys.argv.pop(1)
+        elif sys.argv[1] == "--folder_id":
+            folder_id = sys.argv[2]
+            sys.argv.pop(1)
+            sys.argv.pop(1)
+        elif sys.argv[1] == "--configs":
+            configs = sys.argv[2]
+            sys.argv.pop(1)
+            sys.argv.pop(1)
+        elif sys.argv[1] == "--pipelines":
+            pipelines = sys.argv[2].split(';')
+            sys.argv.pop(1)
+            sys.argv.pop(1)
+        elif sys.argv[1] == "--all":
+            pipelines = None
+            sys.argv.pop(1)
+        else:
+            print("Invalid option.")
+            sys.exit(1)
     extensions = ("weights","labels","cfg","model")
-    download_fileids_from_google_drive(folder_id, dest_dir, "", configs, extensions, rmlocal)
+    download_fileids_from_google_drive(folder_id, dest_dir, "", configs, extensions, pipelines, rmlocal)
