@@ -240,7 +240,12 @@ class JobInstance:
                 continue
             elif not glycan.has('IUPAC'):
                 glycan.set('linkexpl', 'Extracted structure using Composition.')
-                glymage_jobs.append((idx, self.glymage_client.submit_glymage(glycan)))
+                glymage_jobs.append((idx, 
+                    self.glymage_client.submit_glymage(
+                        composition=glycan.get('composition_str'), 
+                        orientation=glycan.glycan_orientation()
+                    )
+                ))
 
                 # if no iupac - build gnome_url using composition
                 matches = re.findall(r'([A-Za-z]+)\((\d+)\)', glycan.get('composition_str'))
@@ -268,14 +273,25 @@ class JobInstance:
                     glycan.set('gnomeurl', gnome_uri_base + 'focus=' + glycan.get('accession'))
 
                     glycan.set('linkexpl', 'Extracted successfully using accession')
-                    glymage_jobs.append((glycan_idx, self.glymage_client.submit_glymage(glycan)))
+                    glymage_jobs.append((glycan_idx, 
+                        self.glymage_client.submit_glymage(
+                            IUPAC=glycan.get('IUPAC'), 
+                            orientation=glycan.glycan_orientation(),
+                            accession=glycan.get('accession')
+                        )
+                    ))  
                 else:
                     # submit iupac - for glymage and gnome
                     glycan.set('linkexpl', 'Extracted structure using IUPAC.')
-                    glymage_jobs.append((glycan_idx, self.glymage_client.submit_glymage(glycan)))
+                    glymage_jobs.append((glycan_idx, 
+                        self.glymage_client.submit_glymage(
+                            IUPAC=glycan.get('IUPAC'), 
+                            orientation=glycan.glycan_orientation()
+                        )
+                    ))
 
                     # if no accession - gnome_url should be created using iupac
-                    gnome_task_id = self.gnome_client.submit_subsumption(glycan)
+                    gnome_task_id = self.gnome_client.submit_subsumption(IUPAC=glycan.get('IUPAC'))
                     glycan.set('gnomeurl', f"https://gnome.glyomics.org/StructureBrowser.html?ondemandtaskid={gnome_task_id}")
 
         # Retrieve Glymage, download and save the images to the correct folder
