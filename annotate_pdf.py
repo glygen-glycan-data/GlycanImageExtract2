@@ -206,7 +206,100 @@ def best_assignment_mean_iou(manual_xywh_list, pred_xywh_list):
         cur = pmask
     assignment.reverse()
     return total / n, assignment
+MATCH_THRESHOLD = 0.3
+USE_THRESHOLD = 0.8
 
+def match_and_merge(manual_boxes, pred_boxes, pred_raw):
+
+    pairs = []
+    for i, m in enumerate(manual_boxes):
+        for j, p in enumerate(pred_boxes):
+            iou = CompareBoxes.iou(m, p)
+            pairs.append((iou, i, j))
+
+    pairs.sort(reverse=True)
+
+    matched_m = set()
+    matched_p = set()
+    matches = []
+
+    for iou, i, j in pairs:
+        if iou < MATCH_THRESHOLD:
+            continue
+        if i in matched_m or j in matched_p:
+            continue
+        matches.append((i, j, iou))
+        matched_m.add(i)
+        matched_p.add(j)
+
+    merged = []
+
+    # 🔥 统计
+    TP = 0
+    FP = 0
+    FN = 0
+
+    # Case 2: matched
+    for i, j, iou in matches:
+        # if iou > USE_THRESHOLD:
+        #     g = pred_raw[j].copy()
+        #     g["source"] = "pred"
+        #     merged.append(g)
+        #     TP += 1
+        # else:
+        #     box = manual_boxes[i]
+        #     merged.append({
+        #         "bbox": box.bbox(),
+        #         "confidence": 1.0,
+        #         "source": "manual_low_iou"
+        #     })
+        #     FN += 1   # 👉 这里算 FN（prediction 不够好）
+        if iou > USE_THRESHOLD:
+            # 🔥 用 manual
+            box = manual_boxes[i]
+            merged.append({
+                "bbox": box.bbox(),
+                "confidence": 1.0,
+                "source": "manual_high_iou"
+            })
+            TP += 1
+        else:
+            # 🔥 用 predict
+            g = pred_raw[j].copy()
+            g["source"] = "pred_low_iou"
+            merged.append(g)
+            FN += 1   # 或者你也可以定义为 FP，看你evaluation怎么定
+
+    # Case 1: manual only
+    for i in range(len(manual_boxes)):
+        if i not in matched_m:
+            box = manual_boxes[i]
+            merged.append({
+                "bbox": box.bbox(),
+                "confidence": 1.0,
+                "source": "manual_only"
+            })
+            FN += 1
+
+    # Case 3: pred only
+    for j in range(len(pred_boxes)):
+        if j not in matched_p:
+            g = pred_raw[j].copy()
+            g["source"] = "pred_only"
+            merged.append(g)
+            FP += 1
+
+    # 重新编号
+    for idx, g in enumerate(merged):
+        g["fig_glycan_count"] = idx + 1
+
+    stats = {
+        "TP": TP,
+        "FP": FP,
+        "FN": FN
+    }
+
+    return merged, stats
 for manual_file in args.manual:
 
     manual_boxes = []
@@ -328,6 +421,9 @@ for manual_file in args.manual:
         time.sleep(15)
     # draw manual YOLO boxes once per figure (if provided)
     drew_manual_boxes = False
+    total_TP = 0
+    total_FP = 0
+    total_FN = 0
     for i,input_item in enumerate(input_items):
 
         if all_json_data[i].get('state') == "Error":
@@ -408,7 +504,6 @@ for manual_file in args.manual:
             if manual_boxes and best_ridx is not None:
 
                 best_result = all_json_data[i]['result']['figures'][best_ridx]
-
                 fig_w = best_result["width"]
                 fig_h = best_result["height"]
 
@@ -427,22 +522,54 @@ for manual_file in args.manual:
                 #         "confidence": 1.0,
                 #         "source": "manual"
                 #     })
-                new_glycans = [
-                    {
-                        "bbox": BoundingBox(
-                            image_width=fig_w,
-                            image_height=fig_h,
-                            rcx=xc, rcy=yc, rw=mw, rh=mh
-                        ).bbox(),
-                        "fig_glycan_count": gid + 1,
-                        "confidence": 1.0,
-                        "source": "manual"
-                    }
-                    for gid, (xc, yc, mw, mh) in enumerate(manual_boxes)
+                # new_glycans = [
+                #     {
+                #         "bbox": BoundingBox(
+                #             image_width=fig_w,
+                #             image_height=fig_h,
+                #             rcx=xc, rcy=yc, rw=mw, rh=mh
+                #         ).bbox(),
+                #         "fig_glycan_count": gid + 1,
+                #         "confidence": 1.0,
+                #         "source": "manual"
+                #     }
+                #     for gid, (xc, yc, mw, mh) in enumerate(manual_boxes)
+                # ]
+
+                # # 替换 prediction
+                # best_result["glycans"] = new_glycans
+                
+                pred_raw = best_result["glycans"]
+
+                pred_boxes = [
+                    BoundingBox(
+                        image_width=fig_w,
+                        image_height=fig_h,
+                        x=g["bbox"][0],
+                        y=g["bbox"][1],
+                        w=g["bbox"][2],
+                        h=g["bbox"][3]
+                    )
+                    for g in pred_raw
                 ]
 
-                # 替换 prediction
-                best_result["glycans"] = new_glycans
+                manual_bb = [
+                    BoundingBox(
+                        image_width=fig_w,
+                        image_height=fig_h,
+                        rcx=xc, rcy=yc, rw=mw, rh=mh
+                    )
+                    for (xc, yc, mw, mh) in manual_boxes
+                ]
+
+                merged_glycans, stats = match_and_merge(manual_bb, pred_boxes, pred_raw)
+                total_TP += stats["TP"]
+                total_FP += stats["FP"]
+                total_FN += stats["FN"]
+                best_result["glycans"] = merged_glycans
+                
+                print(f"[STATS] TP={stats['TP']} FP={stats['FP']} FN={stats['FN']}")
+                best_result["glycans"] = merged_glycans
 
                 print("[MANUAL] replaced predicted boxes with manual boxes")
                 if best is not None:
@@ -509,6 +636,20 @@ for manual_file in args.manual:
                     )
 
                     gly_annot.set_info(content=content)
+                    source = glycan.get("source", "pred")
+
+                    if source == "pred":
+                        color = (0, 1, 0)       # 绿
+                    elif source == "manual_only":
+                        color = (1, 0, 1)       # 紫
+                    elif source == "manual_low_iou":
+                        color = (1, 1, 0)       # 黄
+                    elif source == "pred_only":
+                        color = (0, 0, 0)       # black
+                    else:
+                        color = (0, 0, 1)
+
+                    gly_annot.set_colors(stroke=color)
                     gly_annot.set_border(width=0.5) 
                     gly_annot.update()
 
@@ -569,7 +710,16 @@ for manual_file in args.manual:
         wh.close()
         print("Wrote annotation table:",basename + ".annotated.tsv")
 
+print("\n===== FINAL METRICS =====")
+print(f"TP: {total_TP}")
+print(f"FP: {total_FP}")
+print(f"FN: {total_FN}")
 
+# precision = total_TP / (total_TP + total_FP) if (total_TP + total_FP) > 0 else 0
+# recall = total_TP / (total_TP + total_FN) if (total_TP + total_FN) > 0 else 0
+
+# print(f"Precision: {precision:.3f}")
+# print(f"Recall: {recall:.3f}")
 '''
 Storing the XREF in the figures annotation - because XREF is a figure property and not an individual
 annotations (eg. glycan) property.
