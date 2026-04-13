@@ -147,6 +147,9 @@ Step_5_precall_test_input_selected_2/
 plusindividuals/
 presentation/
 trainingSetup/*.zip
+manuscripts/
+trainingSetup/.*
+.*
 
 
 
