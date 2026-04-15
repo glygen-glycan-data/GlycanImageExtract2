@@ -55,6 +55,9 @@ class APIErrorBase(RuntimeError):
 class APIParameterError(APIErrorBase):
     pass
 
+class APIDataError(APIErrorBase):
+    pass
+
 class APIFramework:
 
     # job states
@@ -601,6 +604,8 @@ class APIFramework:
             # if search_stratgey given - use the mentioned search_stratgey (useful for re-analyze job, when submission_mode is Local and synthetic pdf will benifit from using the previsuly used fitz image_search_strategy)
             "image_search_strategy": flask.request.form.get('image_search_strategy', task.get('image_search_strategy')),
             "submission_type": flask.request.form.get('submission_type', task.get('submission_type')),
+            "citation": flask.request.form.get('citation', task.get('citation')),
+            "figures_metadata": flask.request.form.get('figures_metadata', task.get('figures_metadata'))
         }
 
     def _get_submission_mode(self, upload_params):
@@ -778,8 +783,6 @@ class APIFramework:
         # image_search_strategy = upload_params["image_search_strategy"]
         submission_type = upload_params["submission_type"]
         
-        # pmc_publication = None
-
         submission_mode = self._get_submission_mode(upload_params)
         if not submission_mode:
             return flask.jsonify({"error": "Invalid file or URL"}), 400
@@ -809,6 +812,13 @@ class APIFramework:
         try:
             if submission_mode == 'Local':
                 self._handle_local_copy(input_file_path, file_dir)
+                # since its local mode, there is some metadata that can come from the previous job that could be passed
+                # over - for example captions, figure_number, citations.
+                # When the job is completed - these extra metadata details will be removed from submission_detail/task_detail.
+                task_detail.update({
+                    'citation': upload_params.get('citation'),
+                    'figures_metadata': upload_params.get('figures_metadata')
+                })
             elif submission_mode in ("PMID", "PMID-PDF"):
                 pmid = upload_params['pmid']
                 pmc_resp, pmc_status = self._download_and_prepare_pmid_data(pmid, file_dir)
@@ -822,9 +832,6 @@ class APIFramework:
             return flask.jsonify({"error": "Submitted input is invalid."}), 400
         except Exception as e:
             return flask.jsonify({"error": f"Unexpected error: {str(e)}"}), 400
-        # TODO: remove pmc_publication and use e-utils method of getting the citation
-        # if upload_params.get('pmid') and pmc_publication:
-        #     task_detail.update({"pmc_publication": pmc_publication})
         status = {
             "id": list_id,
             "task_index": self.get_next_task_index(),
@@ -844,6 +851,38 @@ class APIFramework:
             self.add_to_task_lists(list_id, sessionid, status['submit_time'])
         self.output(1, "Job received by API: %s" % (task_detail))
         return flask.jsonify([status]), 200
+
+    def get_figures_metadata(self, json_file):
+        # TODO Note - This is a temporary method for testing, need to create a semnatics reader in the Semnatics class 
+
+        # metadata is - figure_number, captions, citations
+        metadata = {
+            'citation': None,
+            'figures_metadata': []
+        }
+        try:
+            with open(json_file, 'r', encoding='utf-8') as f:
+                json_result = json.load(f)
+
+            result = json_result.get('result', {})
+            metadata['citation'] = result.get('citation')
+
+            for figure in result.get('figures', {}):
+                image_count = figure.get('image_count')
+
+                if image_count is None:
+                    continue
+                
+                metadata['figures_metadata'].append({
+                        "image_count": image_count,
+                        "caption": figure.get("caption", ""),
+                        "figure_number": figure.get("figure_number", ""),
+                })
+            return metadata
+        except (FileNotFoundError, PermissionError, OSError) as e:
+            raise APIDataError(f"Cannot read metadata file {json_file}: {e}")
+        except json.JSONDecodeError as e:
+            raise APIDataError(f"Invalid JSON in {json_file}: {e}")
 
     def resubmit_file(self,tid=None):
         '''
@@ -876,8 +915,17 @@ class APIFramework:
         if submission_mode == 'PMID' or (submission_mode == 'Local' and oldtask.get('pmid')):
             newtask.update(**{'pmid': oldtask['pmid']})
 
-        response = self.upload_file(task=json.dumps(newtask))
-        # print(response.get_json())
+        # add figures_metadata (if present) - captions,citations, figure_number
+        # probably need a JSON reader - so need to create this -- I will create a method for now, but it should probably live in the 
+        # Semantics class somehwere and work as a reader for all the json docuemnts like correct.json, etc
+
+        json_file = self.abspath(os.path.join('static', result.get('location','files'), tid, 'results.json'))
+        figures_metadata = self.get_figures_metadata(json_file)
+        if figures_metadata:
+            newtask.update(**figures_metadata)
+
+        response, code = self.upload_file(task=json.dumps(newtask))
+        print(response.get_json())
         return flask.redirect(self._prefix + '/jobs')
 
     def download_file(self):
@@ -1102,6 +1150,13 @@ class APIFramework:
                     if key in res:
                         self.result_cache[resid][key] = res[key]
                         del res[key]
+
+                # after the job is finished - submission detail in the result_cache can be cleaned up
+                submission_detail = self.result_cache[resid]['submission_detail']
+                for key in ('citation', 'figures_metadata'):
+                    if key in submission_detail:
+                        del submission_detail[key]
+
                 self.result_cache[resid]["result"] = res
                 self.remove_from_task_list(resid)    
 

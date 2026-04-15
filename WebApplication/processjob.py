@@ -92,28 +92,21 @@ class JobInstance:
     def get_processor(task_detail,*args,**kwargs):
         submission_type = task_detail.get('submission_type')
         submission_mode = task_detail.get('submission_mode')
-        
-        if submission_mode == 'Local' and submission_type not in ("Simple Glycan Image", "Multi-Glycan Image"):
-            if task_detail.get('pmid'):
-                cls = PMIDJob
-            else:
-                cls = PDFJob
-        elif submission_type in ("Simple Glycan Image", "Multi-Glycan Image"):  
-            cls = ImageJob
-        elif submission_mode in ('Upload', 'URL') and submission_type == 'Manuscript':
-            cls = PDFJob
-        elif submission_mode == "PMID-PDF":
+        has_pmid = bool(task_detail.get("pmid"))
+
+        if submission_mode not in ("Local", "Upload", "URL", "PMID", "PMID-PDF"):
+            raise ValueError(f"Unsupported submission_mode={submission_mode}")
+
+        if submission_mode == "PMID-PDF":
             cls = PMIDPDFJob
-        elif submission_type == 'PDF-OriginalPDF':
-            cls = PMIDOriginalPDFJob
-        elif submission_mode == "PMID":
+        elif submission_mode == 'PMID':
             cls = PMIDJob
+        elif submission_type in ('Simple Glycan Image', 'Multi-Glycan Image'):
+            cls = ImageJob
+        elif submission_type == 'Manuscript':
+            cls = PMIDJob if has_pmid else PDFJob
         else:
-            cls = PDFJob  # manuscript upload/url/local
-        
-        # if not cls:
-        #     raise ValueError(f"Unsupported submission type: {submission_type}")
-        
+            raise ValueError(f"Unsupported submission_mode={submission_mode}, submission_type={submission_type}")
         return cls(task_detail, *args, **kwargs)
 
 
@@ -291,6 +284,12 @@ class JobInstance:
                     ))
 
                     # if no accession - gnome_url should be created using iupac
+                    try:
+                        gnome_task_id = self.gnome_client.submit_subsumption(IUPAC=glycan.get('IUPAC'))
+                        glycan.set('gnomeurl', f"https://gnome.glyomics.org/StructureBrowser.html?ondemandtaskid={gnome_task_id}")
+                    except Exception as e:
+                        self.log_file.write(f"Warning: gnome subsumption failed for glycan {glycan_idx}: {e}\n")
+                        glycan.set('gnomeurl', '')
                     gnome_task_id = self.gnome_client.submit_subsumption(IUPAC=glycan.get('IUPAC'))
                     glycan.set('gnomeurl', f"https://gnome.glyomics.org/StructureBrowser.html?ondemandtaskid={gnome_task_id}")
 
@@ -385,6 +384,8 @@ class JobInstance:
         self.pipeline_name = self.pipeline_mapping[self.submission_type]
         pipeline = config.get_pipeline(self.pipeline_name)
 
+        print("find_glycans kwargs", kwargs)
+
         figure_semantics = pipeline.run(figure_path, self.progress_callback, **kwargs)
 
         # Sort bbox L->R for UI
@@ -416,7 +417,7 @@ class JobInstance:
         self.process_glycans(figure_semantics, image_folders)
         self.results.append(figure_semantics.tojson())
 
-    def process_file(self):
+    def process_file(self, **kwargs):
         self.jobstate(False)
         self.update_state(APIFramework.RUNNING)
 
@@ -441,7 +442,7 @@ class JobInstance:
         self.create_directories(*image_folders.values())
 
         # after required directories are ready - process the input file (figures)
-        self.process_figures(image_folders)
+        self.process_figures(image_folders, **kwargs)
 
         self.jobstate(True)
 
@@ -518,7 +519,25 @@ class JobInstance:
             pass
         return (ord(fn[0]), int(fn[1:]) if fn[1:].isdigit() else 0)
 
-    def run_pdf_pipeline(self, image_folders, input_pdf_path=None, image_search_strategy=None, figures_metadata=None):
+    def prepare_pmid_job(self, image_folders, *, copy_tar_file=False):
+        '''
+        main method: which handles xml parsing (gets citiation, figure_names, etc) and 
+        figures extraction from zipped files.
+        '''
+        self.update_status("Processing PMID manuscript figures")
+        image_files, figure_info_map = self.load_pmid_figures(image_folders["figures_dir"])
+        if not image_files:
+            self.log_file.write("Warning: no PMID figure images were loaded.\n")
+            return []
+        self.figure_info_by_renamed = figure_info_map or {}
+
+        # copy over the tar.gz file to the static input file because --> if re-analyze is used, the job should have
+        # access to the zipped file for figure extraction and analysis in Local mode.
+        if copy_tar_file:
+            self.copy_pmidtar_to_input()
+        return image_files
+
+    def run_pdf_pipeline(self, image_folders, input_pdf_path=None, image_search_strategy=None, **kwargs):
         """
         Shared PDF processing pipeline used by PDF-based jobs.
 
@@ -533,7 +552,9 @@ class JobInstance:
         Step 2
         - Using the figures metadata, find all glycans using the object detection pipeline and generate semantics.
 
-        figures_metadata: optional ordered list of dicts with keys like caption, figure_number, etc for synthetically generated pdfs
+        kwargs:
+        figures_metadata: optional ordered list of dicts with keys like caption, figure_number, etc useful for synthetically generated pdfs
+        citation: 
         """
 
         pdf_path = input_pdf_path or self.input_filepath
@@ -545,9 +566,13 @@ class JobInstance:
         if cite:
             self.document_metadata["citation"] = cite.get("citation")
             self.document_metadata["pmid"] = cite.get("pmid")
+        elif kwargs.get('citation'):
+            self.document_metadata["citation"] = kwargs['citation']
 
         image_search_instance = ImageSearch.search_method(strategy)
         pdf_images_metadata = image_search_instance.get_metadata(pdf_path)
+
+        figures_metadata = kwargs.get('figures_metadata', [])
 
         for page_num, fig_data in pdf_images_metadata.items():
             page = doc[page_num - 1]
@@ -592,7 +617,20 @@ class JobInstance:
                     page_num=page_num,
                     **figure_info,
                 )
-                
+
+    def copy_pmidtar_to_input(self):
+        base_path = os.path.dirname(os.path.abspath(__file__))
+        figures_src = os.path.join(base_path, "input", self.id, f"PMID-{self.pmid}.tar.gz")
+        if os.path.isfile(figures_src):
+            try:
+                shutil.copy2(figures_src, self.input_dir)
+                return True
+            except Exception as e:
+                self.log_file.write(f"Warning: tar copy failed ({figures_src}): {e}\n")
+                return False
+        self.log_file.write(f"Warning: tar not found for copy: {figures_src}\n")
+        return False
+
     def process_figures(self, image_folders):
         return NotImplementedError
 
@@ -604,30 +642,15 @@ class ImageJob(JobInstance):
         # self.task_detail['abs_original_filepath'] = self.input_filepath
         self.find_glycans(self.input_filepath,image_folders)
 
-
-class PMIDBaseJob(JobInstance):
-  def process_figures(self, image_folders):
-      self.update_status("Processing PMID manuscript figures")
-      image_files, _ = self.load_pmid_figures(image_folders["figures_dir"])     # helper from base class
-      self.process_pmid_figures(image_files, image_folders)
-      
-  def process_pmid_figures(self, image_files, image_folders):
-      raise NotImplementedError
-
 # PMID job - runs the pipelien directly on the individual figures provided by pubmed
-class PMIDJob(PMIDBaseJob):
+class PMIDJob(JobInstance):
 
-    def process_pmid_figures(self, image_files, image_folders):
-        # copy over the tar.gz file to the static input file because --> if re-analyze is used, the job should have
-        # access to the zipped file for figure extraction and analysis in Local mode.
-        base_path = os.path.dirname(os.path.abspath(__file__))
-        figures_src = os.path.join(base_path, "input", self.id, f"PMID-{self.pmid}.tar.gz")
-        if os.path.isfile(figures_src):
-            shutil.copy2(figures_src, self.input_dir)
-        else:
-            self.log_file.write(f"Warning: tar not found for copy: {figures_src}\n")
-            return 
+    def process_figures(self, image_folders, **kwargs):
+        image_files = self.prepare_pmid_job(image_folders, copy_tar_file=True)
+        if not image_files:
+            return
 
+        # citation is added via xml data parsing during the load/extract pmid figures stage
         for image_count, fig_name in enumerate(image_files, 1):
             fig_path = os.path.join(image_folders["figures_dir"], fig_name)
 
@@ -663,13 +686,17 @@ class PMIDJob(PMIDBaseJob):
                 )
 
 # PMID Figures + embed figures in a pdf + pdfJob
-class PMIDPDFJob(PMIDBaseJob):
+class PMIDPDFJob(JobInstance):
 
-    def process_pmid_figures(self, image_files, image_folders):
+    def process_figures(self, image_folders, **kwargs):
+        image_files = self.prepare_pmid_job(image_folders, copy_tar_file=False)
+        if not image_files:
+            return
+
+        # citation is added via xml data parsing during the load/extract pmid figures stage
         pdfwriter = PDFCreator(self.pmid)
 
         figures_metadata = []
-        
         for image_count, fig_name in enumerate(image_files, 1):
             fig_path = os.path.join(image_folders["figures_dir"], fig_name)
             fig_info = self.figure_info_by_renamed.get(fig_name, {})
@@ -691,11 +718,6 @@ class PMIDPDFJob(PMIDBaseJob):
         # runs the PDFJob pipeline on the synthetically created pdf
         self.run_pdf_pipeline(image_folders, figures_metadata=figures_metadata)  # shared helper
 
-# PMID's original pdf + pdfJob
-class PMIDOriginalPDFJob(JobInstance):
-    def process_figures(self, image_folders):
-        self.run_pdf_pipeline(image_folders)
-
 
 class PDFJob(JobInstance):
     """
@@ -703,5 +725,5 @@ class PDFJob(JobInstance):
     Handles file verification, page/image extraction, and glycan annotation.
     """
     
-    def process_figures(self, image_folders):
-        self.run_pdf_pipeline(image_folders)
+    def process_figures(self, image_folders, **kwargs):
+        self.run_pdf_pipeline(image_folders, **kwargs)

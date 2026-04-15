@@ -126,7 +126,14 @@ class GlyImageExtractor(APIFramework):
             document_metadata = None
             try:
                 job_instance = JobInstance.get_processor(task_detail, config=params, msg_queue=result_queue)
-                job_instance.process_file()
+
+                metadata = {}
+                if task_detail.get("citation"):
+                    metadata["citation"] = task_detail["citation"]
+                if task_detail.get("figures_metadata"):
+                    metadata["figures_metadata"] = task_detail["figures_metadata"]
+
+                job_instance.process_file(**metadata)
                 result = job_instance.get_results()
                 document_metadata = job_instance.get_document_metadata()
             except:
