@@ -235,7 +235,7 @@ class JobInstance:
                 glycan.set('linkexpl', 'Extracted structure using Composition.')
                 glymage_jobs.append((idx, 
                     self.glymage_client.submit_glymage(
-                        composition=glycan.get('composition_str'), 
+                        seq=glycan.get('composition_str'), 
                         orientation=glycan.glycan_orientation()
                     )
                 ))
@@ -268,9 +268,8 @@ class JobInstance:
                     glycan.set('linkexpl', 'Extracted successfully using accession')
                     glymage_jobs.append((glycan_idx, 
                         self.glymage_client.submit_glymage(
-                            IUPAC=glycan.get('IUPAC'), 
+                            seq=glycan.get('IUPAC'), 
                             orientation=glycan.glycan_orientation(),
-                            accession=glycan.get('accession')
                         )
                     ))  
                 else:
@@ -278,7 +277,7 @@ class JobInstance:
                     glycan.set('linkexpl', 'Extracted structure using IUPAC.')
                     glymage_jobs.append((glycan_idx, 
                         self.glymage_client.submit_glymage(
-                            IUPAC=glycan.get('IUPAC'), 
+                            seq=glycan.get('IUPAC'), 
                             orientation=glycan.glycan_orientation()
                         )
                     ))

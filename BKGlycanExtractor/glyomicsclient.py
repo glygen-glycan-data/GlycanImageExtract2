@@ -237,26 +237,26 @@ class GlymageClient(APIFrameworkClient):
         self._image_format = kwargs.get("image_format") or self.image_format
         self._use_accession = kwargs.get("use_accession") or self.use_accession
 
-    def submit_glymage(self, *, accession=None, IUPAC=None, composition=None, **kwargs):
+    def submit_glymage(self, *, acc=None, seq=None, **kwargs):
         # priority order - if accession (self._use_accession), iupac, composition
+
+        if acc and seq:
+            raise ValueError("Provide either acc or seq, not both.")
 
         task = {'orientation': kwargs.get('orientation') or 'RL', 
                     'display': self._display, 
                     'image_format': self._image_format,
                 }
-
-        if self._use_accession and accession:
-            task.update({'acc': accession})
-        elif IUPAC:
-            task.update({'seq': IUPAC})
-        elif composition:
-            task.update({'seq': composition})
+        if acc:
+            task["acc"] = acc
+        elif seq:
+            task["seq"] = seq
         else:
-            raise ValueError("Provide a sequence: accession, IUPAC or composition")
+            raise ValueError("Provide: acc or seq")
 
         return self.submit(task=task)
     
-
+    
     # def getmany(self, seqs, image_orientations=[]):
     #     # every sequence can request a specific orientation for the image
 
@@ -293,7 +293,7 @@ class GnomeClient(APIFrameworkClient):
 
     def submit_subsumption(self, IUPAC=None):
         if IUPAC:
-            return self.submit(task=dict(seq=kwargs['IUPAC']), request="submit")    # return task_id
+            return self.submit(task=dict(IUPAC=IUPAC), request="submit")    # return task_id
         raise ValueError("Provide IUPAC string")
 
 class ExtractorClient(APIFrameworkClient):
