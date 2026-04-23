@@ -105,7 +105,9 @@ class KnownFinder(Finder):
         # generally a label type selected from the TSV file while building training data
         # this will be provided to the respective known finders - create_boxes/find_boxes - so that the labels can be updated
         # based on cmd line args (which is optional) during the activity of buildign training data
-        self.label_type = None
+        self.label_type = kwargs.get('label_type')
+        self.default_label = kwargs.get('default_label','glycan')
+        self.exclude_labels = kwargs.get('exclude_labels',[])
 
     def write_model(self, filename):
         with open(filename, 'w') as wh:
@@ -123,8 +125,14 @@ class KnownFinder(Finder):
                 print(f"{label}",file=wh)
         return
 
-    def set_label(self,label_type):
+    def set_label_type(self,label_type):
         self.label_type = label_type
+
+    def set_default_label(self,default_label):
+        self.default_label = default_label
+
+    def set_exclude_labels(self,exclude_labels):
+        self.exclude_labels = exclude_labels
 
     def get_known_data(self, image_path):
         '''
@@ -182,7 +190,7 @@ class KnownFinder(Finder):
                 elif data_points[0] == '###' and data_points[1] == 'GLYCAN:':
                     # Create new glycan dictionary
                     current_glycan = {
-                        'classlabel': 'glycan',    # default label is glycan, if map file contains a CLASS - it will be updated
+                        'classlabel': self.default_label,
                         'bbox': list(map(int, data_points[2:6])),
                         'monos': {},
                         'links': {},

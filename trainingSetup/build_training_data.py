@@ -42,6 +42,23 @@ parser.add_argument(
 )
 
 parser.add_argument(
+    '--default_label',
+    type = str,
+    required = False,
+    default = None,
+    help = 'Default label used for boxes to build training data.'
+)
+
+parser.add_argument(
+    '--exclude_labels',
+    type = str,
+    required = False,
+    nargs="+",
+    default = [],
+    help = 'Labels to exclude from training data.'
+)
+
+parser.add_argument(
     '--boxpadding',
     type=int,
     required=False,
@@ -113,7 +130,17 @@ if args.boxpadding is not None:
 # from the semantics file and substituted as the
 # classlabel for the known boxes
 if args.label_type is not None:
-    finder.set_label(args.label_type)
+    finder.set_label_type(args.label_type)
+
+    finder.set_default_label(None)
+    if args.default_label is not None:
+        finder.set_default_label(args.default_label)
+
+    finder.set_exclude_labels([])
+    if len(args.exclude_labels) > 0:
+        finder.set_exclude_labels(args.exclude_labels)
+
+
 
 images = Image_Manager(args.images,strategy=StructuredSampling())
 images.exclude() # *.annotated*.{png,jpg,jpeg} by default

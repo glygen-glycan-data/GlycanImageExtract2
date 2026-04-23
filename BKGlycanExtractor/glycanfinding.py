@@ -106,11 +106,14 @@ class KnownGlycanBoxes(KnownFinder,GlycanFinder):
         # Note: map_dict data structure can store single/multiple glycans.
         for glycan in map_dict['glycans']:
             
-            # classlabel can be updated via the semantics file - if the optionally provided label_type matches a key in the semantics file
             if self.label_type:
-                classlabel = glycan[self.label_type]
-            else:   # use default label - "glycan"
+                classlabel = glycan.get(self.label_type,self.default_label)
+                if classlabel in self.exclude_labels:
+                    continue
+            else:   # use default label - glycan
                 classlabel = glycan['classlabel']
+            if classlabel is None or not classlabel.strip():
+                continue
             classid = self.get_label_index(classlabel)
             gly_bbox = glycan['bbox']
 
