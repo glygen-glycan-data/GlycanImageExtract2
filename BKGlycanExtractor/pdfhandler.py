@@ -10,9 +10,10 @@ STANDARD_DPI = 300
 POINTS_PER_INCH = 72.0
 
 class PDFHandler(object):
-    def __init__(self,filename):
-        self.doc = fitz.open(filename)
-        self.dir,self.base = os.path.split(filename)
+    def __init__(self,filepath):
+        self.filepath = filepath
+        self.doc = fitz.open(filepath)
+        self.dir,self.base = os.path.split(filepath)
         self.base,self.extn = self.base.rsplit('.',1)
     
     def make_figure_filename(self,image):
@@ -205,7 +206,6 @@ class PDFHandler(object):
                     if len(blocks) == 1 and re.search(r'^Figure \w+. ',blocks[0]):
                         label,caption = blocks[0].split(". ",1)
                         figure_number = label.split()[1]
-                        # print(figure_number,caption)
                 for image_number,image in enumerate(images,1):
                     try:
                         image.update(self.doc.extract_image(image['xref']))

@@ -7,7 +7,7 @@ import fitz
 import copy
 
 from .bbox import PDFBoundingBox
-from .pdfhandler import PDFHandler, CompoundPDFImageFilter, PDFXRefImageFilter, PDFImageSizeFilter, PDFLargeImageSizeFilter
+from .pdfhandler import PDFHandler, CompoundPDFImageFilter, PDFXRefImageFilter, PDFImageSizeFilter, PDFLargeImageSizeFilter, STANDARD_DPI
 from .compareboxes import CompareBoxes
 
 # FigCap/Hybrid-specific imports are done lazily inside those classes to avoid requiring their dependencies when using FitzImageSearch only.
@@ -42,8 +42,38 @@ class ImageSearch:
     def get_metadata(self):
         raise NotImplementedError
 
+    @staticmethod
+    def figures_metadata_with_paths(pdf_path, figures_dir, metadata, image_path_dict=None, dpi=STANDARD_DPI):
+        """metadata: {page: {image_number: fig_dict}} --> list[dict] with image_path."""
+        os.makedirs(figures_dir, exist_ok=True)
+        image_path_dict = image_path_dict or {}
+        pdf = PDFHandler(pdf_path)
+        res = []
+        for page_num in sorted(metadata):
+            page = pdf.doc[page_num - 1]
+            for image_number in sorted(metadata[page_num]):
+                fig = dict(metadata[page_num][image_number])
+                ic = fig["image_count"]
+                if ic in image_path_dict:
+                    fig["image_path"] = image_path_dict[ic]
+                else:
+                    dest = os.path.join(figures_dir, f"fig{ic}.png")
+                    saved = PDFHandler.save_image(
+                        pdf.doc, page, fig["pdf_fig_bbox"], dest,
+                        xref=fig.get("xref"), dpi=dpi, annots=True,
+                    )
+                    fig["image_path"] = (saved or {}).get("image_path", dest)
+                res.append(fig)
+        return res
+
 class FitzImageSearch:
-    def get_metadata(self, input_filepath):
+    def get_metadata(self, input_filepath, figures_dir, image_path_dict=None, **kwargs):
+        metadata = self._build_metadata(input_filepath)
+        return ImageSearch.figures_metadata_with_paths(
+            input_filepath, figures_dir, metadata, image_path_dict, **kwargs
+        )
+    
+    def _build_metadata(self, input_filepath):
         """
         Extract figure metadata from PDF using fitz - based on XREF of the images
         Stores per page information (about figures, etc) in a data structure.
@@ -91,7 +121,14 @@ class FitzImageSearch:
         return pdf_metadata
 
 class FigCapImageSearch:
-    def get_metadata(self, input_filepath):
+    def get_metadata(self, input_filepath, figures_dir, image_path_dict=None, dpi=300, **kwargs):
+        metadata = self._build_metadata(input_filepath)
+        return ImageSearch.figures_metadata_with_paths(
+            input_filepath, figures_dir, metadata, image_path_dict, dpi
+        )
+    
+    
+    def _build_metadata(self, input_filepath):
         """
         Extract figure metadata from PDF using PDFigCapX (i.e PDFiguesCaptionsData class) repository
         Stores per page information (about figures, etc) in a data structure.
@@ -172,13 +209,20 @@ class HybridImageSearch:
         self.fitz_searcher = fitz_searcher or FitzImageSearch()
         self.figcap_searcher = figcap_searcher or FigCapImageSearch()
 
-    def get_metadata(self, input_filepath):
-        # get metadata from each individual pdf image search strategy
-        fitz_based_metadata = self.fitz_searcher.get_metadata(input_filepath)
-        figcap_based_metadata = self.figcap_searcher.get_metadata(input_filepath)
+    def get_metadata(self, input_filepath, figures_dir, image_path_dict=None, **kwargs):
+        # # get metadata from each individual pdf image search strategy
+        # fitz_based_metadata = self.fitz_searcher.get_metadata(input_filepath)
+        # figcap_based_metadata = self.figcap_searcher.get_metadata(input_filepath)
 
-        # merge the metadata - to pick the best information from both the strategies
-        return self._merge_metadata(fitz_based_metadata, figcap_based_metadata)
+        # # merge the metadata - to pick the best information from both the strategies
+        # return self._merge_metadata(fitz_based_metadata, figcap_based_metadata)
+
+        fitz_metadata = self.fitz_searcher._build_metadata(input_filepath)
+        figcap_metadata = self.figcap_searcher._build_metadata(input_filepath)
+        merged = self._merge_metadata(fitz_metadata, figcap_metadata)
+        return ImageSearch.figures_metadata_with_paths(
+            input_filepath, figures_dir, merged, image_path_dict, **kwargs
+        )
 
     def _merge_metadata(self, fitz_based_metadata, figcap_based_metadata):
         '''

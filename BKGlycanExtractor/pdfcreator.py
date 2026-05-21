@@ -1,7 +1,9 @@
 
 import fitz  # PyMuPDF
-import os
-from . searchpmc import citation_details
+import os, sys
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from BKGlycanExtractor.pmc_details import PMCData
 
 class PDFCreator(object):
     PAGE_WIDTH = 612.0
@@ -14,7 +16,7 @@ class PDFCreator(object):
         self.clear()
         self.citation = {}
         if pmid:
-            self.citation = citation_details(pmid)
+            self.citation = PMCData.citation_details(pmid)
 
     def clear(self):
         self.images = []
