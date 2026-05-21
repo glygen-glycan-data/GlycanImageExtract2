@@ -18,7 +18,6 @@ import tarfile
 from io import BytesIO
 import xml.etree.ElementTree as ET
 from urllib.parse import urljoin
-from pmc_xmlparser import XMLParser
 
 class MultiImageJob:
     '''
