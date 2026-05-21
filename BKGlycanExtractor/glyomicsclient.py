@@ -314,32 +314,38 @@ class ExtractorClient(APIFrameworkClient):
         assert not kwargs.get('tasks'), "ExtractorClient requires single task per submission"
         return super().submit(**kwargs)
     
-    def submit_pmid(self,mode,pmid,aspdf=False):
-        assert mode in ("Manuscript",)
+    def submit_pmid(self,submission_type,pmid,aspdf=False):
+        assert submission_type in ("Manuscript",)
         if aspdf:
             pmid = str(pmid) + ".pdf"
-        task = dict(submission_type=mode,pmid=pmid)
+        task = dict(submission_type=submission_type,pmid=pmid)
         return self.submit(task=task,request="file_upload")
     
-    def submit_local(self,mode,filepath):
-        assert mode in ("Manuscript",
+    def submit_local(self,submission_type,filepath,submission_mode='Local',processor=None):
+        assert submission_type in ("Manuscript",
                         "Multi-Glycan Image",
                         "Simple Glycan Image")
-        task = dict(submission_type=mode,filePath=filepath)
+        if processor is None:
+            raise APISubmitError('Processor name is required')
+        task = dict(submission_type=submission_type,
+            filePath=filepath,
+            submission_mode=submission_mode,
+            processor=processor
+        )
         return self.submit(task=task,request="file_upload")
     
-    def submit_url(self,mode,url):
-        assert mode in ("Manuscript",
+    def submit_url(self,submission_type,url):
+        assert submission_type in ("Manuscript",
                         "Multi-Glycan Image",
                         "Simple Glycan Image")
-        task = dict(submission_type=mode,fileURL=url)
+        task = dict(submission_type=submission_type,fileURL=url)
         return self.submit(task=task,request="file_upload")
     
-    def submit_file(self,mode,filename):
-        assert mode in ("Manuscript",
+    def submit_file(self,submission_type,filename):
+        assert submission_type in ("Manuscript",
                         "Multi-Glycan Image",
                         "Simple Glycan Image")
-        task = dict(submission_type=mode)
+        task = dict(submission_type=submission_type)
         return self.submit(task=task,request="file_upload",files=dict(file=filename))
 
     def submit_manuscript_local(self,filepath):
@@ -407,7 +413,7 @@ class ExtractorClient(APIFrameworkClient):
 
 class ExtractorDevClient(ExtractorClient):
     apiurl="http://localhost"
-    port = 10982
+    port = 10981
 
 if __name__ == "__main__":
 

@@ -6,7 +6,6 @@ from APIFramework import APIFramework
 from BKGlycanExtractor import ImageSearch
 from BKGlycanExtractor import Config_Manager, BoundingBox, PDFBoundingBox, CompareBoxes
 from BKGlycanExtractor import STANDARD_DPI, PDFHandler, PDFXRefImageFilter, PDFImageSizeFilter, PDFLargeImageSizeFilter
-from BKGlycanExtractor import searchpmc
 from BKGlycanExtractor import PDFCreator
 from BKGlycanExtractor.glyomicsclient import GlyLookupClient, GlymageClient, GnomeClient
 from BKGlycanExtractor import PMCData, PMCTarFile

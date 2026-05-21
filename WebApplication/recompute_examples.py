@@ -27,24 +27,33 @@ for pat in patterns:
   for resultfile in sorted(glob.glob("static/examples/%s/results.json"%(pat,))):
     basedir = os.path.split(resultfile)[0]
     result = json.loads(open(resultfile).read())
-    inputfilename = result['submission_detail']['filename']
+    submission_detail = result['submission_detail']
+    inputfilename = submission_detail['filename']
     inputpath = basedir+"/input/"+inputfilename
-    mode = result['submission_detail']['submission_type']
-    if mode == "Single-Glycan Image":
-        mode = "Simple Glycan Image"
+    submission_type = submission_detail['submission_type']
+    if submission_type == "Single-Glycan Image":
+        submission_type = "Simple Glycan Image"
+
+    submission_mode = submission_detail["submission_mode"]
+
     exampledir = os.path.split(basedir)[1]
-    if result['submission_detail'].get('pmid'):
-        pmid = result['submission_detail']['pmid']
-        aspdf = (result['submission_detail']['submission_mode'] == "PMID-PDF")
-        tasks.append((exampledir,extractor.submit_pmid(mode,pmid,aspdf)))
+    if submission_detail.get('pmid'):
+        pmid = submission_detail['pmid']
+        aspdf = (submission_mode == "PMID-PDF")
+        tasks.append((exampledir,extractor.submit_pmid(submission_type,pmid,aspdf)))
     else:
         if filetasks % 3 == 0:
-            tasks.append((exampledir,extractor.submit_file(mode,inputpath)))
+            tasks.append((exampledir,extractor.submit_file(submission_type,inputpath)))
         elif filetasks % 3 == 1:
-            tasks.append((exampledir,extractor.submit_local(mode,inputpath)))
+            tasks.append((exampledir,extractor.submit_local(
+                submission_type,
+                inputpath,
+                submission_mode='Local',
+                processor=submission_detail['processor']
+            )))
         else:
             url = extractor.makeurl(inputpath)
-            tasks.append((exampledir,extractor.submit_url(mode,url)))
+            tasks.append((exampledir,extractor.submit_url(submission_type,url)))
         filetasks += 1
     print("Example %s submitted (%s). "%(exampledir,tasks[-1][1]))
     time.sleep(1)
