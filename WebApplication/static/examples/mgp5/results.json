@@ -6,6 +6,7 @@
     "filename": "figcap_example.pdf",
     "submission_type": "Manuscript",
     "submission_mode": "Upload",
+    "processor": "PDFJob",
     "id": "fjkit46dbq"
   },
   "state": "Complete",

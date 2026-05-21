@@ -5,6 +5,7 @@
     "filename": "mass-spectrometry-glycans-fig-2.jpg",
     "submission_type": "Multi-Glycan Image",
     "submission_mode": "Upload",
+    "processor": "SingleImageJob",
     "id": "cklr5d3o7k"
   },
   "state": "Complete",

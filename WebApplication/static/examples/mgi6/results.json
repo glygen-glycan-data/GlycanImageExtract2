@@ -5,6 +5,7 @@
     "filename": "pr1c00245_0002.jpg",
     "submission_type": "Multi-Glycan Image",
     "submission_mode": "Upload",
+    "processor": "SingleImageJob",
     "id": "rw4pw6ovto"
   },
   "state": "Complete",

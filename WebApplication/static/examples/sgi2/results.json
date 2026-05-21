@@ -5,6 +5,7 @@
     "filename": "wrong.png",
     "submission_type": "Simple Glycan Image",
     "submission_mode": "Upload",
+    "processor": "SimpleImageJob",
     "id": "5yo2u5yrvt"
   },
   "state": "Complete",

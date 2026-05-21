@@ -5,6 +5,7 @@
     "filename": "2_glycans.png",
     "submission_type": "Multi-Glycan Image",
     "submission_mode": "Upload",
+    "processor": "SingleImageJob",
     "id": "ejcfuedzno"
   },
   "state": "Complete",

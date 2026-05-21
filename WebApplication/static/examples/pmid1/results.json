@@ -4,8 +4,9 @@
   "submission_detail": {
     "filename": "PMID-34010560.pdf",
     "submission_type": "Manuscript",
-    "submission_mode": "PMID",
+    "submission_mode": "PMID-PDF",
     "pmid": "34010560",
+    "processor": "PMIDSyntheticPDFJob",
     "id": "jhhlakov4s",
     "pmc_publication": "J Proteome Res. 2021 Jun 4; 20(6):3345-3352"
   },

@@ -5,6 +5,7 @@
     "filename": "41589_2018_34_Fig1_HTML.jpg",
     "submission_type": "Multi-Glycan Image",
     "submission_mode": "Upload",
+    "processor": "SingleImageJob",
     "id": "c3kvqwep7o"
   },
   "state": "Complete",

@@ -6,6 +6,7 @@
     "filename": "use_multi_pdf.pdf",
     "submission_type": "Manuscript",
     "submission_mode": "Upload",
+    "processor": "PDFJob",
     "id": "2jvms7exsi"
   },
   "state": "Complete",

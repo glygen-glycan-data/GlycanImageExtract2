@@ -5,6 +5,7 @@
     "filename": "multi_glycans.png",
     "submission_type": "Multi-Glycan Image",
     "submission_mode": "Upload",
+    "processor": "SingleImageJob",
     "id": "gizvechbtk"
   },
   "state": "Complete",

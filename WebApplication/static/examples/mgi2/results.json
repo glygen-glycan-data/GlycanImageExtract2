@@ -5,6 +5,7 @@
     "filename": "pdf7_extra.png",
     "submission_type": "Multi-Glycan Image",
     "submission_mode": "Upload",
+    "processor": "SingleImageJob",
     "id": "r4bl7zsiw5"
   },
   "state": "Complete",

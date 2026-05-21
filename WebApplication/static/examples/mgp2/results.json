@@ -6,6 +6,7 @@
     "filename": "Example0.pdf",
     "submission_type": "Manuscript",
     "submission_mode": "Upload",
+    "processor": "PDFJob",
     "id": "qpupftwbkt"
   },
   "state": "Complete",

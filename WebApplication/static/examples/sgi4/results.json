@@ -5,6 +5,7 @@
     "filename": "G16150CJ.png",
     "submission_type": "Simple Glycan Image",
     "submission_mode": "Upload",
+    "processor": "SimpleImageJob",
     "id": "cg4um53nnb"
   },
   "state": "Complete",

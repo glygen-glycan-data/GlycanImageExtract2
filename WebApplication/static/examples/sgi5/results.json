@@ -5,6 +5,7 @@
     "filename": "G69233PF.png",
     "submission_type": "Simple Glycan Image",
     "submission_mode": "Upload",
+    "processor": "SimpleImageJob",
     "id": "aaulaebwtw"
   },
   "state": "Complete",

@@ -5,6 +5,7 @@
     "filename": "f4003b0298c8e8f4576146bd232601e0.png",
     "submission_type": "Simple Glycan Image",
     "submission_mode": "Upload",
+    "processor": "SimpleImageJob",
     "id": "ucgfm7qrl7"
   },
   "state": "Complete",
