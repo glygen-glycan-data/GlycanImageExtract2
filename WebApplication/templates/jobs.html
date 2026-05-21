@@ -52,7 +52,7 @@
 
     async function loadJobs() {
         try {
-            const response = await fetch("{{urlprefix}}/api/recent_jobs");;
+            const response = await fetch("{{urlprefix}}/recent_jobs");
             const jobs = await response.json();
 
             const container = document.getElementById('jobs-container');
@@ -78,10 +78,10 @@
                 <tbody>
                     ${jobs.map((job, index) => `<tr>
                     <td>${formatSubmitTime(job.submit_time)}</td>
-                    <td><a href="{{urlprefix}}/result/${job.id}">${job.submission_detail.filename || job.submission_detail.original_file_name}</a></td>
+                    <td><a href="{{urlprefix}}/result/${encodeURIComponent(job.id)}">${job.submission_detail.filename || job.submission_detail.original_file_name}</a></td>
                     <td>${job.submission_detail.submission_type || job.file_type}${job.submission_detail.submission_mode && (' (' + job.submission_detail.submission_mode + ')') || ''}</td>
                     <td class="text-truncate" title="${job.status || job.state}">${job.status || job.state}</td>
-                    <!-- <td><A href="{{urlprefix}}/resubmit_file/${job.id}"><img width=20 src="{{urlprefix}}/static/images/redo.svg"></A></td> -->
+                    <!-- <td><A href="{{urlprefix}}/resubmit_file/${encodeURIComponent(job.id)}"><img width=20 src="{{urlprefix}}/static/images/redo.svg"></A></td> -->
                     </tr>`).join('')}
                 </tbody>
             </table>

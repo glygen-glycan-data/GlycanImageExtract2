@@ -172,7 +172,7 @@
     let delay = 5;
 
     function query() {
-        let request_URL = "{{urlprefix}}/get_job_status/" + list_id;
+        let request_URL = "{{urlprefix}}/job_status/" + encodeURIComponent(list_id);
         jQuery.getJSON(request_URL, function (d) {
             // in ms
             // console.log(d);
@@ -273,7 +273,9 @@
         // avoids page re-load, and opens a new page (fileHref) with the annotated results when they are ready
         event.preventDefault();    
         
-        const resultsUrl = `{{urlprefix}}/annotate_results?resultid=${resultid}`;
+        // const resultsUrl = `{{urlprefix}}/annotate_results?resultid=${resultid}`;
+        const resultsUrl = `{{ urlprefix }}/annotate_results/${encodeURIComponent(resultid)}`;
+
 
         // Show feedback directly on the clicked link
         // const link = event.currentTarget;
@@ -302,7 +304,7 @@
                 alert('Failed to generate annotated files. Please try again.');
             }
         }).fail(function () {
-            link.innerHTML = originalHtml;
+            // link.innerHTML = originalHtml;
             // link.classList.remove('disabled');
             // link.style.pointerEvents = 'auto';
             alert('Failed to contact server for annotated files.');
@@ -353,7 +355,7 @@
                 TSV Results</a> | </span>`;
         }
 
-        resstr += "<span><a class='pill-link' href='{{urlprefix}}/resubmit_file/" + list_id  + "'>Reanalyze</a> </span>";
+        resstr += "<span><a class='pill-link' href='{{urlprefix}}/resubmit_file/" + encodeURIComponent(list_id) + "'>Reanalyze</a> </span>";
         
         resstr += "</h3>";
         
