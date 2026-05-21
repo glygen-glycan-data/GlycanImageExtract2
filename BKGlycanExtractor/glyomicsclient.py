@@ -305,7 +305,7 @@ class ExtractorClient(APIFrameworkClient):
         return self.url() + '/' + path.lstrip('/')
     
     def status(self, task_id):
-        res = self.request("get_job_status/"+task_id).json()
+        res = self.request("job_status/"+task_id).json()
         if not res[u"finished"]:
             raise APIUnfinishedError(task_id,res["state"],res["status"])
         return self.retrieve_nowait(task_id)
