@@ -26,8 +26,6 @@ import shutil
 import tarfile
 import traceback
 
-from BKGlycanExtractor import annotate_from_webapp
-
 if (not os.environ.get('PYTHONHTTPSVERIFY', '') and getattr(ssl,'_create_unverified_context', None)):
     ssl._create_default_https_context = ssl._create_unverified_context
 
@@ -61,7 +59,7 @@ class APIDataError(APIErrorBase):
 class APIFramework:
 
     # job states
-    UNKOWN = 'Unkown'
+    UNKNOWN = 'Unknown'
     QUEUED = 'Queued'
     RUNNING = 'Running'
     ERROR = 'Error'
@@ -134,24 +132,6 @@ class APIFramework:
             self._port = p
         else:
             raise APIParameterError("Port number requires integer, %s is not acceptable")
-
-    # flask.request.url_root seems to work poorly with respect to proxies etc.
-    # and the proxy code (_prefix) didn't seem to work correctly either
-    # 
-    # The referer url (source of the request) is a better choice, since
-    # we know what page should be calling this. We must make sure we do not fail
-    # badly if called by another referer, but we only need this to work correctly
-    # when clicked on from the appropriate page. 
-    # 
-    # def get_base_url(self):
-    #     if flask.has_request_context():
-    #         
-    #         base = flask.request.url_root.rstrip('/')
-    #         if self._prefix:
-    #             prefix = self._prefix.strip('/')
-    #             return f"{self._prefix}"
-    #         return f"{base}"
-    #
 
     def debug(self):
         return self._debug
@@ -314,55 +294,39 @@ class APIFramework:
     # FLASK related functions starts here
 
     # FLASK handlers, need to be overwrite for your own app
+    def _render_page(self, template_attr, page_response=None,**page_args):
+        template_name = getattr(self, template_attr, None)
+        if not template_name:
+            if page_response:
+                return page_response
+            return flask.jsonify({"error": "Not Implemented"}), 501
+
+        args = dict(self._template_render_kwargs)
+        args.update(page_args)
+        return flask.render_template(template_name, **args)
+
     def home(self, **kwargs):
         sessionid = self.get_session()
-        if self._home_html is None:
-            return flask.jsonify("Hello from %s:%s" % (self.host(), self.port()))
-        kwargs.update(dict(**self._template_render_kwargs))
-        return flask.render_template(self._home_html, **kwargs)
+        page_response = flask.jsonify("Hello from %s:%s" % (self.host(), self.port())), 200
+        return self._render_page('_home_html', page_response=page_response, **kwargs)
 
-    def process(self):
-        submission_type = flask.request.args.get("type")
+    def jobs(self, **kwargs):
+        return self._render_page('_jobs_html', **kwargs)
 
-        if submission_type == 'Manuscript':
-            placeholder_url = 'https://example.com/document.pdf'
-        else:
-            placeholder_url = 'https://example.com/image.png'
+    def process(self, **kwargs):
+        return self._render_page('_process_html', **kwargs)
 
-        kwargs = dict(**self._template_render_kwargs)
-        return flask.render_template(self._process_html, submission_type=submission_type, placeholder_url=placeholder_url, **kwargs)
+    def examples(self, **kwargs):
+        return self._render_page('_examples_html', **kwargs)
 
+    def jobs(self, **kwargs):
+        return self._render_page('_jobs_html', **kwargs)
 
-    def examples(self):
-        # Mcleod - https://www.neb.com/en-us/-/media/nebus/files/application-notes/appnote_characterization_of_glycans_from_erbitux_rituxan_and_enbrel_using_recombinant_pngase_f.pdf?rev=581a874aebbc4351bec05e10c07f96ea&hash=C8D5EB5AF1B7D5C331DFAB13BB87F649
-        example_cards = [
-            {"title": "Sassi et al., 2014", "desc": "", "url": f"{self._prefix}/result/mgp1", "icon": f"{self._prefix}/static/images/pdf.svg" },
-            {"title": "Huang & Orlando, 2017", "desc": "", "url": f"{self._prefix}/result/mgp4", "icon": f"{self._prefix}/static/images/pdf.svg" },
-            {"title": "Mcleod, 2024", "desc": "", "url": f"{self._prefix}/result/mgp3", "icon": f"{self._prefix}/static/images/pdf.svg"},
-            {"title": "Figure 1, Kri\u0161ti\u0107 et al., 2018", "desc": "", "url": f"{self._prefix}/result/mgi4", "icon": f"{self._prefix}/static/images/multi-image.svg" },
-            {"title": "Figure 2, Zhang et al., 2021", "desc": "", "url": f"{self._prefix}/result/mgi6", "icon": f"{self._prefix}/static/images/multi-image.svg" },
-            {"title": "Mass Spectrometry of Glycans Webpage, Millipore Sigma", "desc": "", "url": f"{self._prefix}/result/mgi5", "icon": f"{self._prefix}/static/images/multi-image.svg" },
-            {"title": "G16150CJ - Compact N-Glycan", "desc": "", "url": f"{self._prefix}/result/sgi4", "icon": f"{self._prefix}/static/images/single-image.svg"},
-            {"title": "G83439SR - N-Glycan Toplogy ", "desc": "", "url": f"{self._prefix}/result/sgi6", "icon": f"{self._prefix}/static/images/single-image.svg" },
-            {"title": "G69233PF - O-Glycan Fully-defined", "desc": "", "url": f"{self._prefix}/result/sgi5", "icon": f"{self._prefix}/static/images/single-image.svg" },
-        ]
-        kwargs = dict(**self._template_render_kwargs)
-        return flask.render_template(self._examples_html, example_cards=example_cards, **kwargs)
-
-
-    def jobs(self):
-        kwargs = dict(**self._template_render_kwargs)
-        return flask.render_template(self._jobs_html, **kwargs)
-
-    # def about(self):
-    #     return flask.render_template("about.html", urlprefix=self._prefix)
+    def result(self,id=None, **kwargs):
+        return self._render_page('_result_html', list_id=id, **kwargs)
 
     def file_upload_finished_page(self, **kwargs):
-        if self._file_upload_finished_html is None:
-            return flask.jsonify("Not Implemented")
-        else:
-            kwargs.update(dict(**self._template_render_kwargs))
-            return flask.render_template(self._file_upload_finished_html, **kwargs)
+        return self._render_page('_file_upload_finished_html', **kwargs)
 
     def get_jobs_ahead(self,tid):
         tind = self.result_cache[tid].get("task_index",1e+10)
@@ -379,7 +343,7 @@ class APIFramework:
         if 'tid' in params:
             tid = params['tid']
         status = "Job status not available."
-        state = self.UNKOWN
+        state = self.UNKNOWN
         finished = False
         self.update_results(getall=True)
         result = self.get_result(tid)
@@ -411,13 +375,12 @@ class APIFramework:
             for tid in map(lambda t: t[0], sorted(self.session_task_list[sid], key=lambda t: -t[1])[:10]):
                 task1 = dict((k, v) for k, v in self.get_result(tid).items() if k != 'result')
 
-                task1['job_status'] = f"{self._prefix}/get_job_status/{tid}"
+                task1['job_status'] = f"{self._prefix}/job_status/{tid}"
                 if task1['state'] == self.QUEUED:
                     task1['status'] = "Position %d in queue"%(self.get_jobs_ahead(tid)+1,)
 
                 recent_jobs.append(task1)
         return flask.jsonify(recent_jobs)
-
 
     def get_next_task_index(self):
         with self.task_index_lock:
@@ -436,6 +399,7 @@ class APIFramework:
             if tid in self.task_list:
                 self.task_list.remove(tid)
 
+    # TODO this method is similar to upload_file - probably should collapse these methods into one
     def submit(self):
         if flask.request.method in ['GET', 'POST']:
             p = self.api_para()
@@ -482,23 +446,9 @@ class APIFramework:
         return flask.jsonify(res)
 
     def get_result(self,list_id):
-        thing = {"Error": "list_id (%s) not found" % list_id}
         if list_id in self.result_cache:
-            thing = self.result_cache[list_id]
-        elif os.path.exists(f"static/files/{list_id}/results.json"):
-            thing = json.loads(open(f"static/files/{list_id}/results.json").read())
-        elif os.path.exists(f"static/examples/{list_id}/results.json"):
-            thing = json.loads(open(f"static/examples/{list_id}/results.json").read())
-            thing['location'] = 'examples'
-        return thing
-
-    def save_result(self,list_id,result):
-        # We should lock so that we don't get two at once...
-        self.result_cache[list_id] = result
-        location = result.get('location','files')
-        wh = open(f"static/{location}/{list_id}/results.json",'wt')
-        json.dump(result,wh,indent=2)
-        wh.close()
+            result = self.result_cache[list_id]
+        return {"Error": "list_id (%s) not found" % (list_id,)}
 
     def retrieve(self):
         if flask.request.method in ['GET', 'POST']:
@@ -522,316 +472,119 @@ class APIFramework:
             res.append(self.get_result(list_id))
         return flask.jsonify(res)
 
-    
-    def validate_pmid(self, pmid=None):
+    def _input_filename(self, params: dict):
         '''
-        Validates is the given PMID has a PMCID and that the resources for the PMCID are Open Access (check if zip file can be retrieved)
+        Handles filename for: file (upload), fileURL, filePath (file stored on disk)
+        
+        Other applications can override this for submissions that dont fit the generic use case.
         '''
-        developer_email="nje5%2bextractor@georgetown.edu"
-
-        if pmid is None:
-            pmid = flask.request.json.get('pmid')
-
-        pmid = pmid.strip()
-        if pmid.endswith(".pdf"):
-            pmid = pmid.rsplit('.',1)[0]
-            
-        pmid_to_pmc_converter_api = f'https://pmc.ncbi.nlm.nih.gov/tools/idconv/api/v1/articles/?ids={pmid}&tool=extract&email={developer_email}&idtype=pmid&format=json'
-
-        try:
-            resp = requests.get(pmid_to_pmc_converter_api, timeout=5)
-            #
-            # This API raises 400 errors for bad parameters, which need a 
-            # nicer error message than the exception handler can give...
-            # 
-            # resp.raise_for_status()
-            resp_json = resp.json()
-
-            if not resp_json.get('records') or len(resp_json['records']) == 0:
-                return flask.jsonify({'valid': False, 'error': f'PMID {pmid} is not in PubMed Central'}), 400
-                
-            pmcid = resp_json['records'][0].get('pmcid')
-            if not pmcid:
-                return flask.jsonify({'valid': False, 'error': f"PMID {pmid} is not in PubMed Central"}), 400
-
-            # check if it is possible to retrieve the zipped file using PMCID
-            pmc_resp, pmc_status = self.validate_pmcid_resources(pmid, pmcid)
-            pmc_resp_json = pmc_resp.get_json()
-
-            if pmc_status != 200 or not pmc_resp_json.get('valid'):
-                return pmc_resp, pmc_status
-                
-            return flask.jsonify(pmc_resp_json), 200
-        
-        except (requests.exceptions.Timeout,requests.exceptions.ReadTimeout,requests.exceptions.RequestException) as e:
-            return flask.jsonify({'valid': False, 'error': str(e)}), 500
-
-
-    def validate_pmcid_resources(self, pmid, pmcid):
-        pmc_api = f'https://www.ncbi.nlm.nih.gov/pmc/utils/oa/oa.fcgi?id={pmcid}'
-        r = requests.get(pmc_api, timeout=5)
-        r.raise_for_status()
-
-        root = ET.fromstring(r.text)
-        link = root.find(".//link[@format='tgz']")
-        record = root.find(".//record")
-
-        if link is None:
-            return flask.jsonify({
-                'valid': False,
-                'error': f"PMID {pmid} is not Open Access in PubMed Central"
-            }), 400
-
-        return flask.jsonify({
-            'valid': True,
-            'success': f'Given PMCID: {pmcid} is Open Access',
-            'resource': {
-                'href': link.get('href'),
-                'format': link.get('format'),
-                'pmcid': pmcid,
-                # 'pmc_publication': record.get("citation")
-            }
-        }), 200
-
-    def _parse_upload_inputs(self, task=None):
-        task = json.loads(flask.request.form.get('task', task if task else '{}'))
-        return {
-            "task": task,
-            "file": flask.request.files.get('file'),
-            "file_url": flask.request.form.get('fileURL', task.get('fileURL')),
-            "input_file_path": flask.request.form.get('filePath', task.get('filePath')),
-            "pmid": flask.request.form.get('pmid', task.get('pmid')),
-            # if search_stratgey given - use the mentioned search_stratgey (useful for re-analyze job, when submission_mode is Local and synthetic pdf will benifit from using the previsuly used fitz image_search_strategy)
-            "image_search_strategy": flask.request.form.get('image_search_strategy', task.get('image_search_strategy')),
-            "submission_type": flask.request.form.get('submission_type', task.get('submission_type')),
-            "citation": flask.request.form.get('citation', task.get('citation')),
-            "figures_metadata": flask.request.form.get('figures_metadata', task.get('figures_metadata'))
-        }
-
-    def _get_submission_mode(self, upload_params):
-        submission_mode = None
-        pmid = upload_params.get('pmid', None)
-        
-        if upload_params['input_file_path']:
-            submission_mode = "Local"
-        elif upload_params['file']:
-            submission_mode = "Upload"
-        elif upload_params['file_url']:
-            submission_mode = "URL"
-        elif upload_params['submission_type'] == "Manuscript" and pmid:
-            pmid = pmid.strip()
-            if pmid.endswith(".pdf"):
-                submission_mode = "PMID-PDF"
-                pmid = pmid.split('.', 1)[0]
-            else:
-                submission_mode = "PMID"
-
-        upload_params['submission_mode'] = submission_mode
-        upload_params['pmid'] = pmid
-        
-        return submission_mode
-
-    def _get_filename(self, upload_params):
-        submission_mode = upload_params.get('submission_mode')
-        input_file_path = upload_params['input_file_path']
-        file_url = upload_params['file_url']
-        pmid = upload_params.get('pmid', None)
-        file = upload_params['file']
-
         filename = None
 
-        # Extract info using Pubmed API and get filename of the pdf based on PMID and at the same time extract figures as well - everything is present in the zipped file
-        if submission_mode and pmid and submission_mode in ("PMID", "PMID-PDF"):
-            # pdf file that goes in the input folder should be renamed as "PMID-<PMID>.pdf"
-            filename = 'PMID-' + pmid + ".pdf"
-        elif input_file_path:
-            filename = werkzeug.utils.secure_filename(os.path.split(input_file_path)[1])
-        elif file_url:
-            filename = werkzeug.utils.secure_filename(os.path.basename(file_url.split('?')[0]))
+        if params.get('file'):
+            filename = werkzeug.utils.secure_filename(params['file'].filename)
+        elif params.get('filePath'):
+            filename = werkzeug.utils.secure_filename(os.path.split(params['filePath'])[1])
+        elif params.get('fileURL'):
+            filename = werkzeug.utils.secure_filename(os.path.basename(params['fileURL'].split('?')[0]))
             if not os.path.splitext(filename)[1]:
                 try:
-                    head_resp = requests.head(file_url, timeout=10, allow_redirects=True)
+                    head_resp = requests.head(params['fileURL'], timeout=10, allow_redirects=True)
                     head_resp.raise_for_status()   
                     content_disposition = head_resp.headers.get('content-disposition')
                     if content_disposition:
                         filename = content_disposition.split('filename=')[-1].strip('"')
-                except requests.exceptions.RequestException:
-                    # Keep derived filename
-                    pass
-        elif file:
-            filename = werkzeug.utils.secure_filename(file.filename)
+                except requests.exceptions.RequestException as e:
+                    raise APIParameterError(
+                        "Could not create filename for the provided URL: %s" % (params["fileURL"],)
+                    ) from e
 
-        if filename:
-            upload_params['filename'] = filename
-            return filename
+        if filename is None:
+            raise APIParameterError('Could not create a filename for the provided input')
 
-        return None
+        return filename
 
-    def _handle_local_copy(self, input_file_path, file_dir):
-        # Local means its a reanalyze step - copy over all files from the mentioned input folder to your current input folder
-        # copy over files (pdf/tar.gz) from the old task id's folder i.e static/files/old_task_id/input/ --> input/curr_task_id
-        old_input_directory = os.path.dirname(input_file_path)
-        shutil.copytree(old_input_directory, file_dir, dirs_exist_ok=True)
+    def prepare_job_input(self, params: dict, task_detail: dict, current_file_path: str):
+        '''
+        params: contains user submitted details
+        task_detail: may contain derived details which could be helpful
+        '''
 
-    def _download_and_prepare_pmid_data(self, pmid, file_dir):
-        # validate if PMCID resources are Open Access before proceeding
-        pmc_resp, pmc_status = self.validate_pmid(pmid)
-        pmc_resp_json = pmc_resp.get_json()
-
-        if pmc_status != 200 or not pmc_resp_json.get('valid'):
-            return pmc_resp, pmc_status, None
-                    
-        resource = pmc_resp_json.get("resource")
-        pmcid = resource.get("pmcid")
-
-        # 1) get citation from json response - if available
-        # pmc_publication - is the PMC publication information obtained
-        # from hittin the PMC API (useful when publication information is only partially present in the xml document provided by pmc)
-        # pmc_publication = resource.get("pmc_publication")
-
-        # 2) extract the href link, which is in ftp (NCBI supports both ftp and https protocols)
-        href = resource.get("href")
-        # temporary PMC deprecation fix...
-        href = href.replace('pub/pmc/','pub/pmc/deprecated/')
-        # Convert FTP to HTTPS
-        download_url = href.replace("ftp://ftp.ncbi.nlm.nih.gov", "https://ftp.ncbi.nlm.nih.gov")
-
-        # 3) Download the zipped file to the input folder
-        zipped_path = os.path.join(file_dir, f"PMID-{pmid}.tar.gz")
-        with open(zipped_path, "wb") as f:
-            with requests.get(download_url, stream=True, timeout=120) as resp:
-                resp.raise_for_status()
-                for chunk in resp.iter_content(1 << 20):
-                    if chunk:
-                        f.write(chunk)
-
-        # 4) Extract data from tar file
-        # Note: The zip file may contain multiple pdf's, so the main pdf filename is same
-        # as the xml filename - the below code tracks and finds the correct pdf to use
-        with tarfile.open(zipped_path, "r:gz") as tar:
-            # Single pass: collect nxml files and their corresponding PDFs
-            nxml_files = []
-            pdf_files = {}
-            for member in tar.getmembers():
-                base = os.path.basename(member.name).lower()
-                ext = os.path.splitext(base)[1]
-                if ext == '.nxml':
-                    nxml_basename = os.path.splitext(base)[0]
-                    nxml_files.append((member, nxml_basename))
-                elif ext == '.pdf':
-                    pdf_basename = os.path.splitext(base)[0]
-                    pdf_files[pdf_basename] = member
-            # Now extract the main pdf and rename it as PMID-<PMID>.pdf
-            for nxml_member, nxml_basename in nxml_files:
-                if nxml_basename in pdf_files:
-                    pdf_member = pdf_files[nxml_basename]
-                    tar.extract(pdf_member, file_dir, filter="data")
-                    # Rename the PDF
-                    old_pdf_path = os.path.join(file_dir, pdf_member.name)
-                    new_pdf_path = os.path.join(file_dir, f"PMID-{pmid}.pdf")
-                    if os.path.exists(old_pdf_path):
-                        os.rename(old_pdf_path, new_pdf_path)
-                    else:
-                        print(f"File not found: {old_pdf_path}")
-        # renamed the zipped file to PMID-<PMID>, while using the tarfile modeule a residual empty folder was created with the original zipped file name --> so deleting this empty folder
-        pmc_folder_path = os.path.join(file_dir, pmcid)
-        try:
-            shutil.rmtree(pmc_folder_path)
-        except FileNotFoundError:
-            pass
-        return None, None
-
-    def _save_file(self, upload_params):
-        file = upload_params['file']
-        file_url = upload_params['file_url']
-        input_file_path = upload_params['input_file_path']
-        current_file_path = upload_params['current_file_path']
-        filename = upload_params['filename']
-
-        if file and self.allow_file_ext(file.filename):
-            file.save(current_file_path)
-            return None
-        if file_url:
+        if params.get('file') and self.allow_file_ext(params['file'].filename):
+            params["file"].save(current_file_path)
+            return 
+        elif params.get('filePath'):
+            src = params["filePath"]
+            if not os.path.isfile(src):
+                raise APIParameterError("filePath does not exist or is not a file")
+            try:
+                shutil.copyfile(src, current_file_path)
+            except OSError as e:
+                raise APIDataError("Could not copy filePath") from e
+            return
+        elif params.get('fileURL'):
             headers = {
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36',
                 'Accept': '*/*'
             }
             try:
-                with requests.get(file_url, headers=headers, stream=True, timeout=10) as response:
-                    response.raise_for_status()
+                with requests.get(params["fileURL"], headers=headers, stream=True, timeout=10) as response:
+                    if not response.ok:
+                        raise APIDataError("Download failed (HTTP %s)" % response.status_code)
                     with open(current_file_path, "wb") as f:
                         for chunk in response.iter_content(1024):
-                            f.write(chunk)
-                return None
-            except requests.exceptions.RequestException:
-                return flask.jsonify({"error": f"Can't download from provided URL."}), 400
-        if input_file_path:
-            shutil.copyfile(input_file_path, current_file_path)
-            return None
-        return flask.jsonify({"error": f"File format not supported: {filename}"}), 400
+                            if chunk:
+                                f.write(chunk)
+                return 
+            except requests.exceptions.RequestException as e:
+                raise APIDataError("Could not download file from provided URL") from e
 
-
+        raise APIParameterError(
+            "No supported file source (file, filePath, or fileURL), or file type not allowed"
+        ) 
+    
     def upload_file(self, task=None):
+
         if not (flask.request.method == 'POST' or task):
             return flask.jsonify({"error": "Invalid request method"}), 400
 
-        upload_params = self._parse_upload_inputs(task)
-        file = upload_params["file"]
-        file_url = upload_params["file_url"]
-        input_file_path = upload_params["input_file_path"]
-        # pmid = upload_params["pmid"]
-        # image_search_strategy = upload_params["image_search_strategy"]
-        submission_type = upload_params["submission_type"]
-        
-        submission_mode = self._get_submission_mode(upload_params)
-        if not submission_mode:
-            return flask.jsonify({"error": "Invalid file or URL"}), 400
+        try:
+            # parse_request accesses the form fields 
+            params = self.parse_request(task)  # task=None for FormData UI
+        except APIParameterError as e:
+            return flask.jsonify({"error": str(e), "valid": False}), 400
 
-        filename = self._get_filename(upload_params)
-        if not filename:
-            return flask.jsonify({"error": "Invalid file or URL"}), 400
+        try:
+            filename = self._input_filename(params)
+        except APIParameterError as e:
+            return flask.jsonify({"error": str(e), "valid": False}), 400
+
+        # form task
+        params_dict = dict(params)
+        params_dict['filename'] = filename
+
+        try:
+            task_detail = self.form_task(params_dict)
+        except APIParameterError as e:
+            return flask.jsonify({"error": str(e), "valid": False}), 400
 
         sessionid = self.get_session()
-        # default image_search_strategy in configs file is 'hybrid', but if nothing is mentioned in configs file, then 'fitz' is assumed as default
-        # Note - for PMID-PDF - synethetic pdf's are created using figures, so the deafult image search stratgey for this is fitz
-        # Create task details
-        task_detail = self.form_task({
-            "filename": filename,  # derived
-            "fileURL": file_url,
-            "submission_type": submission_type,
-            "submission_mode": submission_mode,  # derived
-            "pmid": upload_params.get('pmid'),
-            "image_search_strategy": upload_params.get('image_search_strategy')  # if provided, else form_task method will assign an image_search_strategy derieved from configs file or default will be used
-        })
         list_id = task_detail["id"]
         file_dir = os.path.join(self.input_file_folder(), list_id)
         os.makedirs(file_dir, exist_ok=True)
         current_file_path = os.path.join(file_dir, filename)
-        # adding current_file_path to the params dict, so that other methods can easily access it
-        upload_params['current_file_path'] = current_file_path
+
         try:
-            if submission_mode == 'Local':
-                self._handle_local_copy(input_file_path, file_dir)
-                # since its local mode, there is some metadata that can come from the previous job that could be passed
-                # over - for example captions, figure_number, citations.
-                # When the job is completed - these extra metadata details will be removed from submission_detail/task_detail.
-                task_detail.update({
-                    'citation': upload_params.get('citation'),
-                    'figures_metadata': upload_params.get('figures_metadata')
-                })
-            elif submission_mode in ("PMID", "PMID-PDF"):
-                pmid = upload_params['pmid']
-                pmc_resp, pmc_status = self._download_and_prepare_pmid_data(pmid, file_dir)
-                if pmc_resp is not None:
-                    return pmc_resp, pmc_status
-            else:
-                save_error = self._save_file(upload_params)
-                if save_error is not None:
-                    return save_error
+            self.prepare_job_input(params_dict, task_detail, current_file_path)
+        except APIParameterError as e:
+            return flask.jsonify({"error": str(e), "valid": False}), 400
+        except APIErrorBase as e:
+            return flask.jsonify({"error": str(e), "valid": False}), 400
         except requests.exceptions.RequestException:
-            return flask.jsonify({"error": "Submitted input is invalid."}), 400
+            return flask.jsonify({"error": "Can't download or fetch input.", "valid": False}), 400
         except Exception as e:
-            return flask.jsonify({"error": f"Unexpected error: {str(e)}"}), 400
+            traceback.print_exception(type(e), e, e.__cause__)
+            return flask.jsonify({"error": f"Unexpected error: {e}", "valid": False}), 500
+
         status = {
             "id": list_id,
             "task_index": self.get_next_task_index(),
@@ -843,91 +596,61 @@ class APIFramework:
             "sessionid": sessionid,
             "result": {},
         }
+
         if list_id in self.result_cache:
             pass
         else:
             self.task_queue.put(task_detail)
             self.result_cache[list_id] = status
             self.add_to_task_lists(list_id, sessionid, status['submit_time'])
+
         self.output(1, "Job received by API: %s" % (task_detail))
         return flask.jsonify([status]), 200
 
-    def get_figures_metadata(self, json_file):
-        # TODO Note - This is a temporary method for testing, need to create a semnatics reader in the Semnatics class 
+    def _build_resubmit_task(self, submission_detail, result, tid, input_file):
+        """Can override in derived classes to add or change resubmit fields."""
+        params_dict = {k: v for k, v in submission_detail.items() if k not in ('id')}
+        params_dict["filePath"] = input_file
+        return params_dict
 
-        # metadata is - figure_number, captions, citations
-        metadata = {
-            'citation': None,
-            'figures_metadata': []
-        }
-        try:
-            with open(json_file, 'r', encoding='utf-8') as f:
-                json_result = json.load(f)
+    def resubmit_file(self, tid=None):
+        '''
+        Resubmit a prior job as a new job (reanalyze)
+        Not currently a feature, but probably paramters could be tweaked by user for resubmission
+        '''
 
-            result = json_result.get('result', {})
-            metadata['citation'] = result.get('citation')
-
-            for figure in result.get('figures', {}):
-                image_count = figure.get('image_count')
-
-                if image_count is None:
-                    continue
+        if tid is None:
+            tid = flask.request.args.get("tid") or flask.request.form.get("tid")
+        if not tid:
+            return flask.jsonify({"error": "task id is required", "valid": False}), 400
                 
-                metadata['figures_metadata'].append({
-                        "image_count": image_count,
-                        "caption": figure.get("caption", ""),
-                        "figure_number": figure.get("figure_number", ""),
-                })
-            return metadata
-        except (FileNotFoundError, PermissionError, OSError) as e:
-            raise APIDataError(f"Cannot read metadata file {json_file}: {e}")
-        except json.JSONDecodeError as e:
-            raise APIDataError(f"Invalid JSON in {json_file}: {e}")
-
-    def resubmit_file(self,tid=None):
-        '''
-        Resubmit pathways:
-        1) if submission_mode is - PMID, Single Image, Multi Image --> analysis will be done 
-        on the figures again after they are copied from the old tasks input folder.
-
-        2) other submission_modes (PDF, PMID-PDF) - uses pdf or adds figures to a pdf, 
-        so the re-analyze task should directly run on the existing pdf (maybe synthetically created pdf) 
-        after obtaining the pdf from the old tasks input folder.
-        '''
-
-        params = self.api_para()
-        if 'tid' in params:
-            tid = params['tid']
         result = self.get_result(tid)
-        oldtask = result['submission_detail']
+        if not result:
+            return flask.jsonify({"error": "unknown task id %s" % tid, "valid": False}), 404
 
-        submission_mode = oldtask['submission_mode']
-        submission_type = oldtask['submission_type']
-        input_file = os.path.join('static', result.get('location','files'), tid, 'input', oldtask.get('filename',oldtask.get('original_file_name')))
+        if not result.get('finished'):
+            return flask.jsonify({"error": "Previous task %s was not completed successfully" % tid, "valid": False}), 404
 
-        newtask = {
-            'submission_type': submission_type,
-            'fileUrl': oldtask.get('fileURL'),
-            'filePath': input_file,
-            'image_search_strategy': oldtask.get('image_search_strategy')
-        }
+        submission_detail = result.get("submission_detail") or {}
+        
+        input_file = os.path.join(
+            "static", result.get("location", "files"), tid, "input",
+            submission_detail.get("filename") or submission_detail.get("original_file_name", ""),
+        )   
+        if not os.path.isfile(input_file):
+          return flask.jsonify({"error": "input file not found for resubmit", "valid": False}), 404
 
-        if submission_mode == 'PMID' or (submission_mode == 'Local' and oldtask.get('pmid')):
-            newtask.update(**{'pmid': oldtask['pmid']})
+        params_dict = self._build_resubmit_task(submission_detail, result['result'], tid, input_file)
 
-        # add figures_metadata (if present) - captions,citations, figure_number
-        # probably need a JSON reader - so need to create this -- I will create a method for now, but it should probably live in the 
-        # Semantics class somehwere and work as a reader for all the json docuemnts like correct.json, etc
+        response, code = self.upload_file(task=json.dumps(params_dict))
 
-        json_file = self.abspath(os.path.join('static', result.get('location','files'), tid, 'results.json'))
-        figures_metadata = self.get_figures_metadata(json_file)
-        if figures_metadata:
-            newtask.update(**figures_metadata)
+        if code != 200:
+            resp_body = response.get_json(silent=True) or {}
+            err = resp_body.get("error") if isinstance(resp_body, dict) else str(resp_body)
+            return flask.jsonify({"error": "Resubmission failed: %s" % err, "valid": False}), code
 
-        response, code = self.upload_file(task=json.dumps(newtask))
-        print(response.get_json())
         return flask.redirect(self._prefix + '/jobs')
-
+        
     def download_file(self):
         if flask.request.method in ['GET', 'POST']:
             p = self.api_para()
@@ -959,9 +682,7 @@ class APIFramework:
         except:
             flask.abort(404)
 
-
-    # FLASK helper functions
-    def form_task(self, p):
+    def form_task(self, p: dict):
         #
         """
         task = {
@@ -981,147 +702,71 @@ class APIFramework:
         else:
             raise APIErrorBase
 
-    def _get_base_url_from_request(self):
-        base_url = None
-        if flask.has_request_context():
-            referer = flask.request.headers.get('Referer')
-            # print("Referer:",referer)
-            if referer:
-                if '/result/' in referer:
-                    base_url = referer.split('/result/')[0]
-                elif referer.endswith('/jobs'):
-                    base_url = referer.split('/jobs')[0]
-        return base_url
+    def parse_request(self, task=None) -> dict:
+        # generic method - which handles different types of data: JSON, arguments, post, etc
+        # form-data/multipart - form + optional file
+        # application/json - request.get_json(silent=true)
+        # optionally application/www-form-urlencoded
 
-    def _update_annotation_result_paths(self, resultid, result, annotated_pdf_file, annotated_tsv_file):
-        # make sure you add the annoated file keys to the json result - so that this is added to the json file on disk
-        result['annotated_pdf_file'] = annotated_pdf_file
-        result['annotated_tsv_file'] = annotated_tsv_file
-        # make sure to add annotated file keys to the in-memory cache (result_cache) - so
-        # that the frontend has access to these keys via API payloads
-        cache_entry = self.result_cache.get(resultid)
-        if cache_entry is not None:
-            if cache_entry.get('result') is None:
-                cache_entry['result'] = {}
-            cache_entry['result']['annotated_pdf_file'] = annotated_pdf_file
-            cache_entry['result']['annotated_tsv_file'] = annotated_tsv_file
-            
-    def annotate_results(self, resultid=None):
-        resultid = flask.request.args.get('resultid') or resultid
+        req = flask.request
+        
+        params = {}
 
-        if resultid is None:
-            return flask.jsonify(dict(status="ERROR"))
+        # 1) flask provides form fields (task dict) - for files and text fields.
+        raw = req.form.get("task") if req.form else None
+        if raw is not None and str(raw).strip():
+            try:
+                form_params = json.loads(raw)
+            except (TypeError, ValueError) as e:
+                raise APIParameterError(f"Invalid JSON in form form field 'task': {e}")
+            if not isinstance(form_params, dict):
+                raise APIParameterError("Form field 'task' must be a JSON object")
+            params = form_params
 
-        location = "files"
+        # 2) Explicit task argument:
+        # useful when resubmit is used and task_dict is provided
+        elif task is not None:
+            if isinstance(task, dict):
+                params = dict(task)
+            else:
+                if isinstance(task, bytes):
+                    task = task.decode("utf-8")
+                if isinstance(task, str):
+                    s = task.strip()
+                    if s:
+                        try:
+                            parsed = json.loads(s)
+                        except (TypeError, ValueError) as e:
+                            raise APIParameterError("task argument must be valid JSON: %s" % (e,))
+                    if not isinstance(parsed, dict):
+                        raise APIParameterError("task JSON must be an object")
+                    params = parsed
+                else:
+                    raise APIParameterError("task must be dict, str, bytes, or None")
+        
+        # 3) JSON body (API style application/json)
+        elif req.is_json:
+            body = req.get_json(silent=True)
+            if isinstance(body, dict):
+                params = dict(body)
 
-        if flask.request.is_json:
-            location = (flask.request.get_json(silent=True) or {}).get('location') or "files"
-        elif flask.request.args.get('location'):
-            location = flask.request.args.get('location')
+        # below code ensures that form details are added properly
+        if req.form:
+            for key in req.form:
+                if key == "task":
+                    continue
+                val = req.form.get(key)
+                if val is not None:
+                    params[key] = val
 
-        json_file = self.abspath(f"static/{location}/{resultid}/results.json")
+        # if files are present - it ensures that they are added as well
+        if req.files:
+            for key in req.files:
+                f = req.files.get(key)
+                if f and getattr(f, 'filename', None):
+                    params[key] = f
 
-        if not os.path.exists(json_file):
-            print("Status: ERROR:NO_JSON, ResultID: %s." % (resultid,), file=sys.stderr)
-            return flask.jsonify(dict(status="ERROR"))
-
-        locked = False
-        try:
-            locked = self.lock_result(resultid, timeout=10)
-            if not locked:
-                print("Status: ERROR:RESULT_TIMEOUT, ResultID: %s." % (resultid,), file=sys.stderr)
-                return flask.jsonify(dict(status="ERROR"))
-
-            with open(json_file, 'r') as f:
-                json_data = json.load(f)
-
-            base_dir = self.abspath(f"static/{location}/{resultid}/")
-
-            result = json_data.get('result', {})
-            if result is None:
-                result = {}
-            # ensure changes to `result` always persist in json_data
-            json_data['result'] = result
-
-            subdetails = json_data.get('submission_detail', {})
-            pdf_path = os.path.join(base_dir, "input", subdetails.get('filename', ""))
-            # print(pdf_path)
-            if not pdf_path or not os.path.isfile(pdf_path):
-                print("Status: ERROR:NO_PDF, ResultID: %s." % (resultid,), file=sys.stderr)
-                return flask.jsonify(dict(status="ERROR"))
-
-            output_dir = os.path.join(base_dir, "annotated_files")
-            os.makedirs(output_dir, exist_ok=True)
-
-            pdf_basename = os.path.splitext(os.path.basename(pdf_path))[0]
-            annotated_pdf = os.path.join(output_dir, pdf_basename + ".annotated.pdf")
-            annotated_pdf_file = pdf_basename + ".annotated.pdf"
-            annotated_tsv_file = pdf_basename + ".annotated.tsv"
-
-            # print("Expecting annotated PDF at: %s" % (annotated_pdf,), file=sys.stderr)
-
-            # Check if the annotated results (pdf and tsv) are up to date with the json file?
-            # i.e if the annotated results were modified at the time after the json was modified - then
-            # no need to annotate files again -> serve the results directly to the user
-            # getmtime --> helps with getting the last modified time of a file
-            if os.path.exists(annotated_pdf):
-                json_mtime = os.path.getmtime(json_file)
-                pdf_mtime = os.path.getmtime(annotated_pdf)
-                if pdf_mtime >= json_mtime:
-                    self._update_annotation_result_paths(
-                        resultid=resultid,
-                        result=result,
-                        annotated_pdf_file=annotated_pdf_file,
-                        annotated_tsv_file=annotated_tsv_file
-                    )
-                    with open(json_file, 'w') as f:
-                        json.dump(json_data, f, indent=2)
-
-                    print("Status: OK (annotated PDF up-to-date), ResultID: %s." % (resultid,), file=sys.stderr)
-                    return flask.jsonify(dict(status="OK", resultid=resultid))
-
-            base_url = self._get_base_url_from_request()
-
-            if not base_url:
-                base_url = f"http://{self.host()}:{self.port()}"
-
-            # Regenerate annotated results
-            print("Building annotated PDF/TSV for ResultID: %s." % (resultid,), file=sys.stderr)
-            annotate_from_webapp(json_file, pdf_path, base_url, output_dir=output_dir)
-
-            # after the results are ready and wrriten to the file system (via annotate_from_webapp), using a small delay to ensure
-            # everything is set.
-            time.sleep(0.2)
-
-            # Verify that the annotated_pdf exists
-            if annotated_pdf and os.path.exists(annotated_pdf):
-                # make sure to add annotated file keys to the in-memory cache (result_cache) - so
-                # that the front end has access to these keys via the API payload
-                self._update_annotation_result_paths(
-                    resultid=resultid,
-                    result=result,
-                    annotated_pdf_file=annotated_pdf_file,
-                    annotated_tsv_file=annotated_tsv_file
-                )
-
-                # Write back to same file
-                with open(json_file, 'w') as f:
-                    json.dump(json_data, f, indent=2)
-
-                print("Status: OK, ResultID: %s." % (resultid,), file=sys.stderr)
-                return flask.jsonify(dict(status="OK", resultid=resultid))
-
-            print("Status: ERROR:PDF_NOT_CREATED, ResultID: %s." % (resultid,), file=sys.stderr)
-            return flask.jsonify(dict(status="ERROR"))
-
-        except Exception:
-            traceback.print_exc()
-            print("Status: ERROR:EXCEPTION, ResultID: %s." % (resultid,), file=sys.stderr)
-            return flask.jsonify(dict(status="ERROR"))
-
-        finally:
-            if locked:
-                self.release_result(resultid)
+        return params
 
     def update_results(self, getall=False):
 
@@ -1151,29 +796,20 @@ class APIFramework:
                         self.result_cache[resid][key] = res[key]
                         del res[key]
 
-                # after the job is finished - submission detail in the result_cache can be cleaned up
-                submission_detail = self.result_cache[resid]['submission_detail']
-                for key in ('citation', 'figures_metadata'):
-                    if key in submission_detail:
-                        del submission_detail[key]
-
                 self.result_cache[resid]["result"] = res
-                self.remove_from_task_list(resid)    
+                self.remove_from_task_list(resid)   
 
-                abs_json_path = self.abspath(os.path.join("static/files/"+resid, "results.json"))
-                with open(abs_json_path, 'w') as f:
-                    json.dump(self.result_cache[resid],f,indent=2)
+                # derived class method can override this to add functionality wrt result updates 
+                self.on_task_finished(resid) 
 
-                submission_detail = self.result_cache[resid]['submission_detail']
-                submission_type = submission_detail['submission_type']
-                submission_mode = submission_detail['submission_mode']
+    
+    def on_task_finished(self, resid):
+        '''
+        Override in subclass - if the results need to be saved some where
+        and if special cleanup steps is required
+        '''
+        pass
 
-                # DO NOT ANNOTATE - if image based job, PMID figures, local mode but it is PMID figures based job
-                # for all other cases you can create annotated pdf and tsv file
-                if (submission_type not in ('Simple Glycan Image', 'Multi-Glycan Image')
-                    and submission_mode != 'PMID'
-                    and not (submission_mode == 'Local' and submission_detail.get('pmid'))):
-                    self.annotate_results(resultid=resid)
 
     def allow_file_ext(self, filename):
         return '.' in filename and filename.rsplit('.', 1)[1].lower() in self.allowed_file_ext()
@@ -1188,24 +824,14 @@ class APIFramework:
         # TODO custom route?
         self._flask_app.add_url_rule("/", "home", self.home, methods=["GET", "POST"])
         self._flask_app.add_url_rule("/retrieve", "retrieve", self.retrieve, methods=["GET", "POST"])
-        # self._flask_app.add_url_rule("/abstract", "abstract", self.abstract, methods=["GET", "POST"])
-        # self._flask_app.add_url_rule("/examples", "examples", self.examples, methods=["GET", "POST"])
-        self._flask_app.add_url_rule("/result", "result", self.result, methods=["GET", "POST"])
+        self._flask_app.add_url_rule("/examples", "examples", self.examples, methods=["GET", "POST"])
         self._flask_app.add_url_rule("/result/<id>", "result", self.result, methods=["GET", "POST"])
-        self._flask_app.add_url_rule("/mark", "mark", self.mark, methods=["GET", "POST"])
-        self._flask_app.add_url_rule("/annotate_results", "annotate_results", self.annotate_results, methods=["GET", "POST"])
-        self._flask_app.add_url_rule("/annotate_results/<rid>", "annotate_results", self.annotate_results, methods=["GET", "POST"])
-        self._flask_app.add_url_rule("/get_job_counts", "get_job_counts", self.get_job_counts, methods=["GET", "POST"])
-        self._flask_app.add_url_rule("/get_job_status", "get_job_status", self.get_job_status, methods=["GET", "POST"])
-        self._flask_app.add_url_rule("/get_job_status/<tid>", "get_job_status", self.get_job_status, methods=["GET", "POST"])
-        self._flask_app.add_url_rule("/resubmit_file", "resubmit_file", self.resubmit_file, methods=["GET", "POST"])
-        self._flask_app.add_url_rule("/resubmit_file/<tid>", "resubmit_file", self.resubmit_file, methods=["GET", "POST"])
-        self._flask_app.add_url_rule("/api/recent_jobs", "get_recent_jobs_api", self.get_recent_jobs_api, methods=["GET"])
-        self._flask_app.add_url_rule("/process", "process", self.process, methods=["GET"])
-        self._flask_app.add_url_rule("/examples", "examples", self.examples, methods=["GET"])
+        self._flask_app.add_url_rule("/job_counts", "get_job_counts", self.get_job_counts, methods=["GET"])
+        self._flask_app.add_url_rule("/job_status/<tid>", "get_job_status", self.get_job_status, methods=["GET"])
+        self._flask_app.add_url_rule("/recent_jobs", "get_recent_jobs_api", self.get_recent_jobs_api, methods=["GET"])
+        self._flask_app.add_url_rule("/process", "process", self.process, methods=["GET"])  # keep here, but the method can live in the derived
         self._flask_app.add_url_rule("/jobs", "jobs", self.jobs, methods=["GET"])
-        self._flask_app.add_url_rule("/pmid", "validate_pmid", self.validate_pmid, methods=["POST"])
-        self._flask_app.add_url_rule("/pmid/<pmid>", "validate_pmid", self.validate_pmid, methods=["GET"])
+        self._flask_app.add_url_rule("/resubmit_file/<tid>", "resubmit_file", self.resubmit_file, methods=["GET", "POST"])
         self._flask_app.add_url_rule("/robots.txt", "robots.txt", self.robots, methods=["GET", "POST"])
 
         if self._file_based_job:
@@ -1213,8 +839,6 @@ class APIFramework:
             self._flask_app.add_url_rule("/file_download", "download_file", self.download_file, methods=["GET", "POST"])
         else:
             self._flask_app.add_url_rule("/submit", "submit", self.submit, methods=["GET", "POST"])
-
-
 
     def manipulate_dirs(self):
         if not os.path.exists(self.input_file_folder()):
