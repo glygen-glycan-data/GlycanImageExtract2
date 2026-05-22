@@ -1,0 +1,14 @@
+tfgw52jei4
+/home/nmathias/GlycanImageExtract2/WebApplication/static/files/tfgw52jei4/output/annotated_Example4_use.pdf
+Warning: gnome subsumption failed for glycan 10: Invalid JSON response from API: <!doctype html>
+<html lang=en>
+<title>500 Internal Server Error</title>
+<h1>Internal Server Error</h1>
+<p>The server encountered an internal error and was unable to complete your request. Either the server is overloaded or there is an error in the application.</p>
+
+Warning: gnome subsumption failed for glycan 1: Invalid JSON response from API: <!doctype html>
+<html lang=en>
+<title>500 Internal Server Error</title>
+<h1>Internal Server Error</h1>
+<p>The server encountered an internal error and was unable to complete your request. Either the server is overloaded or there is an error in the application.</p>
+

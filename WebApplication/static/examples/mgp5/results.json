@@ -1,44 +1,31 @@
 {
-  "id": "fjkit46dbq",
-  "task_index": 11,
+  "id": "4gxmyr7bgw",
+  "task_index": 6,
   "submission_detail": {
-    "image_search_strategy": "hybrid",
     "filename": "figcap_example.pdf",
     "submission_type": "Manuscript",
     "submission_mode": "Upload",
     "processor": "PDFJob",
-    "id": "fjkit46dbq"
+    "id": "4gxmyr7bgw"
   },
   "state": "Complete",
   "status": "",
   "finished": true,
-  "submit_time": 1773173838.918498,
-  "sessionid": "jhtqwe5bffwp7vnm",
+  "submit_time": 1779465733.2116199,
+  "sessionid": "vc3tngfxcdckbq5t",
   "result": {
     "figures": [
       {
-        "annotated_image_path": "extracted_figures/annotated_figures/1.png",
-        "bbox": [
-          52.32719039916992,
-          245.18392944335938,
-          541.9244995117188,
-          636.5463256835938
-        ],
+        "annotated_image_path": "extracted_figures/annotated_figures/fig1.png",
         "caption": "Summary of snRNA-seq analysis of glycogenes in heart cells from COVID-19(+/) patients. A, schematic summary of the bio- informatic analysis of 950 glycosylation-related genes from 19 pathways interrogated from previously published snRNA-seq data (19, 20). B, relative distribution of glycogenes within individual cells of the left and right ventricular regions of the heart is presented as a radial heat map. The outer circle represents the gene expression pro\ufb01le of glycogenes having log2FC > \u00b11 and FDR <0.05. The inner circle represents the percentage contribution of each glycosylation-related pathway normalized to the total abundance. Glycogenes of N-glycan biosynthesis having 15 to 20% variation are indicated within the inner circle. The color gradients for the inner and outer circles in B correspond to the legend for glycosylation- related pathways in A and gene expression fold changes, respectively. Parts of this \ufb01gure were generated with Biorender.comMultiomics Reveals N-Glycan Alterations in COVID-19 Hearts",
-        "center": [
-          297.12584495544434,
-          440.86512756347656
-        ],
         "figure_number": "1",
-        "file_name": "1.png",
+        "file_name": "fig1.png",
         "glycans": [],
         "height": 1632,
         "image_count": 1,
         "image_number": 1,
-        "image_path": "extracted_figures/figures/1.png",
-        "merge_type": "figcap",
+        "image_path": "extracted_figures/figures/fig1.png",
         "page_height": 782.9860229492188,
-        "page_num": 3,
         "page_number": 3,
         "page_width": 593.9719848632812,
         "pdf_fig_bbox": [
@@ -52,28 +39,16 @@
         "width": 2041
       },
       {
-        "annotated_image_path": "extracted_figures/annotated_figures/2.png",
-        "bbox": [
-          98.0,
-          65.76835632324219,
-          495.0,
-          340.8704833984375
-        ],
+        "annotated_image_path": "extracted_figures/annotated_figures/fig2.png",
         "caption": "Overview of experimental design for glycomics and imaging and results of histopathological analyses. A, FFPE tissue sections were analyzed by histopathology, MS-based glycomics, and lectin-based imaging. Cardiomyocytes were analyzed by MS-based glycomics. B, histopathological \ufb01ndings in COVID-19(+/\u2212) cardiac tissues showing normal cardiac tissue for COVID-19(\u2212) with intact myocyte array and COVID-19(+) tissue with cardiac hypertrophy, in\ufb02ammatory in\ufb01ltrate, focal interstitial \ufb01brosis, and fat in\ufb01ltration. Scale bar = 100 \u03bcm. Parts of this \ufb01gure were generated with Biorender.com.",
-        "center": [
-          296.5,
-          203.31941986083984
-        ],
         "figure_number": "2",
-        "file_name": "2.png",
+        "file_name": "fig2.png",
         "glycans": [],
         "height": 1147,
         "image_count": 2,
         "image_number": 1,
-        "image_path": "extracted_figures/figures/2.png",
-        "merge_type": "figcap",
+        "image_path": "extracted_figures/figures/fig2.png",
         "page_height": 782.9860229492188,
-        "page_num": 6,
         "page_number": 6,
         "page_width": 593.9719848632812,
         "pdf_fig_bbox": [
@@ -87,20 +62,10 @@
         "width": 1655
       },
       {
-        "annotated_image_path": "extracted_figures/annotated_figures/3.png",
-        "bbox": [
-          56.0,
-          65.76835632324219,
-          537.0447387695312,
-          552.3895263671875
-        ],
+        "annotated_image_path": "extracted_figures/annotated_figures/fig3.png",
         "caption": "Qualitative N-glycan pro\ufb01le of cardiac tissue and isolated cardiomyocytes. A, graph of relatedness of observed N-glycan compositions identi\ufb01ed in FFPE cardiac tissue slices and isolated cardiomyocytes. Each node represents a unique glycan composition, and two adjacent nodes differ by one monosaccharide residue. Blue nodes are observed only in FFPE tissue, and purple is observed in both FFPE tissue and isolated cardiomyocytes. B, distribution of inferred N-glycan composition properties. Graphs in A and B were generated using Glyco- mpozitor (31). C, Pie charts summarizing the percentage distribution of each N-glycan class calculated from the relative abundance values. D, graphical representation of glycan types identi\ufb01ed, and modi\ufb01cations observed at the core and terminal branches.",
-        "center": [
-          296.5223693847656,
-          309.07894134521484
-        ],
         "figure_number": "3",
-        "file_name": "3.png",
+        "file_name": "fig3.png",
         "glycans": [
           {
             "IUPAC": "Man?1-?(Man?1-?)Man?1-?GlcNAc?1-?GlcNAc",
@@ -120,13 +85,13 @@
             "classlabel": "glycan",
             "composition_str": "GlcNAc(2)Man(3)",
             "confidence": 0.997530460357666,
-            "extracted_image_path": "extracted_figures/extracted_images/3-1.png",
+            "extracted_image_path": "extracted_figures/extracted_images/fig3-1.png",
             "fig_glycan_count": 1,
             "glyImage": "glymage/0c4ac75ab86f430ad5253225b60a0537.svg",
             "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G03833LE",
             "height": 177,
-            "image_name": "3-1.png",
-            "image_path": "extracted_figures/images/3-1.png",
+            "image_name": "fig3-1.png",
+            "image_path": "extracted_figures/images/fig3-1.png",
             "linkexpl": "Extracted successfully using accession",
             "monos": [
               {
@@ -512,13 +477,13 @@
             "classlabel": "glycan",
             "composition_str": "GlcNAc(2)Fuc(1)",
             "confidence": 0.7540709972381592,
-            "extracted_image_path": "extracted_figures/extracted_images/3-2.png",
+            "extracted_image_path": "extracted_figures/extracted_images/fig3-2.png",
             "fig_glycan_count": 2,
             "glyImage": "glymage/68e355bd0799989c306608f0984d5aa4.svg",
-            "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?ondemandtaskid=264cf1058894ea324f93b2da099b8e8ab9722cfa0ef29cfab2e1",
+            "gnomeurl": "",
             "height": 110,
-            "image_name": "3-2.png",
-            "image_path": "extracted_figures/images/3-2.png",
+            "image_name": "fig3-2.png",
+            "image_path": "extracted_figures/images/fig3-2.png",
             "linkexpl": "Extracted structure using IUPAC.",
             "monos": [
               {
@@ -624,7 +589,7 @@
                 "width": 31
               }
             ],
-            "orientation": "RL",
+            "orientation": "BT",
             "rejected_roots": [
               {
                 "bbox": [
@@ -747,13 +712,13 @@
             "classlabel": "glycan",
             "composition_str": "GlcNAc(1)Man(3)",
             "confidence": 0.9680386185646057,
-            "extracted_image_path": "extracted_figures/extracted_images/3-3.png",
+            "extracted_image_path": "extracted_figures/extracted_images/fig3-3.png",
             "fig_glycan_count": 3,
             "glyImage": "glymage/358c438b36ac8e2fd8f1e3820a51afde.svg",
             "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G53892NW",
             "height": 105,
-            "image_name": "3-3.png",
-            "image_path": "extracted_figures/images/3-3.png",
+            "image_name": "fig3-3.png",
+            "image_path": "extracted_figures/images/fig3-3.png",
             "linkexpl": "Extracted successfully using accession",
             "monos": [
               {
@@ -898,7 +863,7 @@
                 "width": 28
               }
             ],
-            "orientation": "RL",
+            "orientation": "BT",
             "rejected_roots": [
               {
                 "bbox": [
@@ -1104,13 +1069,13 @@
             "classlabel": "glycan",
             "composition_str": "GlcNAc(2)Man(6)",
             "confidence": 0.9840853810310364,
-            "extracted_image_path": "extracted_figures/extracted_images/3-4.png",
+            "extracted_image_path": "extracted_figures/extracted_images/fig3-4.png",
             "fig_glycan_count": 4,
             "glyImage": "glymage/c1d2ff0cc3cdc2ebe0d06b4f17cb49e2.svg",
             "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G64780OA",
             "height": 170,
-            "image_name": "3-4.png",
-            "image_path": "extracted_figures/images/3-4.png",
+            "image_name": "fig3-4.png",
+            "image_path": "extracted_figures/images/fig3-4.png",
             "linkexpl": "Extracted successfully using accession",
             "monos": [
               {
@@ -1735,13 +1700,13 @@
             "classlabel": "glycan",
             "composition_str": "GlcNAc(2)Man(3)",
             "confidence": 0.8810105919837952,
-            "extracted_image_path": "extracted_figures/extracted_images/3-5.png",
+            "extracted_image_path": "extracted_figures/extracted_images/fig3-5.png",
             "fig_glycan_count": 5,
             "glyImage": "glymage/7fcb66bfd7aea9bdd54046ff1ac08140.svg",
-            "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?ondemandtaskid=e6188fedbd21bc12233c1d4ce33e5b1db9722cfa0ef29cfab2e1",
+            "gnomeurl": "",
             "height": 121,
-            "image_name": "3-5.png",
-            "image_path": "extracted_figures/images/3-5.png",
+            "image_name": "fig3-5.png",
+            "image_path": "extracted_figures/images/fig3-5.png",
             "linkexpl": "Extracted structure using IUPAC.",
             "monos": [
               {
@@ -1929,7 +1894,7 @@
                 "width": 28
               }
             ],
-            "orientation": "LR",
+            "orientation": "BT",
             "rejected_roots": [
               {
                 "bbox": [
@@ -2148,13 +2113,13 @@
             "classlabel": "glycan",
             "composition_str": "GlcNAc(4)Man(5)Gal(1)",
             "confidence": 0.9891855120658875,
-            "extracted_image_path": "extracted_figures/extracted_images/3-6.png",
+            "extracted_image_path": "extracted_figures/extracted_images/fig3-6.png",
             "fig_glycan_count": 6,
             "glyImage": "glymage/754d0eda8a7a117ad6535f43beb36643.svg",
             "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G90872DS",
             "height": 215,
-            "image_name": "3-6.png",
-            "image_path": "extracted_figures/images/3-6.png",
+            "image_name": "fig3-6.png",
+            "image_path": "extracted_figures/images/fig3-6.png",
             "linkexpl": "Extracted successfully using accession",
             "monos": [
               {
@@ -2965,13 +2930,13 @@
             "classlabel": "glycan",
             "composition_str": "GlcNAc(3)Man(3)",
             "confidence": 0.98978590965271,
-            "extracted_image_path": "extracted_figures/extracted_images/3-7.png",
+            "extracted_image_path": "extracted_figures/extracted_images/fig3-7.png",
             "fig_glycan_count": 7,
             "glyImage": "glymage/1a92e3bea22dca4363ac490b67bc72af.svg",
-            "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?ondemandtaskid=b853cca5d03d61753542a592aae89c3eb9722cfa0ef29cfab2e1",
+            "gnomeurl": "",
             "height": 130,
-            "image_name": "3-7.png",
-            "image_path": "extracted_figures/images/3-7.png",
+            "image_name": "fig3-7.png",
+            "image_path": "extracted_figures/images/fig3-7.png",
             "linkexpl": "Extracted structure using IUPAC.",
             "monos": [
               {
@@ -3198,7 +3163,7 @@
                 "width": 29
               }
             ],
-            "orientation": "RL",
+            "orientation": "BT",
             "rejected_roots": [
               {
                 "bbox": [
@@ -3438,13 +3403,13 @@
             "classlabel": "glycan",
             "composition_str": "GlcNAc(6)Man(3)Gal(2)",
             "confidence": 0.9100548028945923,
-            "extracted_image_path": "extracted_figures/extracted_images/3-8.png",
+            "extracted_image_path": "extracted_figures/extracted_images/fig3-8.png",
             "fig_glycan_count": 8,
             "glyImage": "glymage/090aa9323308e62d08ffc30566a4a298.svg",
             "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G38695AD",
             "height": 251,
-            "image_name": "3-8.png",
-            "image_path": "extracted_figures/images/3-8.png",
+            "image_name": "fig3-8.png",
+            "image_path": "extracted_figures/images/fig3-8.png",
             "linkexpl": "Extracted successfully using accession",
             "monos": [
               {
@@ -4310,13 +4275,13 @@
             "classlabel": "glycan",
             "composition_str": "GlcNAc(3)Man(3)NeuGc(1)",
             "confidence": 0.9887757897377014,
-            "extracted_image_path": "extracted_figures/extracted_images/3-9.png",
+            "extracted_image_path": "extracted_figures/extracted_images/fig3-9.png",
             "fig_glycan_count": 9,
             "glyImage": "glymage/625a0409c67a001a65859541b7d96684.svg",
-            "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?ondemandtaskid=9319fa89059d98a9d1ac060cc6f56960b9722cfa0ef29cfab2e1",
+            "gnomeurl": "",
             "height": 161,
-            "image_name": "3-9.png",
-            "image_path": "extracted_figures/images/3-9.png",
+            "image_name": "fig3-9.png",
+            "image_path": "extracted_figures/images/fig3-9.png",
             "linkexpl": "Extracted structure using IUPAC.",
             "monos": [
               {
@@ -4583,7 +4548,7 @@
                 "width": 29
               }
             ],
-            "orientation": "LR",
+            "orientation": "BT",
             "rejected_roots": [
               {
                 "bbox": [
@@ -4880,13 +4845,13 @@
             "classlabel": "glycan",
             "composition_str": "GlcNAc(1)NeuAc(1)GalNAc(1)",
             "confidence": 0.8301288485527039,
-            "extracted_image_path": "extracted_figures/extracted_images/3-10.png",
+            "extracted_image_path": "extracted_figures/extracted_images/fig3-10.png",
             "fig_glycan_count": 10,
             "glyImage": "glymage/8d9eef309bad1927fcd6ff0ebe5dbefc.svg",
             "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G92400JZ",
             "height": 112,
-            "image_name": "3-10.png",
-            "image_path": "extracted_figures/images/3-10.png",
+            "image_name": "fig3-10.png",
+            "image_path": "extracted_figures/images/fig3-10.png",
             "linkexpl": "Extracted successfully using accession",
             "monos": [
               {
@@ -5175,10 +5140,8 @@
         "height": 2028,
         "image_count": 3,
         "image_number": 1,
-        "image_path": "extracted_figures/figures/3.png",
-        "merge_type": "figcap",
+        "image_path": "extracted_figures/figures/fig3.png",
         "page_height": 782.9860229492188,
-        "page_num": 8,
         "page_number": 8,
         "page_width": 593.9719848632812,
         "pdf_fig_bbox": [
@@ -5192,20 +5155,10 @@
         "width": 2005
       },
       {
-        "annotated_image_path": "extracted_figures/annotated_figures/4.png",
-        "bbox": [
-          45.918853759765625,
-          88.0,
-          548.112548828125,
-          730.9958477020264
-        ],
+        "annotated_image_path": "extracted_figures/annotated_figures/fig4.png",
         "caption": "Quantitative differences in the N-glycome of cardiac tissues (FFPE) from COVID-19(+) and COVID-19(\u2212) patients. A, compo- sitional analysis of N-glycans in cardiac tissue. Graphical results display output from differential expression analysis using Glynsight. Hex (H), HexNAc (N), Fuc (F), and Sia (S) are monosaccharide moieties that form glycan structures. Red and blue bars depict differences in relative abundance. Colored lines indicate the addition of monosaccharide moieties to a given composition. A downward trend (blue bar) in HnN2, corresponding to paucimannose, and oligo mannose indicates reduced levels, and an upward trend (red bars) corresponding to HnNnFS for complex and hybrid structures, indicates an overall increase in abundance. B, Volcano plot displaying N-glycan structures that are most signi\ufb01cantly different between cardiac tissues from each patient group.Multiomics Reveals N-Glycan Alterations in COVID-19 Hearts",
-        "center": [
-          297.0157012939453,
-          409.4979238510132
-        ],
         "figure_number": "4",
-        "file_name": "4.png",
+        "file_name": "fig4.png",
         "glycans": [
           {
             "IUPAC": "GlcNAc?1-?GlcNAc?1-?Man",
@@ -5225,13 +5178,13 @@
             "classlabel": "glycan",
             "composition_str": "GlcNAc(2)Man(1)",
             "confidence": 0.6132580637931824,
-            "extracted_image_path": "extracted_figures/extracted_images/4-1.png",
+            "extracted_image_path": "extracted_figures/extracted_images/fig4-1.png",
             "fig_glycan_count": 1,
             "glyImage": "glymage/ba32e559e8dc22ebb3b7c58a984cb617.svg",
             "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G67397CY",
             "height": 118,
-            "image_name": "4-1.png",
-            "image_path": "extracted_figures/images/4-1.png",
+            "image_name": "fig4-1.png",
+            "image_path": "extracted_figures/images/fig4-1.png",
             "linkexpl": "Extracted successfully using accession",
             "monos": [
               {
@@ -5337,7 +5290,7 @@
                 "width": 23
               }
             ],
-            "orientation": "TB",
+            "orientation": "BT",
             "rejected_roots": [
               {
                 "bbox": [
@@ -5478,13 +5431,13 @@
             "classlabel": "glycan",
             "composition_str": "GlcNAc(2)Man(3)",
             "confidence": 0.8916015625,
-            "extracted_image_path": "extracted_figures/extracted_images/4-2.png",
+            "extracted_image_path": "extracted_figures/extracted_images/fig4-2.png",
             "fig_glycan_count": 2,
             "glyImage": "glymage/b330a9968eac6837f77cfcc6b93b3271.svg",
             "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G17271TR",
             "height": 188,
-            "image_name": "4-2.png",
-            "image_path": "extracted_figures/images/4-2.png",
+            "image_name": "fig4-2.png",
+            "image_path": "extracted_figures/images/fig4-2.png",
             "linkexpl": "Extracted successfully using accession",
             "monos": [
               {
@@ -5873,13 +5826,13 @@
             "classlabel": "glycan",
             "composition_str": "GlcNAc(2)Man(3)",
             "confidence": 0.9765992760658264,
-            "extracted_image_path": "extracted_figures/extracted_images/4-3.png",
+            "extracted_image_path": "extracted_figures/extracted_images/fig4-3.png",
             "fig_glycan_count": 3,
             "glyImage": "glymage/b330a9968eac6837f77cfcc6b93b3271.svg",
             "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G17271TR",
             "height": 186,
-            "image_name": "4-3.png",
-            "image_path": "extracted_figures/images/4-3.png",
+            "image_name": "fig4-3.png",
+            "image_path": "extracted_figures/images/fig4-3.png",
             "linkexpl": "Extracted successfully using accession",
             "monos": [
               {
@@ -6286,13 +6239,13 @@
             "classlabel": "glycan",
             "composition_str": "GlcNAc(2)Fuc(1)Man(3)",
             "confidence": 0.9329266548156738,
-            "extracted_image_path": "extracted_figures/extracted_images/4-4.png",
+            "extracted_image_path": "extracted_figures/extracted_images/fig4-4.png",
             "fig_glycan_count": 4,
             "glyImage": "glymage/bc104edecf6e4251b48ae2355190fd27.svg",
             "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G94017LW",
             "height": 188,
-            "image_name": "4-4.png",
-            "image_path": "extracted_figures/images/4-4.png",
+            "image_name": "fig4-4.png",
+            "image_path": "extracted_figures/images/fig4-4.png",
             "linkexpl": "Extracted successfully using accession",
             "monos": [
               {
@@ -6760,13 +6713,13 @@
             "classlabel": "glycan",
             "composition_str": "GlcNAc(2)Fuc(1)Man(3)",
             "confidence": 0.9174102544784546,
-            "extracted_image_path": "extracted_figures/extracted_images/4-5.png",
+            "extracted_image_path": "extracted_figures/extracted_images/fig4-5.png",
             "fig_glycan_count": 5,
             "glyImage": "glymage/bc104edecf6e4251b48ae2355190fd27.svg",
             "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G94017LW",
             "height": 183,
-            "image_name": "4-5.png",
-            "image_path": "extracted_figures/images/4-5.png",
+            "image_name": "fig4-5.png",
+            "image_path": "extracted_figures/images/fig4-5.png",
             "linkexpl": "Extracted successfully using accession",
             "monos": [
               {
@@ -7234,13 +7187,13 @@
             "classlabel": "glycan",
             "composition_str": "GlcNAc(2)Man(4)",
             "confidence": 0.9915726184844971,
-            "extracted_image_path": "extracted_figures/extracted_images/4-6.png",
+            "extracted_image_path": "extracted_figures/extracted_images/fig4-6.png",
             "fig_glycan_count": 6,
             "glyImage": "glymage/b0b0bdd42cb5fa107ba055019c040dba.svg",
             "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G58858DY",
             "height": 163,
-            "image_name": "4-6.png",
-            "image_path": "extracted_figures/images/4-6.png",
+            "image_name": "fig4-6.png",
+            "image_path": "extracted_figures/images/fig4-6.png",
             "linkexpl": "Extracted successfully using accession",
             "monos": [
               {
@@ -7726,13 +7679,13 @@
             "classlabel": "glycan",
             "composition_str": "GlcNAc(2)Man(4)",
             "confidence": 0.962022602558136,
-            "extracted_image_path": "extracted_figures/extracted_images/4-7.png",
+            "extracted_image_path": "extracted_figures/extracted_images/fig4-7.png",
             "fig_glycan_count": 7,
             "glyImage": "glymage/b0b0bdd42cb5fa107ba055019c040dba.svg",
             "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G58858DY",
             "height": 176,
-            "image_name": "4-7.png",
-            "image_path": "extracted_figures/images/4-7.png",
+            "image_name": "fig4-7.png",
+            "image_path": "extracted_figures/images/fig4-7.png",
             "linkexpl": "Extracted successfully using accession",
             "monos": [
               {
@@ -8200,13 +8153,13 @@
             "classlabel": "glycan",
             "composition_str": "GlcNAc(2)Fuc(1)Man(3)",
             "confidence": 0.9935038685798645,
-            "extracted_image_path": "extracted_figures/extracted_images/4-8.png",
+            "extracted_image_path": "extracted_figures/extracted_images/fig4-8.png",
             "fig_glycan_count": 8,
             "glyImage": "glymage/0d3a617edcb861638040cb1ffc64b4d7.svg",
             "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G27815BZ",
             "height": 219,
-            "image_name": "4-8.png",
-            "image_path": "extracted_figures/images/4-8.png",
+            "image_name": "fig4-8.png",
+            "image_path": "extracted_figures/images/fig4-8.png",
             "linkexpl": "Extracted successfully using accession",
             "monos": [
               {
@@ -8673,13 +8626,13 @@
             "classlabel": "glycan",
             "composition_str": "GlcNAc(2)Man(6)",
             "confidence": 0.9783626198768616,
-            "extracted_image_path": "extracted_figures/extracted_images/4-9.png",
+            "extracted_image_path": "extracted_figures/extracted_images/fig4-9.png",
             "fig_glycan_count": 9,
             "glyImage": "glymage/c1d2ff0cc3cdc2ebe0d06b4f17cb49e2.svg",
             "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G64780OA",
             "height": 201,
-            "image_name": "4-9.png",
-            "image_path": "extracted_figures/images/4-9.png",
+            "image_name": "fig4-9.png",
+            "image_path": "extracted_figures/images/fig4-9.png",
             "linkexpl": "Extracted successfully using accession",
             "monos": [
               {
@@ -9324,13 +9277,13 @@
             "classlabel": "glycan",
             "composition_str": "GlcNAc(2)Man(3)",
             "confidence": 0.9923228621482849,
-            "extracted_image_path": "extracted_figures/extracted_images/4-10.png",
+            "extracted_image_path": "extracted_figures/extracted_images/fig4-10.png",
             "fig_glycan_count": 10,
             "glyImage": "glymage/0c4ac75ab86f430ad5253225b60a0537.svg",
             "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G03833LE",
             "height": 183,
-            "image_name": "4-10.png",
-            "image_path": "extracted_figures/images/4-10.png",
+            "image_name": "fig4-10.png",
+            "image_path": "extracted_figures/images/fig4-10.png",
             "linkexpl": "Extracted successfully using accession",
             "monos": [
               {
@@ -9718,13 +9671,13 @@
             "classlabel": "glycan",
             "composition_str": "GlcNAc(2)Man(7)Glc(1)",
             "confidence": 0.9973583221435547,
-            "extracted_image_path": "extracted_figures/extracted_images/4-11.png",
+            "extracted_image_path": "extracted_figures/extracted_images/fig4-11.png",
             "fig_glycan_count": 11,
             "glyImage": "glymage/ce31ee960e50d87369a0a85766378ba4.svg",
             "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G29250KT",
             "height": 202,
-            "image_name": "4-11.png",
-            "image_path": "extracted_figures/images/4-11.png",
+            "image_name": "fig4-11.png",
+            "image_path": "extracted_figures/images/fig4-11.png",
             "linkexpl": "Extracted successfully using accession",
             "monos": [
               {
@@ -10511,13 +10464,13 @@
             "classlabel": "glycan",
             "composition_str": "GlcNAc(3)NeuAc(1)Fuc(1)Man(5)Gal(1)",
             "confidence": 0.9978776574134827,
-            "extracted_image_path": "extracted_figures/extracted_images/4-12.png",
+            "extracted_image_path": "extracted_figures/extracted_images/fig4-12.png",
             "fig_glycan_count": 12,
             "glyImage": "glymage/7d66542a76efaa4438a640a280f268c9.svg",
             "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G72404VA",
             "height": 211,
-            "image_name": "4-12.png",
-            "image_path": "extracted_figures/images/4-12.png",
+            "image_name": "fig4-12.png",
+            "image_path": "extracted_figures/images/fig4-12.png",
             "linkexpl": "Extracted successfully using accession",
             "monos": [
               {
@@ -11383,13 +11336,13 @@
             "classlabel": "glycan",
             "composition_str": "GlcNAc(4)Fuc(1)Man(3)GalNAc(1)Gal(1)",
             "confidence": 0.9583964347839355,
-            "extracted_image_path": "extracted_figures/extracted_images/4-13.png",
+            "extracted_image_path": "extracted_figures/extracted_images/fig4-13.png",
             "fig_glycan_count": 13,
             "glyImage": "glymage/29edc9bf4feb4fe34672278c69731a34.svg",
             "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G53113PI",
             "height": 188,
-            "image_name": "4-13.png",
-            "image_path": "extracted_figures/images/4-13.png",
+            "image_name": "fig4-13.png",
+            "image_path": "extracted_figures/images/fig4-13.png",
             "linkexpl": "Extracted successfully using accession",
             "monos": [
               {
@@ -12176,13 +12129,13 @@
             "classlabel": "glycan",
             "composition_str": "GlcNAc(4)Fuc(1)Man(3)GalNAc(2)",
             "confidence": 0.9084187150001526,
-            "extracted_image_path": "extracted_figures/extracted_images/4-14.png",
+            "extracted_image_path": "extracted_figures/extracted_images/fig4-14.png",
             "fig_glycan_count": 14,
             "glyImage": "glymage/be98b9f43eb5d9552bef398b92601f7d.svg",
             "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G09276VG",
             "height": 185,
-            "image_name": "4-14.png",
-            "image_path": "extracted_figures/images/4-14.png",
+            "image_name": "fig4-14.png",
+            "image_path": "extracted_figures/images/fig4-14.png",
             "linkexpl": "Extracted successfully using accession",
             "monos": [
               {
@@ -12955,10 +12908,8 @@
         "height": 2680,
         "image_count": 4,
         "image_number": 1,
-        "image_path": "extracted_figures/figures/4.png",
-        "merge_type": "figcap",
+        "image_path": "extracted_figures/figures/fig4.png",
         "page_height": 782.9860229492188,
-        "page_num": 9,
         "page_number": 9,
         "page_width": 593.9719848632812,
         "pdf_fig_bbox": [
@@ -12972,20 +12923,10 @@
         "width": 2093
       },
       {
-        "annotated_image_path": "extracted_figures/annotated_figures/5.png",
-        "bbox": [
-          45.919677734375,
-          65.97244262695312,
-          548.1083984375,
-          660.8925457000732
-        ],
+        "annotated_image_path": "extracted_figures/annotated_figures/fig5.png",
         "caption": "Quantitative differences in the N-glycome of isolated cardiomyocytes from COVID-19(+) and COVID-19(\u2212) patients. A, compositional analysis of N-glycans from cardiomyocytes. Graphical results display output from differential expression analysis using Glynsight. Hex (H), HexNAc (N), Fuc (F), and Sia (S) are monosaccharide moieties that form glycan structures. Red and blue bars depict differences in relative abundance. Colored lines indicate the addition of monosaccharide moieties to a given composition. A mixed trend in abundance was observed. Overall changes were indicative of increased complex type structures. B, Volcano plot displaying N-glycan structures that are most signi\ufb01cantly different between isolated cardiomyocytes from each patient group.Multiomics Reveals N-Glycan Alterations in COVID-19 Hearts",
-        "center": [
-          297.0140380859375,
-          363.4324941635132
-        ],
         "figure_number": "5",
-        "file_name": "5.png",
+        "file_name": "fig5.png",
         "glycans": [
           {
             "IUPAC": "Fuc?1-?(Man?1-?GlcNAc?1-?)GlcNAc",
@@ -13005,13 +12946,13 @@
             "classlabel": "glycan",
             "composition_str": "GlcNAc(2)Fuc(1)Man(1)",
             "confidence": 0.939997673034668,
-            "extracted_image_path": "extracted_figures/extracted_images/5-1.png",
+            "extracted_image_path": "extracted_figures/extracted_images/fig5-1.png",
             "fig_glycan_count": 1,
             "glyImage": "glymage/78852fa728fd2f04f50f4403749b13a0.svg",
             "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G25347ZR",
             "height": 149,
-            "image_name": "5-1.png",
-            "image_path": "extracted_figures/images/5-1.png",
+            "image_name": "fig5-1.png",
+            "image_path": "extracted_figures/images/fig5-1.png",
             "linkexpl": "Extracted successfully using accession",
             "monos": [
               {
@@ -13319,13 +13260,13 @@
             "classlabel": "glycan",
             "composition_str": "GlcNAc(3)NeuAc(1)Man(4)GalNAc(1)",
             "confidence": 0.9752163887023926,
-            "extracted_image_path": "extracted_figures/extracted_images/5-2.png",
+            "extracted_image_path": "extracted_figures/extracted_images/fig5-2.png",
             "fig_glycan_count": 2,
             "glyImage": "glymage/d6f611a118b6ed982acb99215dc38898.svg",
             "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G89163OE",
             "height": 217,
-            "image_name": "5-2.png",
-            "image_path": "extracted_figures/images/5-2.png",
+            "image_name": "fig5-2.png",
+            "image_path": "extracted_figures/images/fig5-2.png",
             "linkexpl": "Extracted successfully using accession",
             "monos": [
               {
@@ -14031,13 +13972,13 @@
             "classlabel": "glycan",
             "composition_str": "GlcNAc(3)NeuAc(1)Fuc(1)Man(4)GalNAc(1)",
             "confidence": 0.9939393401145935,
-            "extracted_image_path": "extracted_figures/extracted_images/5-3.png",
+            "extracted_image_path": "extracted_figures/extracted_images/fig5-3.png",
             "fig_glycan_count": 3,
             "glyImage": "glymage/50842f81777f1181ed62f24626873aa1.svg",
-            "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?ondemandtaskid=41ef5d91888ac065b8dd4f6738942af0b9722cfa0ef29cfab2e1",
+            "gnomeurl": "",
             "height": 222,
-            "image_name": "5-3.png",
-            "image_path": "extracted_figures/images/5-3.png",
+            "image_name": "fig5-3.png",
+            "image_path": "extracted_figures/images/fig5-3.png",
             "linkexpl": "Extracted structure using IUPAC.",
             "monos": [
               {
@@ -14822,13 +14763,13 @@
             "classlabel": "glycan",
             "composition_str": "GlcNAc(3)NeuAc(1)Fuc(1)Man(5)GalNAc(1)",
             "confidence": 0.9976463913917542,
-            "extracted_image_path": "extracted_figures/extracted_images/5-4.png",
+            "extracted_image_path": "extracted_figures/extracted_images/fig5-4.png",
             "fig_glycan_count": 4,
             "glyImage": "glymage/7f19cfd69d8538be3c900af0ff4ecc2e.svg",
-            "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?ondemandtaskid=dd6fc6821d4ec8a23065e9ea4c477254b9722cfa0ef29cfab2e1",
+            "gnomeurl": "",
             "height": 217,
-            "image_name": "5-4.png",
-            "image_path": "extracted_figures/images/5-4.png",
+            "image_name": "fig5-4.png",
+            "image_path": "extracted_figures/images/fig5-4.png",
             "linkexpl": "Extracted structure using IUPAC.",
             "monos": [
               {
@@ -15720,13 +15661,13 @@
             "classlabel": "glycan",
             "composition_str": "GlcNAc(6)Fuc(1)Man(3)Gal(2)",
             "confidence": 0.9905202984809875,
-            "extracted_image_path": "extracted_figures/extracted_images/5-5.png",
+            "extracted_image_path": "extracted_figures/extracted_images/fig5-5.png",
             "fig_glycan_count": 5,
             "glyImage": "glymage/a0bb150be0e7b24d35c4c06bac7cc1c0.svg",
             "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G67634VG",
             "height": 223,
-            "image_name": "5-5.png",
-            "image_path": "extracted_figures/images/5-5.png",
+            "image_name": "fig5-5.png",
+            "image_path": "extracted_figures/images/fig5-5.png",
             "linkexpl": "Extracted successfully using accession",
             "monos": [
               {
@@ -16671,13 +16612,13 @@
             "classlabel": "glycan",
             "composition_str": "GlcNAc(4)NeuAc(1)Fuc(1)Man(3)GalNAc(1)",
             "confidence": 0.8545297980308533,
-            "extracted_image_path": "extracted_figures/extracted_images/5-6.png",
+            "extracted_image_path": "extracted_figures/extracted_images/fig5-6.png",
             "fig_glycan_count": 6,
             "glyImage": "glymage/63741ce353be012b9b98291d6734ef6f.svg",
             "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G83257QY",
             "height": 202,
-            "image_name": "5-6.png",
-            "image_path": "extracted_figures/images/5-6.png",
+            "image_name": "fig5-6.png",
+            "image_path": "extracted_figures/images/fig5-6.png",
             "linkexpl": "Extracted successfully using accession",
             "monos": [
               {
@@ -17464,13 +17405,13 @@
             "classlabel": "glycan",
             "composition_str": "GlcNAc(4)Fuc(1)Man(3)GalNAc(2)",
             "confidence": 0.8550198674201965,
-            "extracted_image_path": "extracted_figures/extracted_images/5-7.png",
+            "extracted_image_path": "extracted_figures/extracted_images/fig5-7.png",
             "fig_glycan_count": 7,
             "glyImage": "glymage/be98b9f43eb5d9552bef398b92601f7d.svg",
             "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G09276VG",
             "height": 257,
-            "image_name": "5-7.png",
-            "image_path": "extracted_figures/images/5-7.png",
+            "image_name": "fig5-7.png",
+            "image_path": "extracted_figures/images/fig5-7.png",
             "linkexpl": "Extracted successfully using accession",
             "monos": [
               {
@@ -18257,13 +18198,13 @@
             "classlabel": "glycan",
             "composition_str": "GlcNAc(5)Man(3)Gal(3)",
             "confidence": 0.9837486743927002,
-            "extracted_image_path": "extracted_figures/extracted_images/5-8.png",
+            "extracted_image_path": "extracted_figures/extracted_images/fig5-8.png",
             "fig_glycan_count": 8,
             "glyImage": "glymage/8a9b47776f70fc33bf251a75e42470b4.svg",
             "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G91496ML",
             "height": 246,
-            "image_name": "5-8.png",
-            "image_path": "extracted_figures/images/5-8.png",
+            "image_name": "fig5-8.png",
+            "image_path": "extracted_figures/images/fig5-8.png",
             "linkexpl": "Extracted successfully using accession",
             "monos": [
               {
@@ -19130,13 +19071,13 @@
             "classlabel": "glycan",
             "composition_str": "GlcNAc(4)Fuc(1)Man(3)",
             "confidence": 0.9520911574363708,
-            "extracted_image_path": "extracted_figures/extracted_images/5-9.png",
+            "extracted_image_path": "extracted_figures/extracted_images/fig5-9.png",
             "fig_glycan_count": 9,
             "glyImage": "glymage/7cc4860879d0d7c54632ab1eeb322085.svg",
             "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G72398VP",
             "height": 268,
-            "image_name": "5-9.png",
-            "image_path": "extracted_figures/images/5-9.png",
+            "image_name": "fig5-9.png",
+            "image_path": "extracted_figures/images/fig5-9.png",
             "linkexpl": "Extracted successfully using accession",
             "monos": [
               {
@@ -19789,13 +19730,13 @@
             "classlabel": "glycan",
             "composition_str": "GlcNAc(4)Fuc(1)Man(3)",
             "confidence": 0.9662706255912781,
-            "extracted_image_path": "extracted_figures/extracted_images/5-10.png",
+            "extracted_image_path": "extracted_figures/extracted_images/fig5-10.png",
             "fig_glycan_count": 10,
             "glyImage": "glymage/7cc4860879d0d7c54632ab1eeb322085.svg",
             "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G72398VP",
             "height": 266,
-            "image_name": "5-10.png",
-            "image_path": "extracted_figures/images/5-10.png",
+            "image_name": "fig5-10.png",
+            "image_path": "extracted_figures/images/fig5-10.png",
             "linkexpl": "Extracted successfully using accession",
             "monos": [
               {
@@ -20434,10 +20375,8 @@
         "height": 2480,
         "image_count": 5,
         "image_number": 1,
-        "image_path": "extracted_figures/figures/5.png",
-        "merge_type": "figcap",
+        "image_path": "extracted_figures/figures/fig5.png",
         "page_height": 782.9860229492188,
-        "page_num": 11,
         "page_number": 11,
         "page_width": 593.9719848632812,
         "pdf_fig_bbox": [
@@ -20451,20 +20390,10 @@
         "width": 2093
       },
       {
-        "annotated_image_path": "extracted_figures/annotated_figures/6.png",
-        "bbox": [
-          65.8419189453125,
-          80.9742431640625,
-          537.0309448242188,
-          363.6888427734375
-        ],
+        "annotated_image_path": "extracted_figures/annotated_figures/fig6.png",
         "caption": "Differences in FFPE tissue N-glycans that are independent of confounding variables. A, median normalized data were subjected to multivariate analysis to determine glycosylation changes independent of confounding factors such as age, sex, and comorbidities. Volcano plot represents differential abundance of glycans between COVID-19(\u2212) and COVID-19(+) groups. Paucimannoses were reduced exclusively due to COVID-19. B, heat map representing log2FC changes in expression of various enzymes in N-glycan biosynthesis obtained from snRNA-seq analysis (Fig. 1). LV-left ventricle, RV-right ventricle.",
-        "center": [
-          301.4364318847656,
-          222.33154296875
-        ],
         "figure_number": "6",
-        "file_name": "6.png",
+        "file_name": "fig6.png",
         "glycans": [
           {
             "IUPAC": "Man?1-?(Man?1-?)Man?1-?GlcNAc?1-?GlcNAc",
@@ -20484,13 +20413,13 @@
             "classlabel": "glycan",
             "composition_str": "GlcNAc(2)Man(3)",
             "confidence": 0.9913530945777893,
-            "extracted_image_path": "extracted_figures/extracted_images/6-1.png",
+            "extracted_image_path": "extracted_figures/extracted_images/fig6-1.png",
             "fig_glycan_count": 1,
             "glyImage": "glymage/0c4ac75ab86f430ad5253225b60a0537.svg",
             "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G03833LE",
             "height": 179,
-            "image_name": "6-1.png",
-            "image_path": "extracted_figures/images/6-1.png",
+            "image_name": "fig6-1.png",
+            "image_path": "extracted_figures/images/fig6-1.png",
             "linkexpl": "Extracted successfully using accession",
             "monos": [
               {
@@ -20878,13 +20807,13 @@
             "classlabel": "glycan",
             "composition_str": "GlcNAc(2)Man(1)",
             "confidence": 0.9600843191146851,
-            "extracted_image_path": "extracted_figures/extracted_images/6-2.png",
+            "extracted_image_path": "extracted_figures/extracted_images/fig6-2.png",
             "fig_glycan_count": 2,
             "glyImage": "glymage/6d1ab2caab8df4d6b80bfb8d73a5130f.svg",
             "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G64017CW",
             "height": 151,
-            "image_name": "6-2.png",
-            "image_path": "extracted_figures/images/6-2.png",
+            "image_name": "fig6-2.png",
+            "image_path": "extracted_figures/images/fig6-2.png",
             "linkexpl": "Extracted successfully using accession",
             "monos": [
               {
@@ -21131,13 +21060,13 @@
             "classlabel": "glycan",
             "composition_str": "GlcNAc(2)Man(2)",
             "confidence": 0.9489485621452332,
-            "extracted_image_path": "extracted_figures/extracted_images/6-3.png",
+            "extracted_image_path": "extracted_figures/extracted_images/fig6-3.png",
             "fig_glycan_count": 3,
             "glyImage": "glymage/99a4f114794fcbf6cb731e87249070b7.svg",
             "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G86427WL",
             "height": 125,
-            "image_name": "6-3.png",
-            "image_path": "extracted_figures/images/6-3.png",
+            "image_name": "fig6-3.png",
+            "image_path": "extracted_figures/images/fig6-3.png",
             "linkexpl": "Extracted successfully using accession",
             "monos": [
               {
@@ -21446,13 +21375,13 @@
             "classlabel": "glycan",
             "composition_str": "GlcNAc(2)Man(2)",
             "confidence": 0.9652849435806274,
-            "extracted_image_path": "extracted_figures/extracted_images/6-4.png",
+            "extracted_image_path": "extracted_figures/extracted_images/fig6-4.png",
             "fig_glycan_count": 4,
             "glyImage": "glymage/99a4f114794fcbf6cb731e87249070b7.svg",
             "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G86427WL",
             "height": 128,
-            "image_name": "6-4.png",
-            "image_path": "extracted_figures/images/6-4.png",
+            "image_name": "fig6-4.png",
+            "image_path": "extracted_figures/images/fig6-4.png",
             "linkexpl": "Extracted successfully using accession",
             "monos": [
               {
@@ -21761,13 +21690,13 @@
             "classlabel": "glycan",
             "composition_str": "GlcNAc(2)Man(3)",
             "confidence": 0.9496902823448181,
-            "extracted_image_path": "extracted_figures/extracted_images/6-5.png",
+            "extracted_image_path": "extracted_figures/extracted_images/fig6-5.png",
             "fig_glycan_count": 5,
             "glyImage": "glymage/b330a9968eac6837f77cfcc6b93b3271.svg",
             "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G17271TR",
             "height": 151,
-            "image_name": "6-5.png",
-            "image_path": "extracted_figures/images/6-5.png",
+            "image_name": "fig6-5.png",
+            "image_path": "extracted_figures/images/fig6-5.png",
             "linkexpl": "Extracted successfully using accession",
             "monos": [
               {
@@ -22174,13 +22103,13 @@
             "classlabel": "glycan",
             "composition_str": "GlcNAc(2)Man(1)",
             "confidence": 0.9118463397026062,
-            "extracted_image_path": "extracted_figures/extracted_images/6-6.png",
+            "extracted_image_path": "extracted_figures/extracted_images/fig6-6.png",
             "fig_glycan_count": 6,
             "glyImage": "glymage/6d1ab2caab8df4d6b80bfb8d73a5130f.svg",
             "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G64017CW",
             "height": 146,
-            "image_name": "6-6.png",
-            "image_path": "extracted_figures/images/6-6.png",
+            "image_name": "fig6-6.png",
+            "image_path": "extracted_figures/images/fig6-6.png",
             "linkexpl": "Extracted successfully using accession",
             "monos": [
               {
@@ -22409,13 +22338,13 @@
             "classlabel": "glycan",
             "composition_str": "GlcNAc(2)Fuc(1)Man(3)",
             "confidence": 0.9146042466163635,
-            "extracted_image_path": "extracted_figures/extracted_images/6-7.png",
+            "extracted_image_path": "extracted_figures/extracted_images/fig6-7.png",
             "fig_glycan_count": 7,
             "glyImage": "glymage/3371ecf0d8ee61d89cbc7be1146e63c6.svg",
             "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G94017LW",
             "height": 129,
-            "image_name": "6-7.png",
-            "image_path": "extracted_figures/images/6-7.png",
+            "image_name": "fig6-7.png",
+            "image_path": "extracted_figures/images/fig6-7.png",
             "linkexpl": "Extracted successfully using accession",
             "monos": [
               {
@@ -22883,13 +22812,13 @@
             "classlabel": "glycan",
             "composition_str": "GlcNAc(2)Fuc(1)Man(3)",
             "confidence": 0.960875928401947,
-            "extracted_image_path": "extracted_figures/extracted_images/6-8.png",
+            "extracted_image_path": "extracted_figures/extracted_images/fig6-8.png",
             "fig_glycan_count": 8,
             "glyImage": "glymage/3371ecf0d8ee61d89cbc7be1146e63c6.svg",
             "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G94017LW",
             "height": 142,
-            "image_name": "6-8.png",
-            "image_path": "extracted_figures/images/6-8.png",
+            "image_name": "fig6-8.png",
+            "image_path": "extracted_figures/images/fig6-8.png",
             "linkexpl": "Extracted successfully using accession",
             "monos": [
               {
@@ -23357,13 +23286,13 @@
             "classlabel": "glycan",
             "composition_str": "GlcNAc(2)Fuc(1)Man(1)",
             "confidence": 0.6437325477600098,
-            "extracted_image_path": "extracted_figures/extracted_images/6-9.png",
+            "extracted_image_path": "extracted_figures/extracted_images/fig6-9.png",
             "fig_glycan_count": 9,
             "glyImage": "glymage/b33cb18f486444dbdd1cf3168fa7f06e.svg",
             "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G25347ZR",
             "height": 160,
-            "image_name": "6-9.png",
-            "image_path": "extracted_figures/images/6-9.png",
+            "image_name": "fig6-9.png",
+            "image_path": "extracted_figures/images/fig6-9.png",
             "linkexpl": "Extracted successfully using accession",
             "monos": [
               {
@@ -23657,10 +23586,8 @@
         "height": 1179,
         "image_count": 6,
         "image_number": 1,
-        "image_path": "extracted_figures/figures/6.png",
-        "merge_type": "figcap",
+        "image_path": "extracted_figures/figures/fig6.png",
         "page_height": 782.9860229492188,
-        "page_num": 12,
         "page_number": 12,
         "page_width": 593.9719848632812,
         "pdf_fig_bbox": [
@@ -23674,12 +23601,13 @@
         "width": 1964
       }
     ],
-    "job_type": "PDFJob",
+    "annotated_pdf_file": "figcap_example.annotated.pdf",
+    "annotated_tsv_file": "figcap_example.annotated.tsv",
     "citation": "Subramanian S P, Wojtkiewicz M, Yu F, Castro C, Schuette E N, Rodriguez-Paar J, Churko J, Renavikar P, Anderson D, Mahr C, Gundry R L. Integrated Multiomics Reveals Alterations in Paucimannose and Complex Type N-Glycans in Cardiac Tissue of Patients with COVID-19. Molecular & Cellular Proteomics (MCP) 2025; 24(4): 6-14.",
     "pmid": "39988192"
   },
-  "start_time": 1773173923.6772606,
-  "end_time": 1773174016.6760328,
-  "runtime": 92.99877214431763,
+  "start_time": 1779465733.2119715,
+  "end_time": 1779465850.0320587,
+  "runtime": 116.82008719444275,
   "error": []
 }
