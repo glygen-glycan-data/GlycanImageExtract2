@@ -152,13 +152,8 @@ class GlyImageExtractor(APIFramework):
             self.submission_mode = 'URL'
         elif self.submission_type == 'Manuscript' and pmid:
             if pmid.endswith('.pdf'):
-                self.submission_mode = 'PMID-PDF'
                 pmid = pmid.split('.', 1)[0]
-            else:
-                # Treating a PMID submission (from frontend) as a PMID-PDF submission
-                # self.submission_mode = 'PMID'
-                self.submission_mode = 'PMID-PDF'
-
+            self.submission_mode = 'PMID-PDF'  # defaulting every pmid submission to PMID-PDF as mode - which is synthetic pdf cretaion and annotation
         else:
             raise APIParameterError("No input file: Upload a file/image, paste a URL or submit PMID")
 
@@ -174,7 +169,7 @@ class GlyImageExtractor(APIFramework):
                 processor = 'PDFJob' 
             else:
                 if not p.get("processor"):
-                    raise APIParameterError("processor from the original task is required")
+                    raise APIParameterError("processor name from the original task is required")
                 processor = p['processor']
         elif self.submission_type == "Simple Glycan Image":
             processor = 'SimpleImageJob'
