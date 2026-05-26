@@ -321,7 +321,7 @@ class ExtractorClient(APIFrameworkClient):
         task = dict(submission_type=submission_type,pmid=pmid)
         return self.submit(task=task,request="file_upload")
     
-    def submit_local(self,submission_type,filepath,submission_mode='Local',processor=None):
+    def submit_local(self,submission_type,filepath,submission_mode='Local',processor=None, **kwargs):
         assert submission_type in ("Manuscript",
                         "Multi-Glycan Image",
                         "Simple Glycan Image")
@@ -330,15 +330,16 @@ class ExtractorClient(APIFrameworkClient):
         task = dict(submission_type=submission_type,
             filePath=filepath,
             submission_mode=submission_mode,
-            processor=processor
+            processor=processor,
+            **kwargs
         )
         return self.submit(task=task,request="file_upload")
     
-    def submit_url(self,submission_type,url):
+    def submit_url(self,submission_type,url,**kwargs):
         assert submission_type in ("Manuscript",
                         "Multi-Glycan Image",
                         "Simple Glycan Image")
-        task = dict(submission_type=submission_type,fileURL=url)
+        task = dict(submission_type=submission_type,fileURL=url, **kwargs)
         return self.submit(task=task,request="file_upload")
     
     def submit_file(self,submission_type,filename):

@@ -23,6 +23,7 @@ if len(sys.argv) > 1:
 
 tasks = []
 filetasks=0
+pmidtasks=0
 for pat in patterns:
   for resultfile in sorted(glob.glob("static/examples/%s/results.json"%(pat,))):
     basedir = os.path.split(resultfile)[0]
@@ -37,23 +38,58 @@ for pat in patterns:
     submission_mode = submission_detail["submission_mode"]
 
     exampledir = os.path.split(basedir)[1]
-    if submission_detail.get('pmid'):
-        pmid = submission_detail['pmid']
-        aspdf = (submission_mode == "PMID-PDF")
-        tasks.append((exampledir,extractor.submit_pmid(submission_type,pmid,aspdf)))
+
+    processor = submission_detail.get("processor")
+    if not processor:
+        print(f"Skip {exampledir}: missing processor in submission_detail", file=sys.stderr)
+        continue
+    
+    pmid = None
+    is_pmid = bool(submission_detail.get("pmid"))
+
+    if is_pmid:
+        pmid = submission_detail["pmid"]
+        idx = pmidtasks % 3
     else:
-        if filetasks % 3 == 0:
-            tasks.append((exampledir,extractor.submit_file(submission_type,inputpath)))
-        elif filetasks % 3 == 1:
+        idx = filetasks % 3
+
+    if idx == 0:
+        # file / PMID 
+        if is_pmid: 
+            aspdf = submission_mode == "PMID-PDF"
+            tasks.append((exampledir, extractor.submit_pmid(submission_type, pmid, aspdf)))
+        else:
+            tasks.append((exampledir, extractor.submit_file(submission_type, inputpath)))
+
+    elif idx == 1:
+        # Local
+        if is_pmid:
+            tasks.append((exampledir, extractor.submit_local(
+                submission_type,
+                inputpath,
+                submission_mode=submission_detail['submission_mode'],   # provide the tasks original submission mode - so that reanalyze can make some helpful distinctions for PMID based jobs for Local submissions
+                processor=processor,
+                pmid=pmid,
+            )))
+        else:
             tasks.append((exampledir,extractor.submit_local(
                 submission_type,
                 inputpath,
                 submission_mode='Local',
                 processor=submission_detail['processor']
             )))
-        else:
-            url = extractor.makeurl(inputpath)
-            tasks.append((exampledir,extractor.submit_url(submission_type,url)))
+
+    else:
+        # URL
+        url = extractor.makeurl(inputpath)
+        kwargs = {}
+        if is_pmid:
+            kwargs["pmid"] = pmid
+        tasks.append((exampledir,extractor.submit_url(submission_type,url, **kwargs)))
+
+    if is_pmid:
+        pmidtasks += 1
+    else:
         filetasks += 1
     print("Example %s submitted (%s). "%(exampledir,tasks[-1][1]))
     time.sleep(1)
