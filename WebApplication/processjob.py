@@ -179,7 +179,9 @@ class MultiImageJob:
             os.makedirs(path, exist_ok=True)
         return [os.path.join(self.workdir, subdir) for subdir in subdirs]
 
-    def tar_filepath(self, pmid):
+    def tar_filepath(self, pmid=None):
+        if pmid is None:
+            raise ValueError("PMID not provided")
         return os.path.join(self.base_dir, "input", self.id, f"PMID-{self.pmid}.tar.gz")
 
     def annotate_image(self,figure_semantics):
@@ -500,7 +502,10 @@ class PMIDImageJob(MultiImageJob):
 
         # set citation
         citation = PMCData.citation_details(self.pmid)
-        self.set_document_metadata(citation=citation['ascii_citation'])
+        citation_txt = ''
+        if citation:
+            citation_txt = citation.get('ascii_citation') or citation.get('citation', '')
+        self.set_document_metadata(citation=citation_txt)
 
         return pmc_api.figures_metadata(self.figures_dir, input_dir=self.input_dir)
 

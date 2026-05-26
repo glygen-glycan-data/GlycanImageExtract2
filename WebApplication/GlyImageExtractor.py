@@ -338,7 +338,7 @@ class GlyImageExtractor(APIFramework):
         submission_mode = task_detail["submission_mode"]
 
         if submission_mode == "Local":
-            src = params.get("filePath") or task_detail.get("filePath")
+            src = params.get("filePath")
             if not src or not os.path.isdir(os.path.dirname(src)):
                 raise APIErrorBase("Local resubmit: invalid filePath")
 
@@ -402,8 +402,6 @@ class GlyImageExtractor(APIFramework):
             location = flask.request.args.get('location')
 
         json_file = self.abspath(f"static/{location}/{resultid}/results.json")
-
-        print("THE JSON FILE", json_file)
 
         if not os.path.exists(json_file):
             print(f"No results found for job {resultid}", file=sys.stderr)
