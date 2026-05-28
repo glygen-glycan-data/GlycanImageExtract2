@@ -4,6 +4,7 @@ __all__ = [ "ExtractorClient", "ExtractorDevClient", "GlyLookupClient" , "GlyLoo
 import sys, os, glob, json
 import requests, time
 import traceback
+from datetime import datetime
 
 class APISubmitError(RuntimeError):
     pass
@@ -27,6 +28,7 @@ class APIFrameworkClient:
     max_request_retry = 3
     nocache = False
     status_callback = None
+    verbose = False
 
     def __init__(self,**kwargs):
         self._apiurl = kwargs.get('apiurl') or self.apiurl
@@ -40,11 +42,16 @@ class APIFrameworkClient:
         self._interval = kwargs.get('request_interval',self.request_interval)
         self._max_retry_for_unfinished_task = kwargs.get('max_retrieve_wait',self.max_retrieve_wait)
         self._statusfn = kwargs.get('status_callback',self.status_callback)
-
+        self._verbose = kwargs.get('verbose',self.verbose)
+    
     def url(self):
         return self._apiurl
 
     def request(self, sub, params=None, files=None):
+        if self._verbose:
+            now = datetime.now()
+            now.replace(microsecond=0)
+            print(now,self.__class__.__name__,sub,params,file=sys.stderr)   
         for i in range(self._max_retry):
             if files is not None:
                 files1 = dict((k,open(v,'rb')) for k,v in files.items())
