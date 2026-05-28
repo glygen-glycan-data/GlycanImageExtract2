@@ -553,6 +553,7 @@ class PMCTarFile:
                     caption = []
                     for p in caption_elem.findall('.//p', self.NAMESPACES):
                         text = ''.join(p.itertext()).strip()
+                        text = " ".join(text.split())
                         if text:
                             caption.append(text)
                     fig_info['caption'] = ' '.join(caption) if caption else None
