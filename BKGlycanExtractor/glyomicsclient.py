@@ -337,25 +337,18 @@ class ExtractorClient(APIFrameworkClient):
         task = dict(submission_type=submission_type,pmid=pmid)
         return self.submit(task=task,request="file_upload")
     
-    def submit_local(self,submission_type,filepath,submission_mode='Local',processor=None, **kwargs):
+    def submit_local(self,submission_type,filepath):
         assert submission_type in ("Manuscript",
-                        "Multi-Glycan Image",
-                        "Simple Glycan Image")
-        if processor is None:
-            raise APISubmitError('Processor name is required')
-        task = dict(submission_type=submission_type,
-            filePath=filepath,
-            submission_mode=submission_mode,
-            processor=processor,
-            **kwargs
-        )
+                                   "Multi-Glycan Image",
+                                   "Simple Glycan Image")
+        task = dict(submission_type=submission_type,filePath=filepath)
         return self.submit(task=task,request="file_upload")
     
-    def submit_url(self,submission_type,url,**kwargs):
+    def submit_url(self,submission_type,url):
         assert submission_type in ("Manuscript",
                         "Multi-Glycan Image",
                         "Simple Glycan Image")
-        task = dict(submission_type=submission_type,fileURL=url, **kwargs)
+        task = dict(submission_type=submission_type,fileURL=url)
         return self.submit(task=task,request="file_upload")
     
     def submit_file(self,submission_type,filename):
