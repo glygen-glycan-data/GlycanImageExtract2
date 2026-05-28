@@ -1,7 +1,7 @@
 
 __all__ = [ "ExtractorClient", "ExtractorDevClient", "GlyLookupClient" , "GlyLookupClient", "GlymageClient", "GnomeClient"]
 
-import sys, os, glob, json
+import sys, os, glob, json, re
 import requests, time
 import traceback
 from datetime import datetime
@@ -295,13 +295,22 @@ class GlymageClient(APIFrameworkClient):
     #     for index, data in self.getmany([seq], image_orientations=orientation):
     #         return data
 
-class GnomeClient(APIFrameworkClient):
+class SubsumptionClient(APIFrameworkClient):
     apiurl = 'https://subsumption.glyomics.org/'
+    gnomeurl = 'https://gnome.glyomics.org/'
 
-    def submit_subsumption(self, IUPAC=None):
-        if IUPAC:
-            return self.submit(task=dict(IUPAC=IUPAC), request="submit")    # return task_id
-        raise ValueError("Provide IUPAC string")
+    def get_gnome_url(self,*,seq=None,acc=None,compositionstr=None,**composition):
+        if acc:
+            return self.gnomeurl + 'StructureBrowser.html?focus=' + acc
+        if seq:
+            taskid = self.submit(task=dict(seq=seq))
+            return self.gnomeurl + 'StructureBrowser.html?ondemandtaskid=' + taskid
+        if compositionstr:
+            matches = re.findall(r'([A-Za-z]+)\((\d+)\)', compositionstr)
+            converted_composition = '&'.join(f"{name}={count}" for name, count in matches)
+        else:
+            converted_composition = '&'.join(f"{name}={count}" for name, count in composition)
+        return self.gnomeurl + 'StructureBrowser.html?' + converted_composition
 
 class ExtractorClient(APIFrameworkClient):
     request_interval=5

@@ -7,7 +7,7 @@ from BKGlycanExtractor import ImageSearch
 from BKGlycanExtractor import Config_Manager, BoundingBox, PDFBoundingBox, CompareBoxes
 from BKGlycanExtractor import STANDARD_DPI, PDFHandler, PDFXRefImageFilter, PDFImageSizeFilter, PDFLargeImageSizeFilter
 from BKGlycanExtractor import PDFCreator
-from BKGlycanExtractor.glyomicsclient import GlyLookupClient, GlymageClient, GnomeClient
+from BKGlycanExtractor.glyomicsclient import GlyLookupClient, GlymageClient, SubsumptionClient
 from BKGlycanExtractor import PMCData, PMCTarFile
 
 import numpy as np
@@ -83,7 +83,7 @@ class MultiImageJob:
         self.glymage_client = GlymageClient(apiurl=self.config.get('glymage_url'),
                                     developer_email=self.config.get('dev_email'))
 
-        self.gnome_client = GnomeClient(apiurl=self.config.get('subsumption_url'),
+        self.gnome_client = SubsumptionClient(apiurl=self.config.get('subsumption_url'),
                                     developer_email=self.config.get('dev_email'))
 
     # generic/basic methods
@@ -206,8 +206,6 @@ class MultiImageJob:
 
         glylookup_seqs = []
         glymage_jobs = []
-
-        gnome_uri_base = "https://gnome.glyomics.org/StructureBrowser.html?"
         
         for idx, glycan in enumerate(glycans):
             if not glycan.get('composition_str'):
@@ -221,11 +219,10 @@ class MultiImageJob:
                     )
                 ))
 
-                # if no iupac - build gnome_url using composition
-                matches = re.findall(r'([A-Za-z]+)\((\d+)\)', glycan.get('composition_str'))
-                converted_composition = '&'.join(f"{name}={count}" for name, count in matches)
-                gnome_url = gnome_uri_base + converted_composition
-                glycan.set('gnomeurl', gnome_url )
+                gnomeurl = self.gnome_client.get_gnome_url(
+                    compositionstr=glycan.get('composition_str'))
+                glycan.set('gnomeurl', gnomeurl)
+
             else:
                 # iupac exists
                 # build GlyLookup collection for batch - get accesson and wurcs from batch retrieve later
@@ -244,12 +241,13 @@ class MultiImageJob:
                             glycan.set('WURCS', sequence_type['seq'])
 
                     # build gnome_url using accession
-                    glycan.set('gnomeurl', gnome_uri_base + 'focus=' + glycan.get('accession'))
+                    gnomeurl = self.gnome_client.get_gnome_url(acc=glycan.get('accession'))
+                    glycan.set('gnomeurl', gnomeurl)
 
                     glycan.set('linkexpl', 'Extracted successfully using accession')
                     glymage_jobs.append((glycan_idx, 
                         self.glymage_client.submit_glymage(
-                            seq=glycan.get('IUPAC'), 
+                            acc=glycan.get('accession'), 
                             orientation=glycan.glycan_orientation(),
                         )
                     ))  
@@ -265,9 +263,10 @@ class MultiImageJob:
 
                     # if no accession - gnome_url should be created using iupac
                     try:
-                        gnome_task_id = self.gnome_client.submit_subsumption(IUPAC=glycan.get('IUPAC'))
-                        glycan.set('gnomeurl', f"https://gnome.glyomics.org/StructureBrowser.html?ondemandtaskid={gnome_task_id}")
+                        gnomeurl = self.gnome_client.get_gnome_url(seq=glycan.get('IUPAC'))
+                        glycan.set('gnomeurl', gnomeurl)
                     except Exception as e:
+                        sys.stderr.write(f"Warning: gnome subsumption failed for glycan {glycan_idx}: {e}\n")
                         self.log_file.write(f"Warning: gnome subsumption failed for glycan {glycan_idx}: {e}\n")
                         glycan.set('gnomeurl', '')
 
