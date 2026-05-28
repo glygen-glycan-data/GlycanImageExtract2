@@ -1,2 +1,2 @@
-lnfcp3x75y
-/data2/projects/GlyGen/GlycanImageExtract2-dev/WebApplication/static/files/lnfcp3x75y/output/annotated_2_glycans.png
+wm7id4mf7p
+/data2/projects/GlyGen/GlycanImageExtract2-dev/WebApplication/static/files/wm7id4mf7p/output/annotated_2_glycans.png

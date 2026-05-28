@@ -247,7 +247,8 @@ class MultiImageJob:
                     glycan.set('linkexpl', 'Extracted successfully using accession')
                     glymage_jobs.append((glycan_idx, 
                         self.glymage_client.submit_glymage(
-                            acc=glycan.get('accession'), 
+                            seq=glycan.get('IUPAC'), # need IUPAC even though we have accession
+                                                     # because IUPAC encodes branch order
                             orientation=glycan.glycan_orientation(),
                         )
                     ))  
