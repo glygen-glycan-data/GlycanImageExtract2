@@ -1,3 +1,4 @@
+#!/bin/env python3.12
 import sys
 import os
 import argparse
