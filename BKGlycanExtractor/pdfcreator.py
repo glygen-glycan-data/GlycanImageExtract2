@@ -1,9 +1,7 @@
 
 import fitz  # PyMuPDF
 import os, sys
-
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from BKGlycanExtractor.pmc_details import PMCData
+from . pmc_details import PMCData
 
 class PDFCreator(object):
     PAGE_WIDTH = 612.0
