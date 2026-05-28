@@ -128,8 +128,7 @@ def process_figure_annotation(annot_box, figure_box, page, tsv_data, comment_map
         'ID': comment_map['id'],
         'url': comment_map.get('url'),
         'pdf_fig_bbox': figure_box,
-        **{k: v.strip() for k, v in tsv_data.items() 
-            if k in ['class','accession', 'iupac', 'composition', 'wurcs'] and v is not None},
+        **{k: v.strip() for k, v in tsv_data.items() if v is not None},
         **kwargs,
     }
 
@@ -216,7 +215,7 @@ def write_semantics(semantics_file, glycan_data):
         if key == 'gly_bbox':
             continue
         value = glycan_data.get(key)
-        if value:  # Checks: not None, not empty, not just whitespace
+        if value:  # Checks: not None, not empty, not just whitespace, not numeric zero(!)
             semantics_file.write(f"# {key}: {value}\n")
 
 output_folder = args.output
