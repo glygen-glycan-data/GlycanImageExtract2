@@ -102,14 +102,13 @@ class GlyImageExtractor(APIFramework):
 
         return {"Error": "resultid (%s) not found" % (resultid,)}
 
-    task_params = ["filename",    
+    task_params = [
+        "filename",    
         "submission_type",   
-       "submission_mode",           # derived
-        "fileURL",           
+        "submission_mode",           # derived   
         "pmid",
-       "image_search_strategy",     # derived
-       "processor",                   # derived
-       "_citation"              # derived key - which needs to be stripped out from submission detail
+        "image_search_strategy",     # derived
+        "processor",                 # derived
     ]
 
     def form_task(self, p: dict):
@@ -125,81 +124,55 @@ class GlyImageExtractor(APIFramework):
         # additional/derieved keys have an underscore in front (so they can be stripped out before
         # the final JSON is written)
 
-        self.submission_mode = None
-        original_submission_mode = None     # if task is Local submission_mode
-        processor = None
-        # image_search_strategy is present in the job classes instance variable, but for Local mode - we need to override it
-        # or if configs file provides it, then override the class instance variable
-        image_search_strategy = None    
-
         if not p.get("submission_type"):
             raise APIParameterError("submission_type is required")
-        self.submission_type = p['submission_type']
+        submission_type = p['submission_type']
 
         pmid = p.get('pmid', None)
         if pmid:
             pmid = pmid.strip()
 
         # submission_mode
-        if p.get('filePath'):       # Local/resubmit mode
-            if not p.get("submission_mode"):
-                raise APIParameterError("Type of submission_mode from the original task is required")
-            # save the original submission_mode 
-            original_submission_mode = p['submission_mode']
-            self.submission_mode = 'Local'
+        submission_mode = None
+        if p.get('filePath'):
+            submission_mode = 'Local'
         elif p.get('file'):
-            self.submission_mode = 'Upload'
+            submission_mode = 'Upload'
         elif p.get('fileURL'):
-            self.submission_mode = 'URL'
-        elif self.submission_type == 'Manuscript' and pmid:
+            submission_mode = 'URL'
+        elif submission_type == 'Manuscript' and pmid:
             if pmid.endswith('.pdf'):
                 pmid = pmid.split('.', 1)[0]
-            self.submission_mode = 'PMID-PDF'  # defaulting every pmid submission to PMID-PDF as mode - which is synthetic pdf cretaion and annotation
-        else:
+                submission_mode = 'PMID.PDF'
+            else:
+                submission_mode = 'PMID'
+        
+        if not submission_mode:
             raise APIParameterError("No input file: Upload a file/image, paste a URL or submit PMID")
 
 
         # This block uses both submission_mode and submission_type to determine job processor
-        if self.submission_mode == 'Local':
-            # if submission is Local, that means we have access to all the input files already and dont need
-            # to download/validate things.
-
-            # Note: So for cases like a synthetically created PDF - you can directly run a PDF based Job now
-            # else use the same processor as used originally in the original task.
-            if original_submission_mode == 'PMID-PDF':
-                processor = 'PDFJob' 
-            else:
-                if not p.get("processor"):
-                    raise APIParameterError("processor name from the original task is required")
-                processor = p['processor']
-        elif self.submission_type == "Simple Glycan Image":
+        processor = None
+        if submission_type == "Simple Glycan Image":
             processor = 'SimpleImageJob'
-        elif self.submission_type == "Multi-Glycan Image":
+        elif submission_type == "Multi-Glycan Image":
             processor = 'SingleImageJob'
-        elif self.submission_mode == 'PMID-PDF':
+        elif submission_mode == 'PMID':
             processor = 'PMIDSyntheticPDFJob'
-        elif self.submission_mode == 'PMID':
-            processor = 'PMIDImageJob'
+        elif submission_mode == 'PMID.PDF':
+            processor = 'PDFJob'
         else:
             processor = 'PDFJob' 
 
-        # image_search_strategy is already present in the Class instance, but the below cases are when the instance variable
-        # needs to be modified
-        if processor == 'PDFJob':
-            if self.submission_mode == 'Local' and original_submission_mode == 'PMID-PDF':
-                image_search_strategy = 'fitz'          # resubmit synthetic PDF 
-            elif self._image_search_type:     # configs file image_search_strategy can override the job classes instance based image search strategy
-                image_search_strategy = self._image_search_type
-            
+        image_search_strategy = p.get('image_search_strategy',self._image_search_type)
+                  
         params_dict = dict(p)
-        params_dict.pop('image_search_strategy', None)
-        if image_search_strategy:       # exists if configs file provides it, or reanalyze needs to change it
-            params_dict['image_search_strategy'] = image_search_strategy
-
-        params_dict['submission_mode'] = self.submission_mode
+        params_dict['submission_mode'] = submission_mode
         params_dict['processor'] = processor
-        params_dict['pmid'] =  pmid if pmid else None
-
+        if image_search_strategy:
+            params_dict['image_search_strategy'] = image_search_strategy
+        if pmid:
+            params_dict['pmid'] =  pmid
 
         task = {}
         for k in self.task_params:
@@ -211,7 +184,7 @@ class GlyImageExtractor(APIFramework):
         # provide all parameter values in a predictable list (deterministic) 
         # incase we want to make the id's reproducible 
         task["id"] = self.makeid(*(task.get(k) for k in self.task_params),
-                               random=True,length=10)
+                                 random=True,length=10)
         
         return task
 
@@ -329,7 +302,7 @@ class GlyImageExtractor(APIFramework):
         # A manuscript submission - can be a file upload, fileURL, or PMID
         if submission_type == "Manuscript" and pmid:
             if pmid.endswith(".pdf"):
-                pmid = pmid.split(".", 1)[0]
+                pmid = pmid.rsplit(".", 1)[0]
             return "PMID-" + pmid + ".pdf"
 
         return super()._input_filename(params)
@@ -350,7 +323,7 @@ class GlyImageExtractor(APIFramework):
             shutil.copytree(src_dir, dst_dir, dirs_exist_ok=True)
             return
       
-        elif submission_mode in ("PMID", "PMID-PDF"):
+        elif submission_mode in ("PMID","PMID.PDF"):
             pmid = task_detail['pmid']
             filename = task_detail['filename']
             file_dir = os.path.dirname(current_file_path)
@@ -531,14 +504,11 @@ class GlyImageExtractor(APIFramework):
         # make the method flexible to use result_cache is json is not avaibale??
         # Note: currently annotate_results uses the json dict written on disk for details
         # if you want to use this feature before the json files are written, the the result_cache will have to be accessed
-        if (submission_mode and submission_mode != "PMID" 
-            and submission_type and submission_type == "Manuscript"
-            and processor and processor != "PMIDImageJob"
-        ):
+        if processor in ("PDFJob","PMIDSyntheticPDFJob"):
             self.annotate_results(resultid=resid)
 
     document_metadata_keys = [
-        '_citation'
+        # '_citation'
     ]
 
     def _build_resubmit_task(self, submission_detail, result, tid, input_file):
@@ -554,6 +524,12 @@ class GlyImageExtractor(APIFramework):
             submission_detail, result, tid, input_file
         )
 
+        if p.get("pmid"):
+            if p.get("submission_mode") == "PMID.PDF":
+                p["pmid"] += ".pdf"
+            if 'filePath' in p:
+                del p['filePath']
+
         for key in self.document_metadata_keys:
             cleaned_key = key.lstrip('_')
             if cleaned_key in result and result[cleaned_key] is not None:
@@ -564,6 +540,9 @@ class GlyImageExtractor(APIFramework):
     def validate_pmid(self, pmid):
         # wrapper used so that proper json responses are created after the helper returns a response.
         # TODO - Ticket for better design PMCData and PMCTarFile classes
+        pmid = pmid.strip()
+        if pmid.endswith('.pdf'):
+            pmid = pmid.rsplit('.',1)[0]
         body, status = PMCData.validate_pmid(pmid)
         return flask.jsonify(body), status
 
