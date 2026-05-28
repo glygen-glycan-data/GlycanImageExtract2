@@ -1,0 +1,2 @@
+lnfcp3x75y
+/data2/projects/GlyGen/GlycanImageExtract2-dev/WebApplication/static/files/lnfcp3x75y/output/annotated_2_glycans.png

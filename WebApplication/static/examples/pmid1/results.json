@@ -1,48 +1,42 @@
 {
-  "id": "jhhlakov4s",
-  "task_index": 13,
   "submission_detail": {
     "filename": "PMID-34010560.pdf",
     "submission_type": "Manuscript",
     "submission_mode": "PMID",
     "pmid": "34010560",
-    "processor": "PMIDImageJob",
-    "id": "jhhlakov4s"
+    "processor": "PMIDSyntheticPDFJob"
   },
   "state": "Complete",
   "status": "",
   "finished": true,
-  "submit_time": 1773938149.7438684,
-  "sessionid": "l6m5y5c3r456zbi5",
   "result": {
     "figures": [
       {
         "annotated_image_path": "extracted_figures/annotated_figures/pr1c00245_0001.jpg",
         "caption": "Workflow of the GlycoHybridSeq algorithm.",
-        "fig_bbox": [
-          0,
-          0,
-          774,
-          192
-        ],
         "figure_number": "1",
         "file_name": "pr1c00245_0001.jpg",
         "glycans": [],
         "height": 192,
         "image_count": 1,
+        "image_number": 1,
         "image_path": "extracted_figures/figures/pr1c00245_0001.jpg",
-        "pmid_job": true,
+        "page_height": 792.0,
+        "page_number": 2,
+        "page_width": 612.0,
+        "pdf_fig_bbox": [
+          72.00001525878906,
+          72.0,
+          540.0,
+          188.093017578125
+        ],
+        "pdf_fig_height": 117.093017578125,
+        "pdf_fig_width": 468.99998474121094,
         "width": 774
       },
       {
         "annotated_image_path": "extracted_figures/annotated_figures/pr1c00245_0002.jpg",
-        "caption": "An example of annotated glycopeptide spectrum, where peaks annotated\nas b/c/y/z ions are colored as purple, and those annotated as Y ions\nas red.",
-        "fig_bbox": [
-          0,
-          0,
-          726,
-          284
-        ],
+        "caption": "An example of annotated glycopeptide spectrum, where peaks annotated as b/c/y/z ions are colored as purple, and those annotated as Y ions as red.",
         "figure_number": "2",
         "file_name": "pr1c00245_0002.jpg",
         "glycans": [
@@ -66,7 +60,7 @@
             "confidence": 0.9147787690162659,
             "extracted_image_path": "extracted_figures/extracted_images/pr1c00245_0002-1.png",
             "fig_glycan_count": 1,
-            "glyImage": "glymage/6d1ab2caab8df4d6b80bfb8d73a5130f.svg",
+            "glyImage": "glymage/641a5b9e8eda66ab1fdc338fd8426de8.svg",
             "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G64017CW",
             "height": 87,
             "image_name": "pr1c00245_0002-1.png",
@@ -301,7 +295,7 @@
             "confidence": 0.9524672627449036,
             "extracted_image_path": "extracted_figures/extracted_images/pr1c00245_0002-2.png",
             "fig_glycan_count": 2,
-            "glyImage": "glymage/99a4f114794fcbf6cb731e87249070b7.svg",
+            "glyImage": "glymage/dd5eb21c7105aee1f7ef4dbd4c4be846.svg",
             "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G86427WL",
             "height": 120,
             "image_name": "pr1c00245_0002-2.png",
@@ -616,7 +610,7 @@
             "confidence": 0.9982804656028748,
             "extracted_image_path": "extracted_figures/extracted_images/pr1c00245_0002-3.png",
             "fig_glycan_count": 3,
-            "glyImage": "glymage/cbdc4c48c8dccf165a262c3c8203f3b5.svg",
+            "glyImage": "glymage/d5a82ba03383f50e42338ebc55a9ab93.svg",
             "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G59325ZF",
             "height": 147,
             "image_name": "pr1c00245_0002-3.png",
@@ -1090,7 +1084,7 @@
             "confidence": 0.9991775155067444,
             "extracted_image_path": "extracted_figures/extracted_images/pr1c00245_0002-4.png",
             "fig_glycan_count": 4,
-            "glyImage": "glymage/43be33b26df70b8d73919e0695e8eb02.svg",
+            "glyImage": "glymage/79704e782d88d393ee7a655002e3c89b.svg",
             "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G78607HP",
             "height": 132,
             "image_name": "pr1c00245_0002-4.png",
@@ -1627,52 +1621,71 @@
         ],
         "height": 284,
         "image_count": 2,
+        "image_number": 1,
         "image_path": "extracted_figures/figures/pr1c00245_0002.jpg",
-        "pmid_job": true,
+        "page_height": 792.0,
+        "page_number": 3,
+        "page_width": 612.0,
+        "pdf_fig_bbox": [
+          86.51161193847656,
+          72.0,
+          525.4884033203125,
+          243.720947265625
+        ],
+        "pdf_fig_height": 172.720947265625,
+        "pdf_fig_width": 439.97679138183594,
         "width": 726
       },
       {
         "annotated_image_path": "extracted_figures/annotated_figures/pr1c00245_0003.jpg",
-        "caption": "Comparison of (A) unique peptide sequences, (B) unique\nglycopeptides,\nand (C) spectra identified by GlycoHybridSeq, Byonic, and MSFragger,\nrespectively.",
-        "fig_bbox": [
-          0,
-          0,
-          644,
-          169
-        ],
+        "caption": "Comparison of (A) unique peptide sequences, (B) unique glycopeptides, and (C) spectra identified by GlycoHybridSeq, Byonic, and MSFragger, respectively.",
         "figure_number": "3",
         "file_name": "pr1c00245_0003.jpg",
         "glycans": [],
         "height": 169,
         "image_count": 3,
+        "image_number": 1,
         "image_path": "extracted_figures/figures/pr1c00245_0003.jpg",
-        "pmid_job": true,
+        "page_height": 792.0,
+        "page_number": 4,
+        "page_width": 612.0,
+        "pdf_fig_bbox": [
+          111.30235290527344,
+          72.0,
+          500.6976318359375,
+          174.18603515625
+        ],
+        "pdf_fig_height": 103.18603515625,
+        "pdf_fig_width": 390.39527893066406,
         "width": 644
       },
       {
         "annotated_image_path": "extracted_figures/annotated_figures/pr1c00245_0004.jpg",
-        "caption": "Two EThcD spectra with\nhigh cosine similarity were identified as\ntwo different glycopeptides by Byonic.",
-        "fig_bbox": [
-          0,
-          0,
-          640,
-          251
-        ],
+        "caption": "Two EThcD spectra with high cosine similarity were identified as two different glycopeptides by Byonic.",
         "figure_number": "4",
         "file_name": "pr1c00245_0004.jpg",
         "glycans": [],
         "height": 251,
         "image_count": 4,
+        "image_number": 1,
         "image_path": "extracted_figures/figures/pr1c00245_0004.jpg",
-        "pmid_job": true,
+        "page_height": 792.0,
+        "page_number": 5,
+        "page_width": 612.0,
+        "pdf_fig_bbox": [
+          112.51162719726562,
+          72.00001525878906,
+          499.4883728027344,
+          223.7674560546875
+        ],
+        "pdf_fig_height": 152.76744079589844,
+        "pdf_fig_width": 387.97674560546875,
         "width": 640
       }
     ],
-    "job_type": "PMIDJob",
-    "citation": "Zhang R, Zhu J, Lubman DM, Mechref Y, Tang H. GlycoHybridSeq:\nAutomated Identification of N-Linked\nGlycopeptides Using Electron Transfer/High-Energy Collision Dissociation\n(EThcD). Journal of Proteome Research 2021;20(6):3345-3352."
+    "citation": "Zhang R, Zhu J, Lubman DM, Mechref Y, Tang H. GlycoHybridSeq: Automated Identification of N-Linked Glycopeptides Using Electron Transfer/High-Energy Collision Dissociation (EThcD). J Proteome Res 2021;20(6):3345-3352.",
+    "annotated_pdf_file": "PMID-34010560.annotated.pdf",
+    "annotated_tsv_file": "PMID-34010560.annotated.tsv"
   },
-  "start_time": 1773938268.379504,
-  "end_time": 1773938289.3372865,
-  "runtime": 20.95778250694275,
   "error": []
 }

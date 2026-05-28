@@ -1,18 +1,13 @@
 {
-  "id": "rw4pw6ovto",
-  "task_index": 6,
   "submission_detail": {
     "filename": "pr1c00245_0002.jpg",
     "submission_type": "Multi-Glycan Image",
-    "submission_mode": "Upload",
-    "processor": "SingleImageJob",
-    "id": "rw4pw6ovto"
+    "submission_mode": "URL",
+    "processor": "SingleImageJob"
   },
   "state": "Complete",
   "status": "",
   "finished": true,
-  "submit_time": 1773173833.709051,
-  "sessionid": "t4o7ytxrvclke72d",
   "result": {
     "figures": [
       {
@@ -39,7 +34,7 @@
             "confidence": 0.9147787690162659,
             "extracted_image_path": "extracted_figures/extracted_images/pr1c00245_0002-1.png",
             "fig_glycan_count": 1,
-            "glyImage": "glymage/6d1ab2caab8df4d6b80bfb8d73a5130f.svg",
+            "glyImage": "glymage/641a5b9e8eda66ab1fdc338fd8426de8.svg",
             "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G64017CW",
             "height": 87,
             "image_name": "pr1c00245_0002-1.png",
@@ -274,7 +269,7 @@
             "confidence": 0.9524672627449036,
             "extracted_image_path": "extracted_figures/extracted_images/pr1c00245_0002-2.png",
             "fig_glycan_count": 2,
-            "glyImage": "glymage/99a4f114794fcbf6cb731e87249070b7.svg",
+            "glyImage": "glymage/dd5eb21c7105aee1f7ef4dbd4c4be846.svg",
             "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G86427WL",
             "height": 120,
             "image_name": "pr1c00245_0002-2.png",
@@ -589,7 +584,7 @@
             "confidence": 0.9982804656028748,
             "extracted_image_path": "extracted_figures/extracted_images/pr1c00245_0002-3.png",
             "fig_glycan_count": 3,
-            "glyImage": "glymage/cbdc4c48c8dccf165a262c3c8203f3b5.svg",
+            "glyImage": "glymage/d5a82ba03383f50e42338ebc55a9ab93.svg",
             "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G59325ZF",
             "height": 147,
             "image_name": "pr1c00245_0002-3.png",
@@ -1063,7 +1058,7 @@
             "confidence": 0.9991775155067444,
             "extracted_image_path": "extracted_figures/extracted_images/pr1c00245_0002-4.png",
             "fig_glycan_count": 4,
-            "glyImage": "glymage/43be33b26df70b8d73919e0695e8eb02.svg",
+            "glyImage": "glymage/79704e782d88d393ee7a655002e3c89b.svg",
             "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G78607HP",
             "height": 132,
             "image_name": "pr1c00245_0002-4.png",
@@ -1600,17 +1595,14 @@
         ],
         "height": 284,
         "image_path": "input/pr1c00245_0002.jpg",
+        "status_message": "Processing image",
         "width": 726,
         "figure_number": "2",
         "caption": "An example of annotated glycopeptide spectrum, where peaks annotated as b/c/y/z ions are colored as purple, and those annotated as Y ions as red."
       }
     ],
-    "job_type": "ImageJob",
     "citation": "Zhang R, Zhu J, Lubman DM, Mechref Y, Tang H. GlycoHybridSeq: Automated Identification of N-Linked Glycopeptides Using Electron Transfer/High-Energy Collision Dissociation (EThcD). J Proteome Res. 2021;20(6):3345-3352.",
     "pmid": "34010560"
   },
-  "start_time": 1773173844.3304226,
-  "end_time": 1773173853.76704,
-  "runtime": 9.436617374420166,
   "error": []
 }

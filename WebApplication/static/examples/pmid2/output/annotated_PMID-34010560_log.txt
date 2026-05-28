@@ -1,2 +1,2 @@
-jdlusgxaop
-/home/nmathias/GlycanImageExtract2/WebApplication/static/files/jdlusgxaop/output/annotated_PMID-34010560.pdf
+saaz4lncnb
+/data2/projects/GlyGen/GlycanImageExtract2-dev/WebApplication/static/files/saaz4lncnb/output/annotated_PMID-34010560.pdf

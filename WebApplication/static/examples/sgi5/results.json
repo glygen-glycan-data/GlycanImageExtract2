@@ -1,18 +1,13 @@
 {
-  "id": "aaulaebwtw",
-  "task_index": 16,
   "submission_detail": {
     "filename": "G69233PF.png",
     "submission_type": "Simple Glycan Image",
     "submission_mode": "Upload",
-    "processor": "SimpleImageJob",
-    "id": "aaulaebwtw"
+    "processor": "SimpleImageJob"
   },
   "state": "Complete",
   "status": "",
   "finished": true,
-  "submit_time": 1773173843.9677756,
-  "sessionid": "qvvq3dyjs7xbfmwx",
   "result": {
     "figures": [
       {
@@ -39,7 +34,7 @@
             "extracted_image_path": "extracted_figures/extracted_images/G69233PF-1.png",
             "fig_glycan_count": 1,
             "file_name": "G69233PF.png",
-            "glyImage": "glymage/b338ef7a1d4cc3e50a3917af1fa92c69.svg",
+            "glyImage": "glymage/dc91145b3157d20cf1d77b5fbe666cfa.svg",
             "glycans": [],
             "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G63135DD",
             "height": 237,
@@ -515,7 +510,7 @@
                 "width": 34
               }
             ],
-            "orientation": "RL",
+            "orientation": "BT",
             "rejected_roots": [
               {
                 "bbox": [
@@ -734,6 +729,7 @@
               "mono_id": 1,
               "width": 32
             },
+            "status_message": "Processing image",
             "undirected_links": [
               {
                 "bbox": [
@@ -974,13 +970,10 @@
         ],
         "height": 238,
         "image_path": "input/G69233PF.png",
+        "status_message": "Processing image",
         "width": 394
       }
-    ],
-    "job_type": "ImageJob"
+    ]
   },
-  "start_time": 1773173955.757285,
-  "end_time": 1773173957.2115586,
-  "runtime": 1.4542734622955322,
   "error": []
 }

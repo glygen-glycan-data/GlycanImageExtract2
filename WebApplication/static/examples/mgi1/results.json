@@ -1,18 +1,13 @@
 {
-  "id": "ejcfuedzno",
-  "task_index": 1,
   "submission_detail": {
     "filename": "2_glycans.png",
     "submission_type": "Multi-Glycan Image",
     "submission_mode": "Upload",
-    "processor": "SingleImageJob",
-    "id": "ejcfuedzno"
+    "processor": "SingleImageJob"
   },
   "state": "Complete",
   "status": "",
   "finished": true,
-  "submit_time": 1773173828.6254241,
-  "sessionid": "zdw7qjrfpnxmg66v",
   "result": {
     "figures": [
       {
@@ -39,7 +34,7 @@
             "confidence": 0.9966831803321838,
             "extracted_image_path": "extracted_figures/extracted_images/2_glycans-1.png",
             "fig_glycan_count": 1,
-            "glyImage": "glymage/c6564ad8eb235da6eb9a7c46cfdcbc21.svg",
+            "glyImage": "glymage/7f30de9fbc9c2bdeb38ed739682c839d.svg",
             "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G35465JY",
             "height": 384,
             "image_name": "2_glycans-1.png",
@@ -516,7 +511,7 @@
                 "width": 76
               }
             ],
-            "orientation": "RL",
+            "orientation": "BT",
             "rejected_roots": [
               {
                 "bbox": [
@@ -992,7 +987,7 @@
             "confidence": 0.9649699330329895,
             "extracted_image_path": "extracted_figures/extracted_images/2_glycans-2.png",
             "fig_glycan_count": 2,
-            "glyImage": "glymage/1062e7bcb3b3b971dd39512cd4624757.svg",
+            "glyImage": "glymage/95949d9a666579e18d4a9f40d32b9a63.svg",
             "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G66457WL",
             "height": 247,
             "image_name": "2_glycans-2.png",
@@ -1429,7 +1424,7 @@
                 "width": 74
               }
             ],
-            "orientation": "RL",
+            "orientation": "BT",
             "rejected_roots": [
               {
                 "bbox": [
@@ -1849,13 +1844,10 @@
         ],
         "height": 1036,
         "image_path": "input/2_glycans.png",
+        "status_message": "Processing image",
         "width": 1176
       }
-    ],
-    "job_type": "ImageJob"
+    ]
   },
-  "start_time": 1773173828.6264353,
-  "end_time": 1773173841.33007,
-  "runtime": 12.70363473892212,
   "error": []
 }

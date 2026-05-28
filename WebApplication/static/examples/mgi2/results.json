@@ -1,18 +1,13 @@
 {
-  "id": "r4bl7zsiw5",
-  "task_index": 2,
   "submission_detail": {
     "filename": "pdf7_extra.png",
     "submission_type": "Multi-Glycan Image",
-    "submission_mode": "Upload",
-    "processor": "SingleImageJob",
-    "id": "r4bl7zsiw5"
+    "submission_mode": "Local",
+    "processor": "SingleImageJob"
   },
   "state": "Complete",
   "status": "",
   "finished": true,
-  "submit_time": 1773173829.641035,
-  "sessionid": "3sbniwfewd3ltwlg",
   "result": {
     "figures": [
       {
@@ -39,7 +34,7 @@
             "confidence": 0.9936928749084473,
             "extracted_image_path": "extracted_figures/extracted_images/pdf7_extra-1.png",
             "fig_glycan_count": 1,
-            "glyImage": "glymage/651f575c11369f07331fae1b9a8a5ac5.svg",
+            "glyImage": "glymage/2cced821828e4a373a0baf49da4ace03.svg",
             "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G78130XL",
             "height": 439,
             "image_name": "pdf7_extra-1.png",
@@ -1070,7 +1065,7 @@
             "confidence": 0.9903014302253723,
             "extracted_image_path": "extracted_figures/extracted_images/pdf7_extra-2.png",
             "fig_glycan_count": 2,
-            "glyImage": "glymage/5d47a3dee0a6c95da6d7a6c799f4c93e.svg",
+            "glyImage": "glymage/096c3cb2aaed989c7d6937d4d8ffa212.svg",
             "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G38382KG",
             "height": 493,
             "image_name": "pdf7_extra-2.png",
@@ -2102,7 +2097,7 @@
             "confidence": 0.9898123145103455,
             "extracted_image_path": "extracted_figures/extracted_images/pdf7_extra-3.png",
             "fig_glycan_count": 3,
-            "glyImage": "glymage/51c089f9b9020109b0a3a514ddf69e6f.svg",
+            "glyImage": "glymage/c45412845066361c468e3b5a7c8ca196.svg",
             "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G66420HM",
             "height": 493,
             "image_name": "pdf7_extra-3.png",
@@ -3117,13 +3112,10 @@
         ],
         "height": 494,
         "image_path": "input/pdf7_extra.png",
+        "status_message": "Processing image",
         "width": 660
       }
-    ],
-    "job_type": "ImageJob"
+    ]
   },
-  "start_time": 1773173829.6417534,
-  "end_time": 1773173842.8874722,
-  "runtime": 13.245718717575073,
   "error": []
 }
