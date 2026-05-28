@@ -1,9 +1,7 @@
 import fitz, os, os.path, re, difflib, traceback
 
-try:
-    from . import searchpmc
-except ImportError:
-    pass
+from . pmc_details import PMCData
+
 
 # if more constants are added, then create a Enum class 
 STANDARD_DPI = 300
@@ -266,10 +264,10 @@ class PDFHandler(object):
         dois = self.find_dois()
         for doi in dois:
             title = None
-            ids = searchpmc.lookup(doi=doi['doi'])
+            ids = PMCData.lookup(doi=doi['doi'])
             if ids is not None and ids.get('pmid'):
                 pmid = ids.get('pmid')
-                cite = searchpmc.citation_details(pmid)
+                cite = PMCData.citation_details(pmid)
                 if cite and cite.get('title'):
                     title = " ".join(cite.get('title').split()).rstrip('.')
             

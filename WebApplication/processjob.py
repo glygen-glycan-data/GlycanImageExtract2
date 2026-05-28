@@ -529,9 +529,17 @@ class PDFJob(MultiImageJob):
 
         metadata = strategy.get_metadata(self.input_filepath, self.figures_dir)
         
-        # set citation if it exists
-        if self.task_detail.get('_citation'):
-            self.set_document_metadata(citation=self.task_detail['_citation'])
+        if self.task_detail.get('pmid'):
+            citation = PMCData.citation_details(self.task_detail['pmid'])
+            if citation:
+                self.set_document_metadata(citation=citation['citation'],
+                                           pmid=self.task_detail['pmid']) 
+        else:
+            handler = PDFHandler(self.input_filepath)
+            citation = handler.get_citation()
+            if citation:
+                self.set_document_metadata(citation=citation['citation'],
+                                           pmid=citation['pmid'])
         return metadata
 
 class PMIDSyntheticPDFJob(PDFJob):
