@@ -1,9 +1,11 @@
 {
+  "id": "sgi4",
   "submission_detail": {
     "filename": "G16150CJ.png",
     "submission_type": "Simple Glycan Image",
     "submission_mode": "URL",
-    "processor": "SimpleImageJob"
+    "processor": "SimpleImageJob",
+    "id": "sgi4"
   },
   "state": "Complete",
   "status": "",
@@ -1136,5 +1138,6 @@
       }
     ]
   },
-  "error": []
+  "error": [],
+  "location": "examples"
 }

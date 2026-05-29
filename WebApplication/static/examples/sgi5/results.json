@@ -1,9 +1,11 @@
 {
+  "id": "sgi5",
   "submission_detail": {
     "filename": "G69233PF.png",
     "submission_type": "Simple Glycan Image",
     "submission_mode": "Upload",
-    "processor": "SimpleImageJob"
+    "processor": "SimpleImageJob",
+    "id": "sgi5"
   },
   "state": "Complete",
   "status": "",
@@ -975,5 +977,6 @@
       }
     ]
   },
-  "error": []
+  "error": [],
+  "location": "examples"
 }

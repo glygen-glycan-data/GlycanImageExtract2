@@ -1,9 +1,11 @@
 {
+  "id": "sgi1",
   "submission_detail": {
     "filename": "f4003b0298c8e8f4576146bd232601e0.png",
     "submission_type": "Simple Glycan Image",
     "submission_mode": "URL",
-    "processor": "SimpleImageJob"
+    "processor": "SimpleImageJob",
+    "id": "sgi1"
   },
   "state": "Complete",
   "status": "",
@@ -657,5 +659,6 @@
       }
     ]
   },
-  "error": []
+  "error": [],
+  "location": "examples"
 }

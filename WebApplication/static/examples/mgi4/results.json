@@ -1,9 +1,11 @@
 {
+  "id": "mgi4",
   "submission_detail": {
     "filename": "41589_2018_34_Fig1_HTML.jpg",
     "submission_type": "Multi-Glycan Image",
     "submission_mode": "Upload",
-    "processor": "SingleImageJob"
+    "processor": "SingleImageJob",
+    "id": "mgi4"
   },
   "state": "Complete",
   "status": "",
@@ -25768,5 +25770,6 @@
     "citation": "Kri\u0161ti\u0107 J, Zaytseva OO, Ram R, Nguyen Q, Novokmet M, Vu\u010dkovi\u0107 F, Vilaj M, Trbojevi\u0107-Akma\u010di\u0107 I, Pezer M, Davern KM, Morahan G, Lauc G. Profiling and genetic control of the murine immunoglobulin G glycome. Nat Chem Biol. 2018;14(5):516-524.",
     "pmid": "29632412"
   },
-  "error": []
+  "error": [],
+  "location": "examples"
 }

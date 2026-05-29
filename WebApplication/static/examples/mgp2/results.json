@@ -1,9 +1,11 @@
 {
+  "id": "mgp2",
   "submission_detail": {
     "filename": "Example0.pdf",
     "submission_type": "Manuscript",
     "submission_mode": "Local",
-    "processor": "PDFJob"
+    "processor": "PDFJob",
+    "id": "mgp2"
   },
   "state": "Complete",
   "status": "",
@@ -5777,5 +5779,6 @@
     "annotated_pdf_file": "Example0.annotated.pdf",
     "annotated_tsv_file": "Example0.annotated.tsv"
   },
-  "error": []
+  "error": [],
+  "location": "examples"
 }

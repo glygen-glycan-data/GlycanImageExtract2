@@ -1,9 +1,11 @@
 {
+  "id": "mgp3",
   "submission_detail": {
     "filename": "Example4_use.pdf",
     "submission_type": "Manuscript",
     "submission_mode": "URL",
-    "processor": "PDFJob"
+    "processor": "PDFJob",
+    "id": "mgp3"
   },
   "state": "Complete",
   "status": "",
@@ -19598,5 +19600,6 @@
     "annotated_tsv_file": "Example4_use.annotated.tsv",
     "citation": "McLeod B. <A target=\"_blank\" href=\"https://www.neb.com/en/-/media/nebus/files/application-notes/appnote_characterization_of_glycans_from_erbitux_rituxan_and_enbrel_using_recombinant_pngase_f.pdf?rev=581a874aebbc4351bec05e10c07f96ea&hash=F7F41C4E1158B1421DCF1FE6AE5126AB\">Characterization of Glycans from Erbitux\u00ae, Rituxan\u00ae and Enbrel\u00ae using PNGase F (Glycerol-free), Recombinant.</A> Application Note. New England BioLabs, Inc. 2024; 1-4."
   },
-  "error": []
+  "error": [],
+  "location": "examples"
 }

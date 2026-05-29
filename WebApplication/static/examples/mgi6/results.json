@@ -1,9 +1,11 @@
 {
+  "id": "mgi6",
   "submission_detail": {
     "filename": "pr1c00245_0002.jpg",
     "submission_type": "Multi-Glycan Image",
     "submission_mode": "URL",
-    "processor": "SingleImageJob"
+    "processor": "SingleImageJob",
+    "id": "mgi6"
   },
   "state": "Complete",
   "status": "",
@@ -1604,5 +1606,6 @@
     "citation": "Zhang R, Zhu J, Lubman DM, Mechref Y, Tang H. GlycoHybridSeq: Automated Identification of N-Linked Glycopeptides Using Electron Transfer/High-Energy Collision Dissociation (EThcD). J Proteome Res. 2021;20(6):3345-3352.",
     "pmid": "34010560"
   },
-  "error": []
+  "error": [],
+  "location": "examples"
 }

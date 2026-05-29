@@ -1,9 +1,11 @@
 {
+  "id": "mgi5",
   "submission_detail": {
     "filename": "mass-spectrometry-glycans-fig-2.jpg",
     "submission_type": "Multi-Glycan Image",
     "submission_mode": "Local",
-    "processor": "SingleImageJob"
+    "processor": "SingleImageJob",
+    "id": "mgi5"
   },
   "state": "Complete",
   "status": "",
@@ -7631,5 +7633,6 @@
     ],
     "citation": "<A target=\"_blank\" href=\"https://www.sigmaaldrich.com/US/en/technical-documents/protocol/protein-biology/protein-mass-spectrometry/mass-spectrometry-of-glycans\">Mass Spectrometry of Glycans</A>. MilliporeSigma Website."
   },
-  "error": []
+  "error": [],
+  "location": "examples"
 }

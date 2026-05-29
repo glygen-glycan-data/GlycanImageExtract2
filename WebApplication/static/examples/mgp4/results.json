@@ -1,9 +1,11 @@
 {
+  "id": "mgp4",
   "submission_detail": {
     "filename": "jbt.28-150.pdf",
     "submission_type": "Manuscript",
     "submission_mode": "Upload",
-    "processor": "PDFJob"
+    "processor": "PDFJob",
+    "id": "mgp4"
   },
   "state": "Complete",
   "status": "",
@@ -18324,5 +18326,6 @@
     "annotated_pdf_file": "jbt.28-150.annotated.pdf",
     "annotated_tsv_file": "jbt.28-150.annotated.tsv"
   },
-  "error": []
+  "error": [],
+  "location": "examples"
 }

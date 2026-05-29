@@ -1,10 +1,12 @@
 {
+  "id": "pmid1",
   "submission_detail": {
     "filename": "PMID-34010560.pdf",
     "submission_type": "Manuscript",
     "submission_mode": "PMID",
     "pmid": "34010560",
-    "processor": "PMIDSyntheticPDFJob"
+    "processor": "PMIDSyntheticPDFJob",
+    "id": "pmid1"
   },
   "state": "Complete",
   "status": "",
@@ -1687,5 +1689,6 @@
     "annotated_pdf_file": "PMID-34010560.annotated.pdf",
     "annotated_tsv_file": "PMID-34010560.annotated.tsv"
   },
-  "error": []
+  "error": [],
+  "location": "examples"
 }

@@ -1,9 +1,11 @@
 {
+  "id": "mgi3",
   "submission_detail": {
     "filename": "multi_glycans.png",
     "submission_type": "Multi-Glycan Image",
     "submission_mode": "URL",
-    "processor": "SingleImageJob"
+    "processor": "SingleImageJob",
+    "id": "mgi3"
   },
   "state": "Complete",
   "status": "",
@@ -1840,5 +1842,6 @@
       }
     ]
   },
-  "error": []
+  "error": [],
+  "location": "examples"
 }

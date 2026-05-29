@@ -1,9 +1,11 @@
 {
+  "id": "mgi2",
   "submission_detail": {
     "filename": "pdf7_extra.png",
     "submission_type": "Multi-Glycan Image",
     "submission_mode": "Local",
-    "processor": "SingleImageJob"
+    "processor": "SingleImageJob",
+    "id": "mgi2"
   },
   "state": "Complete",
   "status": "",
@@ -3117,5 +3119,6 @@
       }
     ]
   },
-  "error": []
+  "error": [],
+  "location": "examples"
 }

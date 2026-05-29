@@ -1,9 +1,11 @@
 {
+  "id": "mgp1",
   "submission_detail": {
     "filename": "use_multi_pdf.pdf",
     "submission_type": "Manuscript",
     "submission_mode": "Upload",
-    "processor": "PDFJob"
+    "processor": "PDFJob",
+    "id": "mgp1"
   },
   "state": "Complete",
   "status": "",
@@ -45882,5 +45884,6 @@
     "annotated_pdf_file": "use_multi_pdf.annotated.pdf",
     "annotated_tsv_file": "use_multi_pdf.annotated.tsv"
   },
-  "error": []
+  "error": [],
+  "location": "examples"
 }

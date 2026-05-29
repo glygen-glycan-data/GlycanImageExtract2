@@ -1,9 +1,11 @@
 {
+  "id": "mgp5",
   "submission_detail": {
     "filename": "figcap_example.pdf",
     "submission_type": "Manuscript",
     "submission_mode": "Local",
-    "processor": "PDFJob"
+    "processor": "PDFJob",
+    "id": "mgp5"
   },
   "state": "Complete",
   "status": "",
@@ -23601,5 +23603,6 @@
     "annotated_pdf_file": "figcap_example.annotated.pdf",
     "annotated_tsv_file": "figcap_example.annotated.tsv"
   },
-  "error": []
+  "error": [],
+  "location": "examples"
 }
