@@ -128,13 +128,23 @@ def add_citation_captions(instance):
 def remove_changable_fields(instance):
     # adds Citation, for each figure --> captions and figure_number
     result = json.loads(open("static/examples/"+instance+"/results.json").read())
-
+    
+    result["id"] = instance
     for k in list(result):
-        if k in ("id","task_index","sessionid") or k.endswith('time'):
+        if k in ("task_index","sessionid") or k.endswith('time'):
             del result[k]
+    
+    result['submission_detail']["id"] = instance
     for k in list(result['submission_detail']):
-        if k in ("id","task_index","sessionid") or k.endswith('time'):
+        if k in ("task_index","sessionid") or k.endswith('time'):
             del result['submission_detail'][k]
+
+    result['location'] = 'examples'
+
+    for fn in glob.glob("static/examples/"+instance+"/annotated_files/*"):
+        os.unlink(fn)
+    for fn in glob.glob("static/examples/"+instance+"/output/*.txt"):
+        os.unlink(fn)
 
     with open("static/examples/"+instance+"/results.json", 'wt') as wh:
         json.dump(result, wh, indent=2)
