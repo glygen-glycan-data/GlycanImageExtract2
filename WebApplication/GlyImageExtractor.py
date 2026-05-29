@@ -52,9 +52,7 @@ class GlyImageExtractor(APIFramework):
         
         # default figure search type for PDF files...
         self._image_search_type = config.get('image_search_type')
-        if self._image_search_type is not None:
-            assert self._image_search_type in ("fitz", "hybrid", "figcap")       
-
+        assert self._image_search_type in (None,"fitz", "hybrid", "figcap")
 
     def process(self):
         submission_type = flask.request.args.get("type")
