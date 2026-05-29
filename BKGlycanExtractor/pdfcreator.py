@@ -140,13 +140,34 @@ if __name__ == "__main__":
 
     import sys
 
-    pdfwriter = PDFCreator(28186137)
+    pdfwriter = PDFCreator()
 
     pdffile = sys.argv[1]
-    imagefiles = sys.argv[2:]
+    sys.argv.pop(1)
+    
+    if len(sys.argv) <= 1:
+        sys.exit(1)
 
-    for i,ifn in enumerate(imagefiles):
-        pdfwriter.add_image(ifn,"Figure %d. Lorum ipsum, lorum ipsum, lorum ipsum, lorum ipsum, lorum ipsum, lorum ipsum, lorum ipsum, lorum ipsum, lorum ipsum, lorum ipsum, lorum ipsum, lorum ipsum."%(i+1,))
+    pmid = None
+    if not os.path.exists(sys.argv[1]):
+        try:
+            pmid = int(sys.argv[1])
+            sys.argv.pop(1)
+        except:
+            pass
+    
+    pdfwriter = PDFCreator(pmid)
+    
+    i = 1; j = 1
+    while i < len(sys.argv):
+        assert os.path.exists(sys.argv[i])
+        if (i+1) < len(sys.argv) and not os.path.exists(sys.argv[i+1]):
+            caption = f"Figure {j}. {sys.argv[i+1]}"
+            pdfwriter.add_image(sys.argv[i],caption)
+            i += 2; j += 1
+        else:
+            pdfwriter.add_image(sys.argv[i])
+            i += 1; j += 1
     
     pdfwriter.write(pdffile)
 

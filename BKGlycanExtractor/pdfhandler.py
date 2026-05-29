@@ -9,7 +9,6 @@ POINTS_PER_INCH = 72.0
 
 class PDFHandler(object):
     def __init__(self,filepath):
-        self.filepath = filepath
         self.doc = fitz.open(filepath)
         self.dir,self.base = os.path.split(filepath)
         self.base,self.extn = self.base.rsplit('.',1)
