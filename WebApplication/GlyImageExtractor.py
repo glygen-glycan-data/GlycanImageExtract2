@@ -422,14 +422,14 @@ class GlyImageExtractor(APIFramework):
                 json_mtime = os.path.getmtime(json_file)
                 pdf_mtime = os.path.getmtime(annotated_pdf)
                 if pdf_mtime >= json_mtime:
-                    self._update_annotation_result_paths(
-                        resultid=resultid,
-                        result=result,
-                        annotated_pdf_file=annotated_pdf_file,
-                        annotated_tsv_file=annotated_tsv_file
-                    )
-                    with open(json_file, 'w') as f:
-                        json.dump(json_data, f, indent=2)
+                    # self._update_annotation_result_paths(
+                    #     resultid=resultid,
+                    #     result=result,
+                    #     annotated_pdf_file=annotated_pdf_file,
+                    #     annotated_tsv_file=annotated_tsv_file
+                    # )
+                    # with open(json_file, 'w') as f:
+                    #     json.dump(json_data, f, indent=2)
 
                     print("Status: OK (annotated PDF up-to-date), ResultID: %s." % (resultid,), file=sys.stderr)
                     return flask.jsonify(dict(status="OK", resultid=resultid, valid=True)), 200
@@ -440,6 +440,8 @@ class GlyImageExtractor(APIFramework):
                 base_url = f"http://{self.host()}:{self.port()}"
 
             # Regenerate annotated results
+            isnewannotatedpdf = (annotated_pdf and not os.path.exists(annotated_pdf))
+
             print("Building annotated PDF/TSV for ResultID: %s." % (resultid,), file=sys.stderr)
             annotate_from_webapp(json_file, pdf_path, base_url, output_dir=output_dir)
 
@@ -451,16 +453,19 @@ class GlyImageExtractor(APIFramework):
             if annotated_pdf and os.path.exists(annotated_pdf):
                 # make sure to add annotated file keys to the in-memory cache (result_cache) - so
                 # that the front end has access to these keys via the API payload
-                self._update_annotation_result_paths(
-                    resultid=resultid,
-                    result=result,
-                    annotated_pdf_file=annotated_pdf_file,
-                    annotated_tsv_file=annotated_tsv_file
-                )
-
-                # Write back to same file
-                with open(json_file, 'w') as f:
-                    json.dump(json_data, f, indent=2)
+                if isnewannotatedpdf: # if not, nothing to update...
+                    self._update_annotation_result_paths(
+                        resultid=resultid,
+                        result=result,
+                        annotated_pdf_file=annotated_pdf_file,
+                        annotated_tsv_file=annotated_tsv_file
+                    )
+                    # Write back to same file
+                    with open(json_file, 'w') as f:
+                        json.dump(json_data, f, indent=2)
+                
+                    # Touch the annotated_pdf file so that we don't recreate it next time!
+                    os.utime(annotated_pdf, None)
 
                 print("Status: OK, ResultID: %s." % (resultid,), file=sys.stderr)
                 return flask.jsonify(dict(status="OK", resultid=resultid, valid=True)), 200
