@@ -150,6 +150,8 @@ trainingSetup/*.zip
 manuscripts/
 trainingSetup/.*
 .*
+WebApplication/static/examples/*/output/
+WebApplication/static/examples/*/annotated_files/
 
 
 
