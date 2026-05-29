@@ -322,6 +322,10 @@
         const figures = (result_doc['result']['figures'] || result_doc['result']['figure_result'] || []);
         const file_extension = (result_doc['submission_detail']['filename'] || result_doc['submission_detail']['original_file_name']).split('.').pop();
         
+        const submission_type = result_doc['submission_detail']['submission_type'];
+        const submission_mode = result_doc['submission_detail']['submission_mode'];
+        const processor = result_doc['submission_detail']['processor'];
+
         // let pmc_publication = null;
         // if (result_doc && result_doc['pmc_publication']) {
         //     pmc_publication = result_doc['pmc_publication'];
@@ -336,10 +340,12 @@
         resstr += "<h3 class='result-heading'>Results: ";
         resstr += "<span><a class='pill-link' href='{{urlprefix}}/static/" + location + "/" + list_id + "/results.json' target='_blank'>JSON data</a> | </span> ";
         const originalHref = "{{urlprefix}}/static/" + location + "/" + list_id + "/input/" + encodeURIComponent(result_doc.submission_detail.filename || result_doc.submission_detail.original_file_name);
-        if (file_extension === "pdf") {
-            resstr += "<span><a class='pill-link' target='_blank' href='" + originalHref + "'>Original PDF</a> | </span>";
-        } else {
+        if (submission_type === "Simple Glycan Image") {
             resstr += "<span><a class='pill-link' target='_blank' href='" + originalHref + "'>Original Image</a> | </span>";
+        } else if (submission_type === "Multi-Glycan Image") {
+            resstr += "<span><a class='pill-link' target='_blank' href='" + originalHref + "'>Original Image</a> | </span>";
+        } else if (submission_type === "Manuscript" && submission_mode !== "PMID") {
+            resstr += "<span><a class='pill-link' target='_blank' href='" + originalHref + "'>Original PDF</a> | </span>";
         }
 
         if (result_doc.result.annotated_pdf_file && result_doc.result.annotated_tsv_file) {
