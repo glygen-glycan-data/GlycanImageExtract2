@@ -205,11 +205,17 @@ class APIFramework:
         return res
 
     def parse_config(self, config_file_name):
-        config_path = self.abspath(config_file_name)
+        config_file_name = self.abspath(config_file_name)
 
         config = configparser.ConfigParser()
-        config.read_file(open(config_path))
-
+        self.output(1, "reading config: "+config_file_name)
+        config.read_file(open(config_file_name))
+        
+        for fn in glob.glob(os.path.split(config_file_name)[0]+"/*-local.ini"):
+            if fn != config_file_name:
+                self.output(1, "reading config: "+fn)
+                config.read_file(open(fn))
+        
         res = {}
         for each_section in config.sections():
             res[each_section] = {}
