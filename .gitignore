@@ -152,6 +152,7 @@ trainingSetup/.*
 .*
 WebApplication/static/examples/*/output/
 WebApplication/static/examples/*/annotated_files/
+WebApplication/static/examples/pmid1/input/*.pdf
 
 
 
