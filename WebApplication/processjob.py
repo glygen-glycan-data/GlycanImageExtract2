@@ -502,10 +502,8 @@ class PMIDImageJob(MultiImageJob):
 
         # set citation
         citation = PMCData.citation_details(self.pmid)
-        citation_txt = ''
         if citation:
-            citation_txt = citation.get('ascii_citation') or citation.get('citation', '')
-        self.set_document_metadata(citation=citation_txt)
+            self.set_document_metadata(citation=citation['citation'],pmid=self.pmid)
 
         return pmc_api.figures_metadata(self.figures_dir, input_dir=self.input_dir)
 
@@ -529,18 +527,15 @@ class PDFJob(MultiImageJob):
         strategy = ImageSearch.search_method(self.image_search_strategy)
 
         metadata = strategy.get_metadata(self.input_filepath, self.figures_dir)
-        
+        citation = None
         if self.task_detail.get('pmid'):
             citation = PMCData.citation_details(self.task_detail['pmid'])
-            if citation:
-                self.set_document_metadata(citation=citation['citation'],
-                                           pmid=self.task_detail['pmid']) 
         else:
             handler = PDFHandler(self.input_filepath)
             citation = handler.get_citation()
-            if citation:
-                self.set_document_metadata(citation=citation['citation'],
-                                           pmid=citation['pmid'])
+        if citation:
+            self.set_document_metadata(citation=citation['citation'],
+                                       pmid=citation['pmid'])
         return metadata
 
 class PMIDSyntheticPDFJob(PDFJob):
@@ -562,12 +557,15 @@ class PMIDSyntheticPDFJob(PDFJob):
 
         # create PDF - write images and captions, citations to the pdf
         pdfwriter = PDFCreator(self.pmid)
-        for i, fig_data in enumerate(pmc_figures, 1):
-            pdfwriter.add_image(fig_data['image_path'], f"Figure {i}. {fig_data.get('caption', '')}")
+        for fig_data in pmc_figures:
+            if fig_data.get('figure_number'):
+                pdfwriter.add_image(fig_data['image_path'], f"Figure {fig_data['figure_number']}. {fig_data.get('ascii_caption', '')}")
+            else:
+                pdfwriter.add_image(fig_data['image_path'], f"{fig_data.get('ascii_caption', '')}")
         pdfwriter.write(self.input_filepath)
 
-        citation = pdfwriter.citation.get('ascii_citation') or pdfwriter.citation.get('citation')
-        self.set_document_metadata(citation=citation)
+        citation = pdfwriter.citation.get('citation')
+        self.set_document_metadata(citation=citation,pmid=self.pmid)
 
         # image_paths are required for glycan pipleine analysis on image
         # synthetic pdfs have images, but we also have the individual images (used during pdf_creator step)
@@ -576,6 +574,15 @@ class PMIDSyntheticPDFJob(PDFJob):
 
         strategy = ImageSearch.search_method(self.image_search_strategy)
         metadata = strategy.get_metadata(self.input_filepath, self.figures_dir, image_path_dict=image_path_dict)
+        
+        # unfortunately, pdfwriter (fitz) makes dealing with unicode details (such as italics) pretty difficult
+        # so we clobber with the "good" captions from PMC XML
+        for f1,f2 in zip(pmc_figures,metadata):
+            for key in ('caption','figure_number'):
+                if f1.get(key,"") != "":
+                    f2[key] = f1[key]
+                elif f2.get(key,"") != "":
+                    del f2[key]
 
         return metadata
 
