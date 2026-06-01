@@ -197,7 +197,7 @@ class PMCData:
         
         # 2. Iterate through child elements
         for child in element:
-            if child.tag == 'i':
+            if child.tag in ('i','italic'):
                 # Convert text inside <i> to Unicode italics
                 italicized_text = PMCData.get_unicode_italic(child.text)
                 text_parts.append(italicized_text)
@@ -548,15 +548,17 @@ class PMCTarFile:
             if caption_elem is not None:
                 title = caption_elem.find('title', self.NAMESPACES)
                 if title is not None:
-                    fig_info['caption'] = title.text
+                    fig_info['caption'] = PMCData.extract_full_text(title)
                 else:
                     caption = []
                     for p in caption_elem.findall('.//p', self.NAMESPACES):
-                        text = ''.join(p.itertext()).strip()
+                        text = PMCData.extract_full_text(p).strip()
                         text = " ".join(text.split())
                         if text:
                             caption.append(text)
                     fig_info['caption'] = ' '.join(caption) if caption else None
+                if fig_info['caption']:
+                    fig_info['ascii_caption'] = PMCData.toascii(fig_info['caption']) 
             filename = None
             for tag in ('graphic', 'inline-graphic'):
                 graphic_elem = fig.find(tag, self.NAMESPACES)
@@ -594,20 +596,22 @@ class PMCTarFile:
                 # look up XML metadata for this renamed figure (if any)
                 fig_info = figure_info_map.get(fig_name, {})
                 # if the figure_number is empty, can we assume Graphical Abstract?
-                caption = fig_info.get("caption","")
-                figure_number = fig_info.get("figure_number", "")
-
+                # caption = fig_info.get("caption","")
+                # figure_number = fig_info.get("figure_number", "")
+                
                 image = {
                     "image_path": image_path,
                     "fig_bbox": [0, 0, width, height],
                     "image_count": image_count,
                     # XML-derived metadata (keys match XMLParser output)
                     "caption": fig_info.get("caption",""),
+                    "ascii_caption": fig_info.get("ascii_caption",""),
                     "figure_number": fig_info.get("figure_number", ""),
                     "pmid_job": True, 
                 }
                 if not image["figure_number"] and not image["caption"]:
                     image["caption"] = "Graphical Abstract"
+                    image["ascii_caption"] = "Graphical Abstract"       
 
                 metadata.append(image)
 
