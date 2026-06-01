@@ -218,6 +218,7 @@ class PDFHandler(object):
                     image['page_height'] = page.rect.height
                     if figure_number:
                         image['figure_number'] = figure_number
+                    if caption:
                         image['caption'] = caption
                         
                     if filter is None or filter.keep(image):
