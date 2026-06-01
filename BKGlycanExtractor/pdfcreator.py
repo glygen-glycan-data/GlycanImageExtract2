@@ -20,9 +20,9 @@ class PDFCreator(object):
         self.images = []
         self.text = []
 
-    def add_image(self,imagefile,caption=None):
+    def add_image(self,imagefile,caption=None,figure_number=None):
         assert os.path.exists(imagefile)
-        self.images.append((imagefile,caption))
+        self.images.append((imagefile,caption,figure_number))
     
     def add_text(self,text):
         self.text.append(text)
@@ -31,7 +31,7 @@ class PDFCreator(object):
         doc = fitz.open()
         scale = 1e+20
 
-        for img_path, caption in self.images:
+        for img_path, caption, figure_number in self.images:
             img_doc = fitz.open(img_path)
             img_w = img_doc[0].rect.width
             img_h = img_doc[0].rect.height
@@ -61,10 +61,10 @@ class PDFCreator(object):
                 author_rect = fitz.Rect(self.MARGIN, 
                        self.MARGIN+2*self.TITLE_SPACE,
                        self.PAGE_WIDTH-self.MARGIN,
-                       self.MARGIN+4*self.TITLE_SPACE)
+                       self.MARGIN+5*self.TITLE_SPACE)
                 rc = page.insert_textbox(
                     author_rect, 
-                    self.citation['citation'],
+                    self.citation['ascii_citation'],
                     fontsize=12, 
                     fontname="helv", 
                     align=fitz.TEXT_ALIGN_LEFT
@@ -72,9 +72,9 @@ class PDFCreator(object):
 
             if self.citation.get('doi'):
                 doi_rect = fitz.Rect(self.MARGIN, 
-                                     self.MARGIN+4*self.TITLE_SPACE,
+                                     self.MARGIN+5*self.TITLE_SPACE,
                                      self.PAGE_WIDTH-self.MARGIN,
-                                     self.MARGIN+5*self.TITLE_SPACE)
+                                     self.MARGIN+6*self.TITLE_SPACE)
 
                 rc = page.insert_textbox(
                     doi_rect, 
@@ -84,7 +84,7 @@ class PDFCreator(object):
                     align=fitz.TEXT_ALIGN_CENTER
                 )
 
-        for img_path, caption in self.images:
+        for img_path, caption, figure_number in self.images:
 
             img_doc = fitz.open(img_path)
             img_w = img_doc[0].rect.width
@@ -114,6 +114,11 @@ class PDFCreator(object):
             # fig_annot.update()
 
             if caption:
+                if figure_number:
+                    full_caption = f"Figure {figure_number}. {caption}"
+                else:
+                    full_caption = f"{caption}"
+
                 # Define a bounding box for the caption text just below the image
                 caption_rect = fitz.Rect(x0, 
                                          y1 + 5, 
@@ -123,14 +128,20 @@ class PDFCreator(object):
                 # Insert the caption text, horizontally centered
                 rc = page.insert_textbox(
                     caption_rect, 
-                    caption, 
+                    full_caption, 
                     fontsize=10, 
                     fontname="helv", 
                     align=fitz.TEXT_ALIGN_LEFT
                 )
                 
                 if rc < 0:
-                    print(f"Warning: Caption for {img_path} was STILL too long to fit in the bounding box.")
+                    rc = page.insert_textbox(
+                        caption_rect, 
+                        full_caption[:200]+"...", 
+                        fontsize=10, 
+                        fontname="helv", 
+                        align=fitz.TEXT_ALIGN_LEFT
+                    )
                 
         # Save and close the generated document
         doc.save(outfile, garbage=4, deflate=True)
