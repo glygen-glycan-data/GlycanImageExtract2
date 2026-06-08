@@ -17,6 +17,9 @@ parser = argparse.ArgumentParser(description="Annotate PDF")
 
 # TODO - if url path is not valid for PDF - state a warning
 
+MATCH_THRESHOLD = 0.3
+USE_THRESHOLD = 0.8
+
 parser.add_argument(
     '--pdf',
     type = str,
@@ -160,54 +163,40 @@ def build_input_items(pdf_list=None, pmid_list=None):
 #     union = area_a + area_b - inter
 #     return 0.0 if union <= 0 else inter / union
 
+
 def best_assignment_mean_iou(manual_xywh_list, pred_xywh_list):
-
     n = len(manual_xywh_list)
-    if n == 0:
-        return 0.0, []
-    if len(pred_xywh_list) != n:
+    p = len(pred_xywh_list)
+    if n == 0 or p == 0:
         return -1.0, []
-
-    # precompute iou matrix
-    # iou_mat = [[iou_xywh(manual_xywh_list[i], pred_xywh_list[j]) for j in range(n)] for i in range(n)]
-    iou_mat = [[CompareBoxes.iou(manual_xywh_list[i], pred_xywh_list[j]) for j in range(n)] for i in range(n)]
-    # dp[mask] = best total iou for assigning first k manuals where k = popcount(mask)
-    dp = [-1.0] * (1 << n)
-    parent = [None] * (1 << n)
-    dp[0] = 0.0
-
-    for mask in range(1 << n):
-        k = mask.bit_count()
-        if k >= n:
-            continue
-        base = dp[mask]
-        if base < 0:
-            continue
-        # assign manual k to some unused pred j
-        for j in range(n):
-            if not (mask & (1 << j)):
-                nmask = mask | (1 << j)
-                score = base + iou_mat[k][j]
-                if score > dp[nmask]:
-                    dp[nmask] = score
-                    parent[nmask] = (mask, k, j)
-
-    full = (1 << n) - 1
-    total = dp[full]
-    if total < 0:
-        return -1.0, []
-
-    # reconstruct
+    pairs = []
+    for i in range(n):
+        for j in range(p):
+            iou = CompareBoxes.iou(
+                manual_xywh_list[i],
+                pred_xywh_list[j]
+            )
+            pairs.append((iou, i, j))
+    pairs.sort(reverse=True)
+    used_manual = set()
+    used_pred = set()
     assignment = []
-    cur = full
-    while cur != 0:
-        pmask, mi, pj = parent[cur]
-        assignment.append((mi, pj))
-        cur = pmask
-    assignment.reverse()
-    return total / n, assignment
-MATCH_THRESHOLD = 0.3
-USE_THRESHOLD = 0.8
+    total_iou = 0.0
+    for iou, i, j in pairs:
+        if i in used_manual:
+            continue
+        if j in used_pred:
+            continue
+        used_manual.add(i)
+        used_pred.add(j)
+        assignment.append((i, j))
+        total_iou += iou
+    if len(assignment) == 0:
+        return -1.0, []
+    mean_iou = total_iou / len(assignment)
+    return mean_iou, assignment
+
+
 
 def match_and_merge(manual_boxes, pred_boxes, pred_raw):
 
@@ -263,23 +252,28 @@ def match_and_merge(manual_boxes, pred_boxes, pred_raw):
                 "source": "manual_high_iou"
             })
             TP += 1
-        else:
-            # 🔥 用 predict
+        else: 
+            merged.append({
+                "bbox": manual_boxes[i].bbox(),
+                "confidence": 1.0,
+                "source": "manual_low_iou"
+            })
+            # 也保留 pred
             g = pred_raw[j].copy()
             g["source"] = "pred_low_iou"
             merged.append(g)
-            FN += 1   # 或者你也可以定义为 FP，看你evaluation怎么定
-
-    # Case 1: manual only
-    for i in range(len(manual_boxes)):
-        if i not in matched_m:
-            box = manual_boxes[i]
-            merged.append({
-                "bbox": box.bbox(),
-                "confidence": 1.0,
-                "source": "manual_only"
-            })
             FN += 1
+
+            # Case 1: manual only
+            for i in range(len(manual_boxes)):
+                if i not in matched_m:
+                    box = manual_boxes[i]
+                    merged.append({
+                        "bbox": box.bbox(),
+                        "confidence": 1.0,
+                        "source": "manual_only"
+                    })
+                    FN += 1
 
     # Case 3: pred only
     for j in range(len(pred_boxes)):
@@ -300,6 +294,121 @@ def match_and_merge(manual_boxes, pred_boxes, pred_raw):
     }
 
     return merged, stats
+# GLOBLE
+total_TP = 0
+total_FP = 0
+total_FN = 0
+# draw manual YOLO boxes once per figure (if provided)
+drew_manual_boxes = False
+
+# Using Image Manager to gets paths of all pdf's from a directory 
+# TODO Image_Manager class name - should probably be changed to File_Manager to make the class name sound more relevant, but the Image_Manager classname
+# is being used in a couple of places, so need to make these updates in the all places
+if args.pdf:
+    pdf_manager = Image_Manager(args.pdf, pattern='*.pdf', exclude='*.annotated.pdf')
+    args.pdf = pdf_manager.images
+
+# Build unified input items list
+input_items = build_input_items(args.pdf, args.pmid)
+
+total_inputs = len(input_items)
+if args.json is not None:
+    assert len(args.json) == total_inputs, f"Number of JSON files ({len(args.json)}) must match number of inputs ({total_inputs})"
+if args.taskid is not None:
+    assert len(args.taskid) == total_inputs, f"Number of task IDs ({len(args.taskid)}) must match number of inputs ({total_inputs})"
+if args.resubmit:
+    assert not args.json, "Cannot use --resubmit with --json"
+    assert not args.taskid, "Cannot use --resubmit with --taskid"
+
+client = ExtractorClient(apiurl=args.extractorurl)
+
+needsresults = set()
+all_json_data = {}
+resultfilename = {}
+
+for i, item in enumerate(input_items):
+    if item.is_pdf():
+        if not os.path.exists(item.value):
+            print(f"Error: PDF file not found: {item.value}")
+            sys.exit(1)
+            # assert os.path.exists(pdf)
+    if item.is_pmid():
+        # TODO: validate if pmid is Open Source, else skip and notify user
+        pass
+    
+    if args.json:
+        resultfilename[i] = args.json[i]
+        assert os.path.exists(resultfilename[i])
+    else:
+        if item.is_pdf():
+            resultfilename[i] = item.basename+".results.json"
+        elif item.is_pmid():   # pmid
+            resultfilename[i] = f"PMID-{item.value}.results.json"
+
+    if not os.path.exists(resultfilename[i]) or args.resubmit:
+        if args.taskid:
+            taskid = args.taskid[i]
+        elif item.is_pmid():
+            print(f"PMID {item.value} submitted for analysis")
+            taskid = client.submit_pmid(item.value, curation_task=True)
+        else:
+            print(os.path.split(item.value)[1],"PDF submitted for analysis.")
+            taskid = client.submit_manuscript_file(item.value, curation_task=True)
+
+        json_data = client.retrieve_once(taskid,asis=True)
+        with open(resultfilename[i],'w') as f:
+            json.dump(json_data,f,indent=2)
+    else:
+        with open(resultfilename[i], 'r') as f:
+            json_data = json.load(f)
+        if not json_data.get('finished',False):
+            tmp_json_data = client.retrieve_once(json_data['id'],asis=True)
+            if 'submission_detail' not in tmp_json_data:
+                # result file has non-existent taskid
+                if item.is_pmid():
+                    print(f"PMID {item.value} resubmitted for analysis (bad taskid).")
+                    taskid = client.submit_pmid(item.value)
+                else:
+                    print(os.path.split(item.value)[1],"resubmitted for analysis (bad taskid).")
+                    taskid = client.submit_manuscript_file(item.value, curation_task=True)
+
+                json_data = client.retrieve_once(taskid,asis=True)
+                with open(resultfilename[i],'w') as f:
+                    json.dump(json_data,f,indent=2)
+    all_json_data[i] = json_data
+    if not json_data.get('finished',False):
+        needsresults.add(i)
+
+completed = set()
+while True:
+    for i in sorted(needsresults):
+        if i in completed:
+            continue
+        taskid = all_json_data[i]['id']
+        json_data = client.retrieve_once(taskid,asis=True)
+        input_item = json_data['submission_detail']['filename']
+        if json_data.get('finished',False):
+            all_json_data[i] = json_data
+            completed.add(i)
+            if json_data['state'] == "Complete":
+                print(input_item,"analysis complete.")
+            elif json_data['state'] == "Error":
+                print(input_item,"analysis error.")
+            # basename = os.path.splitext(args.pdf[i])[0]
+            with open(resultfilename[i],'w') as wh:
+                wh.write(json.dumps(json_data))
+            print("Wrote results JSON:",resultfilename[i])
+        else:
+            if json_data.get('status'):
+                print(input_item,"analysis in progress:",json_data['status'])
+            elif json_data['state'] == "Running":
+                print(input_item,"analysis in progress.")
+            else:
+                pass # print(pdf,"analysis queued.")
+    if completed == needsresults:
+        break
+    time.sleep(15)
+
 for manual_file in args.manual:
 
     manual_boxes = []
@@ -312,127 +421,13 @@ for manual_file in args.manual:
                     continue
                 cls, xc, yc, w, h = map(float, parts)
                 manual_boxes.append((xc, yc, w, h))
-    # Using Image Manager to gets paths of all pdf's from a directory 
-    # TODO Image_Manager class name - should probably be changed to File_Manager to make the class name sound more relevant, but the Image_Manager classname
-    # is being used in a couple of places, so need to make these updates in the all places
-    if args.pdf:
-        pdf_manager = Image_Manager(args.pdf, pattern='*.pdf', exclude='*.annotated.pdf')
-        args.pdf = pdf_manager.images
 
-    # Build unified input items list
-    input_items = build_input_items(args.pdf, args.pmid)
-
-    total_inputs = len(input_items)
-    if args.json is not None:
-        assert len(args.json) == total_inputs, f"Number of JSON files ({len(args.json)}) must match number of inputs ({total_inputs})"
-    if args.taskid is not None:
-        assert len(args.taskid) == total_inputs, f"Number of task IDs ({len(args.taskid)}) must match number of inputs ({total_inputs})"
-    if args.resubmit:
-        assert not args.json, "Cannot use --resubmit with --json"
-        assert not args.taskid, "Cannot use --resubmit with --taskid"
-
-    client = ExtractorClient(apiurl=args.extractorurl)
-
-    needsresults = set()
-    all_json_data = {}
-    resultfilename = {}
-
-    for i, item in enumerate(input_items):
-        if item.is_pdf():
-            if not os.path.exists(item.value):
-                print(f"Error: PDF file not found: {item.value}")
-                sys.exit(1)
-                # assert os.path.exists(pdf)
-        if item.is_pmid():
-            # TODO: validate if pmid is Open Source, else skip and notify user
-            pass
-        
-        if args.json:
-            resultfilename[i] = args.json[i]
-            assert os.path.exists(resultfilename[i])
-        else:
-            if item.is_pdf():
-                resultfilename[i] = item.basename+".results.json"
-            elif item.is_pmid():   # pmid
-                resultfilename[i] = f"PMID-{item.value}.results.json"
-
-        if not os.path.exists(resultfilename[i]) or args.resubmit:
-            if args.taskid:
-                taskid = args.taskid[i]
-            elif item.is_pmid():
-                print(f"PMID {item.value} submitted for analysis")
-                taskid = client.submit_pmid(item.value, curation_task=True)
-            else:
-                print(os.path.split(item.value)[1],"PDF submitted for analysis.")
-                taskid = client.submit_manuscript_file(item.value, curation_task=True)
-
-            json_data = client.retrieve_once(taskid,asis=True)
-            with open(resultfilename[i],'w') as f:
-                json.dump(json_data,f,indent=2)
-        else:
-            with open(resultfilename[i], 'r') as f:
-                json_data = json.load(f)
-            if not json_data.get('finished',False):
-                tmp_json_data = client.retrieve_once(json_data['id'],asis=True)
-                if 'submission_detail' not in tmp_json_data:
-                    # result file has non-existent taskid
-                    if item.is_pmid():
-                        print(f"PMID {item.value} resubmitted for analysis (bad taskid).")
-                        taskid = client.submit_pmid(item.value)
-                    else:
-                        print(os.path.split(item.value)[1],"resubmitted for analysis (bad taskid).")
-                        taskid = client.submit_manuscript_file(item.value, curation_task=True)
-
-                    json_data = client.retrieve_once(taskid,asis=True)
-                    with open(resultfilename[i],'w') as f:
-                        json.dump(json_data,f,indent=2)
-        all_json_data[i] = json_data
-        if not json_data.get('finished',False):
-            needsresults.add(i)
-
-    completed = set()
-    while True:
-        for i in sorted(needsresults):
-            if i in completed:
-                continue
-            taskid = all_json_data[i]['id']
-            json_data = client.retrieve_once(taskid,asis=True)
-            input_item = json_data['submission_detail']['filename']
-            if json_data.get('finished',False):
-                all_json_data[i] = json_data
-                completed.add(i)
-                if json_data['state'] == "Complete":
-                    print(input_item,"analysis complete.")
-                elif json_data['state'] == "Error":
-                    print(input_item,"analysis error.")
-                # basename = os.path.splitext(args.pdf[i])[0]
-                with open(resultfilename[i],'w') as wh:
-                    wh.write(json.dumps(json_data))
-                print("Wrote results JSON:",resultfilename[i])
-            else:
-                if json_data.get('status'):
-                    print(input_item,"analysis in progress:",json_data['status'])
-                elif json_data['state'] == "Running":
-                    print(input_item,"analysis in progress.")
-                else:
-                    pass # print(pdf,"analysis queued.")
-        if completed == needsresults:
-            break
-        time.sleep(15)
-    # draw manual YOLO boxes once per figure (if provided)
-    drew_manual_boxes = False
-    total_TP = 0
-    total_FP = 0
-    total_FN = 0
     for i,input_item in enumerate(input_items):
 
         if all_json_data[i].get('state') == "Error":
             print(input_item.value,"skipping due to analysis error.")
             continue
 
-        # original_filepath = all_json_data[i]['result']['abs_original_filepath']
-        # doc = fitz.open(original_filepath)
-        
         best = None  # (best_score, best_result_index, best_page_number, best_assignment)
         if manual_boxes:
             m = len(manual_boxes)
@@ -447,7 +442,7 @@ for manual_file in args.manual:
             candidates = [
                 ridx
                 for ridx, result in enumerate(all_json_data[i]['result']['figures'])
-                if len(result.get("glycans", [])) == m and m > 0
+                if len(result.get("glycans", [])) > 0
             ]
             
             
@@ -578,22 +573,9 @@ for manual_file in args.manual:
                     
                 else:
                     print("[AUTO] No matching figure found for manual boxes (count gating failed).")
-        # doc = fitz.open(input_item.value)
-        basename = input_item.basename
-        annotated_path = basename + ".annotated.pdf"
 
-        if os.path.exists(annotated_path):
-            doc = fitz.open(annotated_path)
-        else:
-            if json_data.get('status'):
-                print(input_item,"analysis in progress:",json_data['status'])
-            elif json_data['state'] == "Running":
-                print(input_item,"analysis in progress.")
-            else:
-                pass # print(pdf,"analysis queued.")
-    if completed == needsresults:
-        break
-    time.sleep(15)
+manual_boxes = []
+best_ridx = None
 
 for i,input_item in enumerate(input_items):
 
@@ -601,8 +583,14 @@ for i,input_item in enumerate(input_items):
         print(input_item.value,"skipping due to analysis error.")
         continue
 
-    doc = fitz.open(input_item.value)
+    # doc = fitz.open(input_item.value)
     basename = input_item.basename
+    annotated_path = basename + ".annotated.pdf"
+
+    if os.path.exists(annotated_path):
+        doc = fitz.open(annotated_path)
+    else:
+        doc = fitz.open(input_item.value)
 
     # if os.path.exists(basename + ".annotated.pdf") or \
     #     os.path.exists(basename + ".annotated.tsv"):
@@ -612,7 +600,8 @@ for i,input_item in enumerate(input_items):
     image_data = []
 
     anyvotes = False
-    for result in all_json_data[i]['result']['figures']:
+
+    for ridx, result in enumerate(all_json_data[i]['result']['figures']):        
         fig_num = result["image_count"]
         taskid = all_json_data[i]['id']
 
@@ -651,123 +640,118 @@ for i,input_item in enumerate(input_items):
                     f"url: {url}\n"
                 )
 
-        image_data = []
+                gly_annot.set_info(content=content)
+                source = glycan.get("source", "pred")
+                print(
+                source,
+                glycan.get("fig_glycan_count")
+            )
+                # if source == "manual_high_iou":
+                #     color = (1, 0, 0)      # 红
+                # elif source == "manual_low_iou":
+                #     color = (1, 1, 0)      # 黄
+                # elif source == "manual_only":
+                #     color = (1, 1, 0)      # 黄
+                # elif source == "pred_low_iou":
+                #     color = (1, 0.4, 0.8)      # 粉色
+                #     width = 2
+                # elif source == "pred_only":
+                #     color = (1, 0.4, 0.8)      # 粉色
+                #     width = 2
+                # elif source == "pred":
+                #     color = (0, 1, 0)
+                # else:
+                #     color = (0, 0, 1)
+                if source.startswith("manual"):
+                    color = (0, 1, 0)      # 绿色
+                    width = 1
 
-        anyvotes = False
+                elif source.startswith("pred"):
+                    color = (1, 0, 0)      # 红色
+                    width = 2
 
-        for ridx, result in enumerate(all_json_data[i]['result']['figures']):        
-            fig_num = result["image_count"]
-            taskid = all_json_data[i]['id']
+                else:
+                    color = (0, 0, 1)      # 蓝色（异常情况）
+                    width = 1
+                gly_annot.set_colors(stroke=color)
+                gly_annot.set_border(width=0.5) 
+                gly_annot.update()
 
-            # page_num - 1, because semantics counts page number starting from 1
-            # but fitz accesses page numbers starting from 0
-            page = doc[result["page_number"]-1]   
+                votes = glycan.get('upvotes',0)-glycan.get('downvotes',0)
+                if votes != 0:
+                    anyvotes = True
 
-            # add figure boxes on the pdf with a fig: <fig_number> comment
-            try:
+                image_data.append({
+                    "ID": gid,
+                    "xref": result.get("xref"),
+                    "page_num": result["page_number"],
+                    "fig_num": fig_num,
+                    "accession": glycan.get('accession', ''),
+                    "iupac": glycan.get('IUPAC', ''),
+                    "composition": glycan.get('composition_str', ''),
+                    'wurcs': glycan.get('WURCS', ''),
+                    'votes': votes,
+                    "url": url,
+                })
 
-                fig_annot = page.add_rect_annot(result["pdf_fig_bbox"])
-                fig_annot.set_colors(stroke=(0, 0, 1)) 
-                fig_annot.set_border(width=0.5) 
-                            
-                # set fig id
-                content = (
-                    f"fig:{result['image_count']}\n"
-                )
-                xref = result.get("xref", None)
-                if xref is not None and xref > 0:
-                    content += f"xref: {xref}\n"
+            # if (not drew_manual_boxes) and manual_boxes and result["page_number"] == page_number_manual:
 
-                fig_annot.set_info(content=content)
-                fig_annot.update()
+            if manual_boxes and ridx == best_ridx:
+                # print(
+                #     "DRAW",
+                #     manual_file,
+                #     "best_ridx=",
+                #     best_ridx,
+                #     "ridx=",
+                #     ridx,
+                #     "page=",
+                #     result["page_number"]
+                # )
+                fig_px_w = result["width"]
+                fig_px_h = result["height"]
 
-                pdf_context_instance = PDFConversionContext.from_result_dict(result)
+                for (xc, yc, mw, mh) in manual_boxes:
+                    # --- BLUE: original manual box ---
+                    x0_px = (xc - mw / 2) * fig_px_w
+                    y0_px = (yc - mh / 2) * fig_px_h
+                    w_px  = mw * fig_px_w
+                    h_px  = mh * fig_px_h
 
-                for glycan in result["glycans"]:
-                    pdf_gly_box = pdf_context_instance.to_pdf_bbox(glycan["bbox"])
-                    gly_annot = page.add_rect_annot(pdf_gly_box.bbox())
+                    # pdf_box_blue = pdf_context_instance.to_pdf_bbox((x0_px, y0_px, w_px, h_px))
+                    # blue_annot = page.add_rect_annot(fitz.Rect(*pdf_box_blue.bbox()))
+                    # blue_annot.set_colors(stroke=(0, 0, 1))
+                    # blue_annot.set_border(width=1)
+                    # blue_annot.set_info(content="manual box (original)")
+                    # blue_annot.update()
+                drew_manual_boxes = True
 
-                    gid = f"G{fig_num}.{glycan['fig_glycan_count']}"
-                    url = client.url() + f"/result/{taskid}#glycan-{fig_num}-{glycan['fig_glycan_count']}"
-                    content = (
-                        f"id: {gid}\n"
-                        f"url: {url}\n"
-                    )
-
-                    gly_annot.set_info(content=content)
-                    source = glycan.get("source", "pred")
-
-                    if source == "pred":
-                        color = (0, 1, 0)       # 绿
-                    elif source == "manual_only":
-                        color = (1, 0, 1)       # 紫
-                    elif source == "manual_low_iou":
-                        color = (1, 1, 0)       # 黄
-                    elif source == "pred_only":
-                        color = (0, 0, 0)       # black
-                    else:
-                        color = (0, 0, 1)
-
-                    gly_annot.set_colors(stroke=color)
-                    gly_annot.set_border(width=0.5) 
-                    gly_annot.update()
-
-                # if (not drew_manual_boxes) and manual_boxes and result["page_number"] == page_number_manual:
-
-                if manual_boxes and ridx == best_ridx:
-                    fig_px_w = result["width"]
-                    fig_px_h = result["height"]
-
-                    for (xc, yc, mw, mh) in manual_boxes:
-                        # --- BLUE: original manual box ---
-                        x0_px = (xc - mw / 2) * fig_px_w
-                        y0_px = (yc - mh / 2) * fig_px_h
-                        w_px  = mw * fig_px_w
-                        h_px  = mh * fig_px_h
-
-                        pdf_box_blue = pdf_context_instance.to_pdf_bbox((x0_px, y0_px, w_px, h_px))
-                        blue_annot = page.add_rect_annot(fitz.Rect(*pdf_box_blue.bbox()))
-                        blue_annot.set_colors(stroke=(0, 0, 1))
-                        blue_annot.set_border(width=1)
-                        blue_annot.set_info(content="manual box (original)")
-                        blue_annot.update()
-                    drew_manual_boxes = True
-        
-                    votes = glycan.get('upvotes',0)-glycan.get('downvotes',0)
-                    if votes != 0:
-                        anyvotes = True
-
-                    image_data.append({
-                        "ID": gid,
-                        "xref": result.get("xref"),
-                        "page_num": result["page_number"],
-                        "fig_num": fig_num,
-                        "accession": glycan.get('accession', ''),
-                        "iupac": glycan.get('IUPAC', ''),
-                        "composition": glycan.get('composition_str', ''),
-                        'wurcs': glycan.get('WURCS', ''),
-                        'votes': votes,
-                        "url": url,
-                    })
-
-            except Exception as e:
-                print(f"\nException occured while drawing bounding box on pdf: {e}")
+        except Exception as e:
+            print(f"\nException occured while drawing bounding box on pdf: {e}")
+    # doc.save(
+    #     basename + ".annotated.pdf"
+    #     # ,
+    #     # incremental=True,
+    #     # encryption=fitz.PDF_ENCRYPT_KEEP
+    # )
+    if os.path.exists(annotated_path):
+        doc.saveIncr()
+    else:
         doc.save(
-            basename + ".annotated.pdf",
-            incremental=True,
-            encryption=fitz.PDF_ENCRYPT_KEEP
+            annotated_path,
+            garbage=4,
+            deflate=True
         )
-        doc.close()
-        print("Wrote annotated PDF:",basename + ".annotated.pdf") 
-        wh = open(basename + ".annotated.tsv",'w')
-        headers = "ID xref page_num fig_num accession iupac composition wurcs votes url".split()
-        if not anyvotes:
-            headers.remove("votes")    
-        print("\t".join(headers),file=wh)
-        for row in image_data:
-            print("\t".join(map(str,map(row.get,headers))),file=wh)
-        wh.close()
-        print("Wrote annotation table:",basename + ".annotated.tsv")
+    doc.close()
+    print("Wrote annotated PDF:",basename + ".annotated.pdf") 
+    wh = open(basename + ".annotated.tsv",'w')
+    headers = "ID xref page_num fig_num accession iupac composition wurcs votes url".split()
+    if not anyvotes:
+        headers.remove("votes")    
+    print("\t".join(headers),file=wh)
+    for row in image_data:
+        print("\t".join(map(str,map(row.get,headers))),file=wh)
+    wh.close()
+    print("Wrote annotation table:",basename + ".annotated.tsv")
 
 print("\n===== FINAL METRICS =====")
 print(f"TP: {total_TP}")
@@ -789,3 +773,10 @@ figures annotations information itself.
 The TSV file generated only stores information about the glycan (monos, root, links) annotations, so the xref can be tracked via
 the figure annotation in the pdf and this ensures that the dimensions of the figure remain consistent during any extraction activity.
 '''
+
+for ridx, result in enumerate(all_json_data[i]['result']['figures']):
+    cnt = sum(
+        1 for g in result["glycans"]
+        if "source" in g
+    )
+    print(ridx, result["page_number"], cnt)
