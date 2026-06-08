@@ -196,7 +196,14 @@ def best_assignment_mean_iou(manual_xywh_list, pred_xywh_list):
     mean_iou = total_iou / len(assignment)
     return mean_iou, assignment
 
-
+def build_manual_box(fig_w, fig_h, xc, yc, mw, mh):
+    box = BoundingBox(
+        image_width=fig_w,
+        image_height=fig_h,
+        rcx=xc, rcy=yc, rw=mw, rh=mh
+    )
+    box.normalize()
+    return box
 
 def match_and_merge(manual_boxes, pred_boxes, pred_raw):
 
@@ -484,11 +491,7 @@ for manual_file in args.manual:
                 #     for (xc, yc, mw, mh) in manual_boxes
                 # ]
                 manual_xywh = [
-                    BoundingBox(
-                        image_width=fig_w,
-                        image_height=fig_h,
-                        rcx=xc, rcy=yc, rw=mw, rh=mh
-                    )
+                    build_manual_box(fig_w, fig_h, xc, yc, mw, mh)
                     for (xc, yc, mw, mh) in manual_boxes
                 ]
                 mean_iou, assignment = best_assignment_mean_iou(manual_xywh, pred_xywh)
@@ -549,11 +552,7 @@ for manual_file in args.manual:
                 ]
 
                 manual_bb = [
-                    BoundingBox(
-                        image_width=fig_w,
-                        image_height=fig_h,
-                        rcx=xc, rcy=yc, rw=mw, rh=mh
-                    )
+                    build_manual_box(fig_w, fig_h, xc, yc, mw, mh)
                     for (xc, yc, mw, mh) in manual_boxes
                 ]
 
