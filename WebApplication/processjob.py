@@ -5,29 +5,35 @@ from hashlib import md5
 from APIFramework import APIFramework
 from BKGlycanExtractor import ImageSearch
 from BKGlycanExtractor import Config_Manager, BoundingBox, PDFBoundingBox, CompareBoxes
-from BKGlycanExtractor import STANDARD_DPI, PDFHandler
-from BKGlycanExtractor import searchpmc
+from BKGlycanExtractor import STANDARD_DPI, PDFHandler, PDFXRefImageFilter, PDFImageSizeFilter, PDFLargeImageSizeFilter
 from BKGlycanExtractor import PDFCreator
-from BKGlycanExtractor.glyomicsclient import GlyLookupClient, GlymageClient, GnomeClient
-# from submit import searchGlyImage, sendToGNOme
+from BKGlycanExtractor.glyomicsclient import GlyLookupClient, GlymageClient, SubsumptionClient
+from BKGlycanExtractor import PMCData, PMCTarFile
 
 import numpy as np
 from shutil import copyfile
+import copy
 import tarfile
 from io import BytesIO
 import xml.etree.ElementTree as ET
 from urllib.parse import urljoin
-from pmc_xmlparser import XMLParser
 
-class JobInstance:
+class MultiImageJob:
+    '''
+    Generic pipeline class for all types of jobs.
+    '''
 
-    pipeline_mapping = {
-        'Simple Glycan Image': 'SingleGlycanImage-YOLOFinders',
-        # 'Single-Glycan Image': 'SingleGlycanImage-YOLOFinders',
-        'Multi-Glycan Image': 'MultipleGlycanImage-YOLOFinders',
-        'Manuscript': 'MultipleGlycanImage-YOLOFinders'
-    }
+    pipelines_allowed = [
+        'SingleGlycanImage-YOLOFinders',
+        'MultipleGlycanImage-YOLOFinders',
+    ]
 
+    image_search_strategy_allowed = [
+        'fitz',
+        'figcap',
+        'hybrid'
+    ]
+    
     def __init__(self, task_detail, config = {}, msg_queue = None):
         self.task_detail = task_detail
         self.id = task_detail.get('id')
@@ -35,8 +41,6 @@ class JobInstance:
         self.config = config
         self.original_file_name = task_detail.get('filename')
         self.submission_type = task_detail.get('submission_type')
-
-        self.pmid = task_detail.get('pmid')
 
         # Base project directory (absolute)
         self.base_dir = os.path.abspath(os.path.dirname(__file__))
@@ -54,6 +58,13 @@ class JobInstance:
         self.log_file_path = os.path.splitext(self.output_filepath)[0] + "_log.txt"
         self.json_filepath = os.path.splitext(self.output_filepath)[0] + "_job.json"
 
+        # other directories and path to stores downloaded files
+        self.figures_dir = os.path.join(self.workdir, "extracted_figures", "figures")
+        self.extracted_images_dir = os.path.join(self.workdir, "extracted_figures", "extracted_images")
+        self.images_dir = os.path.join(self.workdir, "extracted_figures", "images")
+        self.glymage_dir = os.path.join(self.workdir, "glymage")
+        self.create_directories(*{self.figures_dir, self.images_dir, self.extracted_images_dir, self.glymage_dir})
+
         # Ensure necessary directories exist
         os.makedirs(self.input_dir, exist_ok=True)
         os.makedirs(self.output_dir, exist_ok=True)
@@ -63,7 +74,7 @@ class JobInstance:
 
         self.job_finished = False
         self.results = []
-        self.document_metadata = {}
+        self.document_metadata = {}    
 
         # webservice clients
         self.glylookup_client = GlyLookupClient(apiurl=self.config.get('glylookup_url'),
@@ -72,63 +83,19 @@ class JobInstance:
         self.glymage_client = GlymageClient(apiurl=self.config.get('glymage_url'),
                                     developer_email=self.config.get('dev_email'))
 
-        self.gnome_client = GnomeClient(apiurl=self.config.get('subsumption_url'),
+        self.gnome_client = SubsumptionClient(apiurl=self.config.get('subsumption_url'),
                                     developer_email=self.config.get('dev_email'))
 
-    def update_status(self,status,state=None):
-        msg = dict(id=self.id)
-        if state is not None:
-            msg['state'] = state
-            msg['status'] = ""
-        if status is not None:
-            msg['status'] = status
-        if state is not None or status is not None:
-            self.msg_queue.put(msg)
-
-    def update_state(self,state,status=None):
-        self.update_status(status=None,state=state)
-
-    @staticmethod
-    def get_processor(task_detail,*args,**kwargs):
-        submission_type = task_detail.get('submission_type')
-        submission_mode = task_detail.get('submission_mode')
-        
-        if submission_mode == 'Local' and submission_type not in ("Simple Glycan Image", "Multi-Glycan Image"):
-            if task_detail.get('pmid'):
-                cls = PMIDJob
-            else:
-                cls = PDFJob
-        elif submission_type in ("Simple Glycan Image", "Multi-Glycan Image"):  
-            cls = ImageJob
-        elif submission_mode in ('Upload', 'URL') and submission_type == 'Manuscript':
-            cls = PDFJob
-        elif submission_mode == "PMID-PDF":
-            cls = PMIDPDFJob
-        elif submission_type == 'PDF-OriginalPDF':
-            cls = PMIDOriginalPDFJob
-        elif submission_mode == "PMID":
-            cls = PMIDJob
-        else:
-            cls = PDFJob  # manuscript upload/url/local
-        
-        # if not cls:
-        #     raise ValueError(f"Unsupported submission type: {submission_type}")
-        
-        return cls(task_detail, *args, **kwargs)
-
-
+    # generic/basic methods
     def create_directories(self,*paths):
         for path in paths:
             os.makedirs(path, exist_ok=True)
-
 
     def save_image(self,image, path):
         try:
             cv2.imwrite(path, image)
         except Exception as e:
             print(f"Error saving image at {path}: {e}")
-
-
 
     def abs_to_rel(self, abs_path=None):
         """
@@ -200,12 +167,22 @@ class JobInstance:
     def get_document_metadata(self):
         return self.document_metadata
 
+    def set_document_metadata(self, **kwargs):
+        for k, v in kwargs.items():
+            if v is not None:
+                self.document_metadata[k] = v
+
     def check_and_create_paths(self,subdirs):
         """Ensure that all specified subdirectories exist under the work directory."""
         for subdir in subdirs:
             path = os.path.join(self.workdir, subdir)
             os.makedirs(path, exist_ok=True)
         return [os.path.join(self.workdir, subdir) for subdir in subdirs]
+
+    def tar_filepath(self, pmid=None):
+        if pmid is None:
+            raise ValueError("PMID not provided")
+        return os.path.join(self.base_dir, "input", self.id, f"PMID-{self.pmid}.tar.gz")
 
     def annotate_image(self,figure_semantics):
         """Annotate glycans and save the annotated image."""
@@ -223,30 +200,29 @@ class JobInstance:
         self.save_image(figure_semantics.image(), annotated_image_path)
         figure_semantics.set('annotated_image_path',annotated_image_path)
 
-    def get_glycan_info(self, figure_semantics, image_folders):
+    def set_glycan_info(self, figure_semantics):
         
         glycans = list(figure_semantics.glycans())
 
         glylookup_seqs = []
         glymage_jobs = []
-
-        gnome_uri_base = "https://gnome.glyomics.org/StructureBrowser.html?"
         
         for idx, glycan in enumerate(glycans):
-            # for key in ('composition_str','IUPAC',):
-            #     print(idx,key,glycan.get(key))
-            # composition_str might be empty string, even if it is present
             if not glycan.get('composition_str'):
                 continue
             elif not glycan.has('IUPAC'):
                 glycan.set('linkexpl', 'Extracted structure using Composition.')
-                glymage_jobs.append((idx, self.glymage_client.submit_glymage(glycan)))
+                glymage_jobs.append((idx, 
+                    self.glymage_client.submit_glymage(
+                        seq=glycan.get('composition_str'), 
+                        orientation=glycan.glycan_orientation()
+                    )
+                ))
 
-                # if no iupac - build gnome_url using composition
-                matches = re.findall(r'([A-Za-z]+)\((\d+)\)', glycan.get('composition_str'))
-                converted_composition = '&'.join(f"{name}={count}" for name, count in matches)
-                gnome_url = gnome_uri_base + converted_composition
-                glycan.set('gnomeurl', gnome_url )
+                gnomeurl = self.gnome_client.get_gnome_url(
+                    compositionstr=glycan.get('composition_str'))
+                glycan.set('gnomeurl', gnomeurl)
+
             else:
                 # iupac exists
                 # build GlyLookup collection for batch - get accesson and wurcs from batch retrieve later
@@ -265,18 +241,35 @@ class JobInstance:
                             glycan.set('WURCS', sequence_type['seq'])
 
                     # build gnome_url using accession
-                    glycan.set('gnomeurl', gnome_uri_base + 'focus=' + glycan.get('accession'))
+                    gnomeurl = self.gnome_client.get_gnome_url(acc=glycan.get('accession'))
+                    glycan.set('gnomeurl', gnomeurl)
 
                     glycan.set('linkexpl', 'Extracted successfully using accession')
-                    glymage_jobs.append((glycan_idx, self.glymage_client.submit_glymage(glycan)))
+                    glymage_jobs.append((glycan_idx, 
+                        self.glymage_client.submit_glymage(
+                            seq=glycan.get('IUPAC'), # need IUPAC even though we have accession
+                                                     # because IUPAC encodes branch order
+                            orientation=glycan.glycan_orientation(),
+                        )
+                    ))  
                 else:
                     # submit iupac - for glymage and gnome
                     glycan.set('linkexpl', 'Extracted structure using IUPAC.')
-                    glymage_jobs.append((glycan_idx, self.glymage_client.submit_glymage(glycan)))
+                    glymage_jobs.append((glycan_idx, 
+                        self.glymage_client.submit_glymage(
+                            seq=glycan.get('IUPAC'), 
+                            orientation=glycan.glycan_orientation()
+                        )
+                    ))
 
                     # if no accession - gnome_url should be created using iupac
-                    gnome_task_id = self.gnome_client.submit_subsumption(glycan)
-                    glycan.set('gnomeurl', f"https://gnome.glyomics.org/StructureBrowser.html?ondemandtaskid={gnome_task_id}")
+                    try:
+                        gnomeurl = self.gnome_client.get_gnome_url(seq=glycan.get('IUPAC'))
+                        glycan.set('gnomeurl', gnomeurl)
+                    except Exception as e:
+                        sys.stderr.write(f"Warning: gnome subsumption failed for glycan {glycan_idx}: {e}\n")
+                        self.log_file.write(f"Warning: gnome subsumption failed for glycan {glycan_idx}: {e}\n")
+                        glycan.set('gnomeurl', '')
 
         # Retrieve Glymage, download and save the images to the correct folder
         for j, result in self.glymage_client.retrieve_many(*[t[1] for t in glymage_jobs]):
@@ -285,7 +278,7 @@ class JobInstance:
                 glyImage_path = result['result']
                 rest, imgfilename = os.path.split(glyImage_path)
 
-                glymage_image = os.path.join(image_folders['glymage_images_dir'], imgfilename)
+                glymage_image = os.path.join(self.glymage_dir, imgfilename)
 
                 with open(glymage_image, 'wb') as wh:
                     # build http url glymage_path - so that it can be downloaded from the webservice
@@ -302,16 +295,95 @@ class JobInstance:
                 print(f"Failed glymage download for job {j}: {e}")
                 glycan.set('glyImage', '')
 
-        # return glycans
+    def update_status(self,status,state=None):
+        msg = dict(id=self.id)
+        if state is not None:
+            msg['state'] = state
+            msg['status'] = ""
+        if status is not None:
+            msg['status'] = status
+        if state is not None or status is not None:
+            self.msg_queue.put(msg)
 
+    def update_state(self,state,status=None):
+        self.update_status(status=None,state=state)
 
-    def process_glycans(self,figure_semantics, image_folders):
+    @staticmethod
+    def get_processor(task_detail,*args,**kwargs):
+        processor = task_detail.get('processor')
+        if not processor:
+            raise ValueError("processor is required")
+
+        job_cls = globals()[task_detail["processor"]]
+        return job_cls(task_detail, *args, **kwargs)
+
+    def process_file(self):
+        self.jobstate(False)
+        self.update_state(APIFramework.RUNNING)
+
+        input_file = os.path.join(self.base_dir, "input", self.id, self.original_file_name)
+
+        try:
+            copyfile(input_file, self.input_filepath)
+        except FileNotFoundError:
+            time.sleep(5)
+            copyfile(input_file, self.input_filepath)
+
+        self.log_file.write(f"{self.id}\n{self.output_filepath}\n")
+        self.process_figures()
+        self.jobstate(True)
+
+    # pipeline methods
+    def extract_figures(self) -> list[dict]:
+        raise NotImplementedError
+
+    def process_figures(self):
+        # STEPS:
+        # loop over figures
+        # update status message - based on the metadata you have 
+        # find glycans
+        for figure_data in self.extract_figures():
+            image_path = figure_data.pop("image_path", None) 
+            if not image_path or not os.path.isfile(image_path):
+                self.log_file.write("Warning: skipping figure with no image_path: %s\n" % (figure_data,))
+                continue
+            status_message = self._status_message(**figure_data)
+            self.update_status(status_message)
+            self.find_glycans(image_path, **figure_data)
+
+    def _status_message(self, **kwargs):
+        if kwargs.get("status_message"):
+            return kwargs["status_message"]
+        pmid_job = bool(kwargs.get("pmid_job"))
+        page_num = kwargs.get("page_number") or 0
+        figure_number = kwargs.get("figure_number")
+        caption = (kwargs.get("caption") or "").strip()
+        image_number = kwargs.get("image_number")
+        has_fig_num = (
+            figure_number is not None and str(figure_number).strip() != ""
+        )
+        
+        if pmid_job:
+            if has_fig_num:
+                return f"Processing figure {figure_number}"
+            if caption:
+                return f"Processing {caption}"
+            return "Processing figure"
+        if page_num == 0:
+            return "Processing image"
+        if has_fig_num:
+            return f"Processing figure {figure_number}"
+        if image_number is not None and page_num != 0:
+            return f"Processing image {image_number} from page {page_num}"
+        return "Processing figure"
+
+    def glycan_postprocessing(self,figure_semantics):
         """
         Process all glycans in a figure, saving images and metadata.
         """
 
         # Batch request - GlyImage and GlyLookup and gnome for each figure
-        self.get_glycan_info(figure_semantics, image_folders)
+        self.set_glycan_info(figure_semantics)
 
         basename = os.path.basename(figure_semantics.image_path()).split('.')[0]
 
@@ -325,14 +397,13 @@ class JobInstance:
 
             image_name = f"{basename}-{i+1}.png"
             # save processed/cleaned extracted image
-            image_url = os.path.join(image_folders['images_dir'], image_name)
+            image_url = os.path.join(self.images_dir, image_name)
             self.save_image(glycan_image,image_url)
 
             # save origial extracted imaged
-            extracted_image_url = os.path.join(image_folders['extracted_images_dir'], image_name)
+            extracted_image_url = os.path.join(self.extracted_images_dir, image_name)
             self.save_image(extracted_glycan_image,extracted_image_url)
 
-            # gly_semantics.set('image_path',save_origin_url)      
             gly_semantics.set('image_path', image_url)    
             gly_semantics.set('extracted_image_path',extracted_image_url)  
             gly_semantics.set('image_name', image_name)
@@ -342,34 +413,45 @@ class JobInstance:
         if kwargs.get('stage') == "GLYCAN" and kwargs.get('checkpoint') == "DONE":
             nglycan = kwargs.get('nglycan')
             index = kwargs.get('index')
-            image_number = kwargs.get("image_number", 0)
-            page_num = kwargs.get("page_num",0)
-            pmid_job = kwargs.get("pmid_job", False)
-            figure_number = kwargs.get("figure_number","")
-            caption = kwargs.get("caption","")
-            
-            if pmid_job:    # for PMID submissions
-                if figure_number:
-                    self.update_status("Processing figure %s, analyzed %d/%d glycan(s)"%(figure_number,index,nglycan))
-                elif caption:
-                    self.update_status("Processing %s, analyzed %d/%d glycan(s)"%(caption,index,nglycan))
-                else:
-                    self.update_status("Processing figure, analyzed %d/%d glycan(s)"%(index,nglycan))
-            elif page_num == 0:     # for simple/multi glycans submissions
-                self.update_status("Processing image, analyzed %d/%d glycan(s)"%(index,nglycan))
-            else:   # for pdf submission
-                if figure_number:
-                    self.update_status("Processing figure %s, analyzed %d/%d glycan(s)"%(figure_number,index,nglycan))
-                else:
-                    self.update_status("Processing image %d from page %d, analyzed %d/%d glycan(s)"%(image_number,page_num,index,nglycan))
+            if index is None or nglycan is None:
+                return
 
+            status_message = self._status_message(**kwargs)
+            self.update_status(f"{status_message}, analyzed {index}/{nglycan} glycan(s)")
 
-    def find_glycans(self, figure_path, image_folders, **kwargs):
+    accepted_pipeline_args = {
+        "caption",
+        "figure_number",
+        "image_count",
+        "page_number",
+        "image_number",
+        "fig_bbox",
+        "pdf_fig_bbox",
+        "pdf_fig_width",
+        "pdf_fig_height",
+        "page_width",
+        "page_height",
+        "pmid_job",
+        "figure_name",
+        "status_message",
+    }
+
+    def find_glycans(self, image_path, **kwargs):
+        
+        # pipeline_name is a static variable in each derived class
+        if self.pipeline_name not in self.pipelines_allowed:
+            allowed = ", ".join(sorted(self.pipelines_allowed))
+            raise ValueError(f"The pipeline name {self.pipeline_name} is not valid. Allowed {allowed}")
+
         config = Config_Manager()
-        self.pipeline_name = self.pipeline_mapping[self.submission_type]
-        pipeline = config.get_pipeline(self.pipeline_name)
+        
+        pipeline_kwargs = {
+            k: v for k, v in kwargs.items()
+            if k in self.accepted_pipeline_args
+        }
 
-        figure_semantics = pipeline.run(figure_path, self.progress_callback, **kwargs)
+        pipeline = config.get_pipeline(self.pipeline_name)
+        figure_semantics = pipeline.run(image_path, self.progress_callback, **pipeline_kwargs)
 
         # Sort bbox L->R for UI
         sorted_glycans = sorted(
@@ -381,311 +463,126 @@ class JobInstance:
         nglycan = len(figure_semantics.glycans())
 
         if nglycan > 0:
-            if kwargs.get('pmid_job',False):
-                if kwargs.get('figure_number'):
-                    self.update_status("Processing figure %s, postprocessing %d glycan(s)"%(kwargs['figure_number'],nglycan))
-                elif kwargs.get('caption'):
-                    self.update_status("Processing %s, postprocessing %d glycan(s)"%(kwargs['caption'],nglycan))
-                else:
-                    self.update_status("Processing figure, postprocessing %d glycan(s)"%(nglycan))
-            elif kwargs.get("page_num",0) == 0:
-                self.update_status("Processing image, postprocessing %d glycan(s)" % (nglycan))
-            else:
-                if kwargs.get('figure_number'):
-                    self.update_status("Processing figure %s, postprocessing %d glycan(s)" % (kwargs["figure_number"],nglycan))
-                else:
-                    self.update_status("Processing image %d from page %d, postprocessing %d glycan(s)" % (kwargs["image_number"], kwargs["page_num"], nglycan))
+            status_message = self._status_message(**kwargs)
+            self.update_status(f"{status_message}, postprocessing {nglycan} glycan(s)")
 
+        self.glycan_postprocessing(figure_semantics)
         self.annotate_image(figure_semantics)
-        self.process_glycans(figure_semantics, image_folders)
         self.results.append(figure_semantics.tojson())
 
-    def process_file(self):
-        self.jobstate(False)
-        self.update_state(APIFramework.RUNNING)
+class SingleImageJob(MultiImageJob):
+    '''
+    Single Image - which has multiple glycans
+    '''    
+    pipeline_name = 'MultipleGlycanImage-YOLOFinders'
 
-        base_path = os.path.dirname(os.path.abspath(__file__))
-        input_file = os.path.join(base_path, "input", self.id, self.original_file_name)
+    def extract_figures(self) -> list[dict]:
+        return [{'image_path': self.input_filepath, 'status_message': 'Processing image'}]
 
-        try:
-            copyfile(input_file, self.input_filepath)
-        except FileNotFoundError:
-            time.sleep(5)
-            copyfile(input_file, self.input_filepath)
+class SimpleImageJob(SingleImageJob):
+    '''
+    Single Image - which has a single/simple glycan
+    '''
+    pipeline_name = 'SingleGlycanImage-YOLOFinders'
 
-        self.log_file.write(f"{self.id}\n{self.output_filepath}\n")
+class PMIDImageJob(MultiImageJob):
 
-        figures_dir = os.path.join(self.workdir, "extracted_figures", "figures")
-        extracted_images_dir = os.path.join(self.workdir, "extracted_figures", "extracted_images")
-        images_dir = os.path.join(self.workdir, "extracted_figures", "images")
-        glymage_dir = os.path.join(self.workdir, "glymage")
+    pipeline_name = 'MultipleGlycanImage-YOLOFinders'
 
-        image_folders = {'figures_dir': figures_dir, 'images_dir': images_dir, 'extracted_images_dir': extracted_images_dir, 'glymage_images_dir': glymage_dir}
+    def __init__(self, task_detail, config = {}, msg_queue = None):
+        super().__init__(task_detail, config=config, msg_queue=msg_queue)
+        self.pmid = task_detail.get('pmid')
 
-        self.create_directories(*image_folders.values())
+    def extract_figures(self) -> list[dict]:
+        '''
+        gets PMC figures and metadata (captions, figure_number, citations)
+        '''
+        tar_filepath = self.tar_filepath(self.pmid)
+        pmc_api = PMCTarFile(tar_filepath=tar_filepath)
 
-        # after required directories are ready - process the input file (figures)
-        self.process_figures(image_folders)
+        # set citation
+        citation = PMCData.citation_details(self.pmid)
+        if citation:
+            self.set_document_metadata(citation=citation['citation'],pmid=self.pmid)
 
-        self.jobstate(True)
+        return pmc_api.figures_metadata(self.figures_dir, input_dir=self.input_dir)
 
+class PDFJob(MultiImageJob):
+    pipeline_name = 'MultipleGlycanImage-YOLOFinders'
 
-    def load_pmid_figures(self, figures_dest_dir):
-        """
-        Extract PMID tar file, parse NXML metadata, extract figure images,
-        and return sorted image filenames + figure metadata map.
-        """
-        base_path = os.path.dirname(os.path.abspath(__file__))
-        pmc_publication_info = self.task_detail.get("pmc_publication")
-        figures_src = os.path.join(base_path, "input", self.id, f"PMID-{self.pmid}.tar.gz")
-        fig_to_label_map = {}
-        image_files = []
-        self.figure_info_by_basename = {}
-        self.figure_info_by_renamed = {}
-        try:
-            with tarfile.open(figures_src, "r:gz") as tar:
-                # pass 1: parse nxml
-                for member in tar.getmembers():
-                    if not member.name.lower().endswith(".nxml"):
-                        continue
-                    file_obj = tar.extractfile(member)
-                    if not file_obj:
-                        continue
-                    nxml_content = file_obj.read().decode("utf-8", errors="ignore")
-                    xml_obj = XMLParser(nxml_content, pmc_publication=pmc_publication_info)
-                    try:
-                        xml_data = xml_obj.parse()
-                        self.document_metadata = {k: v for k, v in xml_data.items() if k != "figure_info"}
-                        self.document_metadata["citation"] = xml_data.get("citation", None)
-                        self.figure_info_by_basename = xml_data.get("figure_info") or {}
-                        for basename, info in self.figure_info_by_basename.items():
-                            fig_to_label_map[basename] = info.get("figure_number", "")
-                    except Exception as e:
-                        self.log_file.write(f"Warning: Could not parse nxml: {e}\n")
-                    break
-                # pass 2: extract image files
-                seen_basenames = set()
-                for member in tar.getmembers():
-                    filename = os.path.basename(member.name)
-                    base_name, ext = os.path.splitext(filename)
-                    ext = ext.lower()
-                    if ext not in (".jpg", ".jpeg", ".png"):
-                        continue
-                    if base_name not in fig_to_label_map:
-                        continue
-                    if base_name in seen_basenames:
-                        continue
-                    file_obj = tar.extractfile(member)
-                    if not file_obj:
-                        continue
-                    renamed_file_path = os.path.join(figures_dest_dir, filename)
-                    with open(renamed_file_path, "wb") as f:
-                        f.write(file_obj.read())
-                    image_files.append(filename)
-                    seen_basenames.add(base_name)
-                    fig_info = self.figure_info_by_basename.get(base_name, {}).copy()
-                    fig_info["figure_number"] = fig_to_label_map[base_name]
-                    self.figure_info_by_renamed[filename] = fig_info
-        except Exception as e:
-            self.log_file.write(f"Error: opening tar {figures_src}: {e}\n")
-            return [], {}
-        image_files.sort(key=self._pmid_image_sort_key)
-        return image_files, self.figure_info_by_renamed
+    def __init__(self, task_detail, config = {}, msg_queue = None):
+        super().__init__(task_detail, config=config, msg_queue=msg_queue)
+        self.image_search_strategy = 'hybrid'   # default, but should be able to update this
 
-    def _pmid_image_sort_key(self, imfn):
-        fn = self.figure_info_by_renamed.get(imfn, {}).get("figure_number", "")
-        if fn == "":
-            return (0, 0)
-        try:
-            return (0, int(fn))
-        except Exception:
-            pass
-        return (ord(fn[0]), int(fn[1:]) if fn[1:].isdigit() else 0)
+        # reanalyze on a synthetic pdf will use 'fitz' (set by form_task) - so the above image_search_startegy will have to be updated
+        strategy = task_detail.get('image_search_strategy')
+        if strategy:
+            if strategy in self.image_search_strategy_allowed:
+                self.image_search_strategy = strategy
+            else:
+                allowed = ", ".join(sorted(self.image_search_strategy_allowed))
+                raise ValueError(f"Image search strategy {strategy!r} is not valid. Allowed {allowed}")
+       
+    def extract_figures(self) -> list[dict]:
+        strategy = ImageSearch.search_method(self.image_search_strategy)
 
-    def run_pdf_pipeline(self, image_folders, input_pdf_path=None, image_search_strategy=None, figures_metadata=None):
-        """
-        Shared PDF processing pipeline used by PDF-based jobs.
-
-        Extract figure metadata from PDF using the two methods:
-        a) xref based figure extraction (returns figures metadata) 
-        b) Using Heuristics (PDFigCapX)- Text block and Image block positions (returns figures metadata) 
-
-        Step 1
-        - Both the above methods return figures metadata for the pdf. 
-        Merge the info obtained --> to get the overall best figures metadata in the pdf.
-
-        Step 2
-        - Using the figures metadata, find all glycans using the object detection pipeline and generate semantics.
-
-        figures_metadata: optional ordered list of dicts with keys like caption, figure_number, etc for synthetically generated pdfs
-        """
-
-        pdf_path = input_pdf_path or self.input_filepath
-        strategy = image_search_strategy or self.task_detail.get("image_search_strategy", "fitz")
-        
-        pdf = PDFHandler(pdf_path)
-        doc = pdf.doc
-        cite = pdf.get_citation()
-        if cite:
-            self.document_metadata["citation"] = cite.get("citation")
-            self.document_metadata["pmid"] = cite.get("pmid")
-
-        image_search_instance = ImageSearch.search_method(strategy)
-        pdf_images_metadata = image_search_instance.get_metadata(pdf_path)
-
-        for page_num, fig_data in pdf_images_metadata.items():
-            page = doc[page_num - 1]
-            for image_number, figure_info in fig_data.items():
-                image_path = os.path.join(
-                    image_folders["figures_dir"],
-                    f"fig{figure_info['image_count']}.png"
-                )
-                figinfo = PDFHandler.save_image(
-                    doc,
-                    page,
-                    figure_info["pdf_fig_bbox"],
-                    image_path,
-                    xref=figure_info.get("xref"),
-                    dpi=STANDARD_DPI,
-                    annots=True,
-                )
-                image_path = figinfo.get("image_path", image_path)
-                figinfo.pop("image_path", None)
-                figure_info.update(figinfo)
-
-                # figures_metadata: optional ordered list of dicts with keys like caption, figure_number, etc for synthetically generated pdfs
-                if figures_metadata:
-                    idx = figure_info['image_count'] - 1
-                    if 0 <= idx < len(figures_metadata):
-                        fm = figures_metadata[idx] or {}
-                        if not figure_info.get("caption"):
-                            figure_info["caption"] = fm.get("caption", "")
-                        if not figure_info.get("figure_number"):
-                            figure_info["figure_number"] = fm.get("figure_number", "")
-                        if "fig_bbox" not in figure_info and fm.get("fig_bbox"):
-                            figure_info["fig_bbox"] = fm["fig_bbox"]
-
-                if figure_info.get("figure_number"):
-                    self.update_status(f"Processing figure {figure_info['figure_number']}")
-                else:
-                    self.update_status(f"Processing image {image_number} from page {page_num}")
-
-                self.find_glycans(
-                    image_path,
-                    image_folders,
-                    page_num=page_num,
-                    **figure_info,
-                )
-                
-    def process_figures(self, image_folders):
-        return NotImplementedError
-
-# even this class could be - simple image analysis, image embedded in pdf (pdfjob)
-class ImageJob(JobInstance):
-    def process_figures(self, image_folders):
-        self.update_status("Processing image")
-        # self.task_detail['original_filepath'] = self.abs_to_rel(self.input_filepath)
-        # self.task_detail['abs_original_filepath'] = self.input_filepath
-        self.find_glycans(self.input_filepath,image_folders)
-
-
-class PMIDBaseJob(JobInstance):
-  def process_figures(self, image_folders):
-      self.update_status("Processing PMID manuscript figures")
-      image_files, _ = self.load_pmid_figures(image_folders["figures_dir"])     # helper from base class
-      self.process_pmid_figures(image_files, image_folders)
-      
-  def process_pmid_figures(self, image_files, image_folders):
-      raise NotImplementedError
-
-# PMID job - runs the pipelien directly on the individual figures provided by pubmed
-class PMIDJob(PMIDBaseJob):
-
-    def process_pmid_figures(self, image_files, image_folders):
-        # copy over the tar.gz file to the static input file because --> if re-analyze is used, the job should have
-        # access to the zipped file for figure extraction and analysis in Local mode.
-        base_path = os.path.dirname(os.path.abspath(__file__))
-        figures_src = os.path.join(base_path, "input", self.id, f"PMID-{self.pmid}.tar.gz")
-        if os.path.isfile(figures_src):
-            shutil.copy2(figures_src, self.input_dir)
+        metadata = strategy.get_metadata(self.input_filepath, self.figures_dir)
+        citation = None
+        if self.task_detail.get('pmid'):
+            citation = PMCData.citation_details(self.task_detail['pmid'])
         else:
-            self.log_file.write(f"Warning: tar not found for copy: {figures_src}\n")
-            return 
+            handler = PDFHandler(self.input_filepath)
+            citation = handler.get_citation()
+        if citation:
+            self.set_document_metadata(citation=citation['citation'],
+                                       pmid=citation['pmid'])
+        return metadata
 
-        for image_count, fig_name in enumerate(image_files, 1):
-            fig_path = os.path.join(image_folders["figures_dir"], fig_name)
+class PMIDSyntheticPDFJob(PDFJob):
+    pipeline_name = 'MultipleGlycanImage-YOLOFinders'
 
-            with Image.open(fig_path) as img:
-                width, height = img.size
+    def __init__(self, task_detail, config = {}, msg_queue = None):
+        super().__init__(task_detail, config=config, msg_queue=msg_queue)
+        self.pmid = task_detail.get('pmid')
+        self.image_search_strategy = 'fitz'     # always fitz by default - no one should be able to change it
 
-                base_fig_name = fig_name.rsplit('.', 1)[0]
+    def extract_figures(self) -> list[dict]:
+        tar_filepath = self.tar_filepath(self.pmid)
+        pmc_api = PMCTarFile(tar_filepath=tar_filepath)
 
-                # look up XML metadata for this renamed figure (if any)
-                fig_info = self.figure_info_by_renamed.get(fig_name, {})
-                # if the figure_number is empty, can we assume Graphical Abstract?
-                figure_metadata = {
-                    "fig_bbox": [0, 0, width, height],
-                    "image_count": image_count,
-                    # XML-derived metadata (keys match XMLParser output)
-                    "caption": fig_info.get("caption",""),
-                    "figure_number": fig_info.get("figure_number", "")
-                }
-                if not figure_metadata["figure_number"] and not figure_metadata["caption"]:
-                    figure_metadata["caption"] = "Graphical Abstract"
-                
-                if figure_metadata["figure_number"]:
-                    self.update_status("Processing figure %s" % figure_metadata["figure_number"])
-                elif figure_metadata["caption"]:
-                    self.update_status("Processing %s" % figure_metadata["caption"])
-                else:
-                    self.update_status("Processing figure")
-                self.find_glycans(
-                    fig_path,
-                    image_folders,
-                    pmid_job = True,
-                    **figure_metadata,
-                )
+        pmc_figures = list(pmc_api.figures_metadata(self.figures_dir, input_dir=self.input_dir))
 
-# PMID Figures + embed figures in a pdf + pdfJob
-class PMIDPDFJob(PMIDBaseJob):
+        if not pmc_figures:
+            return
 
-    def process_pmid_figures(self, image_files, image_folders):
+        # create PDF - write images and captions, citations to the pdf
         pdfwriter = PDFCreator(self.pmid)
-
-        figures_metadata = []
-        
-        for image_count, fig_name in enumerate(image_files, 1):
-            fig_path = os.path.join(image_folders["figures_dir"], fig_name)
-            fig_info = self.figure_info_by_renamed.get(fig_name, {})
-            pdfwriter.add_image(fig_path, fig_info.get("caption", ""))
-            
-            # store ordered fallback metadata to reattach later - because captions are npot extracted from
-            # synthetically created pdf's
-            with Image.open(fig_path) as img:
-                width, height = img.size
-                figures_metadata.append({
-                    "image_count": image_count,
-                    "caption": fig_info.get("caption", ""),
-                    "figure_number": fig_info.get("figure_number", ""),
-                    "fig_bbox": [0, 0, width, height],
-                })
-
+        for fig_data in pmc_figures:
+            if fig_data.get('figure_number'):
+                pdfwriter.add_image(fig_data['image_path'], f"Figure {fig_data['figure_number']}. {fig_data.get('ascii_caption', '')}")
+            else:
+                pdfwriter.add_image(fig_data['image_path'], f"{fig_data.get('ascii_caption', '')}")
         pdfwriter.write(self.input_filepath)
 
-        # runs the PDFJob pipeline on the synthetically created pdf
-        self.run_pdf_pipeline(image_folders, figures_metadata=figures_metadata)  # shared helper
+        citation = pdfwriter.citation.get('citation')
+        self.set_document_metadata(citation=citation,pmid=self.pmid)
 
-# PMID's original pdf + pdfJob
-class PMIDOriginalPDFJob(JobInstance):
-    def process_figures(self, image_folders):
-        self.run_pdf_pipeline(image_folders)
+        # image_paths are required for glycan pipleine analysis on image
+        # synthetic pdfs have images, but we also have the individual images (used during pdf_creator step)
+        # so provide the image_paths
+        image_path_dict = {f["image_count"]: f["image_path"] for f in pmc_figures}
 
+        strategy = ImageSearch.search_method(self.image_search_strategy)
+        metadata = strategy.get_metadata(self.input_filepath, self.figures_dir, image_path_dict=image_path_dict)
+        
+        # unfortunately, pdfwriter (fitz) makes dealing with unicode details (such as italics) pretty difficult
+        # so we clobber with the "good" captions from PMC XML
+        for f1,f2 in zip(pmc_figures,metadata):
+            for key in ('caption','figure_number'):
+                if f1.get(key,"") != "":
+                    f2[key] = f1[key]
+                elif f2.get(key,"") != "":
+                    del f2[key]
 
-class PDFJob(JobInstance):
-    """
-    Main processing logic for PDF files.
-    Handles file verification, page/image extraction, and glycan annotation.
-    """
-    
-    def process_figures(self, image_folders):
-        self.run_pdf_pipeline(image_folders)
+        return metadata
+

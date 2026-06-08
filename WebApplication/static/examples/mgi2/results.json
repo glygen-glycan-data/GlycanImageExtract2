@@ -1,17 +1,15 @@
 {
-  "id": "r4bl7zsiw5",
-  "task_index": 2,
+  "id": "mgi2",
   "submission_detail": {
     "filename": "pdf7_extra.png",
     "submission_type": "Multi-Glycan Image",
-    "submission_mode": "Upload",
-    "id": "r4bl7zsiw5"
+    "submission_mode": "Local",
+    "processor": "SingleImageJob",
+    "id": "mgi2"
   },
   "state": "Complete",
   "status": "",
   "finished": true,
-  "submit_time": 1773173829.641035,
-  "sessionid": "3sbniwfewd3ltwlg",
   "result": {
     "figures": [
       {
@@ -3116,13 +3114,11 @@
         ],
         "height": 494,
         "image_path": "input/pdf7_extra.png",
+        "status_message": "Processing image",
         "width": 660
       }
-    ],
-    "job_type": "ImageJob"
+    ]
   },
-  "start_time": 1773173829.6417534,
-  "end_time": 1773173842.8874722,
-  "runtime": 13.245718717575073,
-  "error": []
+  "error": [],
+  "location": "examples"
 }

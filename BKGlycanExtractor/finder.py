@@ -12,7 +12,9 @@ class Finder(object):
 
     filters = []
 
-    def __init__(self,labels=[]):
+    def __init__(self,name=None,cfgmgr=None,labels=[]):
+        self._name = name
+        self._cfgmgr = cfgmgr
         self._labels = list(labels)
         self.params = {}
       
@@ -94,7 +96,8 @@ class KnownFinder(Finder):
     }
 
     def __init__(self,**kwargs):
-        super().__init__()
+        super().__init__(name=kwargs.get('name'),
+                         cfgmgr=kwargs.get('cfgmgr'))
         self.params.update(dict(
             boxpadding = Config.get_param('boxpadding', Config.FLOAT, kwargs, self.defaults),
         ))
@@ -102,11 +105,13 @@ class KnownFinder(Finder):
         # generally a label type selected from the TSV file while building training data
         # this will be provided to the respective known finders - create_boxes/find_boxes - so that the labels can be updated
         # based on cmd line args (which is optional) during the activity of buildign training data
-        self.label_type = None
+        self.label_type = kwargs.get('label_type')
+        self.default_label = kwargs.get('default_label','glycan')
+        self.exclude_labels = kwargs.get('exclude_labels',[])
 
-    def write_model(self, finder_name, filename):
+    def write_model(self, filename):
         with open(filename, 'w') as wh:
-            print(f"[Finder:{finder_name}]",file=wh)
+            print(f"[Finder:{self._name}]",file=wh)
             print(f"class={self.__class__.__name__}",file=wh)
             # might need something more sophistocated if we have
             # params that are not easily output as strings...
@@ -120,8 +125,14 @@ class KnownFinder(Finder):
                 print(f"{label}",file=wh)
         return
 
-    def set_label(self,label_type):
+    def set_label_type(self,label_type):
         self.label_type = label_type
+
+    def set_default_label(self,default_label):
+        self.default_label = default_label
+
+    def set_exclude_labels(self,exclude_labels):
+        self.exclude_labels = exclude_labels
 
     def get_known_data(self, image_path):
         '''
@@ -179,7 +190,7 @@ class KnownFinder(Finder):
                 elif data_points[0] == '###' and data_points[1] == 'GLYCAN:':
                     # Create new glycan dictionary
                     current_glycan = {
-                        'classlabel': 'glycan',    # default label is glycan, if map file contains a CLASS - it will be updated
+                        'classlabel': self.default_label,
                         'bbox': list(map(int, data_points[2:6])),
                         'monos': {},
                         'links': {},
@@ -349,7 +360,7 @@ class YOLOFinder(YOLOModel,Finder):
         assert weights_file is not None
         labels_file = weights_file.replace("weights","labels")
         labels = [ s.strip() for s in open(labels_file).read().split() ]
-        Finder.__init__(self,labels)
+        Finder.__init__(self,name=kwargs.get('name'),cfgmgr=kwargs.get('cfgmgr'),labels=labels)
         self.params.update(dict(
             config = Config.get_param('config', Config.CONFIGFILE, kwargs, self.defaults),
             weights = weights_file,

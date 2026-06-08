@@ -172,7 +172,7 @@
     let delay = 5;
 
     function query() {
-        let request_URL = "{{urlprefix}}/get_job_status/" + list_id;
+        let request_URL = "{{urlprefix}}/job_status/" + encodeURIComponent(list_id);
         jQuery.getJSON(request_URL, function (d) {
             // in ms
             // console.log(d);
@@ -273,7 +273,9 @@
         // avoids page re-load, and opens a new page (fileHref) with the annotated results when they are ready
         event.preventDefault();    
         
-        const resultsUrl = `{{urlprefix}}/annotate_results?resultid=${resultid}`;
+        // const resultsUrl = `{{urlprefix}}/annotate_results?resultid=${resultid}`;
+        const resultsUrl = `{{ urlprefix }}/annotate_results/${encodeURIComponent(resultid)}`;
+
 
         // Show feedback directly on the clicked link
         // const link = event.currentTarget;
@@ -302,12 +304,37 @@
                 alert('Failed to generate annotated files. Please try again.');
             }
         }).fail(function () {
-            link.innerHTML = originalHtml;
+            // link.innerHTML = originalHtml;
             // link.classList.remove('disabled');
             // link.style.pointerEvents = 'auto';
             alert('Failed to contact server for annotated files.');
         });
     }
+
+    function unicodeItalicsToHTML(text) {
+        // Gemini code...
+        // Matches sequences of Mathematical Italic Unicode characters (A-Z and a-z blocks)
+        // Range 119808 (A) to 119859 (z)
+        const italicBlockRegex = /(?:[\uD835][\uDC00-\uDC33]|[\uD835][\uDC34-\uDC4D])+/g;
+
+        return text.replace(italicBlockRegex, (block) => {
+            // Convert each italic character in the matched block to standard text
+            const normalized = block.replace(/[\uD835][\uDC00-\uDFFF]/g, (char) => {
+                const code = char.codePointAt(0);
+                
+                if (code >= 119808 && code <= 119833) {
+                    return String.fromCharCode(65 + (code - 119808)); // A-Z
+                }
+                if (code >= 119834 && code <= 119859) {
+                    return String.fromCharCode(97 + (code - 119834)); // a-z
+                }
+                return char; // Fallback for unmatched surrogates
+            });
+
+            return `<i>${normalized}</i>`;
+        });
+    };
+
 
     function addDownloadButton(result_doc) {
         const alert_data = document.getElementById("alert_data");
@@ -320,6 +347,10 @@
         const figures = (result_doc['result']['figures'] || result_doc['result']['figure_result'] || []);
         const file_extension = (result_doc['submission_detail']['filename'] || result_doc['submission_detail']['original_file_name']).split('.').pop();
         
+        const submission_type = result_doc['submission_detail']['submission_type'];
+        const submission_mode = result_doc['submission_detail']['submission_mode'];
+        const processor = result_doc['submission_detail']['processor'];
+
         // let pmc_publication = null;
         // if (result_doc && result_doc['pmc_publication']) {
         //     pmc_publication = result_doc['pmc_publication'];
@@ -334,10 +365,12 @@
         resstr += "<h3 class='result-heading'>Results: ";
         resstr += "<span><a class='pill-link' href='{{urlprefix}}/static/" + location + "/" + list_id + "/results.json' target='_blank'>JSON data</a> | </span> ";
         const originalHref = "{{urlprefix}}/static/" + location + "/" + list_id + "/input/" + encodeURIComponent(result_doc.submission_detail.filename || result_doc.submission_detail.original_file_name);
-        if (file_extension === "pdf") {
-            resstr += "<span><a class='pill-link' target='_blank' href='" + originalHref + "'>Original PDF</a> | </span>";
-        } else {
+        if (submission_type === "Simple Glycan Image") {
             resstr += "<span><a class='pill-link' target='_blank' href='" + originalHref + "'>Original Image</a> | </span>";
+        } else if (submission_type === "Multi-Glycan Image") {
+            resstr += "<span><a class='pill-link' target='_blank' href='" + originalHref + "'>Original Image</a> | </span>";
+        } else if (submission_type === "Manuscript" && submission_mode !== "PMID") {
+            resstr += "<span><a class='pill-link' target='_blank' href='" + originalHref + "'>Original PDF</a> | </span>";
         }
 
         if (result_doc.result.annotated_pdf_file && result_doc.result.annotated_tsv_file) {
@@ -353,7 +386,7 @@
                 TSV Results</a> | </span>`;
         }
 
-        resstr += "<span><a class='pill-link' href='{{urlprefix}}/resubmit_file/" + list_id  + "'>Reanalyze</a> </span>";
+        resstr += "<span><a class='pill-link' href='{{urlprefix}}/resubmit_file/" + encodeURIComponent(list_id) + "'>Reanalyze</a> </span>";
         
         resstr += "</h3>";
         
@@ -361,7 +394,7 @@
         // const citationHtml = formatCitation(document_metadata, pmc_publication);
         const citation = result_doc.result.citation
         if (citation && citation.length > 0) {
-            resstr += `<div class="citation-container" style="padding: 20px 0 10px 0;">${citation}`
+            resstr += `<div class="citation-container" style="padding: 20px 0 10px 0;">${unicodeItalicsToHTML(citation)}`
             if (result_doc.submission_detail.pmid){
                 resstr += ` <span style="white-space:nowrap;"><b>PMID:</b> <a target='_blank' href='https://pubmed.ncbi.nlm.nih.gov/${result_doc.submission_detail.pmid}/'>${result_doc.submission_detail.pmid}</a></span>`
             } else if (result_doc.result.pmid) {
@@ -434,7 +467,7 @@
             }
 
             innerdiv += `<div class="figure-caption-block">
-                <p class="figure-caption-text">${labelHtml}${figure.caption}</p>
+                <p class="figure-caption-text">${labelHtml}${unicodeItalicsToHTML(figure.caption)}</p>
             </div>`;
         }
 

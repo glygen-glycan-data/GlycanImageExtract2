@@ -1,0 +1,79 @@
+{
+  "result": {
+    "figures": [
+      {
+        "caption": "Workflow of the GlycoHybridSeq algorithm.",
+        "figure_number": "1",
+        "glycans": []
+      },
+      {
+        "caption": "An example of annotated glycopeptide spectrum, where peaks annotated as b/c/y/z ions are colored as purple, and those annotated as Y ions as red.",
+        "figure_number": "2",
+        "glycans": [
+          {
+            "IUPAC": "Man?1-?GlcNAc?1-?GlcNAc",
+            "WURCS": "WURCS=2.0/2,3,2/[a2122h-1x_1-5_2*NCC/3=O][a1122h-1x_1-5]/1-1-2/a?-b1_b?-c1",
+            "accession": "G64017CW",
+            "bbox": [
+              368,
+              140,
+              29,
+              88
+            ],
+            "composition_str": "GlcNAc(2)Man(1)"
+          },
+          {
+            "IUPAC": "Man?1-?Man?1-?GlcNAc?1-?GlcNAc",
+            "WURCS": "WURCS=2.0/2,4,3/[a2122h-1x_1-5_2*NCC/3=O][a1122h-1x_1-5]/1-1-2-2/a?-b1_b?-c1_c?-d1",
+            "accession": "G86427WL",
+            "bbox": [
+              413,
+              57,
+              50,
+              121
+            ],
+            "composition_str": "GlcNAc(2)Man(2)"
+          },
+          {
+            "IUPAC": "Man?1-?(GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?GlcNAc",
+            "WURCS": "WURCS=2.0/2,6,5/[a2122h-1x_1-5_2*NCC/3=O][a1122h-1x_1-5]/1-1-2-2-1-2/a?-b1_b?-c1_c?-d1_c?-f1_d?-e1",
+            "accession": "G59325ZF",
+            "bbox": [
+              464,
+              0,
+              67,
+              148
+            ],
+            "composition_str": "GlcNAc(3)Man(3)"
+          },
+          {
+            "IUPAC": "GlcNAc?1-?Man?1-?(GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?GlcNAc",
+            "WURCS": "WURCS=2.0/2,7,6/[a2122h-1x_1-5_2*NCC/3=O][a1122h-1x_1-5]/1-1-2-2-1-2-1/a?-b1_b?-c1_c?-d1_c?-f1_d?-e1_f?-g1",
+            "accession": "G78607HP",
+            "bbox": [
+              514,
+              61,
+              67,
+              133
+            ],
+            "composition_str": "GlcNAc(4)Man(3)"
+          }
+        ]
+      },
+      {
+        "caption": "Comparison of (A) unique peptide sequences, (B) unique glycopeptides, and (C) spectra identified by GlycoHybridSeq, Byonic, and MSFragger, respectively.",
+        "figure_number": "3",
+        "glycans": []
+      },
+      {
+        "caption": "Two EThcD spectra with high cosine similarity were identified as two different glycopeptides by Byonic.",
+        "figure_number": "4",
+        "glycans": []
+      }
+    ],
+    "citation": "Zhang R, Zhu J, Lubman DM, Mechref Y, Tang H. GlycoHybridSeq: Automated Identification of N-Linked Glycopeptides Using Electron Transfer/High-Energy Collision Dissociation (EThcD). J Proteome Res 2021;20(6):3345-3352.",
+    "annotated_pdf_file": "PMID-34010560.annotated.pdf",
+    "annotated_tsv_file": "PMID-34010560.annotated.tsv",
+    "pmid": "34010560"
+  }
+}

@@ -15,7 +15,7 @@ from BKGlycanExtractor.bbox import BoundingBox
 from BKGlycanExtractor.glyomicsclient import ExtractorDevClient, ExtractorClient, APIUnfinishedError
 
 # Should get the port number from the ini file...
-extractor = ExtractorDevClient()
+extractor = ExtractorDevClient(port=10982,verbose=False)
 
 patterns = ["*"]
 if len(sys.argv) > 1:
@@ -23,29 +23,50 @@ if len(sys.argv) > 1:
 
 tasks = []
 filetasks=0
+pmidtasks=0
 for pat in patterns:
   for resultfile in sorted(glob.glob("static/examples/%s/results.json"%(pat,))):
     basedir = os.path.split(resultfile)[0]
     result = json.loads(open(resultfile).read())
-    inputfilename = result['submission_detail']['filename']
+    submission_detail = result['submission_detail']
+    inputfilename = submission_detail['filename']
     inputpath = basedir+"/input/"+inputfilename
-    mode = result['submission_detail']['submission_type']
-    if mode == "Single-Glycan Image":
-        mode = "Simple Glycan Image"
+    submission_type = submission_detail['submission_type']
+    if submission_type == "Single-Glycan Image":
+        submission_type = "Simple Glycan Image"
+
+    submission_mode = submission_detail.get("submission_mode")
     exampledir = os.path.split(basedir)[1]
-    if result['submission_detail'].get('pmid'):
-        pmid = result['submission_detail']['pmid']
-        aspdf = (result['submission_detail']['submission_mode'] == "PMID-PDF")
-        tasks.append((exampledir,extractor.submit_pmid(mode,pmid,aspdf)))
+
+    pmid = submission_detail.get("pmid")
+    
+    if pmid:
+        idx = -1
     else:
-        if filetasks % 3 == 0:
-            tasks.append((exampledir,extractor.submit_file(mode,inputpath)))
-        elif filetasks % 3 == 1:
-            tasks.append((exampledir,extractor.submit_local(mode,inputpath)))
-        else:
-            url = extractor.makeurl(inputpath)
-            tasks.append((exampledir,extractor.submit_url(mode,url)))
+        idx = filetasks % 3
+
+    if idx == -1:
+        aspdf = False
+        if submission_mode == "PMID.PDF":
+            aspdf = True
+        tasks.append((exampledir, extractor.submit_pmid(submission_type, pmid, aspdf)))
+
+    elif idx == 0:
+        # File Upload
+        tasks.append((exampledir, extractor.submit_file(submission_type, inputpath)))
         filetasks += 1
+
+    elif idx == 1:
+        # Local
+        tasks.append((exampledir,extractor.submit_local(submission_type,inputpath)))
+        filetasks += 1
+
+    else: #idx == 2
+        # URL
+        url = extractor.makeurl(inputpath)
+        tasks.append((exampledir,extractor.submit_url(submission_type,url)))
+        filetasks += 1
+
     print("Example %s submitted (%s). "%(exampledir,tasks[-1][1]))
     time.sleep(1)
 
@@ -103,19 +124,44 @@ def add_citation_captions(instance):
 
     with open("static/examples/"+instance+"/results.json", 'wt') as wh:
         json.dump(result, wh, indent=2)
-                
+
+def remove_changable_fields(instance):
+    # adds Citation, for each figure --> captions and figure_number
+    result = json.loads(open("static/examples/"+instance+"/results.json").read())
+    
+    result["id"] = instance
+    for k in list(result):
+        if k in ("task_index","sessionid") or k.endswith('time'):
+            del result[k]
+    
+    result['submission_detail']["id"] = instance
+    for k in list(result['submission_detail']):
+        if k in ("task_index","sessionid") or k.endswith('time'):
+            del result['submission_detail'][k]
+
+    result['location'] = 'examples'
+
+    for fn in glob.glob("static/examples/"+instance+"/annotated_files/*"):
+        os.unlink(fn)
+    for fn in glob.glob("static/examples/"+instance+"/output/*.txt"):
+        os.unlink(fn)
+
+    with open("static/examples/"+instance+"/results.json", 'wt') as wh:
+        json.dump(result, wh, indent=2)
+
 for exampledir,taskid in tasks:
     result = {}
     try:
         result = extractor.retrieve(taskid)
     except APIUnfinishedError:
         pass
-    if result.get('finished',False):
+    if result.get('finished',False) and len(result.get('error',[])) == 0:
         shutil.rmtree("static/examples/"+exampledir)
         shutil.copytree("static/files/"+taskid,
                         "static/examples/"+exampledir)
         correct,total = update_votes(exampledir)
         add_citation_captions(exampledir)
+        remove_changable_fields(exampledir)
         print("Example %s done, %d/%d correct (%s)."%(exampledir,correct,total,taskid))
     else:
         print("Example %s not updated (%s)."%(exampledir,taskid))

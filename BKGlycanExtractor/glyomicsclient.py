@@ -1,9 +1,10 @@
 
 __all__ = [ "ExtractorClient", "ExtractorDevClient", "GlyLookupClient" , "GlyLookupClient", "GlymageClient", "GnomeClient"]
 
-import sys, os, glob, json
+import sys, os, glob, json, re
 import requests, time
 import traceback
+from datetime import datetime
 
 class APISubmitError(RuntimeError):
     pass
@@ -27,6 +28,7 @@ class APIFrameworkClient:
     max_request_retry = 3
     nocache = False
     status_callback = None
+    verbose = False
 
     def __init__(self,**kwargs):
         self._apiurl = kwargs.get('apiurl') or self.apiurl
@@ -40,11 +42,16 @@ class APIFrameworkClient:
         self._interval = kwargs.get('request_interval',self.request_interval)
         self._max_retry_for_unfinished_task = kwargs.get('max_retrieve_wait',self.max_retrieve_wait)
         self._statusfn = kwargs.get('status_callback',self.status_callback)
-
+        self._verbose = kwargs.get('verbose',self.verbose)
+    
     def url(self):
         return self._apiurl
 
     def request(self, sub, params=None, files=None):
+        if self._verbose:
+            now = datetime.now()
+            now.replace(microsecond=0)
+            print(now,self.__class__.__name__,sub,params,file=sys.stderr)   
         for i in range(self._max_retry):
             if files is not None:
                 files1 = dict((k,open(v,'rb')) for k,v in files.items())
@@ -237,26 +244,26 @@ class GlymageClient(APIFrameworkClient):
         self._image_format = kwargs.get("image_format") or self.image_format
         self._use_accession = kwargs.get("use_accession") or self.use_accession
 
-    def submit_glymage(self, *, accession=None, IUPAC=None, composition=None, **kwargs):
+    def submit_glymage(self, *, acc=None, seq=None, **kwargs):
         # priority order - if accession (self._use_accession), iupac, composition
+
+        if acc and seq:
+            raise ValueError("Provide either acc or seq, not both.")
 
         task = {'orientation': kwargs.get('orientation') or 'RL', 
                     'display': self._display, 
                     'image_format': self._image_format,
                 }
-
-        if self._use_accession and accession:
-            task.update({'acc': accession})
-        elif IUPAC:
-            task.update({'seq': IUPAC})
-        elif composition:
-            task.update({'seq': composition})
+        if acc:
+            task["acc"] = acc
+        elif seq:
+            task["seq"] = seq
         else:
-            raise ValueError("Provide a sequence: accession, IUPAC or composition")
+            raise ValueError("Provide: acc or seq")
 
         return self.submit(task=task)
     
-
+    
     # def getmany(self, seqs, image_orientations=[]):
     #     # every sequence can request a specific orientation for the image
 
@@ -288,13 +295,22 @@ class GlymageClient(APIFrameworkClient):
     #     for index, data in self.getmany([seq], image_orientations=orientation):
     #         return data
 
-class GnomeClient(APIFrameworkClient):
+class SubsumptionClient(APIFrameworkClient):
     apiurl = 'https://subsumption.glyomics.org/'
+    gnomeurl = 'https://gnome.glyomics.org/'
 
-    def submit_subsumption(self, IUPAC=None):
-        if IUPAC:
-            return self.submit(task=dict(seq=kwargs['IUPAC']), request="submit")    # return task_id
-        raise ValueError("Provide IUPAC string")
+    def get_gnome_url(self,*,seq=None,acc=None,compositionstr=None,**composition):
+        if acc:
+            return self.gnomeurl + 'StructureBrowser.html?focus=' + acc
+        if seq:
+            taskid = self.submit(task=dict(seq=seq))
+            return self.gnomeurl + 'StructureBrowser.html?ondemandtaskid=' + taskid
+        if compositionstr:
+            matches = re.findall(r'([A-Za-z]+)\((\d+)\)', compositionstr)
+            converted_composition = '&'.join(f"{name}={count}" for name, count in matches)
+        else:
+            converted_composition = '&'.join(f"{name}={count}" for name, count in composition)
+        return self.gnomeurl + 'StructureBrowser.html?' + converted_composition
 
 class ExtractorClient(APIFrameworkClient):
     request_interval=5
@@ -305,7 +321,7 @@ class ExtractorClient(APIFrameworkClient):
         return self.url() + '/' + path.lstrip('/')
     
     def status(self, task_id):
-        res = self.request("get_job_status/"+task_id).json()
+        res = self.request("job_status/"+task_id).json()
         if not res[u"finished"]:
             raise APIUnfinishedError(task_id,res["state"],res["status"])
         return self.retrieve_nowait(task_id)
@@ -314,32 +330,32 @@ class ExtractorClient(APIFrameworkClient):
         assert not kwargs.get('tasks'), "ExtractorClient requires single task per submission"
         return super().submit(**kwargs)
     
-    def submit_pmid(self,mode,pmid,aspdf=False):
-        assert mode in ("Manuscript",)
+    def submit_pmid(self,submission_type,pmid,aspdf=False):
+        assert submission_type in ("Manuscript",)
         if aspdf:
             pmid = str(pmid) + ".pdf"
-        task = dict(submission_type=mode,pmid=pmid)
+        task = dict(submission_type=submission_type,pmid=pmid)
         return self.submit(task=task,request="file_upload")
     
-    def submit_local(self,mode,filepath):
-        assert mode in ("Manuscript",
-                        "Multi-Glycan Image",
-                        "Simple Glycan Image")
-        task = dict(submission_type=mode,filePath=filepath)
+    def submit_local(self,submission_type,filepath):
+        assert submission_type in ("Manuscript",
+                                   "Multi-Glycan Image",
+                                   "Simple Glycan Image")
+        task = dict(submission_type=submission_type,filePath=filepath)
         return self.submit(task=task,request="file_upload")
     
-    def submit_url(self,mode,url):
-        assert mode in ("Manuscript",
+    def submit_url(self,submission_type,url):
+        assert submission_type in ("Manuscript",
                         "Multi-Glycan Image",
                         "Simple Glycan Image")
-        task = dict(submission_type=mode,fileURL=url)
+        task = dict(submission_type=submission_type,fileURL=url)
         return self.submit(task=task,request="file_upload")
     
-    def submit_file(self,mode,filename):
-        assert mode in ("Manuscript",
+    def submit_file(self,submission_type,filename):
+        assert submission_type in ("Manuscript",
                         "Multi-Glycan Image",
                         "Simple Glycan Image")
-        task = dict(submission_type=mode)
+        task = dict(submission_type=submission_type)
         return self.submit(task=task,request="file_upload",files=dict(file=filename))
 
     def submit_manuscript_local(self,filepath):
@@ -407,7 +423,7 @@ class ExtractorClient(APIFrameworkClient):
 
 class ExtractorDevClient(ExtractorClient):
     apiurl="http://localhost"
-    port = 10982
+    port = 10981
 
 if __name__ == "__main__":
 

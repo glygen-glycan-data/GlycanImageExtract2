@@ -17,6 +17,7 @@ cairosvg
 tqdm
 setuptools<81
 psutil
+scipy==1.16.1
 colour_science
 future
 lxml

@@ -1,17 +1,15 @@
 {
-  "id": "c3kvqwep7o",
-  "task_index": 4,
+  "id": "mgi4",
   "submission_detail": {
     "filename": "41589_2018_34_Fig1_HTML.jpg",
     "submission_type": "Multi-Glycan Image",
     "submission_mode": "Upload",
-    "id": "c3kvqwep7o"
+    "processor": "SingleImageJob",
+    "id": "mgi4"
   },
   "state": "Complete",
   "status": "",
   "finished": true,
-  "submit_time": 1773173831.683773,
-  "sessionid": "whcbyq5zzg72rsfo",
   "result": {
     "figures": [
       {
@@ -25763,17 +25761,15 @@
         ],
         "height": 1397,
         "image_path": "input/41589_2018_34_Fig1_HTML.jpg",
+        "status_message": "Processing image",
         "width": 1539,
         "figure_number": "1",
         "caption": "Representative overlaid chromatograms of mouse and human IgG glycans separated by uPLC. Mouse IgG glycans (red) were separated into 26 chromatographic glycan peaks while human IgG glycans (black) were separated into 24 chromatographic glycan peaks as in Pu\u010di\u0107 et al. Shown are structural schemes of all identified glycans of mouse and human IgG. These experiments were repeated 589 times (the number of mice studied) with similar results."
       }
     ],
-    "job_type": "ImageJob",
     "citation": "Kri\u0161ti\u0107 J, Zaytseva OO, Ram R, Nguyen Q, Novokmet M, Vu\u010dkovi\u0107 F, Vilaj M, Trbojevi\u0107-Akma\u010di\u0107 I, Pezer M, Davern KM, Morahan G, Lauc G. Profiling and genetic control of the murine immunoglobulin G glycome. Nat Chem Biol. 2018;14(5):516-524.",
     "pmid": "29632412"
   },
-  "start_time": 1773173841.3302505,
-  "end_time": 1773173894.1542003,
-  "runtime": 52.82394981384277,
-  "error": []
+  "error": [],
+  "location": "examples"
 }

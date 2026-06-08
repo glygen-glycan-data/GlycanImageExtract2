@@ -1,43 +1,27 @@
 {
-  "id": "3xk5umshmu",
-  "task_index": 14,
+  "id": "pmid2",
   "submission_detail": {
-    "image_search_strategy": "hybrid",
     "filename": "PMID-34010560.pdf",
     "submission_type": "Manuscript",
-    "submission_mode": "PMID-PDF",
+    "submission_mode": "PMID.PDF",
     "pmid": "34010560",
-    "id": "3xk5umshmu",
-    "pmc_publication": "J Proteome Res. 2021 Jun 4; 20(6):3345-3352"
+    "processor": "PDFJob",
+    "id": "pmid2"
   },
   "state": "Complete",
   "status": "",
   "finished": true,
-  "submit_time": 1773938151.2012677,
-  "sessionid": "2nbdpc47fnd7ndsb",
   "result": {
     "figures": [
       {
         "annotated_image_path": "extracted_figures/annotated_figures/fig1.png",
-        "bbox": [
-          326.6080017089844,
-          264.8699951171875,
-          564.4349975585938,
-          327.0050048828125
-        ],
-        "center": [
-          445.52149963378906,
-          295.9375
-        ],
         "file_name": "fig1.png",
         "glycans": [],
         "height": 259,
         "image_count": 1,
         "image_number": 1,
         "image_path": "extracted_figures/figures/fig1.png",
-        "merge_type": "fitz",
         "page_height": 818.3619995117188,
-        "page_num": 1,
         "page_number": 1,
         "page_width": 625.4359741210938,
         "pdf_fig_bbox": [
@@ -48,22 +32,11 @@
         ],
         "pdf_fig_height": 63.135009765625,
         "pdf_fig_width": 238.82699584960938,
-        "width": 991,
-        "xref": 56
+        "width": 991
       },
       {
         "annotated_image_path": "extracted_figures/annotated_figures/fig2.png",
-        "bbox": [
-          80.05000305175781,
-          69.16497802734375,
-          544.875,
-          184.59197998046875
-        ],
         "caption": "Work\ufb02ow of the GlycoHybridSeq algorithm.Journal of Proteome Research pubs.acs.org/jpr Article",
-        "center": [
-          312.4625015258789,
-          126.87847900390625
-        ],
         "figure_number": "1",
         "file_name": "fig2.png",
         "glycans": [],
@@ -71,9 +44,7 @@
         "image_count": 2,
         "image_number": 1,
         "image_path": "extracted_figures/figures/fig2.png",
-        "merge_type": "fitz",
         "page_height": 818.3619995117188,
-        "page_num": 2,
         "page_number": 2,
         "page_width": 625.4359741210938,
         "pdf_fig_bbox": [
@@ -84,22 +55,11 @@
         ],
         "pdf_fig_height": 116.427001953125,
         "pdf_fig_width": 465.8249969482422,
-        "width": 1937,
-        "xref": 437
+        "width": 1937
       },
       {
         "annotated_image_path": "extracted_figures/annotated_figures/fig3.png",
-        "bbox": [
-          138.2169952392578,
-          69.16502380371094,
-          486.6519775390625,
-          205.22802734375
-        ],
         "caption": "An example of annotated glycopeptide spectrum, where peaks annotated as b/c/y/z ions are colored as purple, and those annotated as Y ions as red.",
-        "center": [
-          312.43448638916016,
-          137.19652557373047
-        ],
         "figure_number": "2",
         "file_name": "fig3.png",
         "glycans": [
@@ -1686,9 +1646,7 @@
         "image_count": 3,
         "image_number": 1,
         "image_path": "extracted_figures/figures/fig3.png",
-        "merge_type": "fitz",
         "page_height": 818.3619995117188,
-        "page_num": 5,
         "page_number": 5,
         "page_width": 625.4359741210938,
         "pdf_fig_bbox": [
@@ -1699,22 +1657,11 @@
         ],
         "pdf_fig_height": 137.06300354003906,
         "pdf_fig_width": 349.4349822998047,
-        "width": 1452,
-        "xref": 450
+        "width": 1452
       },
       {
         "annotated_image_path": "extracted_figures/annotated_figures/fig4.png",
-        "bbox": [
-          119.28199768066406,
-          246.21798706054688,
-          505.64398193359375,
-          347.697998046875
-        ],
         "caption": "Comparison of (A) unique peptide sequences, (B) unique glycopeptides, and (C) spectra identi\ufb01ed by GlycoHybridSeq, Byonic, and MSFragger, respectively.Journal of Proteome Research pubs.acs.org/jpr Article",
-        "center": [
-          312.4629898071289,
-          296.95799255371094
-        ],
         "figure_number": "3",
         "file_name": "fig4.png",
         "glycans": [],
@@ -1722,9 +1669,7 @@
         "image_count": 4,
         "image_number": 2,
         "image_path": "extracted_figures/figures/fig4.png",
-        "merge_type": "fitz",
         "page_height": 818.3619995117188,
-        "page_num": 5,
         "page_number": 5,
         "page_width": 625.4359741210938,
         "pdf_fig_bbox": [
@@ -1735,22 +1680,11 @@
         ],
         "pdf_fig_height": 102.48001098632812,
         "pdf_fig_width": 387.3619842529297,
-        "width": 1610,
-        "xref": 449
+        "width": 1610
       },
       {
         "annotated_image_path": "extracted_figures/annotated_figures/fig5.png",
-        "bbox": [
-          120.24600219726562,
-          69.16496276855469,
-          504.6809997558594,
-          220.08197021484375
-        ],
         "caption": "Two EThcD spectra with high cosine similarity were identi\ufb01ed as two di\ufb00erent glycopeptides by Byonic.Journal of Proteome Research pubs.acs.org/jpr Article",
-        "center": [
-          312.4635009765625,
-          144.62346649169922
-        ],
         "figure_number": "4",
         "file_name": "fig5.png",
         "glycans": [],
@@ -1758,9 +1692,7 @@
         "image_count": 5,
         "image_number": 1,
         "image_path": "extracted_figures/figures/fig5.png",
-        "merge_type": "fitz",
         "page_height": 818.3619995117188,
-        "page_num": 6,
         "page_number": 6,
         "page_width": 625.4359741210938,
         "pdf_fig_bbox": [
@@ -1771,16 +1703,14 @@
         ],
         "pdf_fig_height": 151.91700744628906,
         "pdf_fig_width": 385.43499755859375,
-        "width": 1602,
-        "xref": 451
+        "width": 1602
       }
     ],
-    "job_type": "PDFJob",
     "citation": "Zhang R, Zhu J, Lubman DM, Mechref Y, Tang H. GlycoHybridSeq: Automated Identification of N-Linked Glycopeptides Using Electron Transfer/High-Energy Collision Dissociation (EThcD). J Proteome Res 2021;20(6):3345-3352.",
-    "pmid": "34010560"
+    "pmid": "34010560",
+    "annotated_pdf_file": "PMID-34010560.annotated.pdf",
+    "annotated_tsv_file": "PMID-34010560.annotated.tsv"
   },
-  "start_time": 1773938289.339493,
-  "end_time": 1773938322.1513283,
-  "runtime": 32.811835289001465,
-  "error": []
+  "error": [],
+  "location": "examples"
 }

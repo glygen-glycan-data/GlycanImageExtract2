@@ -1,18 +1,16 @@
 import fitz, os, os.path, re, difflib, traceback
 
-try:
-    from . import searchpmc
-except ImportError:
-    pass
+from . pmc_details import PMCData
+
 
 # if more constants are added, then create a Enum class 
 STANDARD_DPI = 300
 POINTS_PER_INCH = 72.0
 
 class PDFHandler(object):
-    def __init__(self,filename):
-        self.doc = fitz.open(filename)
-        self.dir,self.base = os.path.split(filename)
+    def __init__(self,filepath):
+        self.doc = fitz.open(filepath)
+        self.dir,self.base = os.path.split(filepath)
         self.base,self.extn = self.base.rsplit('.',1)
     
     def make_figure_filename(self,image):
@@ -205,7 +203,6 @@ class PDFHandler(object):
                     if len(blocks) == 1 and re.search(r'^Figure \w+. ',blocks[0]):
                         label,caption = blocks[0].split(". ",1)
                         figure_number = label.split()[1]
-                        # print(figure_number,caption)
                 for image_number,image in enumerate(images,1):
                     try:
                         image.update(self.doc.extract_image(image['xref']))
@@ -221,6 +218,7 @@ class PDFHandler(object):
                     image['page_height'] = page.rect.height
                     if figure_number:
                         image['figure_number'] = figure_number
+                    if caption:
                         image['caption'] = caption
                         
                     if filter is None or filter.keep(image):
@@ -266,10 +264,10 @@ class PDFHandler(object):
         dois = self.find_dois()
         for doi in dois:
             title = None
-            ids = searchpmc.lookup(doi=doi['doi'])
+            ids = PMCData.lookup(doi=doi['doi'])
             if ids is not None and ids.get('pmid'):
                 pmid = ids.get('pmid')
-                cite = searchpmc.citation_details(pmid)
+                cite = PMCData.citation_details(pmid)
                 if cite and cite.get('title'):
                     title = " ".join(cite.get('title').split()).rstrip('.')
             

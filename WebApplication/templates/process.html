@@ -341,11 +341,13 @@
             // Validate if PMID has Open Access resources for PMCID via backend API using AJAX
             jQuery.ajax({
                 type: 'POST',
-                url: '{{urlprefix}}/pmid',
+                url: '{{ urlprefix }}/pmid/' + encodeURIComponent(pmid),
                 contentType: 'application/json',
-                data: JSON.stringify({ pmid: pmid }),
+                dataType: 'json',
+                // data: JSON.stringify({ pmid: pmid }),
                 success: function(result) {
                     if (!result.valid) {
+                        setLoadingState(false);
                         alert(result.error || 'Invalid PMID. Please check and try again.');
                         return false;
                     }
@@ -422,7 +424,7 @@
                 setLoadingState(false);
                 
                 // Extract error message from Flask response
-                let errorMessage = "Upload failed: Either url is under a paywall or url format is not supported";
+                let errorMessage = "Upload failed: Server Error";
                 
                 try {
                     if (xhr.responseJSON && xhr.responseJSON.error) {
@@ -492,7 +494,12 @@
                                 <!-- <label for="fileURL" class="form-label">Document URL</label> -->
                                 <!-- <i class="fas fa-link fa-3x text-muted mb-3"></i> -->
                                 <img src="{{urlprefix}}/static/images/pdf.svg">
-                                <h5>PubMed ID (Open-Access, PMC manuscripts only)</h5>
+                                <h5>PubMed ID 
+                                    <a href="https://pmc.ncbi.nlm.nih.gov/tools/openftlist/"
+                                        target="_blank" rel="noopener noreferrer">
+                                        (Open-Access, PMC manuscripts only)
+                                    </a>
+                                </h5>
                                 <input type="text" name="pmid" id="pmid" class="form-control" 
                                         placeholder=31614918 />
                             </div>

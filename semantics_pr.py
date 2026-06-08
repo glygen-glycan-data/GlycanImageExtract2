@@ -132,10 +132,10 @@ for i,finder_name in enumerate(args.finders):
     # ------------------------------
 
     f = cm.get_finder(finder_name)
-    pred_pipeline = f.finder_pipeline(cm)
+    pred_pipeline = f.finder_pipeline()
 
     kf = f.known_finder()
-    known_pipeline = kf.finder_pipeline(cm)
+    known_pipeline = kf.finder_pipeline()
 
     pipelines = {}
     pipelines[finder_name] = (pred_pipeline,known_pipeline)

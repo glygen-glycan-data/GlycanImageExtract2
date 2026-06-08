@@ -1,33 +1,20 @@
 {
-  "id": "qpupftwbkt",
-  "task_index": 8,
+  "id": "mgp2",
   "submission_detail": {
-    "image_search_strategy": "hybrid",
     "filename": "Example0.pdf",
     "submission_type": "Manuscript",
-    "submission_mode": "Upload",
-    "id": "qpupftwbkt"
+    "submission_mode": "Local",
+    "processor": "PDFJob",
+    "id": "mgp2"
   },
   "state": "Complete",
   "status": "",
   "finished": true,
-  "submit_time": 1773173835.7908392,
-  "sessionid": "wbmlgx463yddvmon",
   "result": {
     "figures": [
       {
-        "annotated_image_path": "extracted_figures/annotated_figures/1.png",
-        "bbox": [
-          72.0,
-          72.0,
-          539.7000122070312,
-          407.79998779296875
-        ],
-        "center": [
-          305.8500061035156,
-          239.89999389648438
-        ],
-        "file_name": "1.png",
+        "annotated_image_path": "extracted_figures/annotated_figures/fig1.png",
+        "file_name": "fig1.png",
         "glycans": [
           {
             "IUPAC": "NeuAc?2-?Gal?1-?GlcNAc?1-?Man?1-?(NeuAc?2-?Gal?1-?GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?GlcNAc",
@@ -47,13 +34,13 @@
             "classlabel": "glycan",
             "composition_str": "GlcNAc(4)NeuAc(2)Man(3)Gal(2)",
             "confidence": 0.9888017773628235,
-            "extracted_image_path": "extracted_figures/extracted_images/1-1.png",
+            "extracted_image_path": "extracted_figures/extracted_images/fig1-1.png",
             "fig_glycan_count": 1,
             "glyImage": "glymage/254b337a144d8029f26e4e2b3fe43d8c.svg",
             "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G97599MN",
             "height": 107,
-            "image_name": "1-1.png",
-            "image_path": "extracted_figures/images/1-1.png",
+            "image_name": "fig1-1.png",
+            "image_path": "extracted_figures/images/fig1-1.png",
             "linkexpl": "Extracted successfully using accession",
             "monos": [
               {
@@ -486,7 +473,7 @@
                 "width": 33
               }
             ],
-            "orientation": "RL",
+            "orientation": "BT",
             "rejected_roots": [
               {
                 "bbox": [
@@ -921,13 +908,13 @@
             "classlabel": "glycan",
             "composition_str": "GlcNAc(5)NeuAc(2)Fuc(1)Man(3)Gal(2)",
             "confidence": 0.8013911843299866,
-            "extracted_image_path": "extracted_figures/extracted_images/1-2.png",
+            "extracted_image_path": "extracted_figures/extracted_images/fig1-2.png",
             "fig_glycan_count": 2,
             "glyImage": "glymage/ed753d09e573adfc100f02b2ca108cf4.svg",
             "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G52512ZN",
             "height": 178,
-            "image_name": "1-2.png",
-            "image_path": "extracted_figures/images/1-2.png",
+            "image_name": "fig1-2.png",
+            "image_path": "extracted_figures/images/fig1-2.png",
             "linkexpl": "Extracted successfully using accession",
             "monos": [
               {
@@ -1440,7 +1427,7 @@
                 "width": 33
               }
             ],
-            "orientation": "RL",
+            "orientation": "BT",
             "rejected_roots": [
               {
                 "bbox": [
@@ -1951,13 +1938,13 @@
             "classlabel": "glycan",
             "composition_str": "GlcNAc(4)NeuAc(2)Man(3)Gal(2)",
             "confidence": 0.9809902310371399,
-            "extracted_image_path": "extracted_figures/extracted_images/1-3.png",
+            "extracted_image_path": "extracted_figures/extracted_images/fig1-3.png",
             "fig_glycan_count": 3,
             "glyImage": "glymage/0571094a74502b356c301dd95e108d46.svg",
-            "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?ondemandtaskid=7f19b11df8bdcfbd509af8b640af22b3b9722cfa0ef29cfab2e1",
+            "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?ondemandtaskid=7f19b11df8bdcfbd509af8b640af22b30847c971a4f7a787baf6",
             "height": 150,
-            "image_name": "1-3.png",
-            "image_path": "extracted_figures/images/1-3.png",
+            "image_name": "fig1-3.png",
+            "image_path": "extracted_figures/images/fig1-3.png",
             "linkexpl": "Extracted structure using IUPAC.",
             "monos": [
               {
@@ -2389,7 +2376,7 @@
                 "width": 33
               }
             ],
-            "orientation": "RL",
+            "orientation": "BT",
             "rejected_roots": [
               {
                 "bbox": [
@@ -2824,13 +2811,13 @@
             "classlabel": "glycan",
             "composition_str": "GlcNAc(5)NeuAc(2)Fuc(2)Man(3)Gal(2)",
             "confidence": 0.9307370781898499,
-            "extracted_image_path": "extracted_figures/extracted_images/1-4.png",
+            "extracted_image_path": "extracted_figures/extracted_images/fig1-4.png",
             "fig_glycan_count": 4,
             "glyImage": "glymage/52179aba8190ea3827372c26c83e9d7d.svg",
             "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G37281BN",
             "height": 178,
-            "image_name": "1-4.png",
-            "image_path": "extracted_figures/images/1-4.png",
+            "image_name": "fig1-4.png",
+            "image_path": "extracted_figures/images/fig1-4.png",
             "linkexpl": "Extracted successfully using accession",
             "monos": [
               {
@@ -3383,7 +3370,7 @@
                 "width": 30
               }
             ],
-            "orientation": "RL",
+            "orientation": "BT",
             "rejected_roots": [
               {
                 "bbox": [
@@ -3961,13 +3948,13 @@
             "classlabel": "glycan",
             "composition_str": "GlcNAc(5)NeuAc(2)Man(3)Gal(2)",
             "confidence": 0.9924600124359131,
-            "extracted_image_path": "extracted_figures/extracted_images/1-5.png",
+            "extracted_image_path": "extracted_figures/extracted_images/fig1-5.png",
             "fig_glycan_count": 5,
             "glyImage": "glymage/c6564ad8eb235da6eb9a7c46cfdcbc21.svg",
             "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G35465JY",
             "height": 179,
-            "image_name": "1-5.png",
-            "image_path": "extracted_figures/images/1-5.png",
+            "image_name": "fig1-5.png",
+            "image_path": "extracted_figures/images/fig1-5.png",
             "linkexpl": "Extracted successfully using accession",
             "monos": [
               {
@@ -4440,7 +4427,7 @@
                 "width": 34
               }
             ],
-            "orientation": "RL",
+            "orientation": "BT",
             "rejected_roots": [
               {
                 "bbox": [
@@ -4914,13 +4901,13 @@
             "classlabel": "glycan",
             "composition_str": "GlcNAc(3)NeuAc(2)Man(3)GalNAc(1)Gal(2)",
             "confidence": 0.9861156940460205,
-            "extracted_image_path": "extracted_figures/extracted_images/1-6.png",
+            "extracted_image_path": "extracted_figures/extracted_images/fig1-6.png",
             "fig_glycan_count": 6,
             "glyImage": "glymage/1062e7bcb3b3b971dd39512cd4624757.svg",
             "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G66457WL",
             "height": 133,
-            "image_name": "1-6.png",
-            "image_path": "extracted_figures/images/1-6.png",
+            "image_name": "fig1-6.png",
+            "image_path": "extracted_figures/images/fig1-6.png",
             "linkexpl": "Extracted successfully using accession",
             "monos": [
               {
@@ -5353,7 +5340,7 @@
                 "width": 34
               }
             ],
-            "orientation": "RL",
+            "orientation": "BT",
             "rejected_roots": [
               {
                 "bbox": [
@@ -5774,10 +5761,8 @@
         "height": 697,
         "image_count": 1,
         "image_number": 1,
-        "image_path": "extracted_figures/figures/1.png",
-        "merge_type": "fitz",
+        "image_path": "extracted_figures/figures/fig1.png",
         "page_height": 792.0,
-        "page_num": 1,
         "page_number": 1,
         "page_width": 612.0,
         "pdf_fig_bbox": [
@@ -5788,14 +5773,12 @@
         ],
         "pdf_fig_height": 336.79998779296875,
         "pdf_fig_width": 468.70001220703125,
-        "width": 971,
-        "xref": 9
+        "width": 971
       }
     ],
-    "job_type": "PDFJob"
+    "annotated_pdf_file": "Example0.annotated.pdf",
+    "annotated_tsv_file": "Example0.annotated.tsv"
   },
-  "start_time": 1773173863.0180645,
-  "end_time": 1773173875.6442783,
-  "runtime": 12.626213788986206,
-  "error": []
+  "error": [],
+  "location": "examples"
 }

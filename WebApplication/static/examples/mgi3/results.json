@@ -1,17 +1,15 @@
 {
-  "id": "gizvechbtk",
-  "task_index": 3,
+  "id": "mgi3",
   "submission_detail": {
     "filename": "multi_glycans.png",
     "submission_type": "Multi-Glycan Image",
-    "submission_mode": "Upload",
-    "id": "gizvechbtk"
+    "submission_mode": "URL",
+    "processor": "SingleImageJob",
+    "id": "mgi3"
   },
   "state": "Complete",
   "status": "",
   "finished": true,
-  "submit_time": 1773173830.653928,
-  "sessionid": "chfxz2odi35dvpf2",
   "result": {
     "figures": [
       {
@@ -269,7 +267,7 @@
                 "width": 35
               }
             ],
-            "orientation": "LR",
+            "orientation": "BT",
             "rejected_roots": [
               {
                 "bbox": [
@@ -783,7 +781,7 @@
                 "width": 23
               }
             ],
-            "orientation": "RL",
+            "orientation": "BT",
             "rejected_roots": [
               {
                 "bbox": [
@@ -1458,7 +1456,7 @@
                 "width": 24
               }
             ],
-            "orientation": "RL",
+            "orientation": "BT",
             "rejected_roots": [
               {
                 "bbox": [
@@ -1839,13 +1837,11 @@
         ],
         "height": 320,
         "image_path": "input/multi_glycans.png",
+        "status_message": "Processing image",
         "width": 580
       }
-    ],
-    "job_type": "ImageJob"
+    ]
   },
-  "start_time": 1773173830.6543844,
-  "end_time": 1773173844.3298569,
-  "runtime": 13.675472497940063,
-  "error": []
+  "error": [],
+  "location": "examples"
 }

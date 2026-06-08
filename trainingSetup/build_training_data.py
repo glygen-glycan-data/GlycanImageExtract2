@@ -22,6 +22,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from BKGlycanExtractor import Config_Manager
 from BKGlycanExtractor.training_utils import build_training
+from BKGlycanExtractor.image_manager import Image_Manager, StructuredSampling
 
 parser = argparse.ArgumentParser(description="Build training data")
 
@@ -38,6 +39,23 @@ parser.add_argument(
     required = False,
     default = None,
     help = 'Label type used to build training data. The type can be selected from the TSV file.'
+)
+
+parser.add_argument(
+    '--default_label',
+    type = str,
+    required = False,
+    default = None,
+    help = 'Default label used for boxes to build training data.'
+)
+
+parser.add_argument(
+    '--exclude_labels',
+    type = str,
+    required = False,
+    nargs="+",
+    default = [],
+    help = 'Labels to exclude from training data.'
 )
 
 parser.add_argument(
@@ -58,21 +76,79 @@ parser.add_argument(
 parser.add_argument(
     '--out',
     type = str,
-    default = 'images.zip',
-    help = 'Filename for training data zip file, must end in .zip. Default: images.zip'
+    default = "images",
+    help = 'Name for dataset, training data zip file will be <out>-train.zip, if test_percent is set, else <out>.zip'
+)
+
+parser.add_argument(
+    '--test_percent',
+    type = float,
+    default = 0.0,
+    help = 'Percent (%%) of images to select for testing data zip file, <out>-test.zip. Default: No testing data.'
+)
+
+parser.add_argument(
+    '-F',
+    '--force',
+    action = 'store_true',
+    default = False,
+    help = 'Overwrite output zip files, if they exist.'
+)
+
+parser.add_argument(
+    '-q',
+    '--quiet',
+    action = 'store_true',
+    default = False,
+    help = 'Run without extra output.'
 )
 
 args = parser.parse_args()
 
+if args.out.endswith('.zip'):
+    raise ValueError("Output name should not end in .zip")
+
+if args.test_percent > 0.0:
+    if os.path.exists(args.out + "-train.zip") and not args.force:
+        raise AssertionError(f"Zip file {args.out+"-train.zip"} exists")
+
+    if os.path.exists(args.out + "-test.zip") and not args.force:
+        raise AssertionError(f"Zip file {args.out+"-test.zip"} exists")
+else:
+    if os.path.exists(args.out + ".zip") and not args.force:
+        raise AssertionError(f"Zip file {args.out+".zip"} exists")
+
+assert args.test_percent == 0.0 or args.test_percent >= 1.0, f"Bad testing percent: {args.test_percent}%."
+
 config = Config_Manager()
+finder = config.get_finder(args.finder)
+
+if args.boxpadding is not None:
+    finder.set_param('boxpadding', boxpadding)
+
+# if a label_type was provided, that it will be picked 
+# from the semantics file and substituted as the
+# classlabel for the known boxes
+if args.label_type is not None:
+    finder.set_label_type(args.label_type)
+
+    finder.set_default_label(None)
+    if args.default_label is not None:
+        finder.set_default_label(args.default_label)
+
+    finder.set_exclude_labels([])
+    if len(args.exclude_labels) > 0:
+        finder.set_exclude_labels(args.exclude_labels)
+
+
+
+images = Image_Manager(args.images,strategy=StructuredSampling())
+images.exclude() # *.annotated*.{png,jpg,jpeg} by default
 
 build_training(
-    config=config,
-    finder_name=args.finder,
-    images=args.images,
-    out_zip=args.out,
-    boxpadding=args.boxpadding,
-    label_type=args.label_type
+    finder = finder,
+    images = images,
+    outname= args.out,
+    test_frac=args.test_percent/100.0,
+    quiet = args.quiet
 )
-print("Training data is ready...")
-print(args.out)

@@ -1,7 +1,7 @@
 
 import fitz  # PyMuPDF
-import os
-from . searchpmc import citation_details
+import os, sys
+from . pmc_details import PMCData
 
 class PDFCreator(object):
     PAGE_WIDTH = 612.0
@@ -14,15 +14,15 @@ class PDFCreator(object):
         self.clear()
         self.citation = {}
         if pmid:
-            self.citation = citation_details(pmid)
+            self.citation = PMCData.citation_details(pmid)
 
     def clear(self):
         self.images = []
         self.text = []
 
-    def add_image(self,imagefile,caption=None):
+    def add_image(self,imagefile,caption=None,figure_number=None):
         assert os.path.exists(imagefile)
-        self.images.append((imagefile,caption))
+        self.images.append((imagefile,caption,figure_number))
     
     def add_text(self,text):
         self.text.append(text)
@@ -31,7 +31,7 @@ class PDFCreator(object):
         doc = fitz.open()
         scale = 1e+20
 
-        for img_path, caption in self.images:
+        for img_path, caption, figure_number in self.images:
             img_doc = fitz.open(img_path)
             img_w = img_doc[0].rect.width
             img_h = img_doc[0].rect.height
@@ -61,10 +61,10 @@ class PDFCreator(object):
                 author_rect = fitz.Rect(self.MARGIN, 
                        self.MARGIN+2*self.TITLE_SPACE,
                        self.PAGE_WIDTH-self.MARGIN,
-                       self.MARGIN+4*self.TITLE_SPACE)
+                       self.MARGIN+5*self.TITLE_SPACE)
                 rc = page.insert_textbox(
                     author_rect, 
-                    self.citation['citation'],
+                    self.citation['ascii_citation'],
                     fontsize=12, 
                     fontname="helv", 
                     align=fitz.TEXT_ALIGN_LEFT
@@ -72,9 +72,9 @@ class PDFCreator(object):
 
             if self.citation.get('doi'):
                 doi_rect = fitz.Rect(self.MARGIN, 
-                                     self.MARGIN+4*self.TITLE_SPACE,
+                                     self.MARGIN+5*self.TITLE_SPACE,
                                      self.PAGE_WIDTH-self.MARGIN,
-                                     self.MARGIN+5*self.TITLE_SPACE)
+                                     self.MARGIN+6*self.TITLE_SPACE)
 
                 rc = page.insert_textbox(
                     doi_rect, 
@@ -84,7 +84,7 @@ class PDFCreator(object):
                     align=fitz.TEXT_ALIGN_CENTER
                 )
 
-        for img_path, caption in self.images:
+        for img_path, caption, figure_number in self.images:
 
             img_doc = fitz.open(img_path)
             img_w = img_doc[0].rect.width
@@ -114,6 +114,11 @@ class PDFCreator(object):
             # fig_annot.update()
 
             if caption:
+                if figure_number:
+                    full_caption = f"Figure {figure_number}. {caption}"
+                else:
+                    full_caption = f"{caption}"
+
                 # Define a bounding box for the caption text just below the image
                 caption_rect = fitz.Rect(x0, 
                                          y1 + 5, 
@@ -123,14 +128,20 @@ class PDFCreator(object):
                 # Insert the caption text, horizontally centered
                 rc = page.insert_textbox(
                     caption_rect, 
-                    caption, 
+                    full_caption, 
                     fontsize=10, 
                     fontname="helv", 
                     align=fitz.TEXT_ALIGN_LEFT
                 )
                 
                 if rc < 0:
-                    print(f"Warning: Caption for {img_path} was STILL too long to fit in the bounding box.")
+                    rc = page.insert_textbox(
+                        caption_rect, 
+                        full_caption[:200]+"...", 
+                        fontsize=10, 
+                        fontname="helv", 
+                        align=fitz.TEXT_ALIGN_LEFT
+                    )
                 
         # Save and close the generated document
         doc.save(outfile, garbage=4, deflate=True)
@@ -140,13 +151,34 @@ if __name__ == "__main__":
 
     import sys
 
-    pdfwriter = PDFCreator(28186137)
+    pdfwriter = PDFCreator()
 
     pdffile = sys.argv[1]
-    imagefiles = sys.argv[2:]
+    sys.argv.pop(1)
+    
+    if len(sys.argv) <= 1:
+        sys.exit(1)
 
-    for i,ifn in enumerate(imagefiles):
-        pdfwriter.add_image(ifn,"Figure %d. Lorum ipsum, lorum ipsum, lorum ipsum, lorum ipsum, lorum ipsum, lorum ipsum, lorum ipsum, lorum ipsum, lorum ipsum, lorum ipsum, lorum ipsum, lorum ipsum."%(i+1,))
+    pmid = None
+    if not os.path.exists(sys.argv[1]):
+        try:
+            pmid = int(sys.argv[1])
+            sys.argv.pop(1)
+        except:
+            pass
+    
+    pdfwriter = PDFCreator(pmid)
+    
+    i = 1; j = 1
+    while i < len(sys.argv):
+        assert os.path.exists(sys.argv[i])
+        if (i+1) < len(sys.argv) and not os.path.exists(sys.argv[i+1]):
+            caption = f"Figure {j}. {sys.argv[i+1]}"
+            pdfwriter.add_image(sys.argv[i],caption)
+            i += 2; j += 1
+        else:
+            pdfwriter.add_image(sys.argv[i])
+            i += 1; j += 1
     
     pdfwriter.write(pdffile)
 

@@ -363,8 +363,8 @@ def build_annotations(input_items, all_json_data, base_url, output_dir=None):
             os.rename(temp_pdf, annotated_pdf_path)
             os.rename(temp_tsv, tsv_path)
 
-            print(f"Wrote annotated PDF: {annotated_pdf_path}")
-            print(f"Wrote annotation table: {tsv_path}")
+            # print(f"Wrote annotated PDF: {annotated_pdf_path}")
+            # print(f"Wrote annotation table: {tsv_path}")
 
         except Exception as e:
             print(f"Error during PDF/TSV generation: {e}", file=sys.stderr)

@@ -1,17 +1,15 @@
 {
-  "id": "ucgfm7qrl7",
-  "task_index": 12,
+  "id": "sgi1",
   "submission_detail": {
     "filename": "f4003b0298c8e8f4576146bd232601e0.png",
     "submission_type": "Simple Glycan Image",
-    "submission_mode": "Upload",
-    "id": "ucgfm7qrl7"
+    "submission_mode": "URL",
+    "processor": "SimpleImageJob",
+    "id": "sgi1"
   },
   "state": "Complete",
   "status": "",
   "finished": true,
-  "submit_time": 1773173839.9308085,
-  "sessionid": "e25w2s5pajywmrzb",
   "result": {
     "figures": [
       {
@@ -352,7 +350,7 @@
                 "width": 34
               }
             ],
-            "orientation": "RL",
+            "orientation": "BT",
             "rejected_roots": [
               {
                 "bbox": [
@@ -499,6 +497,7 @@
               "mono_id": 6,
               "width": 33
             },
+            "status_message": "Processing image",
             "undirected_links": [
               {
                 "bbox": [
@@ -655,13 +654,11 @@
         ],
         "height": 212,
         "image_path": "input/f4003b0298c8e8f4576146bd232601e0.png",
+        "status_message": "Processing image",
         "width": 342
       }
-    ],
-    "job_type": "ImageJob"
+    ]
   },
-  "start_time": 1773173949.9054868,
-  "end_time": 1773173951.353044,
-  "runtime": 1.4475572109222412,
-  "error": []
+  "error": [],
+  "location": "examples"
 }
