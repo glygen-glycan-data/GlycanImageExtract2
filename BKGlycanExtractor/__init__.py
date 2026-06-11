@@ -18,7 +18,7 @@ from . pdf_image_metadata import ImageSearch
 from . compareboxes import CompareBoxes
 from . image_manager import Image_Manager
 from . pdfcreator import PDFCreator
-from . pmc_details import PMCData, PMCTarFile
+from . pmc_details import PMCData, PMCTarFile, PMCFiles
 
 
 # from . webapp_processjob import JobInstance

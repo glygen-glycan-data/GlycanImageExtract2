@@ -14,7 +14,7 @@ sys.path.append(parent_dir)
 
 from APIFramework import APIFramework, APIErrorBase, APIParameterError, APIDataError
 from processjob import MultiImageJob
-from BKGlycanExtractor import PMCData, PMCTarFile
+from BKGlycanExtractor import PMCData, PMCTarFile, PMCFiles
 from BKGlycanExtractor import annotate_from_webapp
 
 from shutil import copyfile
@@ -327,7 +327,8 @@ class GlyImageExtractor(APIFramework):
             file_dir = os.path.dirname(current_file_path)
 
             # validates PMID and download the necessary files needed in the provided file_dir
-            response, status = PMCTarFile.download_and_prepare_pmid_data(pmid, file_dir, filename)
+            # response, status = PMCTarFile.download_and_prepare_pmid_data(pmid, file_dir, filename)
+            response, status = PMCFiles.download_and_prepare_pmid_data(pmid, file_dir, filename)
 
             if status != 200:
                 raise APIErrorBase(response.get("error") or "PMID download failed")

@@ -8,7 +8,7 @@ from BKGlycanExtractor import Config_Manager, BoundingBox, PDFBoundingBox, Compa
 from BKGlycanExtractor import STANDARD_DPI, PDFHandler, PDFXRefImageFilter, PDFImageSizeFilter, PDFLargeImageSizeFilter
 from BKGlycanExtractor import PDFCreator
 from BKGlycanExtractor.glyomicsclient import GlyLookupClient, GlymageClient, SubsumptionClient
-from BKGlycanExtractor import PMCData, PMCTarFile
+from BKGlycanExtractor import PMCData, PMCTarFile, PMCFiles
 
 import numpy as np
 from shutil import copyfile
@@ -183,6 +183,9 @@ class MultiImageJob:
         if pmid is None:
             raise ValueError("PMID not provided")
         return os.path.join(self.base_dir, "input", self.id, f"PMID-{self.pmid}.tar.gz")
+
+    def input_source_files(self):
+        return os.path.join(self.base_dir, "input", self.id)
 
     def annotate_image(self,figure_semantics):
         """Annotate glycans and save the annotated image."""
@@ -497,8 +500,10 @@ class PMIDImageJob(MultiImageJob):
         '''
         gets PMC figures and metadata (captions, figure_number, citations)
         '''
-        tar_filepath = self.tar_filepath(self.pmid)
-        pmc_api = PMCTarFile(tar_filepath=tar_filepath)
+        # tar_filepath = self.tar_filepath(self.pmid)
+        # pmc_api = PMCTarFile(tar_filepath=tar_filepath)
+
+        pmc_api = PMCFiles(self.input_source_files())
 
         # set citation
         citation = PMCData.citation_details(self.pmid)
@@ -547,8 +552,9 @@ class PMIDSyntheticPDFJob(PDFJob):
         self.image_search_strategy = 'fitz'     # always fitz by default - no one should be able to change it
 
     def extract_figures(self) -> list[dict]:
-        tar_filepath = self.tar_filepath(self.pmid)
-        pmc_api = PMCTarFile(tar_filepath=tar_filepath)
+        # tar_filepath = self.tar_filepath(self.pmid)
+        # pmc_api = PMCTarFile(tar_filepath=tar_filepath)
+        pmc_api = PMCFiles(self.input_source_files())
 
         pmc_figures = list(pmc_api.figures_metadata(self.figures_dir, input_dir=self.input_dir))
 
