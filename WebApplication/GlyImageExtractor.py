@@ -401,7 +401,20 @@ class GlyImageExtractor(APIFramework):
             json_data['result'] = result
 
             subdetails = json_data.get('submission_detail', {})
-            pdf_path = os.path.join(base_dir, "input", subdetails.get('filename', ""))
+            filename = subdetails.get('filename', "")
+
+
+            # pdf_path = os.path.join(base_dir, "input", subdetails.get('filename', ""))
+
+            # if pdf (manuscript was submited), then input file is filename.pdf (default)
+            # But for synthetic submissions - the synthetic pdf is created programatically and 
+            # stored in the input folder (as filename.pdf) - so we are just confirming that this file 
+            # exists (else throw an error) - which can then be used to create an annotated pdf.
+            # so the original user submitted input is still present in the json in its original format.
+            pdf_path = None
+            if filename:
+                pdf_filename = filename.rsplit('.')[0] + '.pdf'
+                pdf_path = os.path.join(base_dir, "input", pdf_filename)
             # print(pdf_path)
             if not pdf_path or not os.path.isfile(pdf_path):
                 print(f"Input file not found for job {resultid}.", file=sys.stderr)
