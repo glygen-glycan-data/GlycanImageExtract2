@@ -23,10 +23,11 @@ class MultiImageJob:
     Generic pipeline class for all types of jobs.
     '''
 
-    pipelines_allowed = [
-        'SingleGlycanImage-YOLOFinders',
-        'MultipleGlycanImage-YOLOFinders',
-    ]
+    # GlyImageExtractor.ini or GlyImageExtractor.local.ini config file 
+    _CONFIG_KEYS = {
+        "SingleGlycanImage":  "single_image_pipeline",
+        "MultipleGlycanImage": "multi_image_pipeline",
+    }
 
     image_search_strategy_allowed = [
         'fitz',
@@ -86,10 +87,43 @@ class MultiImageJob:
         self.gnome_client = SubsumptionClient(apiurl=self.config.get('subsumption_url'),
                                     developer_email=self.config.get('dev_email'))
 
+        # default pipeline_name is mentioned in each subclass, but the configs file
+        # can override the default pipelines (useful for testing).
+        # keys in configs file: single_image_pipeline, multi_image_pipeline
+        self.pipeline_name = self._validate_pipeline_name()
+        self.set_document_metadata(pipeline_name=self.pipeline_name)
+
     # generic/basic methods
     def create_directories(self,*paths):
         for path in paths:
             os.makedirs(path, exist_ok=True)
+
+    def _validate_pipeline_name(self):
+        default_pipeline = self.pipeline_name
+        if not default_pipeline:
+            raise ValueError(f"{type(self).__name__} must define pipeline_name")
+
+        # pipeline_type --> SingleGlycanImage or MultiGlycanImage
+        pipeline_type = default_pipeline.split("-", 1)[0]
+        config_key = self._CONFIG_KEYS.get(pipeline_type)
+        if not config_key:
+            raise ValueError(f"Unknown pipeline type {pipeline_type!r} on {type(self).__name__}")
+        
+        # resolve: ini config and default pipeline
+        name = self.config.get(config_key)
+        if not name:
+            name = default_pipeline
+        
+        # validate
+        if not name.startswith(pipeline_type):
+            raise ValueError(
+                f"Pipeline {name!r} invalid for {type(self).__name__} "
+                f"(expected prefix {pipeline_type!r})"
+            )
+            
+        if name not in Config_Manager().list_pipelines():
+            raise ValueError(f"Pipeline {name!r} not defined in configs.ini")
+        return name
 
     def save_image(self,image, path):
         try:
@@ -441,11 +475,6 @@ class MultiImageJob:
 
     def find_glycans(self, image_path, **kwargs):
         
-        # pipeline_name is a static variable in each derived class
-        if self.pipeline_name not in self.pipelines_allowed:
-            allowed = ", ".join(sorted(self.pipelines_allowed))
-            raise ValueError(f"The pipeline name {self.pipeline_name} is not valid. Allowed {allowed}")
-
         config = Config_Manager()
         
         pipeline_kwargs = {

@@ -152,9 +152,11 @@ class GlyImageExtractor(APIFramework):
         # This block uses both submission_mode and submission_type to determine job processor
         processor = None
         if submission_type == "Simple Glycan Image":
-            processor = 'SimpleImageJob'
+            # processor = 'SimpleImageJob'
+            processor = 'SimpleImageSyntheticPDFJob'
         elif submission_type == "Multi-Glycan Image":
-            processor = 'SingleImageJob'
+            # processor = 'SingleImageJob'
+            processor = 'SingleImageSyntheticPDFJob'
         elif submission_mode == 'PMID':
             processor = 'PMIDSyntheticPDFJob'
         elif submission_mode == 'PMID.PDF':
@@ -508,7 +510,7 @@ class GlyImageExtractor(APIFramework):
         # make the method flexible to use result_cache is json is not avaibale??
         # Note: currently annotate_results uses the json dict written on disk for details
         # if you want to use this feature before the json files are written, the the result_cache will have to be accessed
-        if processor in ("PDFJob","PMIDSyntheticPDFJob"):
+        if processor in ("PDFJob","PMIDSyntheticPDFJob", "SimpleImageSyntheticPDFJob", "SingleImageSyntheticPDFJob"):
             self.annotate_results(resultid=resid)
 
     document_metadata_keys = [
