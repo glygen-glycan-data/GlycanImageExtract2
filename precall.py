@@ -20,6 +20,20 @@ parser.add_argument(
 )
 
 parser.add_argument(
+    '--labels',
+    type=str,
+    nargs='+',
+    default=None,
+    metavar='PATH',
+    help=(
+        'Label list file(s) (one class per line; classes.txt or .labels format). '
+        'Required with --finders when test images use YOLO .txt ground truth. '
+        'One file for all finders on the same test set, or one per finder. '
+        'Not used with --pipelines.'
+    ),
+)
+
+parser.add_argument(
     '--pipelines',
     type = str,
     nargs = '+', # allows one or more values
@@ -155,6 +169,10 @@ if not args.finders and not args.pipelines:
     print("At least one of --finders and --pipelines should be specified.",file=sys.stderr)
     sys.exit(1)
 
+if args.labels and args.pipelines:
+    print("Error: --labels applies to --finders only, not --pipelines.", file=sys.stderr)
+    sys.exit(1)
+
 # if args.pipelines:
 #     print("--pipelines not yet supported.",file=sys.stderr)
 #     sys.exit(1)
@@ -228,6 +246,58 @@ else:
 images = Image_Manager(args.images)
 images.exclude("*.annotated-*.png")
 
+# Method for class labels file handling (--labels)
+# Checks if labels files are needed (i.e test case images dont have classes.txt file for ground
+# truth boxes in .txt YOLO format) and handles single/multiple class labels file(s) - if provided.
+def load_labels_file(path):
+    if not os.path.isfile(path):
+        print(f'Error: labels file not found: {path}', file=sys.stderr)
+        sys.exit(1)
+
+    labels = []
+    for l in open(path).read().split():
+        labels.append(l.strip())
+
+    if not labels:
+        print(f'Error: labels file is empty: {path}', file=sys.stderr)
+        sys.exit(1)
+    return labels
+
+def images_use_yolo_ground_truth(images):
+    for image_path in images.images:
+        yolo_txt = image_path.rsplit('.', 1)[0] + '.txt'
+        map_txt = image_path.rsplit('.', 1)[0] + '_map.txt'
+        if os.path.isfile(yolo_txt) and not os.path.isfile(map_txt):
+            return True
+    return False
+
+def resolve_labels_by_finder(finder_names, label_paths):
+    if not label_paths:
+        return {}
+    if len(label_paths) == 1:
+        labels = load_labels_file(label_paths[0])
+        return {name: labels for name in finder_names}
+    if len(label_paths) == len(finder_names):
+        return {
+            name: load_labels_file(path)
+            for name, path in zip(finder_names, label_paths)
+        }
+    print(
+        'Error: provide one --labels file for all finders, or one per finder.',
+        file=sys.stderr,
+    )
+    sys.exit(1)
+
+needs_yolo_labels = args.finders and images_use_yolo_ground_truth(images)
+
+labels_by_finder = {}
+if args.labels:
+    # if multiple finders --> all finders could use a single labels file or finder could use individual labels files
+    labels_by_finder = resolve_labels_by_finder(args.finders, args.labels)
+elif needs_yolo_labels:
+    print('Error: YOLO ground-truth .txt files found but no --labels provided. Pass label files via cmd line arg --labels', file=sys.stderr)
+    sys.exit(1)
+
 allitems = []
 if args.finders:
     allitems.extend([ ("finder",f) for f in args.finders ])
@@ -247,7 +317,11 @@ for i,(ptype,name) in enumerate(allitems):
         f = cm.get_finder(name)
         pred_pipeline = f.finder_pipeline()
 
+        # provide labels to each known finder if present
         kf = f.known_finder()
+        if name in labels_by_finder:
+            kf.set_labels(labels_by_finder[name])
+
         known_pipeline = kf.finder_pipeline()
 
         pipelines[name] = (pred_pipeline,known_pipeline)
