@@ -592,3 +592,35 @@ class PMIDSyntheticPDFJob(PDFJob):
 
         return metadata
 
+class SingleImageSyntheticPDFJob(MultiImageJob):
+    '''
+    Single Image with multiple glycans embedded in a PDF (sythetically created) 
+    '''  
+
+    pipeline_name = 'MultipleGlycanImage-YOLOFinders'
+    pdf_allow_upscale = True   # multi-glycan: fill the page with the provided glycan figure
+
+    def __init__(self, task_detail, config = {}, msg_queue = None):
+        super().__init__(task_detail, config=config, msg_queue=msg_queue)
+        self.image_search_strategy = 'fitz'     # always fitz by default 
+
+    def extract_figures(self) -> list[dict]:
+
+        # create PDF - write images to the pdf
+        pdfwriter = PDFCreator()
+        pdfwriter.add_image(self.input_filepath, allow_upscale=self.pdf_allow_upscale)
+
+        image_path_dict = {1: self.input_filepath}
+
+        pdf_filename = os.path.join(self.input_dir, self.original_file_name.rsplit('.')[0] + '.pdf')
+        pdfwriter.write(pdf_filename)
+        
+        strategy = ImageSearch.search_method(self.image_search_strategy)
+        metadata = strategy.get_metadata(pdf_filename, self.figures_dir, image_path_dict=image_path_dict)
+
+        return metadata
+
+class SimpleImageSyntheticPDFJob(SingleImageSyntheticPDFJob):
+    pipeline_name = 'MultipleGlycanImage-YOLOFinders'
+    pdf_allow_upscale = False   # single glycan: don't stretch the image that is provided
+
