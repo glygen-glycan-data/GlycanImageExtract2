@@ -107,12 +107,20 @@ class KnownGlycanBoxes(KnownFinder,GlycanFinder):
         for glycan in map_dict['glycans']:
             
             if self.label_type:
-                classlabel = glycan.get(self.label_type,self.default_label)
-                if classlabel in self.exclude_labels:
-                    continue
-            else:   # use default label - glycan
-                classlabel = glycan['classlabel']
-            if classlabel is None or not classlabel.strip():
+                # classlabel = glycan.get(self.label_type,self.default_label)
+                classlabel = glycan.get(self.label_type)
+                if classlabel is None or not str(classlabel).strip():
+                    classlabel = self.default_label
+                else:
+                    if classlabel in self.exclude_labels:
+                        continue
+                    if self.label_substitutions:
+                        classlabel = self.label_substitutions.get(classlabel, classlabel)
+
+            else:   
+                classlabel = glycan.get('classlabel', self.default_label)
+                
+            if classlabel is None or not str(classlabel).strip():
                 continue
             classid = self.get_label_index(classlabel)
             gly_bbox = glycan['bbox']

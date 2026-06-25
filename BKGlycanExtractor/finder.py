@@ -108,6 +108,7 @@ class KnownFinder(Finder):
         self.label_type = kwargs.get('label_type')
         self.default_label = kwargs.get('default_label','glycan')
         self.exclude_labels = kwargs.get('exclude_labels',[])
+        self.label_substitutions = kwargs.get('label_substitutions', {})
 
     def write_model(self, filename):
         with open(filename, 'w') as wh:
@@ -133,6 +134,9 @@ class KnownFinder(Finder):
 
     def set_exclude_labels(self,exclude_labels):
         self.exclude_labels = exclude_labels
+
+    def set_label_substitutions(self,label_substitutions):
+        self.label_substitutions = label_substitutions
 
     def get_known_data(self, image_path):
         '''
