@@ -88,6 +88,13 @@ parser.add_argument(
 )
 
 parser.add_argument(
+    '--split_seed',
+    type = int,
+    default = None,
+    help = 'Random seed for train/test image split (only used when --test_percent > 0)'
+)
+
+parser.add_argument(
     '-F',
     '--force',
     action = 'store_true',
@@ -110,10 +117,10 @@ if args.out.endswith('.zip'):
 
 if args.test_percent > 0.0:
     if os.path.exists(args.out + "-train.zip") and not args.force:
-        raise AssertionError(f"Zip file {args.out+"-train.zip"} exists")
+        raise AssertionError(f"Zip file {args.out}-train.zip exists")
 
     if os.path.exists(args.out + "-test.zip") and not args.force:
-        raise AssertionError(f"Zip file {args.out+"-test.zip"} exists")
+        raise AssertionError(f"Zip file {args.out}-test.zip exists")
 else:
     if os.path.exists(args.out + ".zip") and not args.force:
         raise AssertionError(f"Zip file {args.out+".zip"} exists")
@@ -150,5 +157,6 @@ build_training(
     images = images,
     outname= args.out,
     test_frac=args.test_percent/100.0,
+    split_seed = args.split_seed,
     quiet = args.quiet
 )
