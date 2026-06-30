@@ -422,7 +422,7 @@ class MultiImageJob:
         # Batch request - GlyImage and GlyLookup and gnome for each figure
         self.set_glycan_info(figure_semantics)
 
-        basename = os.path.basename(figure_semantics.image_path()).split('.')[0]
+        basename = os.path.basename(figure_semantics.image_path()).rsplit('.', 1)[0]
 
         for i, gly_semantics in enumerate(figure_semantics.glycans()):
             glycan_image = gly_semantics.get('image')
@@ -641,7 +641,7 @@ class SingleImageSyntheticPDFJob(MultiImageJob):
 
         image_path_dict = {1: self.input_filepath}
 
-        pdf_filename = os.path.join(self.input_dir, self.original_file_name.rsplit('.')[0] + '.pdf')
+        pdf_filename = os.path.join(self.input_dir, self.original_file_name.rsplit('.',1)[0] + '.pdf')
         pdfwriter.write(pdf_filename)
         
         strategy = ImageSearch.search_method(self.image_search_strategy)
