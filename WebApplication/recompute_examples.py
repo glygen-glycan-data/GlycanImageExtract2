@@ -87,7 +87,7 @@ def update_votes(instance):
                     bestg2 = g2; bestk = k
             if not bestg2:
                 incorrectcnt += 1
-                print("Warning: No %s figure %s answer matches to glycan %d prediction."%(instance,i,j),file=sys.stderr)
+                print("Warning: No %s figure %s answer matches to glycan %d predicted box."%(instance,i,j),file=sys.stderr)
                 continue
             g2 = bestg2
             if g1.get("IUPAC"):
@@ -101,6 +101,7 @@ def update_votes(instance):
                     print("Warning: No %s figure %s answer %s IUPAC available to compare predicted glycan %d IUPAC."%(instance,i,bestk,j),file=sys.stderr)
                     othercnt += 1
                 else:
+                    print("Warning: %s figure %s answer %s IUPAC does not match prediction %d IUPAC."%(instance,i,bestk,j),file=sys.stderr)
                     g1['upvotes'] = 0; g1['downvotes'] = 1
                     incorrectcnt += 1
             else:
