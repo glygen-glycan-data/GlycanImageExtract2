@@ -81,6 +81,7 @@ def update_votes(instance):
             bestiou = -1
             for k,g2 in enumerate(f2["glycans"]):
                 g2bb = BoundingBox(**dict(zip("xywh",g2['bbox'])))
+                # print(g1bb,g2bb)
                 iou = CompareBoxes.iou(g1bb,g2bb)
                 if iou > 0.4 and iou > bestiou:
                     bestiou = iou
