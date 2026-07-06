@@ -66,9 +66,13 @@ class YOLOGlycanFinder(YOLOFinder,GlycanFinder):
 
 
     def box_to_object(self,box,obj):
+        figure = obj.image()
+        if box.w <= 0 or box.h <= 0:
+            return None
+        if box.crop(figure).size == 0:
+            return None
         return GlycanSemantics(figure=obj.image(),box=box,**box.items())
 
-    
 class SingleGlycanImage(Finder,GlycanFinder):
     
     defaults = {
@@ -168,6 +172,8 @@ class CleanGlycanImage(Finder,GlycanFinder):
     def find_objects(self, obj):
         for gly in obj.glycans():
             img = gly.image()
+            if img is None or img.size == 0:
+                continue
             cropped_img, cleaned_img = self.process_image(img)
             gly.set_image(cleaned_img)
             gly.set('extracted_image',img)
@@ -192,7 +198,7 @@ class CleanGlycanImage(Finder,GlycanFinder):
         contours, largest_index = self.image_contour(img)
 
         if largest_index is None:
-            return img
+            return img, img
 
         # crop image - offset (x, y) and the cropped region size (w, h)
         # need to store this information - required when we annotate details on the entire image
@@ -201,6 +207,8 @@ class CleanGlycanImage(Finder,GlycanFinder):
 
         # clean image 
         contours, largest_index = self.image_contour(cropped_image)
+        if largest_index is None:
+            return img, img
         out = np.zeros_like(cropped_image)
         cv2.drawContours(out, contours, largest_index, (255, 255, 255), -1)
         _, out = cv2.threshold(out, 230, 255, cv2.THRESH_BINARY_INV)
