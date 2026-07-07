@@ -99,7 +99,7 @@ class MultiImageJob:
             os.makedirs(path, exist_ok=True)
 
     def _validate_pipeline_name(self):
-        default_pipeline = self.pipeline_name
+        default_pipeline = type(self).pipeline_name
         if not default_pipeline:
             raise ValueError(f"{type(self).__name__} must define pipeline_name")
 
@@ -109,8 +109,10 @@ class MultiImageJob:
         if not config_key:
             raise ValueError(f"Unknown pipeline type {pipeline_type!r} on {type(self).__name__}")
         
-        # resolve: ini config and default pipeline
-        name = self.config.get(config_key)
+        # resolution priority: task_details, GlyImageExtractor.ini config and default pipeline (each processor job class has a default)
+        name = self.task_detail.get("pipeline_name")
+        if not name:
+            name = self.config.get(config_key)
         if not name:
             name = default_pipeline
         
@@ -650,6 +652,6 @@ class SingleImageSyntheticPDFJob(MultiImageJob):
         return metadata
 
 class SimpleImageSyntheticPDFJob(SingleImageSyntheticPDFJob):
-    pipeline_name = 'MultipleGlycanImage-YOLOFinders'
+    pipeline_name = 'SingleGlycanImage-YOLOFinders'
     pdf_allow_upscale = False   # single glycan: don't stretch the image that is provided
 

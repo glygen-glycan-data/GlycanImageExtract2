@@ -107,6 +107,7 @@ class GlyImageExtractor(APIFramework):
         "pmid",
         "image_search_strategy",     # derived
         "processor",                 # derived
+        "pipeline_name"              # optional, but if provided - it gets the highest priority (compared to using the optional name provided in GlyImageExtractor.ini or default pipeline in the processor job class)
     ]
 
     def form_task(self, p: dict):
