@@ -330,60 +330,68 @@ class ExtractorClient(APIFrameworkClient):
         assert not kwargs.get('tasks'), "ExtractorClient requires single task per submission"
         return super().submit(**kwargs)
     
-    def submit_pmid(self,submission_type,pmid,aspdf=False):
+    def submit_pmid(self,submission_type,pmid,aspdf=False,pipeline_name=None):
         assert submission_type in ("Manuscript",)
         if aspdf:
             pmid = str(pmid) + ".pdf"
         task = dict(submission_type=submission_type,pmid=pmid)
+        if pipeline_name:
+            task['pipeline_name'] = pipeline_name
         return self.submit(task=task,request="file_upload")
     
-    def submit_local(self,submission_type,filepath):
+    def submit_local(self,submission_type,filepath,pipeline_name=None):
         assert submission_type in ("Manuscript",
                                    "Multi-Glycan Image",
                                    "Simple Glycan Image")
         task = dict(submission_type=submission_type,filePath=filepath)
+        if pipeline_name:
+            task['pipeline_name'] = pipeline_name
         return self.submit(task=task,request="file_upload")
     
-    def submit_url(self,submission_type,url):
+    def submit_url(self,submission_type,url,pipeline_name=None):
         assert submission_type in ("Manuscript",
                         "Multi-Glycan Image",
                         "Simple Glycan Image")
         task = dict(submission_type=submission_type,fileURL=url)
+        if pipeline_name:
+            task['pipeline_name'] = pipeline_name
         return self.submit(task=task,request="file_upload")
     
-    def submit_file(self,submission_type,filename):
+    def submit_file(self,submission_type,filename,pipeline_name=None):
         assert submission_type in ("Manuscript",
                         "Multi-Glycan Image",
                         "Simple Glycan Image")
         task = dict(submission_type=submission_type)
+        if pipeline_name:
+            task['pipeline_name'] = pipeline_name
         return self.submit(task=task,request="file_upload",files=dict(file=filename))
 
-    def submit_manuscript_local(self,filepath):
-        return self.submit_local("Manuscript",filepath)
+    def submit_manuscript_local(self,filepath,pipeline_name=None):
+        return self.submit_local("Manuscript",filepath,pipeline_name=pipeline_name)
 
-    def analyze_manuscript_local(self,filepath):
-        taskid = self.submit_manuscript_local(filepath)
+    def analyze_manuscript_local(self,filepath,pipeline_name=None):
+        taskid = self.submit_manuscript_local(filepath,pipeline_name=pipeline_name)
         return self.retrieve(taskid)
     
-    def submit_manuscript_pmid(self,pmid,aspdf=False):
-        return self.submit_pmid("Manuscript",pmid,aspdf)
+    def submit_manuscript_pmid(self,pmid,aspdf=False,pipeline_name=None):
+        return self.submit_pmid("Manuscript",pmid,aspdf,pipeline_name=pipeline_name)
 
-    def analyze_manuscript_pmid(self,pmid,aspdf=False):
-        taskid = self.submit_manuscript_pmid(pmid,aspdf)
+    def analyze_manuscript_pmid(self,pmid,aspdf=False,pipeline_name=None):
+        taskid = self.submit_manuscript_pmid(pmid,aspdf,pipeline_name=pipeline_name)
         return self.retrieve(taskid)
     
-    def submit_manuscript_url(self,url):
-        return self.submit_url("Manuscript",url)
+    def submit_manuscript_url(self,url,pipeline_name=None):
+        return self.submit_url("Manuscript",url,pipeline_name=pipeline_name)
 
-    def analyze_manuscript_url(self,url):
-        taskid = self.submit_manuscript_url(url)
+    def analyze_manuscript_url(self,url,pipeline_name=None):
+        taskid = self.submit_manuscript_url(urlpipeline_name=pipeline_name)
         return self.retrieve(taskid)
     
-    def submit_manuscript_file(self,filename):
-        return self.submit_file("Manuscript",filename)
+    def submit_manuscript_file(self,filename,pipeline_name=None):
+        return self.submit_file("Manuscript",filename,pipeline_name=pipeline_name)
     
-    def analyze_manuscript_file(self,filename):
-        taskid = self.submit_manuscript_file(filename)
+    def analyze_manuscript_file(self,filename,pipeline_name=None):
+        taskid = self.submit_manuscript_file(filename,pipeline_name=pipeline_name)
         return self.retrieve(taskid)
     
     def submit_multiglycanimg_url(self,url):
@@ -393,25 +401,25 @@ class ExtractorClient(APIFrameworkClient):
         taskid = self.submit_multiglycanimg_url(url)
         return self.retrieve(taskid)
     
-    def submit_multiglycanimg_file(self,filename):
-        return self.submit_file("Multi-Glycan Image",filename)
+    def submit_multiglycanimg_file(self,filename,pipeline_name=None):
+        return self.submit_file("Multi-Glycan Image",filename,pipeline_name=pipeline_name)
     
-    def analyze_multiglycanimg_file(self,filename):
-        taskid = self.submit_multiglycanimg_file(filename)
+    def analyze_multiglycanimg_file(self,filename,pipeline_name=None):
+        taskid = self.submit_multiglycanimg_file(filename,pipeline_name=pipeline_name)
         return self.retrieve(taskid)
     
-    def submit_singleglycanimg_url(self,url):
-        return self.submit_url("Single-Glycan Image",url)
+    def submit_singleglycanimg_url(self,url,pipeline_name=None):
+        return self.submit_url("Single-Glycan Image",url,pipeline_name=pipeline_name)
 
-    def analyze_singleglycanimg_url(self,url):
-        taskid = self.submit_singleglycanimg_url(url)
+    def analyze_singleglycanimg_url(self,url,pipeline_name=None):
+        taskid = self.submit_singleglycanimg_url(url,pipeline_name=pipeline_name)
         return self.retrieve(taskid)
     
-    def submit_singleglycanimg_file(self,filename):
-        return self.submit_file("Single-Glycan Image",filename)
+    def submit_singleglycanimg_file(self,filename,pipeline_name=None):
+        return self.submit_file("Single-Glycan Image",filename,pipeline_name=pipeline_name)
     
-    def analyze_singleglycanimg_file(self,filename):
-        taskid = self.submit_singleglycanimg_file(filename)
+    def analyze_singleglycanimg_file(self,filename,pipeline_name=None):
+        taskid = self.submit_singleglycanimg_file(filename,pipeline_name=pipeline_name)
         return self.retrieve(taskid)
     
     @staticmethod
