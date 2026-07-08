@@ -133,7 +133,7 @@ def add_citation_captions(instance):
             result["result"][key] = correct["result"][key]
 
     for f1,f2 in zip(result["result"]["figures"],correct["result"]["figures"]):
-        for k in ('figure_number', 'caption'):
+        for k in ('figure_number', 'caption','figure_label'):
             if f2.get(k):
                 f1[k] = f2[k]
 

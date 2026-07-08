@@ -20,9 +20,9 @@ class PDFCreator(object):
         self.images = []
         self.text = []
 
-    def add_image(self,imagefile,caption=None,figure_number=None,allow_upscale=True):
+    def add_image(self,imagefile,caption=None,figure_label=None,figure_number=None,allow_upscale=True):
         assert os.path.exists(imagefile)
-        self.images.append((imagefile,caption,figure_number,allow_upscale))
+        self.images.append((imagefile,caption,figure_label,figure_number,allow_upscale))
     
     def add_text(self,text):
         self.text.append(text)
@@ -79,7 +79,7 @@ class PDFCreator(object):
                     align=fitz.TEXT_ALIGN_CENTER
                 )
 
-        for img_path, caption, figure_number, allow_upscale in self.images:
+        for img_path, caption, figure_label, figure_number, allow_upscale in self.images:
 
             img_doc = fitz.open(img_path)
             img_w = img_doc[0].rect.width
@@ -112,7 +112,9 @@ class PDFCreator(object):
 
             if caption:
                 if figure_number:
-                    full_caption = f"Figure {figure_number}. {caption}"
+                    if not figure_label:
+                        figure_label = "Figure"
+                    full_caption = f"{figure_label} {figure_number}. {caption}"
                 else:
                     full_caption = f"{caption}"
 

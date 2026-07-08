@@ -258,7 +258,13 @@
                 const noteEl = document.getElementById("note-" + figid + "-" + glyid);
                 votesEl.innerHTML = d.upvotes + d.downvotes;
                 if (d.upvotes > 0) {
-                    votesEl.style.color = "green"; noteEl.innerHTML = "GOOD";
+                    if (d.upvotes == 1) {
+                        votesEl.style.color = "green"; noteEl.innerHTML = "GOOD";
+                    } else if (d.upvotes == 2) {
+                        votesEl.style.color = "green"; noteEl.innerHTML = "GOOD<br>(partial)";
+                    } else {
+                        votesEl.style.color = "green"; noteEl.innerHTML = "GOOD<br>(other)";
+                    }
                 } else if (d.downvotes > 0) {
                     votesEl.style.color = "#ff3333"; noteEl.innerHTML = "&nbsp;BAD&nbsp;";
                 } else {
@@ -462,8 +468,9 @@
             let label = '';
             let labelHtml = '';
             if (figure.figure_number != null && figure.figure_number !== '') {
-                label = "Figure " + figure.figure_number;
-                labelHtml = '<b>' + label + ':</b> ';
+                label = (figure.figure_label || "Figure");
+                label += (" " + figure.figure_number);
+                labelHtml = '<b>' + label + '.</b> ';
             }
 
             innerdiv += `<div class="figure-caption-block">
@@ -487,9 +494,12 @@
             let note = "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;";
             if ((glycan.upvotes || 0) > 0) { 
                 color = "green"; 
-                note = "GOOD"; 
-                if (glycan.upvotes == 2) {
-                    note = "GOOD<br>(partial)"
+                if (glycan.upvotes == 1) {
+                    note = "GOOD";
+                } else if (glycan.upvotes == 2) {
+                    note = "GOOD<br>(partial)";
+                } else {
+                    note = "GOOD<br>(other)";
                 }
             } else if ((glycan.downvotes || 0) > 0) { 
                 color = "#ff3333"; 

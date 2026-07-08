@@ -461,6 +461,7 @@ class MultiImageJob:
     accepted_pipeline_args = {
         "caption",
         "figure_number",
+        "figure_label",
         "image_count",
         "page_number",
         "image_number",
@@ -595,10 +596,10 @@ class PMIDSyntheticPDFJob(PDFJob):
         # create PDF - write images and captions, citations to the pdf
         pdfwriter = PDFCreator(self.pmid)
         for fig_data in pmc_figures:
-            if fig_data.get('figure_number'):
-                pdfwriter.add_image(fig_data['image_path'], f"Figure {fig_data['figure_number']}. {fig_data.get('ascii_caption', '')}")
-            else:
-                pdfwriter.add_image(fig_data['image_path'], f"{fig_data.get('ascii_caption', '')}")
+                pdfwriter.add_image(fig_data['image_path'], 
+                                    figure_label=fig_data.get("figure_label"),
+                                    figure_number=fig_data.get("figure_number"),
+                                    caption=fig_data.get("ascii_caption",""))
         pdfwriter.write(self.input_filepath)
 
         citation = pdfwriter.citation.get('citation')
@@ -615,12 +616,11 @@ class PMIDSyntheticPDFJob(PDFJob):
         # unfortunately, pdfwriter (fitz) makes dealing with unicode details (such as italics) pretty difficult
         # so we clobber with the "good" captions from PMC XML
         for f1,f2 in zip(pmc_figures,metadata):
-            for key in ('caption','figure_number'):
+            for key in ('caption','figure_number','figure_label'):
                 if f1.get(key,"") != "":
                     f2[key] = f1[key]
                 elif f2.get(key,"") != "":
                     del f2[key]
-
         return metadata
 
 class SingleImageSyntheticPDFJob(MultiImageJob):

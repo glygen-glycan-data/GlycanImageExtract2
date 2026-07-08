@@ -111,7 +111,7 @@ class FitzImageSearch:
             pdf_metadata[page_number][image_number] = {k:v for k,v in fig_metadata.items() if k in 
                 ('page_number','image_number','image_count','bbox', 
                 'width', 'height', 'xref', 'pdf_fig_bbox', 'pdf_fig_width', 
-                'pdf_fig_height', 'page_width', 'page_height', 'dpi', 'caption', 'figure_number'
+                'pdf_fig_height', 'page_width', 'page_height', 'dpi', 'caption', 'figure_number', 'figure_label',
             )}
           
             # self.log_file.write(
@@ -184,7 +184,7 @@ class FigCapImageSearch:
                 ('page_number','image_number','image_count','bbox', 'width', 
                 'height', 'xref', 'pdf_fig_bbox', 'pdf_fig_width', 'pdf_fig_height', 
                 'page_width', 'page_height', 'caption_bbox', 'figure_name',
-                'width', 'height', 'caption', 'dpi', 'figure_number'
+                'width', 'height', 'caption', 'dpi', 'figure_number','figure_label',
             )} 
 
         try:

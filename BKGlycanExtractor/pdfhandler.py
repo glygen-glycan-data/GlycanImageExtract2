@@ -1,4 +1,4 @@
-import fitz, os, os.path, re, difflib, traceback
+import fitz, os, os.path, re, difflib, traceback, sys
 
 from . pmc_details import PMCData
 
@@ -197,12 +197,17 @@ class PDFHandler(object):
                 images = self.images_per_page(page)         # image identification is based on xrefs
                 figure_number = None
                 caption = None
+                figure_label = None
                 if len(images) == 1:
                     blocks = list(self.find_text_blocks(page=page_number))
                     # print(blocks)
-                    if len(blocks) == 1 and re.search(r'^Figure \w+. ',blocks[0]):
-                        label,caption = blocks[0].split(". ",1)
-                        figure_number = label.split()[1]
+                    if len(blocks) == 1:
+                        m = re.search(r'^(\w+(\s+\w+)*) (\w+)\. (.*)$',blocks[0])
+                        if m:
+                            figure_label = m.group(1)
+                            figure_number = m.group(3)
+                            caption = m.group(4)
+                            # print(figure_label, figure_number, caption, file=sys.stderr)
                 for image_number,image in enumerate(images,1):
                     try:
                         image.update(self.doc.extract_image(image['xref']))
@@ -218,6 +223,8 @@ class PDFHandler(object):
                     image['page_height'] = page.rect.height
                     if figure_number:
                         image['figure_number'] = figure_number
+                    if figure_label:
+                        image['figure_label'] = figure_label
                     if caption:
                         image['caption'] = caption
                         
