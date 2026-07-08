@@ -488,6 +488,9 @@
             if ((glycan.upvotes || 0) > 0) { 
                 color = "green"; 
                 note = "GOOD"; 
+                if (glycan.upvotes == 2) {
+                    note = "GOOD<br>(partial)"
+                }
             } else if ((glycan.downvotes || 0) > 0) { 
                 color = "#ff3333"; 
                 note = "&nbsp;BAD&nbsp;"; 

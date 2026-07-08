@@ -40,13 +40,16 @@
             "composition_str": "GlcNAc(2)Man(9)"
           },
           {
+            "detpart_IUPAC": "Man?1-?(Man?1-?)Man?1-?(Man?1-?)Man?1-?GlcNAc?1-?GlcNAc",
+            "detpart_accession": "G73636FD",
             "bbox": [
               308,
               107,
               95,
               322
             ],
-            "composition_str": "GlcNAc(2)Man(6)"
+            "composition_str": "GlcNAc(2)Man(6)",
+            "detpart_composition_str": "GlcNAc(2)Man(5)"
           },
           {
             "IUPAC": "Man?1-?(Man?1-?)Man?1-?(Man?1-?)Man?1-?GlcNAc?1-?GlcNAc",
@@ -146,6 +149,17 @@
               185
             ],
             "composition_str": "GlcNAc(6)Man(3)"
+          },
+          {
+            "IUPAC": "GlcNAc?1-?Man?1-?(GlcNAc?1-?(GlcNAc?1-?)Man?1-?)Man?1-?GlcNAc?1-?GlcNAc",
+            "accession": "G88489PQ",
+            "bbox": [
+              1042,
+              472,
+              111,
+              190
+            ],
+            "composition_str": "GlcNAc(5)Man(3)"
           }
         ]
       },
@@ -164,13 +178,16 @@
         "caption": "Accumulation of bi-antennary N-glycans in neutrophils from patients with PGM3 mutations. Mass spectra of permethylated N-glycans of neutrophils from a healthy control subject and the affected subjects B.V.7 and C.IV.7. Results are summarized in Fig 4, B, with consistent color codes. Glycomic data of the control is from Babu et al.E16",
         "glycans": [
           {
+            "detpart_IUPAC": "Gal?1-?GlcNAc?1-?Man?1-?(Gal?1-?GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?(Fuc?1-?)GlcNAc",
+            "detpart_accession": "G27658AJ",
             "bbox": [
               90,
               1434,
               96,
               362
             ],
-            "composition_str": "GlcNAc(4)NeuAc(1)Fuc(1)Man(3)Gal(2)"
+            "composition_str": "GlcNAc(4)NeuAc(1)Fuc(1)Man(3)Gal(2)",
+            "detpart_composition_str": "GlcNAc(4)Fuc(1)Man(3)Gal(2)"
           },
           {
             "IUPAC": "Gal?1-?GlcNAc?1-?Man?1-?(NeuAc?2-?Gal?1-?GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?(Fuc?1-?)GlcNAc",
@@ -183,14 +200,17 @@
             ],
             "composition_str": "GlcNAc(4)NeuAc(1)Fuc(1)Man(3)Gal(2)"
           },
-          {
+          { 
+            "detpart_IUPAC": "Gal?1-?GlcNAc?1-?Man?1-?(Gal?1-?GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?(Fuc?1-?)GlcNAc",
+            "detpart_accession": "G27658AJ",
             "bbox": [
               102,
               840,
               86,
               367
             ],
-            "composition_str": "GlcNAc(4)NeuAc(1)Fuc(1)Man(3)Gal(2)"
+            "composition_str": "GlcNAc(4)NeuAc(1)Fuc(1)Man(3)Gal(2)",
+            "detpart_composition_str": "GlcNAc(4)Fuc(1)Man(3)Gal(2)"
           },
           {
             "IUPAC": "GlcNAc?1-?Man?1-?(GlcNAc?1-?)(NeuAc?2-?Gal?1-?GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?(Fuc?1-?)GlcNAc",
@@ -215,40 +235,52 @@
             "composition_str": "GlcNAc(4)NeuAc(1)Fuc(2)Man(3)Gal(2)"
           },
           {
+            "detpart_IUPAC": "Gal?1-?GlcNAc?1-?Man?1-?(Gal?1-?GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?(Fuc?1-?)GlcNAc",
+            "detpart_accession": "G27658AJ",
             "bbox": [
               223,
               1546,
               103,
               380
             ],
-            "composition_str": "GlcNAc(4)NeuAc(1)Fuc(2)Man(3)Gal(2)"
+            "composition_str": "GlcNAc(4)NeuAc(1)Fuc(2)Man(3)Gal(2)",
+            "detpart_composition_str": "GlcNAc(4)Fuc(1)Man(3)Gal(2)"
           },
           {
+            "detpart_IUPAC": "Gal?1-?GlcNAc?1-?Man?1-?(Gal?1-?GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?(Fuc?1-?)GlcNAc",
+            "detpart_accession": "G27658AJ",
             "bbox": [
               229,
               647,
               83,
               399
             ],
-            "composition_str": "GlcNAc(4)NeuAc(1)Fuc(2)Man(3)Gal(2)"
+            "composition_str": "GlcNAc(4)NeuAc(1)Fuc(2)Man(3)Gal(2)",
+            "detpart_composition_str": "GlcNAc(4)Fuc(1)Man(3)Gal(2)"
           },
           {
+            "detpart_IUPAC": "Gal?1-?GlcNAc?1-?Man?1-?(GlcNAc?1-?)(Gal?1-?GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?(Fuc?1-?)GlcNAc",
+            "detpart_accession": "G27860IO",
             "bbox": [
               272,
               1022,
               150,
               409
             ],
-            "composition_str": "GlcNAc(5)Fuc(1)Man(3)Gal(2)"
+            "composition_str": "GlcNAc(5)NeuAc(1)Fuc(1)Man(3)Gal(2)",
+            "detpart_composition_str": "GlcNAc(5)Fuc(1)Man(3)Gal(2)"
           },
           {
+            "detpart_IUPAC": "Gal?1-?GlcNAc?1-?Man?1-?(GlcNAc?1-?)(Gal?1-?GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?(Fuc?1-?)GlcNAc",
+            "detpart_accession": "G27860IO",
             "bbox": [
               331,
               1463,
               144,
               412
             ],
-            "composition_str": "GlcNAc(5)NeuAc(1)Fuc(1)Man(3)Gal(2)"
+            "composition_str": "GlcNAc(5)NeuAc(1)Fuc(1)Man(3)Gal(2)",
+            "detpart_composition_str": "GlcNAc(5)Fuc(1)Man(3)Gal(2)"
           },
           {
             "IUPAC": "NeuAc?2-?Gal?1-?GlcNAc?1-?Man?1-?(NeuAc?2-?Gal?1-?GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?(Fuc?1-?)GlcNAc",

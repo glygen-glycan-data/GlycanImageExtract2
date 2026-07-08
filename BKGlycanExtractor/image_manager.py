@@ -84,9 +84,16 @@ class Image_Manager:
 
         return sorted(images)
 
-    def train_test_split(self, test_frac, quiet=False):
+    def train_test_split(self, test_frac, split_seed=None, quiet=False):
         if test_frac in (0.0, None):
             return self.images, []
+
+        if split_seed is None:
+            split_seed = random.SystemRandom().randint(0, 2**31 - 1)
+        if not quiet:
+            print(f"\nTrain/test split seed: {split_seed}\n")
+        
+        rand_seed = random.Random(split_seed)
 
         groups = defaultdict(lambda:defaultdict(list))
         train_images = []
@@ -108,7 +115,7 @@ class Image_Manager:
             n = len(groups[grp1])
             k = max(1,int(math.floor(test_frac*n)))
             # print(grp1,n,k,k/n)
-            testgrp2 = set(random.choices(list(groups[grp1]),k=k))
+            testgrp2 = set(rand_seed.choices(sorted(groups[grp1]), k=k))
             ntesti = 0
             ntraini = 0
             for grp2 in groups[grp1]:

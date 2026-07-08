@@ -78,6 +78,27 @@ class Finder(object):
     def box_label(self, box):
         return self.get_label(box.get('classid'))
 
+    def get_labels(self):
+        # provides all labels/classes - from the ".labels" (placed alongside YOLO weights file) 
+        # or user provided file        
+        if not self._labels:
+            raise ValueError(
+                "No labels loaded. Labels file needs to be provided else a .labels files need to exist for the finder"
+            )
+        return list(self._labels)
+
+    def set_labels(self, labels):
+        self._labels = list(labels)
+
+    def load_labels_file(self, path):
+        if not os.path.isfile(path):
+            raise FileNotFoundError(f"Labels file not found: {path}")
+
+        labels = [s.strip() for s in open(path).read().split() if s.strip()]
+        if not labels:
+            raise ValueError(f"Labels file is empty: {path}")
+        return self.set_labels(labels)
+
     def get_label_index(self, label):
         if label not in self._labels:
             self._labels.append(label)
@@ -108,6 +129,7 @@ class KnownFinder(Finder):
         self.label_type = kwargs.get('label_type')
         self.default_label = kwargs.get('default_label','glycan')
         self.exclude_labels = kwargs.get('exclude_labels',[])
+        self.label_substitutions = kwargs.get('label_substitutions', {})
 
     def write_model(self, filename):
         with open(filename, 'w') as wh:
@@ -133,6 +155,9 @@ class KnownFinder(Finder):
 
     def set_exclude_labels(self,exclude_labels):
         self.exclude_labels = exclude_labels
+
+    def set_label_substitutions(self,label_substitutions):
+        self.label_substitutions = label_substitutions
 
     def get_known_data(self, image_path):
         '''
@@ -292,8 +317,13 @@ class KnownFinder(Finder):
             'glycans': []
         }
 
-        imagedir = os.path.split(image_path)[0]
-        classes = open(os.path.join(imagedir,"classes.txt")).read().split()
+        # do not assume that classes.txt file is present by default
+        # eg. test YOLO data (.txt style YOLO) doesnt have it or it is not
+        # added to the test set during build training data phase - in such cases
+        # user will provide the --labels file path during precall.py 
+        # imagedir = os.path.split(image_path)[0]
+        # classes = open(os.path.join(imagedir,"classes.txt")).read().split()
+        classes = self.get_labels()     
 
         glycan_count = 0
         for line in open(yolo_boxes_file):

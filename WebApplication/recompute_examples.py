@@ -73,40 +73,55 @@ for pat in patterns:
 def update_votes(instance):
     result = json.loads(open("static/examples/"+instance+"/results.json").read())
     correct = json.loads(open("static/answers/"+instance+"/correct.json").read())
-    correctcnt = 0; incorrectcnt = 0;
+    correctcnt = 0; incorrectcnt = 0; correctdetcnt = 0; othercnt = 0
     for i,(f1,f2) in enumerate(zip(result["result"]["figures"],correct["result"]["figures"])):
         for j,g1 in enumerate(f1["glycans"]):
             g1bb = BoundingBox(**dict(zip("xywh",g1['bbox'])))
             bestg2 = None
             bestiou = -1
-            for g2 in f2["glycans"]:
+            for k,g2 in enumerate(f2["glycans"]):
                 g2bb = BoundingBox(**dict(zip("xywh",g2['bbox'])))
+                # print(g1bb,g2bb)
                 iou = CompareBoxes.iou(g1bb,g2bb)
-                if iou > 0.7 and iou > bestiou:
+                if iou > 0.4 and iou > bestiou:
                     bestiou = iou
-                    bestg2 = g2
+                    bestg2 = g2; bestk = k
             if not bestg2:
                 incorrectcnt += 1
-                print("Warning: No %s figure %s answer matches to glycan %d prediction."%(instance,i,j),file=sys.stderr)
+                print("Warning: No %s figure %s answer matches to glycan %d predicted box."%(instance,i,j),file=sys.stderr)
                 continue
             g2 = bestg2
             if g1.get("IUPAC"):
                 if g1.get("IUPAC") == g2.get("IUPAC","__XXXXXX__"):
                     g1['upvotes'] = 1; g1['downvotes'] = 0;
                     correctcnt += 1
+                elif g1.get("IUPAC") == g2.get("detpart_IUPAC","__XXXXXX__"):
+                    g1['upvotes'] = 2; g1['downvotes'] = 0;
+                    correctdetcnt += 1
+                elif not g2.get("IUPAC") and not g2.get("detpart_IUPAC"):
+                    print("Warning: No %s figure %s answer %s IUPAC available to compare predicted glycan %d IUPAC."%(instance,i,bestk,j),file=sys.stderr)
+                    othercnt += 1
                 else:
+                    print("Warning: %s figure %s answer %s IUPAC does not match prediction %d IUPAC."%(instance,i,bestk,j),file=sys.stderr)
                     g1['upvotes'] = 0; g1['downvotes'] = 1
                     incorrectcnt += 1
             else:
-                if g1.get("composition_str") == g2.get("composition_str","__XXXXXX__"):
+                if g2.get("IUPAC") or g2.get("detpart_IUPAC"):
+                    print("Warning: %s figure %s answer %s has IUPAC available but prediction %d does not."%(instance,i,bestk,j),file=sys.stderr)
+                    g1['upvotes'] = 0; g1['downvotes'] = 1
+                    incorrectcnt += 1
+                elif g1.get("composition_str") == g2.get("composition_str","__XXXXXX__"):
                     g1['upvotes'] = 1; g1['downvotes'] = 0;
                     correctcnt += 1
+                elif g1.get("composition_str") == g2.get("detpart_composition_str","__XXXXXX__"):
+                    g1['upvotes'] = 2; g1['downvotes'] = 0;
+                    correctdetcnt += 1
                 else:
                     g1['upvotes'] = 0; g1['downvotes'] = 1
                     incorrectcnt += 1
     with open("static/examples/"+instance+"/results.json",'wt') as wh:
         json.dump(result,wh,indent=2)
-    return correctcnt,(correctcnt+incorrectcnt)
+    return correctcnt,correctdetcnt,(correctcnt+incorrectcnt+correctdetcnt+othercnt)
 
 def add_citation_captions(instance):
     # adds Citation, for each figure --> captions and figure_number
@@ -159,10 +174,10 @@ for exampledir,taskid in tasks:
         shutil.rmtree("static/examples/"+exampledir)
         shutil.copytree("static/files/"+taskid,
                         "static/examples/"+exampledir)
-        correct,total = update_votes(exampledir)
+        correct,correctdet,total = update_votes(exampledir)
         add_citation_captions(exampledir)
         remove_changable_fields(exampledir)
-        print("Example %s done, %d/%d correct (%s)."%(exampledir,correct,total,taskid))
+        print("Example %s done, %d/%d correct, %d/%d detpart correct (%s)."%(exampledir,correct,total,correct+correctdet,total,taskid))
     else:
         print("Example %s not updated (%s)."%(exampledir,taskid))
 

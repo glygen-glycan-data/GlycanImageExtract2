@@ -20,27 +20,22 @@ class PDFCreator(object):
         self.images = []
         self.text = []
 
-    def add_image(self,imagefile,caption=None,figure_number=None):
+    def add_image(self,imagefile,caption=None,figure_number=None,allow_upscale=True):
         assert os.path.exists(imagefile)
-        self.images.append((imagefile,caption,figure_number))
+        self.images.append((imagefile,caption,figure_number,allow_upscale))
     
     def add_text(self,text):
         self.text.append(text)
     
     def write(self,outfile):
+        # Replaced document wide image scaling with per image scaling and 
+        # an allow_upscale flag so full page figures still fit the page while single glycan 
+        # images are no longer stretched.
+
         doc = fitz.open()
-        scale = 1e+20
-
-        for img_path, caption, figure_number in self.images:
-            img_doc = fitz.open(img_path)
-            img_w = img_doc[0].rect.width
-            img_h = img_doc[0].rect.height
-            img_doc.close()
-
-            avail_w = self.PAGE_WIDTH - (2 * self.MARGIN)
-            avail_h = self.PAGE_HEIGHT - (2 * self.MARGIN) - self.CAPTION_SPACE
-
-            scale = min(avail_w / img_w, avail_h / img_h, scale)
+        # scale = 1e+20
+        avail_w = self.PAGE_WIDTH - (2 * self.MARGIN)
+        avail_h = self.PAGE_HEIGHT - (2 * self.MARGIN) - self.CAPTION_SPACE
 
         if self.citation.get('title'):
             page = doc.new_page(width=self.PAGE_WIDTH, height=self.PAGE_HEIGHT)
@@ -84,13 +79,15 @@ class PDFCreator(object):
                     align=fitz.TEXT_ALIGN_CENTER
                 )
 
-        for img_path, caption, figure_number in self.images:
+        for img_path, caption, figure_number, allow_upscale in self.images:
 
             img_doc = fitz.open(img_path)
             img_w = img_doc[0].rect.width
             img_h = img_doc[0].rect.height
             img_doc.close()
-        
+            fit_scale = min(avail_w / img_w, avail_h / img_h)
+            max_upscale = float('inf') if allow_upscale else 1.0  # if allow_upscale is False (simple glycan image) --> never enlarge the image
+            scale = min(fit_scale, max_upscale)
             new_w = img_w * scale
             new_h = img_h * scale
 

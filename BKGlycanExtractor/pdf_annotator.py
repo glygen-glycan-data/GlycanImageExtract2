@@ -402,7 +402,7 @@ def annotate_figure(doc, result_item, taskid, image_data, base_url):
         pdf_fig_bbox = result_item.get("pdf_fig_bbox")
         if pdf_fig_bbox:
             fig_annot = page.add_rect_annot(pdf_fig_bbox)
-            fig_annot.set_colors(stroke=(0, 0, 1))
+            fig_annot.set_colors(stroke=(0.63, 0.13, 0.94))     # violet
             fig_annot.set_border(width=0.5)
 
             content = f"fig:{image_count}\n"

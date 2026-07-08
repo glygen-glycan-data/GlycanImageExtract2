@@ -8,7 +8,7 @@ httplib2
 kiwisolver
 matplotlib
 numpy
-opencv-contrib-python
+opencv-contrib-python<5
 pdfplumber
 PyMuPDF==1.24.9
 rdflib

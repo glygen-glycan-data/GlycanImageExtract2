@@ -107,12 +107,14 @@ class YOLOModel(object):
                             box.set_image_dimensions(image=original_image)
                             box.shift(-self.expandimage,-self.expandimage)
 
+                        # padding also normalizes the boxes (refer to pad method)
                         if float(self.boxpadding) != 0.0:
                             if 0 < self.boxpadding < 1:
                                 box.pad_relative(self.boxpadding)
                             else:
                                 box.pad(self.boxpadding)
-
+                        else:
+                            box.normalize()     # normalize predicted boxes at source
                         class_boxes[class_id].append(box)
 
         for class_id in class_boxes:

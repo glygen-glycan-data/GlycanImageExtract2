@@ -42,6 +42,15 @@ parser.add_argument(
 )
 
 parser.add_argument(
+    '--label_substitutions',
+    type = str,
+    required = False,
+    nargs = '+',
+    default = [],
+    help = 'Substitute label name(s) with alternative label(s). Format <current_label_name>:<new_label_name>'
+)
+
+parser.add_argument(
     '--default_label',
     type = str,
     required = False,
@@ -88,6 +97,13 @@ parser.add_argument(
 )
 
 parser.add_argument(
+    '--split_seed',
+    type = int,
+    default = None,
+    help = 'Random seed for train/test image split (only used when --test_percent > 0)'
+)
+
+parser.add_argument(
     '-F',
     '--force',
     action = 'store_true',
@@ -110,10 +126,10 @@ if args.out.endswith('.zip'):
 
 if args.test_percent > 0.0:
     if os.path.exists(args.out + "-train.zip") and not args.force:
-        raise AssertionError(f"Zip file {args.out+"-train.zip"} exists")
+        raise AssertionError(f"Zip file {args.out}-train.zip exists")
 
     if os.path.exists(args.out + "-test.zip") and not args.force:
-        raise AssertionError(f"Zip file {args.out+"-test.zip"} exists")
+        raise AssertionError(f"Zip file {args.out}-test.zip exists")
 else:
     if os.path.exists(args.out + ".zip") and not args.force:
         raise AssertionError(f"Zip file {args.out+".zip"} exists")
@@ -124,23 +140,37 @@ config = Config_Manager()
 finder = config.get_finder(args.finder)
 
 if args.boxpadding is not None:
-    finder.set_param('boxpadding', boxpadding)
+    finder.set_param('boxpadding', args.boxpadding)
 
-# if a label_type was provided, that it will be picked 
+def parse_label_substitutions(pairs):
+    subs = {}
+    for pair in pairs:
+        if ':' not in pair:
+            raise ValueError(f"Invalid label substitution {pair}; expected old:new")
+        old, new = pair.split(':', 1)
+        subs[old] = new
+    return subs
+
+
+# if a label_type was provided for substitution, then it will be picked 
 # from the semantics file and substituted as the
 # classlabel for the known boxes
+
+# Note: - all exclude labels items are removed first and then label substitutions for the
+# remaining data is done.
+finder.set_default_label(None)
+if args.default_label is not None:
+    finder.set_default_label(args.default_label)
+
 if args.label_type is not None:
     finder.set_label_type(args.label_type)
 
-    finder.set_default_label(None)
-    if args.default_label is not None:
-        finder.set_default_label(args.default_label)
-
     finder.set_exclude_labels([])
-    if len(args.exclude_labels) > 0:
+    if args.exclude_labels:
         finder.set_exclude_labels(args.exclude_labels)
 
-
+    if args.label_substitutions:
+        finder.set_label_substitutions(parse_label_substitutions(args.label_substitutions))
 
 images = Image_Manager(args.images,strategy=StructuredSampling())
 images.exclude() # *.annotated*.{png,jpg,jpeg} by default
@@ -150,5 +180,6 @@ build_training(
     images = images,
     outname= args.out,
     test_frac=args.test_percent/100.0,
+    split_seed = args.split_seed,
     quiet = args.quiet
 )

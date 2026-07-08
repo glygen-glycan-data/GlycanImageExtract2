@@ -14,7 +14,7 @@ sys.path.append(parent_dir)
 
 from APIFramework import APIFramework, APIErrorBase, APIParameterError, APIDataError
 from processjob import MultiImageJob
-from BKGlycanExtractor import PMCData, PMCTarFile
+from BKGlycanExtractor import PMCData, PMCTarFile, PMCFiles
 from BKGlycanExtractor import annotate_from_webapp
 
 from shutil import copyfile
@@ -107,6 +107,7 @@ class GlyImageExtractor(APIFramework):
         "pmid",
         "image_search_strategy",     # derived
         "processor",                 # derived
+        "pipeline_name"              # optional, but if provided - it gets the highest priority (compared to using the optional name provided in GlyImageExtractor.ini or default pipeline in the processor job class)
     ]
 
     def form_task(self, p: dict):
@@ -152,9 +153,11 @@ class GlyImageExtractor(APIFramework):
         # This block uses both submission_mode and submission_type to determine job processor
         processor = None
         if submission_type == "Simple Glycan Image":
-            processor = 'SimpleImageJob'
+            # processor = 'SimpleImageJob'
+            processor = 'SimpleImageSyntheticPDFJob'
         elif submission_type == "Multi-Glycan Image":
-            processor = 'SingleImageJob'
+            # processor = 'SingleImageJob'
+            processor = 'SingleImageSyntheticPDFJob'
         elif submission_mode == 'PMID':
             processor = 'PMIDSyntheticPDFJob'
         elif submission_mode == 'PMID.PDF':
@@ -327,7 +330,8 @@ class GlyImageExtractor(APIFramework):
             file_dir = os.path.dirname(current_file_path)
 
             # validates PMID and download the necessary files needed in the provided file_dir
-            response, status = PMCTarFile.download_and_prepare_pmid_data(pmid, file_dir, filename)
+            # response, status = PMCTarFile.download_and_prepare_pmid_data(pmid, file_dir, filename)
+            response, status = PMCFiles.download_and_prepare_pmid_data(pmid, file_dir, filename)
 
             if status != 200:
                 raise APIErrorBase(response.get("error") or "PMID download failed")
@@ -398,7 +402,20 @@ class GlyImageExtractor(APIFramework):
             json_data['result'] = result
 
             subdetails = json_data.get('submission_detail', {})
-            pdf_path = os.path.join(base_dir, "input", subdetails.get('filename', ""))
+            filename = subdetails.get('filename', "")
+
+
+            # pdf_path = os.path.join(base_dir, "input", subdetails.get('filename', ""))
+
+            # if pdf (manuscript was submited), then input file is filename.pdf (default)
+            # But for synthetic submissions - the synthetic pdf is created programatically and 
+            # stored in the input folder (as filename.pdf) - so we are just confirming that this file 
+            # exists (else throw an error) - which can then be used to create an annotated pdf.
+            # so the original user submitted input is still present in the json in its original format.
+            pdf_path = None
+            if filename:
+                pdf_filename = filename.rsplit('.')[0] + '.pdf'
+                pdf_path = os.path.join(base_dir, "input", pdf_filename)
             # print(pdf_path)
             if not pdf_path or not os.path.isfile(pdf_path):
                 print(f"Input file not found for job {resultid}.", file=sys.stderr)
@@ -507,7 +524,7 @@ class GlyImageExtractor(APIFramework):
         # make the method flexible to use result_cache is json is not avaibale??
         # Note: currently annotate_results uses the json dict written on disk for details
         # if you want to use this feature before the json files are written, the the result_cache will have to be accessed
-        if processor in ("PDFJob","PMIDSyntheticPDFJob"):
+        if processor in ("PDFJob","PMIDSyntheticPDFJob", "SimpleImageSyntheticPDFJob", "SingleImageSyntheticPDFJob"):
             self.annotate_results(resultid=resid)
 
     document_metadata_keys = [

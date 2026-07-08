@@ -8,7 +8,7 @@ from BKGlycanExtractor import Config_Manager, BoundingBox, PDFBoundingBox, Compa
 from BKGlycanExtractor import STANDARD_DPI, PDFHandler, PDFXRefImageFilter, PDFImageSizeFilter, PDFLargeImageSizeFilter
 from BKGlycanExtractor import PDFCreator
 from BKGlycanExtractor.glyomicsclient import GlyLookupClient, GlymageClient, SubsumptionClient
-from BKGlycanExtractor import PMCData, PMCTarFile
+from BKGlycanExtractor import PMCData, PMCTarFile, PMCFiles
 
 import numpy as np
 from shutil import copyfile
@@ -23,10 +23,11 @@ class MultiImageJob:
     Generic pipeline class for all types of jobs.
     '''
 
-    pipelines_allowed = [
-        'SingleGlycanImage-YOLOFinders',
-        'MultipleGlycanImage-YOLOFinders',
-    ]
+    # GlyImageExtractor.ini or GlyImageExtractor.local.ini config file 
+    _CONFIG_KEYS = {
+        "SingleGlycanImage":  "single_image_pipeline",
+        "MultipleGlycanImage": "multi_image_pipeline",
+    }
 
     image_search_strategy_allowed = [
         'fitz',
@@ -86,10 +87,45 @@ class MultiImageJob:
         self.gnome_client = SubsumptionClient(apiurl=self.config.get('subsumption_url'),
                                     developer_email=self.config.get('dev_email'))
 
+        # default pipeline_name is mentioned in each subclass, but the configs file
+        # can override the default pipelines (useful for testing).
+        # keys in configs file: single_image_pipeline, multi_image_pipeline
+        self.pipeline_name = self._validate_pipeline_name()
+        self.set_document_metadata(pipeline_name=self.pipeline_name)
+
     # generic/basic methods
     def create_directories(self,*paths):
         for path in paths:
             os.makedirs(path, exist_ok=True)
+
+    def _validate_pipeline_name(self):
+        default_pipeline = type(self).pipeline_name
+        if not default_pipeline:
+            raise ValueError(f"{type(self).__name__} must define pipeline_name")
+
+        # pipeline_type --> SingleGlycanImage or MultiGlycanImage
+        pipeline_type = default_pipeline.split("-", 1)[0]
+        config_key = self._CONFIG_KEYS.get(pipeline_type)
+        if not config_key:
+            raise ValueError(f"Unknown pipeline type {pipeline_type!r} on {type(self).__name__}")
+        
+        # resolution priority: task_details, GlyImageExtractor.ini config and default pipeline (each processor job class has a default)
+        name = self.task_detail.get("pipeline_name")
+        if not name:
+            name = self.config.get(config_key)
+        if not name:
+            name = default_pipeline
+        
+        # validate
+        if not name.startswith(pipeline_type):
+            raise ValueError(
+                f"Pipeline {name!r} invalid for {type(self).__name__} "
+                f"(expected prefix {pipeline_type!r})"
+            )
+            
+        if name not in Config_Manager().list_pipelines():
+            raise ValueError(f"Pipeline {name!r} not defined in configs.ini")
+        return name
 
     def save_image(self,image, path):
         try:
@@ -183,6 +219,9 @@ class MultiImageJob:
         if pmid is None:
             raise ValueError("PMID not provided")
         return os.path.join(self.base_dir, "input", self.id, f"PMID-{self.pmid}.tar.gz")
+
+    def input_source_files(self):
+        return os.path.join(self.base_dir, "input", self.id)
 
     def annotate_image(self,figure_semantics):
         """Annotate glycans and save the annotated image."""
@@ -385,7 +424,7 @@ class MultiImageJob:
         # Batch request - GlyImage and GlyLookup and gnome for each figure
         self.set_glycan_info(figure_semantics)
 
-        basename = os.path.basename(figure_semantics.image_path()).split('.')[0]
+        basename = os.path.basename(figure_semantics.image_path()).rsplit('.', 1)[0]
 
         for i, gly_semantics in enumerate(figure_semantics.glycans()):
             glycan_image = gly_semantics.get('image')
@@ -438,11 +477,6 @@ class MultiImageJob:
 
     def find_glycans(self, image_path, **kwargs):
         
-        # pipeline_name is a static variable in each derived class
-        if self.pipeline_name not in self.pipelines_allowed:
-            allowed = ", ".join(sorted(self.pipelines_allowed))
-            raise ValueError(f"The pipeline name {self.pipeline_name} is not valid. Allowed {allowed}")
-
         config = Config_Manager()
         
         pipeline_kwargs = {
@@ -497,8 +531,10 @@ class PMIDImageJob(MultiImageJob):
         '''
         gets PMC figures and metadata (captions, figure_number, citations)
         '''
-        tar_filepath = self.tar_filepath(self.pmid)
-        pmc_api = PMCTarFile(tar_filepath=tar_filepath)
+        # tar_filepath = self.tar_filepath(self.pmid)
+        # pmc_api = PMCTarFile(tar_filepath=tar_filepath)
+
+        pmc_api = PMCFiles(self.input_source_files())
 
         # set citation
         citation = PMCData.citation_details(self.pmid)
@@ -547,8 +583,9 @@ class PMIDSyntheticPDFJob(PDFJob):
         self.image_search_strategy = 'fitz'     # always fitz by default - no one should be able to change it
 
     def extract_figures(self) -> list[dict]:
-        tar_filepath = self.tar_filepath(self.pmid)
-        pmc_api = PMCTarFile(tar_filepath=tar_filepath)
+        # tar_filepath = self.tar_filepath(self.pmid)
+        # pmc_api = PMCTarFile(tar_filepath=tar_filepath)
+        pmc_api = PMCFiles(self.input_source_files())
 
         pmc_figures = list(pmc_api.figures_metadata(self.figures_dir, input_dir=self.input_dir))
 
@@ -585,4 +622,36 @@ class PMIDSyntheticPDFJob(PDFJob):
                     del f2[key]
 
         return metadata
+
+class SingleImageSyntheticPDFJob(MultiImageJob):
+    '''
+    Single Image with multiple glycans embedded in a PDF (sythetically created) 
+    '''  
+
+    pipeline_name = 'MultipleGlycanImage-YOLOFinders'
+    pdf_allow_upscale = True   # multi-glycan: fill the page with the provided glycan figure
+
+    def __init__(self, task_detail, config = {}, msg_queue = None):
+        super().__init__(task_detail, config=config, msg_queue=msg_queue)
+        self.image_search_strategy = 'fitz'     # always fitz by default 
+
+    def extract_figures(self) -> list[dict]:
+
+        # create PDF - write images to the pdf
+        pdfwriter = PDFCreator()
+        pdfwriter.add_image(self.input_filepath, allow_upscale=self.pdf_allow_upscale)
+
+        image_path_dict = {1: self.input_filepath}
+
+        pdf_filename = os.path.join(self.input_dir, self.original_file_name.rsplit('.',1)[0] + '.pdf')
+        pdfwriter.write(pdf_filename)
+        
+        strategy = ImageSearch.search_method(self.image_search_strategy)
+        metadata = strategy.get_metadata(pdf_filename, self.figures_dir, image_path_dict=image_path_dict)
+
+        return metadata
+
+class SimpleImageSyntheticPDFJob(SingleImageSyntheticPDFJob):
+    pipeline_name = 'SingleGlycanImage-YOLOFinders'
+    pdf_allow_upscale = False   # single glycan: don't stretch the image that is provided
 

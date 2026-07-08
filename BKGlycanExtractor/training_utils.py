@@ -10,7 +10,7 @@ def _remove_tempdir(tempdir):
     if os.path.exists(tempdir):
         shutil.rmtree(tempdir)
 
-def build_training(*, finder, images, outname, test_frac=0.0, quiet=False):
+def build_training(*, finder, images, outname, test_frac=0.0, split_seed=None, quiet=False):
 
     folder_name = tempfile.mkdtemp(prefix=".tmpdir", dir=os.getcwd())
     atexit.register(_remove_tempdir, folder_name)
@@ -21,7 +21,7 @@ def build_training(*, finder, images, outname, test_frac=0.0, quiet=False):
 
     pipeline = finder.finder_pipeline()
 
-    train_images, test_images = images.train_test_split(test_frac, quiet=quiet)
+    train_images, test_images = images.train_test_split(test_frac, split_seed=split_seed, quiet=quiet)
 
     if test_frac > 0:
         assert len(test_images) > 0
