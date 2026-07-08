@@ -80,8 +80,97 @@ parser.add_argument(
     default = None,
     help = 'input page number of png in the PDF'
 )
+
+parser.add_argument(
+    '--manual-remove-border',
+    action='store_true',
+    default=False,
+    help='Remove border from manual YOLO txt using the paired PNG size.'
+)
+
+parser.add_argument(
+    '--manual-border-size',
+    type=int,
+    default=100,
+    help='Border size in pixels to remove when --manual-remove-border is set.'
+)
+
+parser.add_argument(
+    '--figure-match-iou-threshold',
+    type=float,
+    default=0.8,
+    help='Minimum IoU for a manual box to count as matched when ranking figures.'
+)
+
+parser.add_argument(
+    '--figure-match-min-ratio',
+    type=float,
+    default=0.2,
+    help='Optional minimum matched_ratio required before applying a manual file to a figure.'
+)
+parser.add_argument(
+    '--figure-match-min-matched',
+    type=int,
+    default=2,
+    help='Minimum matched manual boxes required before applying a multi-box manual file to a figure.'
+)
+
+def normalize_manual_args(manual_args):
+    if not manual_args:
+        return manual_args
+
+    normalized = []
+    i = 0
+    while i < len(manual_args):
+        manual_file = manual_args[i]
+        if os.path.basename(manual_file) == "classes.txt":
+            i += 1
+            continue
+        if os.path.exists(manual_file):
+            normalized.append(manual_file)
+            i += 1
+            continue
+
+        rebuilt = manual_file
+        recovered = False
+        for j in range(i + 1, len(manual_args)):
+            rebuilt += " " + manual_args[j]
+            if os.path.basename(rebuilt) == "classes.txt":
+                recovered = True
+                i = j + 1
+                break
+            if os.path.exists(rebuilt):
+                normalized.append(rebuilt)
+                print(f"[MANUAL] recovered spaced path: {rebuilt}")
+                recovered = True
+                i = j + 1
+                break
+
+        if not recovered:
+            print(f"[MANUAL] skip missing manual file: {manual_file}")
+            i += 1
+
+    return normalized
+
 args = parser.parse_args()
+args.manual = normalize_manual_args(args.manual)
+if not 0.0 <= args.figure_match_iou_threshold <= 1.0:
+    parser.error('--figure-match-iou-threshold must be between 0 and 1.')
+if not 0.0 <= args.figure_match_min_ratio <= 1.0:
+    parser.error('--figure-match-min-ratio must be between 0 and 1.')
+if args.figure_match_min_matched < 1:
+    parser.error('--figure-match-min-matched must be at least 1.')
 page_number_manual = args.manual_page
+print(
+    "[RUN] annotate_pdf="
+    f"{os.path.abspath(__file__)} "
+    f"figure_match_iou_threshold={args.figure_match_iou_threshold:.3f} "
+    f"figure_match_min_ratio={args.figure_match_min_ratio:.3f} "
+    f"figure_match_min_matched={args.figure_match_min_matched} "
+    f"manual_remove_border={args.manual_remove_border} "
+    f"manual_border_size={args.manual_border_size} "
+    f"manual_files={len(args.manual or [])}"
+)
 class InputItem:
     '''
     Stores the input item and its metadata (so that user can submit both pmid and pdf's at the same time via cmd line args)
@@ -164,37 +253,43 @@ def build_input_items(pdf_list=None, pmid_list=None):
 #     return 0.0 if union <= 0 else inter / union
 
 
-def best_assignment_mean_iou(manual_xywh_list, pred_xywh_list):
-    n = len(manual_xywh_list)
-    p = len(pred_xywh_list)
-    if n == 0 or p == 0:
-        return -1.0, []
-    pairs = []
-    for i in range(n):
-        for j in range(p):
-            iou = CompareBoxes.iou(
-                manual_xywh_list[i],
-                pred_xywh_list[j]
-            )
-            pairs.append((iou, i, j))
-    pairs.sort(reverse=True)
-    used_manual = set()
-    used_pred = set()
-    assignment = []
-    total_iou = 0.0
-    for iou, i, j in pairs:
-        if i in used_manual:
-            continue
-        if j in used_pred:
-            continue
-        used_manual.add(i)
-        used_pred.add(j)
-        assignment.append((i, j))
-        total_iou += iou
-    if len(assignment) == 0:
-        return -1.0, []
-    mean_iou = total_iou / len(assignment)
-    return mean_iou, assignment
+def score_figure_by_manual_coverage(manual_boxes, pred_boxes, iou_threshold):
+    total_manual_boxes = len(manual_boxes)
+    matched_ious = []
+    best_ious = []
+
+    for manual_box in manual_boxes:
+        best_iou = max(
+            (CompareBoxes.iou(manual_box, pred_box) for pred_box in pred_boxes),
+            default=0.0
+        )
+        best_ious.append(best_iou)
+        if best_iou >= iou_threshold:
+            matched_ious.append(best_iou)
+
+    matched_manual_boxes = len(matched_ious)
+    matched_ratio = (
+        matched_manual_boxes / total_manual_boxes
+        if total_manual_boxes else 0.0
+    )
+    mean_iou_of_matched_boxes = (
+        sum(matched_ious) / matched_manual_boxes
+        if matched_manual_boxes else 0.0
+    )
+    max_iou_of_manual_boxes = max(best_ious, default=0.0)
+    mean_best_iou_of_manual_boxes = (
+        sum(best_ious) / total_manual_boxes
+        if total_manual_boxes else 0.0
+    )
+
+    return {
+        "total_manual_boxes": total_manual_boxes,
+        "matched_manual_boxes": matched_manual_boxes,
+        "matched_ratio": matched_ratio,
+        "mean_iou_of_matched_boxes": mean_iou_of_matched_boxes,
+        "max_iou_of_manual_boxes": max_iou_of_manual_boxes,
+        "mean_best_iou_of_manual_boxes": mean_best_iou_of_manual_boxes
+    }
 
 def build_manual_box(fig_w, fig_h, xc, yc, mw, mh):
     box = BoundingBox(
@@ -204,6 +299,73 @@ def build_manual_box(fig_w, fig_h, xc, yc, mw, mh):
     )
     box.normalize()
     return box
+
+def get_png_size(png_path):
+    from PIL import Image
+
+    with Image.open(png_path) as img:
+        return img.size
+
+def load_manual_boxes(manual_file, remove_border=False, border=100, announce=True):
+    manual_boxes = []
+
+    if not os.path.exists(manual_file):
+        if announce:
+            print(f"[MANUAL] skip missing manual file: {manual_file}")
+        return manual_boxes
+
+    w_new = None
+    h_new = None
+    w_orig = None
+    h_orig = None
+    png_path = None
+
+    if remove_border:
+        png_path = os.path.splitext(manual_file)[0] + ".png"
+        if not os.path.exists(png_path):
+            if announce:
+                print(
+                    f"[MANUAL] skip {manual_file}: paired PNG not found for "
+                    f"border removal (expected {png_path})"
+                )
+            return manual_boxes
+        w_new, h_new = get_png_size(png_path)
+        w_orig = w_new - 2 * border
+        h_orig = h_new - 2 * border
+        if w_orig <= 0 or h_orig <= 0:
+            raise ValueError(
+                f"Border {border}px is too large for image size {w_new}x{h_new}"
+            )
+
+    with open(manual_file, "r") as f:
+        for line in f:
+            parts = line.strip().split()
+            if len(parts) != 5:
+                continue
+
+            cls, xc, yc, w, h = parts
+            xc, yc, w, h = map(float, (xc, yc, w, h))
+
+            if remove_border:
+                xc_abs = xc * w_new
+                yc_abs = yc * h_new
+                w_abs = w * w_new
+                h_abs = h * h_new
+
+                xc_abs -= border
+                yc_abs -= border
+
+                xc = xc_abs / w_orig
+                yc = yc_abs / h_orig
+                w = w_abs / w_orig
+                h = h_abs / h_orig
+
+            manual_boxes.append((xc, yc, w, h))
+
+    if remove_border and announce:
+        print(f"[MANUAL] removed {border}px border using {png_path}")
+
+    return manual_boxes
 
 def match_and_merge(manual_boxes, pred_boxes, pred_raw):
 
@@ -271,16 +433,16 @@ def match_and_merge(manual_boxes, pred_boxes, pred_raw):
             merged.append(g)
             FN += 1
 
-            # Case 1: manual only
-            for i in range(len(manual_boxes)):
-                if i not in matched_m:
-                    box = manual_boxes[i]
-                    merged.append({
-                        "bbox": box.bbox(),
-                        "confidence": 1.0,
-                        "source": "manual_only"
-                    })
-                    FN += 1
+    # Case 1: manual only
+    for i in range(len(manual_boxes)):
+        if i not in matched_m:
+            box = manual_boxes[i]
+            merged.append({
+                "bbox": box.bbox(),
+                "confidence": 1.0,
+                "source": "manual_only"
+            })
+            FN += 1
 
     # Case 3: pred only
     for j in range(len(pred_boxes)):
@@ -416,29 +578,32 @@ while True:
         break
     time.sleep(15)
 
-for manual_file in args.manual:
+original_figure_glycans = {}
+for i, input_item in enumerate(input_items):
+    if all_json_data[i].get('state') == "Error":
+        continue
+    original_figure_glycans[i] = [
+        [g.copy() for g in result.get("glycans", [])]
+        for result in all_json_data[i]['result']['figures']
+    ]
 
-    manual_boxes = []
+for manual_file in args.manual or []:
 
-    if os.path.exists(manual_file):
-        with open(manual_file, "r") as f:
-            for line in f:
-                parts = line.strip().split()
-                if len(parts) != 5:
-                    continue
-                cls, xc, yc, w, h = map(float, parts)
-                manual_boxes.append((xc, yc, w, h))
-
+    manual_boxes = load_manual_boxes(
+        manual_file,
+        remove_border=args.manual_remove_border,
+        border=args.manual_border_size
+    )
+    
     for i,input_item in enumerate(input_items):
 
         if all_json_data[i].get('state') == "Error":
             print(input_item.value,"skipping due to analysis error.")
             continue
 
-        best = None  # (best_score, best_result_index, best_page_number, best_assignment)
+        best = None
         if manual_boxes:
-            m = len(manual_boxes)
-            # 收集所有候选 figure：预测框数量==manual数量
+            # Score every figure, including figures with no prediction boxes.
             # candidates = []
             
 
@@ -446,11 +611,8 @@ for manual_file in args.manual:
             #     pred_n = len(result.get("glycans", []))
             #     if pred_n == m and pred_n > 0:
             #         candidates.append(ridx)
-            candidates = [
-                ridx
-                for ridx, result in enumerate(all_json_data[i]['result']['figures'])
-                if len(result.get("glycans", [])) > 0
-            ]
+            candidates = list(range(len(all_json_data[i]['result']['figures'])))
+            figure_scores = []
             
             
             
@@ -471,7 +633,7 @@ for manual_file in args.manual:
                         y=g["bbox"][1],
                         w=g["bbox"][2],
                         h=g["bbox"][3]
-                    )for g in result["glycans"]
+                    ) for g in original_figure_glycans[i][ridx]
                 ]
                 
                 # manual_xywh = []
@@ -494,12 +656,82 @@ for manual_file in args.manual:
                     build_manual_box(fig_w, fig_h, xc, yc, mw, mh)
                     for (xc, yc, mw, mh) in manual_boxes
                 ]
-                mean_iou, assignment = best_assignment_mean_iou(manual_xywh, pred_xywh)
+                score = score_figure_by_manual_coverage(
+                    manual_xywh,
+                    pred_xywh,
+                    args.figure_match_iou_threshold
+                )
+                score["figure_result_index"] = ridx
+                score["page_number"] = result["page_number"]
+                figure_scores.append(score)
 
-                if best is None or mean_iou > best[0]:
-                    best = (mean_iou, ridx, result["page_number"], assignment)
-            best_ridx = best[1] if best else None
+                score_key = (
+                    score["matched_ratio"],
+                    score["mean_iou_of_matched_boxes"],
+                    score["matched_manual_boxes"]
+                )
+                if best is None or score_key > best["score_key"]:
+                    best = {**score, "score_key": score_key}
+
+            rejected_best = None
+            if best is not None and (
+                best["matched_manual_boxes"] < min(args.figure_match_min_matched, best["total_manual_boxes"])
+                or best["matched_ratio"] < args.figure_match_min_ratio
+            ):
+                required_matches = min(
+                    args.figure_match_min_matched,
+                    best["total_manual_boxes"]
+                )
+                if best["matched_manual_boxes"] < required_matches:
+                    reason = (
+                        f"matched_manual_boxes={best['matched_manual_boxes']} "
+                        f"< {required_matches}"
+                    )
+                else:
+                    reason = (
+                        f"matched_ratio={best['matched_ratio']:.3f} "
+                        f"< {args.figure_match_min_ratio:.3f}"
+                    )
+                print(f"[AUTO] No matching figure found for {manual_file}: {reason}.")
+                rejected_best = {
+                    key: value
+                    for key, value in best.items()
+                    if key != "score_key"
+                }
+                best = None
+
+            best_matching_figure = None
+            if best is not None:
+                best_matching_figure = {
+                    key: value
+                    for key, value in best.items()
+                    if key != "score_key"
+                }
+            print(json.dumps({
+                "manual_file": manual_file,
+                "figure_match_min_ratio": args.figure_match_min_ratio,
+                "best_matching_figure": best_matching_figure,
+                "rejected_best_figure": rejected_best,
+                "figure_scores": figure_scores
+            }, indent=2))
+
+            best_ridx = best["figure_result_index"] if best else None
             if manual_boxes and best_ridx is not None:
+                if (
+                    best["matched_manual_boxes"] < min(args.figure_match_min_matched, best["total_manual_boxes"])
+                    or best["matched_ratio"] < args.figure_match_min_ratio
+                ):
+                    required_matches = min(
+                        args.figure_match_min_matched,
+                        best["total_manual_boxes"]
+                    )
+                    print(
+                        f"[AUTO] skip merge for {manual_file}: "
+                        f"matched_manual_boxes={best['matched_manual_boxes']} "
+                        f"required_matches={required_matches} "
+                        f"matched_ratio={best['matched_ratio']:.3f}."
+                    )
+                    continue
 
                 best_result = all_json_data[i]['result']['figures'][best_ridx]
                 fig_w = best_result["width"]
@@ -537,7 +769,7 @@ for manual_file in args.manual:
                 # # 替换 prediction
                 # best_result["glycans"] = new_glycans
                 
-                pred_raw = best_result["glycans"]
+                pred_raw = original_figure_glycans[i][best_ridx]
 
                 pred_boxes = [
                     BoundingBox(
@@ -567,8 +799,15 @@ for manual_file in args.manual:
 
                 print("[MANUAL] replaced predicted boxes with manual boxes")
                 if best is not None:
-                    print(f"[AUTO] manual matched to figure_result index={best[1]} page={best[2]} meanIoU={best[0]:.3f}")
-                    page_number_manual = best[2]   
+                    print(
+                        "[AUTO] manual matched to figure_result "
+                        f"index={best['figure_result_index']} "
+                        f"page={best['page_number']} "
+                        f"matched_ratio={best['matched_ratio']:.3f} "
+                        "mean_iou_of_matched_boxes="
+                        f"{best['mean_iou_of_matched_boxes']:.3f}"
+                    )
+                    page_number_manual = best["page_number"]
                     
                 else:
                     print("[AUTO] No matching figure found for manual boxes (count gating failed).")
@@ -586,10 +825,7 @@ for i,input_item in enumerate(input_items):
     basename = input_item.basename
     annotated_path = basename + ".annotated.pdf"
 
-    if os.path.exists(annotated_path):
-        doc = fitz.open(annotated_path)
-    else:
-        doc = fitz.open(input_item.value)
+    doc = fitz.open(input_item.value)
 
     # if os.path.exists(basename + ".annotated.pdf") or \
     #     os.path.exists(basename + ".annotated.tsv"):
@@ -732,15 +968,16 @@ for i,input_item in enumerate(input_items):
     #     # incremental=True,
     #     # encryption=fitz.PDF_ENCRYPT_KEEP
     # )
-    if os.path.exists(annotated_path):
-        doc.saveIncr()
-    else:
-        doc.save(
-            annotated_path,
-            garbage=4,
-            deflate=True
-        )
+    tmp_annotated_path = annotated_path + ".tmp"
+    if os.path.exists(tmp_annotated_path):
+        os.remove(tmp_annotated_path)
+    doc.save(
+        tmp_annotated_path,
+        garbage=4,
+        deflate=True
+    )
     doc.close()
+    os.replace(tmp_annotated_path, annotated_path)
     print("Wrote annotated PDF:",basename + ".annotated.pdf") 
     wh = open(basename + ".annotated.tsv",'w')
     headers = "ID xref page_num fig_num accession iupac composition wurcs votes url".split()
@@ -773,9 +1010,9 @@ The TSV file generated only stores information about the glycan (monos, root, li
 the figure annotation in the pdf and this ensures that the dimensions of the figure remain consistent during any extraction activity.
 '''
 
-for ridx, result in enumerate(all_json_data[i]['result']['figures']):
-    cnt = sum(
-        1 for g in result["glycans"]
-        if "source" in g
-    )
-    print(ridx, result["page_number"], cnt)
+# for ridx, result in enumerate(all_json_data[i]['result']['figures']):
+#     cnt = sum(
+#         1 for g in result["glycans"]
+#         if "source" in g
+#     )
+#     print(ridx, result["page_number"], cnt)
