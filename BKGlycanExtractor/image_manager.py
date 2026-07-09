@@ -379,7 +379,7 @@ class Image_Data:
     def coldist(col,ref):
         collab = cv2.cvtColor(np.float32([[col]]) / 255, cv2.COLOR_RGB2Lab)
         reflab = cv2.cvtColor(np.float32([[ref]]) / 255, cv2.COLOR_RGB2Lab)
-        return colour.delta_E(collab,reflab)
+        return colour.delta_E(collab,reflab)[0][0]
 
     @staticmethod
     def random_near_color(ref,dist,r=150):

@@ -14,7 +14,7 @@ some set of coordinates, and confidence of detection.
 """
 
 import logging
-import os
+import os, sys
 import json
 import cv2
 import numpy as np
@@ -25,6 +25,7 @@ from . finder import YOLOFinder, KnownFinder, Finder
 from . semantics import GlycanSemantics
 from collections import Counter
 from BKGlycanExtractor import DebugMode, GlycanCompare
+from . image_manager import Image_Data
 
 # Base class
 class GlycanFinder:  
@@ -142,7 +143,13 @@ class KnownGlycanBoxes(KnownFinder,GlycanFinder):
 # Still need to work on this 
 class CleanGlycanImage(Finder,GlycanFinder):
 
+    defaults = {
+        'remove_background': False,
+    }
+
     def __init__(self,**kwargs):
+        self.remove_background = Config.get_param('remove_background', Config.BOOL, kwargs, self.defaults)
+
         Finder.__init__(self)
         GlycanFinder.__init__(self)
 
@@ -195,6 +202,10 @@ class CleanGlycanImage(Finder,GlycanFinder):
 
     # Crop and clean the largest detected component in the image
     def process_image(self,img):
+
+        if self.remove_background:
+            img = self.replace_background_with_white(img)
+        
         contours, largest_index = self.image_contour(img)
 
         if largest_index is None:
@@ -214,9 +225,11 @@ class CleanGlycanImage(Finder,GlycanFinder):
         _, out = cv2.threshold(out, 230, 255, cv2.THRESH_BINARY_INV)
         cleaned_image = cv2.bitwise_or(out, cropped_image)
 
-
         # Estimate background color
-        bg_color = self.get_dominant_background_color(img)
+        if self.remove_background:
+            bg_color = (255,255,255)
+        else:
+            bg_color = self.get_dominant_background_color(img)
 
         # pad the cropped and cleaned image with a white background to resize the extracted image to 
         # its original dimensions
@@ -230,7 +243,27 @@ class CleanGlycanImage(Finder,GlycanFinder):
         
         return background_cropped, background_cleaned
 
+    def replace_background_with_white(self,img,dist1=5,dist2=10):
 
+        white = (255,255,255)
+        bg = self.get_dominant_background_color(img)
+        # print(bg,Image_Data.coldist(bg,white),dist1,file=sys.stderr)
+        if Image_Data.coldist(bg,white) < dist1:
+            return img
+
+        r, g, b = img[:,:,0], img[:,:,1], img[:,:,2]
+        mask = np.zeros(r.shape, dtype=bool)
+        for col in np.unique(img.reshape(-1, 3), axis=0):
+            # print("",col,Image_Data.coldist(bg,col),dist2,file=sys.stderr)
+            if Image_Data.coldist(bg,col) < dist2:
+                col_r, col_g, col_b = col
+                color_mask = ((r==col_r)&(g==col_g)&(b==col_b))
+                mask |= color_mask
+
+        newimg = img.copy()
+        newimg[mask] = white;
+
+        return newimg
     
     def get_dominant_background_color(self,img):
         # Resize to speed up color counting
