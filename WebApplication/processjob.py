@@ -29,11 +29,16 @@ class MultiImageJob:
         "MultipleGlycanImage": "multi_image_pipeline",
     }
 
-    image_search_strategy_allowed = [
+    # Job classes that allow to update the default image_search_strategy (Synthetic PDF's do not allow this)
+    update_image_search_strategy_allowed = (
+        'PDFJob'
+    )
+
+    image_search_strategies = (
         'fitz',
         'figcap',
         'hybrid'
-    ]
+    )
     
     def __init__(self, task_detail, config = {}, msg_queue = None):
         self.task_detail = task_detail
@@ -92,6 +97,10 @@ class MultiImageJob:
         # keys in configs file: single_image_pipeline, multi_image_pipeline
         self.pipeline_name = self._validate_pipeline_name()
         self.set_document_metadata(pipeline_name=self.pipeline_name)
+        
+        self.image_search_strategy = self._resolve_image_search_strategy()
+        if self.image_search_strategy is not None:
+            self.set_document_metadata(image_search_strategy=self.image_search_strategy)
 
     # generic/basic methods
     def create_directories(self,*paths):
@@ -126,6 +135,32 @@ class MultiImageJob:
         if name not in Config_Manager().list_pipelines():
             raise ValueError(f"Pipeline {name!r} not defined in configs.ini")
         return name
+
+
+    def _resolve_image_search_strategy(self):
+        # ONLY MEANT FOR PDF BASED JOBS
+        # resolution priority for image_search_strategy: task_details, GlyImageExtractor.ini config and default pipeline (each processor job class has a default)
+        # but Note that Synthetic pdf job classes will always use 'fitz' (cannot be modified)
+
+        default_strategy = getattr(type(self), 'image_search_strategy', None)
+        if default_strategy is None:
+            return None
+
+        processor = type(self).__name__
+        if processor not in self.update_image_search_strategy_allowed:
+            return default_strategy
+
+        strategy = self.task_detail.get('image_search_strategy')
+        if not strategy:
+            strategy = self.config.get('image_search_strategy')
+        if not strategy:
+            strategy = default_strategy
+        if strategy not in self.image_search_strategies:
+            allowed = ", ".join(sorted(self.image_search_strategies))
+            raise ValueError(
+                f"Image search strategy {strategy!r} is not valid. Allowed: {allowed}"
+            )
+        return strategy
 
     def save_image(self,image, path):
         try:
@@ -546,20 +581,11 @@ class PMIDImageJob(MultiImageJob):
 
 class PDFJob(MultiImageJob):
     pipeline_name = 'MultipleGlycanImage-YOLOFinders'
+    image_search_strategy = 'hybrid'   # default, but possible to update via task_detail or GlyImageExtrator.ini
 
     def __init__(self, task_detail, config = {}, msg_queue = None):
         super().__init__(task_detail, config=config, msg_queue=msg_queue)
-        self.image_search_strategy = 'hybrid'   # default, but should be able to update this
 
-        # reanalyze on a synthetic pdf will use 'fitz' (set by form_task) - so the above image_search_startegy will have to be updated
-        strategy = task_detail.get('image_search_strategy')
-        if strategy:
-            if strategy in self.image_search_strategy_allowed:
-                self.image_search_strategy = strategy
-            else:
-                allowed = ", ".join(sorted(self.image_search_strategy_allowed))
-                raise ValueError(f"Image search strategy {strategy!r} is not valid. Allowed {allowed}")
-       
     def extract_figures(self) -> list[dict]:
         strategy = ImageSearch.search_method(self.image_search_strategy)
 
@@ -577,11 +603,11 @@ class PDFJob(MultiImageJob):
 
 class PMIDSyntheticPDFJob(PDFJob):
     pipeline_name = 'MultipleGlycanImage-YOLOFinders'
+    image_search_strategy = 'fitz'     # always fitz by default for synthetic pdf's - no one should be able to change it
 
     def __init__(self, task_detail, config = {}, msg_queue = None):
         super().__init__(task_detail, config=config, msg_queue=msg_queue)
         self.pmid = task_detail.get('pmid')
-        self.image_search_strategy = 'fitz'     # always fitz by default - no one should be able to change it
 
     def extract_figures(self) -> list[dict]:
         # tar_filepath = self.tar_filepath(self.pmid)
@@ -630,10 +656,10 @@ class SingleImageSyntheticPDFJob(MultiImageJob):
 
     pipeline_name = 'MultipleGlycanImage-YOLOFinders'
     pdf_allow_upscale = True   # multi-glycan: fill the page with the provided glycan figure
+    image_search_strategy = 'fitz'     # always fitz by default for synthetic pdf's - no one should be able to change it
 
     def __init__(self, task_detail, config = {}, msg_queue = None):
         super().__init__(task_detail, config=config, msg_queue=msg_queue)
-        self.image_search_strategy = 'fitz'     # always fitz by default 
 
     def extract_figures(self) -> list[dict]:
 
@@ -654,4 +680,5 @@ class SingleImageSyntheticPDFJob(MultiImageJob):
 class SimpleImageSyntheticPDFJob(SingleImageSyntheticPDFJob):
     pipeline_name = 'SingleGlycanImage-YOLOFinders'
     pdf_allow_upscale = False   # single glycan: don't stretch the image that is provided
+    image_search_strategy = 'fitz'     # always fitz by default for synthetic pdf's - no one should be able to change it
 
