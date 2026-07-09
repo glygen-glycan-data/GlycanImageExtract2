@@ -437,15 +437,26 @@
         
         // console.log(result_doc)
         // Header row (kept minimal)
-        innerdiv += `<tr style='background-color:#7c7d7d;'>`;
-        innerdiv += `<th colspan='3' style='color:#ffffff; text-align:center;'></th>`;
-        innerdiv += `</tr>`;
+        innerdiv += `<tr id="figure-${fig_id}" style='background-color:#7c7d7d;'>`;
+        innerdiv += `<th colspan='3' style='color:#ffffff; text-align:center'>`;
+        if (fig_id > 0) {
+            innerdiv += `<div style="float: left"><A href='#figure-${fig_id-1}' style='text-decoration: none; color: white;'>Prev</A></div>`
+        }
+        if (fig_id < (figures.length-1)) {
+            innerdiv += `<div style="float: right"><A href='#figure-${fig_id+1}' style='text-decoration: none; color: white;'>Next</A></div>`
+        }
+        if (figure.figure_number != null && figure.figure_number !== '') {
+            let label = (figure.figure_label || "Figure");
+            label += (" " + figure.figure_number);
+            innerdiv += `<b><A href='#figure-${fig_id}' style='text-decoration: none; color: white;'>${label}</A></b>`;
+        }
+        innerdiv += `</th></tr>`;
 
         // Annotated figure block
         innerdiv += `
             <tr>
             <td colspan='3' style='padding: 20px; text-align: center;'>
-                <div id="figure-${fig_id}" class="figure-wrap">
+                <div class="figure-wrap">
                 <img class="figure-img" src='{{urlprefix}}/static/${location}/${list_id}/${figure.annotated_image_path}' />
         `;
 
@@ -668,11 +679,15 @@
 
         const el = document.getElementById(rowId);
         if (el) {
-            el.scrollIntoView({ behavior: "smooth", block: "center" });
-            el.style.backgroundColor = "#f4f1e5";
-            setTimeout(() => {
-                el.style.backgroundColor = "";
-            }, 1500);
+            if (rowId.startsWith('glycan')) {
+                el.scrollIntoView({ behavior: "smooth", block: "center" });
+                el.style.backgroundColor = "#f4f1e5";
+                setTimeout(() => {
+                    el.style.backgroundColor = "";
+                }, 1500);
+            } else {
+                el.scrollIntoView({ behavior: "smooth", block: "start" });
+            }
 
             // Manually set the hash without jumping
             history.pushState(null, null, `#${rowId}`);
