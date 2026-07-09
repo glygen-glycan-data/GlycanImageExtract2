@@ -4,7 +4,7 @@
     "filename": "G69233PF.png",
     "submission_type": "Simple Glycan Image",
     "submission_mode": "Upload",
-    "processor": "SimpleImageJob",
+    "processor": "SimpleImageSyntheticPDFJob",
     "id": "sgi5"
   },
   "state": "Complete",
@@ -40,7 +40,9 @@
             "glycans": [],
             "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G63135DD",
             "height": 237,
+            "image_count": 1,
             "image_name": "G69233PF-1.png",
+            "image_number": 1,
             "image_path": "extracted_figures/images/G69233PF-1.png",
             "linkexpl": "Extracted successfully using accession",
             "monos": [
@@ -513,6 +515,17 @@
               }
             ],
             "orientation": "BT",
+            "page_height": 792.0,
+            "page_number": 1,
+            "page_width": 612.0,
+            "pdf_fig_bbox": [
+              158.25,
+              72.0,
+              453.75,
+              250.5
+            ],
+            "pdf_fig_height": 179.5,
+            "pdf_fig_width": 296.5,
             "rejected_roots": [
               {
                 "bbox": [
@@ -731,7 +744,6 @@
               "mono_id": 1,
               "width": 32
             },
-            "status_message": "Processing image",
             "undirected_links": [
               {
                 "bbox": [
@@ -971,11 +983,27 @@
           }
         ],
         "height": 238,
+        "image_count": 1,
+        "image_number": 1,
         "image_path": "input/G69233PF.png",
-        "status_message": "Processing image",
+        "page_height": 792.0,
+        "page_number": 1,
+        "page_width": 612.0,
+        "pdf_fig_bbox": [
+          158.25,
+          72.0,
+          453.75,
+          250.5
+        ],
+        "pdf_fig_height": 179.5,
+        "pdf_fig_width": 296.5,
         "width": 394
       }
-    ]
+    ],
+    "pipeline_name": "SingleGlycanImage-YOLOFinders",
+    "image_search_strategy": "fitz",
+    "annotated_pdf_file": "G69233PF.annotated.pdf",
+    "annotated_tsv_file": "G69233PF.annotated.tsv"
   },
   "error": [],
   "location": "examples"

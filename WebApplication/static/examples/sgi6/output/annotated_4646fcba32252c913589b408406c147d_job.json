@@ -27,7 +27,9 @@
         "glycans": [],
         "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G83439SR",
         "height": 445,
+        "image_count": 1,
         "image_name": "4646fcba32252c913589b408406c147d-1.png",
+        "image_number": 1,
         "image_path": "extracted_figures/images/4646fcba32252c913589b408406c147d-1.png",
         "linkexpl": "Extracted successfully using accession",
         "monos": [
@@ -624,6 +626,17 @@
           }
         ],
         "orientation": "BT",
+        "page_height": 792.0,
+        "page_number": 1,
+        "page_width": 612.0,
+        "pdf_fig_bbox": [
+          216.75,
+          72.0,
+          395.25,
+          406.5
+        ],
+        "pdf_fig_height": 335.5,
+        "pdf_fig_width": 179.5,
         "rejected_roots": [
           {
             "bbox": [
@@ -896,7 +909,6 @@
           "mono_id": 6,
           "width": 33
         },
-        "status_message": "Processing image",
         "undirected_links": [
           {
             "bbox": [
@@ -1197,8 +1209,20 @@
       }
     ],
     "height": 446,
+    "image_count": 1,
+    "image_number": 1,
     "image_path": "input/4646fcba32252c913589b408406c147d.png",
-    "status_message": "Processing image",
+    "page_height": 792.0,
+    "page_number": 1,
+    "page_width": 612.0,
+    "pdf_fig_bbox": [
+      216.75,
+      72.0,
+      395.25,
+      406.5
+    ],
+    "pdf_fig_height": 335.5,
+    "pdf_fig_width": 179.5,
     "width": 238
   }
 ]

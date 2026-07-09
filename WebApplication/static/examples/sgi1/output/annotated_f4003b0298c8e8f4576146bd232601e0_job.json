@@ -27,7 +27,9 @@
         "glycans": [],
         "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G18718DW",
         "height": 211,
+        "image_count": 1,
         "image_name": "f4003b0298c8e8f4576146bd232601e0-1.png",
+        "image_number": 1,
         "image_path": "extracted_figures/images/f4003b0298c8e8f4576146bd232601e0-1.png",
         "linkexpl": "Extracted successfully using accession",
         "monos": [
@@ -338,6 +340,17 @@
           }
         ],
         "orientation": "BT",
+        "page_height": 792.0,
+        "page_number": 1,
+        "page_width": 612.0,
+        "pdf_fig_bbox": [
+          177.75,
+          72.0,
+          434.25,
+          231.0
+        ],
+        "pdf_fig_height": 160.0,
+        "pdf_fig_width": 257.5,
         "rejected_roots": [
           {
             "bbox": [
@@ -484,7 +497,6 @@
           "mono_id": 6,
           "width": 33
         },
-        "status_message": "Processing image",
         "undirected_links": [
           {
             "bbox": [
@@ -638,8 +650,20 @@
       }
     ],
     "height": 212,
+    "image_count": 1,
+    "image_number": 1,
     "image_path": "input/f4003b0298c8e8f4576146bd232601e0.png",
-    "status_message": "Processing image",
+    "page_height": 792.0,
+    "page_number": 1,
+    "page_width": 612.0,
+    "pdf_fig_bbox": [
+      177.75,
+      72.0,
+      434.25,
+      231.0
+    ],
+    "pdf_fig_height": 160.0,
+    "pdf_fig_width": 257.5,
     "width": 342
   }
 ]

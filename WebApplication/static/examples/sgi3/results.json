@@ -4,7 +4,7 @@
     "filename": "058a64f0cda3490dffac747dfb599cef.png",
     "submission_type": "Simple Glycan Image",
     "submission_mode": "Local",
-    "processor": "SimpleImageJob",
+    "processor": "SimpleImageSyntheticPDFJob",
     "id": "sgi3"
   },
   "state": "Complete",
@@ -40,7 +40,9 @@
             "glycans": [],
             "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G35465JY",
             "height": 185,
+            "image_count": 1,
             "image_name": "058a64f0cda3490dffac747dfb599cef-1.png",
+            "image_number": 1,
             "image_path": "extracted_figures/images/058a64f0cda3490dffac747dfb599cef-1.png",
             "linkexpl": "Extracted successfully using accession",
             "monos": [
@@ -515,6 +517,17 @@
               }
             ],
             "orientation": "BT",
+            "page_height": 792.0,
+            "page_number": 1,
+            "page_width": 612.0,
+            "pdf_fig_bbox": [
+              138.75,
+              72.0,
+              473.25,
+              211.5
+            ],
+            "pdf_fig_height": 140.5,
+            "pdf_fig_width": 335.5,
             "rejected_roots": [
               {
                 "bbox": [
@@ -733,7 +746,6 @@
               "mono_id": 9,
               "width": 32
             },
-            "status_message": "Processing image",
             "undirected_links": [
               {
                 "bbox": [
@@ -973,11 +985,27 @@
           }
         ],
         "height": 186,
+        "image_count": 1,
+        "image_number": 1,
         "image_path": "input/058a64f0cda3490dffac747dfb599cef.png",
-        "status_message": "Processing image",
+        "page_height": 792.0,
+        "page_number": 1,
+        "page_width": 612.0,
+        "pdf_fig_bbox": [
+          138.75,
+          72.0,
+          473.25,
+          211.5
+        ],
+        "pdf_fig_height": 140.5,
+        "pdf_fig_width": 335.5,
         "width": 446
       }
-    ]
+    ],
+    "pipeline_name": "SingleGlycanImage-YOLOFinders",
+    "image_search_strategy": "fitz",
+    "annotated_pdf_file": "058a64f0cda3490dffac747dfb599cef.annotated.pdf",
+    "annotated_tsv_file": "058a64f0cda3490dffac747dfb599cef.annotated.tsv"
   },
   "error": [],
   "location": "examples"
