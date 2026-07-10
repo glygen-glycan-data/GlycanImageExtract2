@@ -382,12 +382,15 @@ class PMCFigureExtractor:
         XLINK_NS = "http://www.w3.org/1999/xlink"
         XLINK_HREF = f"{{{XLINK_NS}}}href"
         figures = {}
+        figure_seq = 0
+
         # for fig in self.root.findall('.//fig', self.NAMESPACES):
         for fig in self._find_descendants(self.root, 'fig'):
             fig_info = {}
-            m = re.search(r'^[a-zA-Z]+(\d+)$',fig.attrib["id"])
-            assert m, f"Can't match figure element id string: {fig.attrib["id"]}."
-            fig_info['figure_id'] = int(m.group(1))
+            # m = re.search(r'^[a-zA-Z]+(\d+)$',fig.attrib["id"])
+            # assert m, f"Can't match figure element id string: {fig.attrib["id"]}."
+            # fig_info['figure_id'] = int(m.group(1))
+
             # label_elem = fig.find('label', self.NAMESPACES)
             label_elem = self._find_child(fig, 'label')
             if label_elem is not None:
@@ -425,6 +428,8 @@ class PMCFigureExtractor:
                         filename = os.path.basename(href)
                         break
             if filename:
+                figure_seq += 1
+                fig_info['figure_id'] = figure_seq
                 fig_info['filename'] = filename
                 base_name = os.path.splitext(filename)[0]
                 figures[base_name] = fig_info  
@@ -475,6 +480,8 @@ class PMCFigureExtractor:
                 fig_to_label_map[base_name] = info.get("figure_id", "")
         except Exception:
             traceback.print_exc()
+            self.figure_info_by_basename = {}
+            return {}
         return fig_to_label_map
 
     def collect_figures(self, figures_dir, fig_to_label_map, image_sources):

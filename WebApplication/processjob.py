@@ -617,7 +617,7 @@ class PMIDSyntheticPDFJob(PDFJob):
         pmc_figures = list(pmc_api.figures_metadata(self.figures_dir, input_dir=self.input_dir))
 
         if not pmc_figures:
-            return
+            return []
 
         # create PDF - write images and captions, citations to the pdf
         pdfwriter = PDFCreator(self.pmid)
