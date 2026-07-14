@@ -417,9 +417,8 @@ class GlyImageExtractor(APIFramework):
             # so the original user submitted input is still present in the json in its original format.
             pdf_path = None
             if filename:
-                pdf_filename = filename.rsplit('.')[0] + '.pdf'
+                pdf_filename = filename.rsplit('.',1)[0] + '.pdf'
                 pdf_path = os.path.join(base_dir, "input", pdf_filename)
-            # print(pdf_path)
             if not pdf_path or not os.path.isfile(pdf_path):
                 print(f"Input file not found for job {resultid}.", file=sys.stderr)
                 return flask.jsonify(dict(error=f"Input file not found for job {resultid}.", valid=False)), 404

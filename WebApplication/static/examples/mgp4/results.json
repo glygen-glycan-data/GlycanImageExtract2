@@ -18348,7 +18348,9 @@
     "pipeline_name": "MultipleGlycanImage-YOLOFindersV4",
     "image_search_strategy": "hybrid",
     "citation": "Huang Y, Orlando R. Kinetics of N-Glycan Release from Human Immunoglobulin G (IgG) by PNGase F: All Glycans Are Not Created Equal. Journal of biomolecular techniques : JBT; 28(4):150-157.",
-    "pmid": "29042829"
+    "pmid": "29042829",
+    "annotated_pdf_file": "jbt.28-150.annotated.pdf",
+    "annotated_tsv_file": "jbt.28-150.annotated.tsv"
   },
   "error": [],
   "location": "examples"
