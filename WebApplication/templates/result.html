@@ -556,7 +556,10 @@
             // Left column: index + votes
             innerdiv += `
                 <td width="200">
-                <div onclick="scrollAndHighlight('overlay-${fig_id}-${gly_idx}', event);" class="figure-badge" style="position:static; display:inline-block; cursor:pointer;">
+                <div onclick="scrollAndHighlight('overlay-${fig_id}-${gly_idx}', event, 'figure-${fig_id}');" 
+                    class="figure-badge" 
+                    style="position:static; display:inline-block; cursor:pointer;"
+                >
                     ${gly_idx + 1}
                 </div>
                 <div class="vote-box">
@@ -581,7 +584,7 @@
                 <td style="vertical-align:middle;" width="50%">
                 <div class="figure-wrap" 
                     style="max-width:550px; cursor:pointer;"
-                    onclick="scrollAndHighlight('overlay-${fig_id}-${gly_idx}', event);"
+                    onclick="scrollAndHighlight('overlay-${fig_id}-${gly_idx}', event, 'figure-${fig_id}');"
                 >
                     <img style="max-width:300px; min-width:90px; display:block; margin:auto;"
                         src="{{urlprefix}}/static/${location}/${list_id}/${glycan.extracted_image_path}"
@@ -598,7 +601,7 @@
                     innerdiv += `
                     <figure
                         style="margin:0; cursor:pointer;"
-                        onclick="scrollAndHighlight('overlay-${fig_id}-${gly_idx}', event);"
+                        onclick="scrollAndHighlight('overlay-${fig_id}-${gly_idx}', event, 'figure-${fig_id}');"
                     >
                         <img style="max-width:300px; min-width:90px; width:auto; height:auto; display:block; margin:auto;"
                             src="${glycan.glyImage}"
@@ -609,7 +612,7 @@
                     innerdiv += `
                     <figure
                         style="margin:0; cursor:pointer;"
-                        onclick="scrollAndHighlight('overlay-${fig_id}-${gly_idx}', event);"
+                        onclick="scrollAndHighlight('overlay-${fig_id}-${gly_idx}', event, 'figure-${fig_id}');"
                     >
                         <img style="max-width:300px; min-width:90px; width:auto; height:auto; display:block; margin:auto;"
                             src="{{urlprefix}}/static/${location}/${list_id}/${glycan.glyImage}"
@@ -724,18 +727,19 @@
         }
     }
 
-    function scrollAndHighlight(rowId, event) {
+    function scrollAndHighlight(rowId, event, scrollToId) {
         if (event) event.preventDefault();
 
         const el = document.getElementById(rowId);
-        if (!el) return;
+        const scrollEl = document.getElementById(scrollToId || rowId);
+        if (!scrollEl) return;
 
-        history.pushState(null, null, `#${rowId}`);
+        history.pushState(null, null, `#${scrollToId || rowId}`);
 
-        const needsHighlight = rowId.startsWith("glycan") || rowId.startsWith("overlay");
-        const block = needsHighlight ? "center" : "start";
+        const needsHighlight = el && (rowId.startsWith("glycan") || rowId.startsWith("overlay"));
 
         function clearHighlight() {
+            if (!el) return;
             el.classList.remove("nav-highlight");
             el.style.removeProperty("background-color");
             if (el._highlightTimer) {
@@ -745,9 +749,22 @@
         }
 
         function applyHighlight() {
+            if (!el) return;
             clearHighlight();
             el.classList.add("nav-highlight");
             el._highlightTimer = setTimeout(clearHighlight, 2000);  // goes away after 2s
+        }
+
+        const alignTop = Boolean(scrollToId) || String(rowId).startsWith("figure");
+        function scrollToTarget() {
+            if (alignTop) {
+                // Put figure at the top of the screen
+                const top = window.scrollY + scrollEl.getBoundingClientRect().top;
+                window.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
+            } else {
+                // Glycan rows stay centered
+                scrollEl.scrollIntoView({ behavior: "smooth", block: "center" });
+            }
         }
 
         function afterScroll(callback) {
@@ -761,13 +778,13 @@
             };
             window.addEventListener("scrollend", finish, { once: true });
             const fallback = setTimeout(finish, 900);
-            el.scrollIntoView({ behavior: "smooth", block: block });
+            scrollToTarget();
         }
 
         if (needsHighlight) {
             afterScroll(applyHighlight);
         } else {
-            el.scrollIntoView({ behavior: "smooth", block: block });
+            scrollToTarget();
         }
     }
 
