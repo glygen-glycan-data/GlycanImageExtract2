@@ -446,9 +446,9 @@ def annotate_figure(doc, result_item, taskid, image_data, base_url):
                 page.insert_link(link_info)
     
                 votes = glycan.get('upvotes', 0) - glycan.get('downvotes', 0)
-                color = (0, 0, 1)
+                color = (0, 0, 1)             # blue 
                 if votes > 0:
-                    color = (0, 1, 0)       # green
+                    color = (0, 0.85, 0)      # green
                 elif votes < 0:
                     color = (1, 0, 0)         # red
 
