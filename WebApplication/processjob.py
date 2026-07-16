@@ -343,13 +343,14 @@ class MultiImageJob:
                     except Exception as e:
                         sys.stderr.write(f"Warning: gnome subsumption failed for glycan {glycan_idx}: {e}\n")
                         self.log_file.write(f"Warning: gnome subsumption failed for glycan {glycan_idx}: {e}\n")
-                        glycan.set('gnomeurl', '')
+                        # glycan.set('gnomeurl', '')
 
         # Retrieve Glymage, download and save the images to the correct folder
         for j, result in self.glymage_client.retrieve_many(*[t[1] for t in glymage_jobs]):
             glycan = glycans[glymage_jobs[j][0]]
             try:
                 glyImage_path = result['result']
+                # so glyImage client returns [] - which needs TypeError to be caught in the exception, else the program crashes
                 rest, imgfilename = os.path.split(glyImage_path)
 
                 glymage_image = os.path.join(self.glymage_dir, imgfilename)
@@ -364,10 +365,10 @@ class MultiImageJob:
                     if not glycan.get('linkexpl'):
                         glycan.set('linkexpl', 'Extracted structure.')
 
-            except (urllib.error.URLError, ValueError, OSError) as e:
+            except (urllib.error.URLError, ValueError, OSError, TypeError) as e:
                 # Set to None or empty string, or skip setting it
                 print(f"Failed glymage download for job {j}: {e}")
-                glycan.set('glyImage', '')
+                # glycan.set('glyImage', '')
 
     def update_status(self,status,state=None):
         msg = dict(id=self.id)
