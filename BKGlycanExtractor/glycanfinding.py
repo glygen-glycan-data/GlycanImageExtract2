@@ -140,7 +140,6 @@ class KnownGlycanBoxes(KnownFinder,GlycanFinder):
         return GlycanSemantics(figure=obj.image(),box=box,**box.items())
         
 # handles one/many glycans
-# Still need to work on this 
 class CleanGlycanImage(Finder,GlycanFinder):
 
     defaults = {
@@ -155,7 +154,6 @@ class CleanGlycanImage(Finder,GlycanFinder):
 
     def find_boxes(self, obj):
         raise NotImplementedError
-        # print("\nCLEAN IMAGE")
         boxes = []
         for gly in obj.glycans():
             img = gly.image()
@@ -278,3 +276,60 @@ class CleanGlycanImage(Finder,GlycanFinder):
         # Count pixel frequencies
         most_common_color = Counter(pixels).most_common(1)[0][0]
         return np.array(most_common_color, dtype=np.uint8)
+
+
+class CleanGlycanImageV2(CleanGlycanImage):
+    '''
+    Similar concept as CleanGlycanImage.
+    The dominant background color is detected, if it is not close to white color then
+    take a copy of the glycan image (this will be discarded) and remove the dominant bacground color,
+    find the largest contour. 
+
+    Use the contour to get the glycan segement from of the orignal image and lay it over a white background.
+    '''
+
+    defaults = {
+        'remove_background': True,
+        'white_bg_dist': 5,
+    }
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.white_bg_dist = Config.get_param('white_bg_dist', Config.INT, kwargs, self.defaults)
+
+    def is_background_near_white(self, img):
+        white = (255, 255, 255)
+        bg = self.get_dominant_background_color(img)
+        return Image_Data.coldist(bg, white) < self.white_bg_dist
+
+    def process_image(self, img):
+        original = img.copy()
+
+        if self.remove_background and not self.is_background_near_white(original):
+            contour_img = self.replace_background_with_white(original)
+        else:
+            contour_img = original
+
+        contours, largest_index = self.image_contour(contour_img)
+        if largest_index is None:
+            return original, original
+
+        x, y, w, h = cv2.boundingRect(contours[largest_index])
+        contour_img_crop = contour_img[y:y+h, x:x+w]
+        color_crop = original[y:y+h, x:x+w]
+
+        contours, largest_index = self.image_contour(contour_img_crop)
+        if largest_index is None:
+            return original, original
+
+        mask = np.zeros(contour_img_crop.shape[:2], dtype=np.uint8)
+        cv2.drawContours(mask, contours, largest_index, 255, -1)
+        cleaned_crop = color_crop.copy()
+        cleaned_crop[mask == 0] = (255, 255, 255)
+
+        background_cropped = np.full_like(original, 255)
+        background_cleaned = np.full_like(original, 255)
+        background_cropped[y:y+h, x:x+w] = color_crop
+        background_cleaned[y:y+h, x:x+w] = cleaned_crop
+
+        return background_cropped, background_cleaned
