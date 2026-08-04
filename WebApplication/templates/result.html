@@ -620,8 +620,10 @@
                     </figure>
                     `;
                 }
+            } else if (glycan.glymage_error){
+                innerdiv += `<div style="font-size:16px; color:#555; margin-top:10px;">${glycan.glymage_error}</div>`;
             } else {
-                innerdiv += `<div style="font-size:16px; color:#555; margin-top:10px;">Couldn't extract structure</div>`;
+                innerdiv += `<div style="font-size:16px; color:#555; margin-top:10px;">"Couldn't extract structure"</div>`;
             }
 
             // Figcaption with accession, optional errors (kept disabled)
