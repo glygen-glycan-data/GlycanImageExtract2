@@ -4,6 +4,7 @@ import numpy as np
 import json
 import copy
 import random
+from . bbox import BoundingBox, PDFBoundingBox
 from collections import defaultdict, deque
 try:
     from . lineno import callsig
@@ -323,6 +324,7 @@ class FigureSemantics(ImageSemantics):
         super().__init__(**kwargs)
         self.reset_glycans()
 
+    # semantics writer
     def tojson(self):
         data = {}
         
@@ -335,10 +337,39 @@ class FigureSemantics(ImageSemantics):
         data['glycans'] = [json.loads(gly.tojson()) for gly in self.glycans()]
         
         return json.dumps(data, indent=2, sort_keys=True)
+    
+    # semantics reader - FigureSemantics is meant for a single figure (with multiple glycans),
+    # thats why page_number and image_count are helpful if a multi figure json file is provided.
+    # or else need a class to handle multi figure semantics.
+    @classmethod
+    def read_json(cls, json_file, page_number=1, image_count=1, **kwargs):
+        with open(json_file, 'r') as f:
+            return cls.from_json_data(json.load(f), page_number=page_number, image_count=image_count, **kwargs)
+    
+    @classmethod
+    def from_json_data(cls, json_data, page_number=1, image_count=1, **kwargs):
+        if not json_data or json_data['state'] == 'Error':
+            return None
+        
+        figure_obj = cls()     # FigureSemantics instance
+        for figure in json_data['result']['figures']:     # json file can have multiple figures - FigureSemnatics only handles a single figure at a time
+            if int(figure['page_number']) != int(page_number) or int(figure['image_count']) != int(image_count):
+                continue
+            
+            figure_obj.set('pdf_fig_bbox', PDFBoundingBox(bbox=figure['pdf_fig_bbox']))
+            if figure.get('image_path'):
+                figure_obj.set('image_path', figure['image_path'])
+                
+            for glycan in figure.get('glycans', []):
+                figure_obj.add_glycan(GlycanSemantics.from_json_data(glycan))
 
+            return figure_obj  # this contains pdf_fig_bbox, image_path and glycans details
+        
+        return None
+        
     def reset_glycans(self):
         self.set('glycans',[])
-
+    
     def set_glycans(self, accepted, rejected=[]):
         self.reset_glycans()
         for glycan in accepted:
@@ -354,6 +385,12 @@ class FigureSemantics(ImageSemantics):
 
     def glycans(self):
         return self['glycans']
+    
+    def glycan(self, gid):
+        for glycan in self.glycans():
+            if glycan.get('GID') and glycan.get('GID') == gid:
+                return glycan
+        return None
 
     def random_color(self):
         return tuple(random.randint(0, 255) for _ in range(3))
@@ -479,10 +516,10 @@ class FigureSemantics(ImageSemantics):
         cv2.imwrite(self.make_filename(**kwargs), self.image())
 
 class GlycanSemantics(ImageSemantics):
-
-    def __init__(self,*,figure,box,**kwargs):
+    def __init__(self,*,figure=None,box,**kwargs):
         super().__init__(box=box,**kwargs)  
-        self.set_image(box.crop(figure))
+        if figure is not None:      # its possible to have glycan information without the glycan image stored locally (CV version) for annotated pdf's
+            self.set_image(box.crop(figure))
         self.reset_monos()
         self.reset_root()
         self.reset_undirected_links()
@@ -656,12 +693,77 @@ class GlycanSemantics(ImageSemantics):
                     self.add_link(node, neighbor, **link_info) 
                     queue.append(neighbor)
                
-
+    # semantics writer
     def tojson(self):
         data = self.remove_binary_values(copy.deepcopy(self._semantics))
         data['monos'] = sorted(data['monos'].values(),key=lambda m: m['id'])  
         return json.dumps(data, sort_keys=True)
+    
+    # semantics reader
+    @classmethod
+    def from_json_data(cls, glycan):
+        glycan_box = BoundingBox(bbox=glycan['bbox'])
+        
+        skip = {'image_path', 'bbox', 'box', 'image', 'monos', 'root',
+            'undirected_links', 'rejected_monos', 'rejected_roots'}
+        glycan_kwargs = {k: v for k, v in glycan.items() if k not in skip}
+        glycan_obj = cls(box=glycan_box, **glycan_kwargs)
 
+        # Mono Semantics (includes Link Semantics as well)
+        accepted_monos = [cls._mono_fromjson(m) 
+                          for m in glycan.get('monos', [])
+                        ]
+                
+        # Rejected Mono Semantics (doesnt include Link Semantics)
+        rejected_monos = [cls._mono_fromjson(m, include_links=False)
+                          for m in glycan.get('rejected_monos', [])
+                        ]
+
+        glycan_obj.set_monos(accepted_monos, rejected_monos)
+
+        # Root Semantics
+        accepted_root = cls._root_fromjson(glycan['root']) if glycan.get('root') else None
+        rejected_roots = [cls._root_fromjson(r) for r in glycan.get('rejected_roots', [])]
+        glycan_obj.set_roots(accepted_root, rejected_roots)
+
+        return glycan_obj
+
+    @staticmethod
+    def _mono_fromjson(mono, *, include_links=True):
+        mono_box = BoundingBox(bbox=mono['bbox'])
+
+        # rebuild these, everything else comes from JSON
+        skip = {'bbox', 'box', 'image', 'links'}
+        kwargs = {k: v for k, v in mono.items() if k not in skip}
+        symbol = kwargs.pop('symbol')
+        mono_id = kwargs.pop('id', None)
+        
+        mono_obj = MonoSemantics(symbol=symbol, box=mono_box, id=mono_id, **kwargs)
+        
+        if include_links:
+            for link in mono.get('links', []):
+                link_skip = {'bbox', 'box', 'image'}
+                link_kwargs = {k: v for k, v in link.items() if k not in link_skip}
+                from_id = link_kwargs.pop('from_id')
+                to_id = link_kwargs.pop('to_id')
+
+                if link.get('bbox'):
+                    link_kwargs['box'] = BoundingBox(bbox=link['bbox'])
+
+                mono_obj.add_link(
+                    link=LinkSemantics(from_id=from_id, to_id=to_id, **link_kwargs)
+                )
+
+        return mono_obj
+    
+    @staticmethod
+    def _root_fromjson(root):
+        skip = {'bbox', 'box', 'image'}
+        kwargs = {k: v for k, v in root.items() if k not in skip}
+        mono_id = kwargs.pop('mono_id')
+        if root.get('bbox'):
+            kwargs['box'] = BoundingBox(bbox=root['bbox'])
+        return RootSemantics(mono_id=mono_id, **kwargs)
 
     def remove_binary_values(self, data):
         def is_serializable(val):
