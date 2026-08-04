@@ -7,6 +7,8 @@ reference: https://github.com/AlexeyAB/darknet#how-to-train-to-detect-your-custo
 
 2) classes.txt: which contains all the labels for the training
 
+Label arguments are only for Glycan boxes currently, can be extended for other components but get_know_data() will have to be extended 
+
 Note: If no known finder is supplied via cmd flag (--finder), then KnownGlycanBoxes finder will be used automatically.
 Else, specify a known finder like: KnownMono, KnownRoot, KnownLink...
 '''
@@ -38,7 +40,7 @@ parser.add_argument(
     type = str,
     required = False,
     default = None,
-    help = 'Label type used to build training data. The type can be selected from the TSV file.'
+    help = 'Label type used to build glycan training data. The type can be selected from the TSV file.'
 )
 
 parser.add_argument(
@@ -47,7 +49,7 @@ parser.add_argument(
     required = False,
     nargs = '+',
     default = [],
-    help = 'Substitute label name(s) with alternative label(s). Format <current_label_name>:<new_label_name>'
+    help = 'Substitute glycan label name(s) with alternative label(s). Format <current_label_name>:<new_label_name>'
 )
 
 parser.add_argument(
@@ -55,7 +57,7 @@ parser.add_argument(
     type = str,
     required = False,
     default = None,
-    help = 'Default label used for boxes to build training data.'
+    help = 'Default glycan label used for boxes to build training data.'
 )
 
 parser.add_argument(
@@ -64,7 +66,7 @@ parser.add_argument(
     required = False,
     nargs="+",
     default = [],
-    help = 'Labels to exclude from training data.'
+    help = 'Glycan Labels to exclude from training data.'
 )
 
 parser.add_argument(

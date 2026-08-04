@@ -483,6 +483,10 @@ class MultiImageJob:
             gly_semantics.set('extracted_image_path',extracted_image_url)  
             gly_semantics.set('image_name', image_name)
             gly_semantics.set('fig_glycan_count', i+1)
+            # create glycan_id and add it to semnatics - which will also be present in the json file.
+            # if PDF is annotated with glycan - the same ID's will be used for annotation
+            gid = f"G{figure_semantics.get('image_count')}.{gly_semantics.get('fig_glycan_count', '?')}"
+            gly_semantics.set("GID", gid)
 
     def progress_callback(self,**kwargs):
         if kwargs.get('stage') == "GLYCAN" and kwargs.get('checkpoint') == "DONE":

@@ -425,7 +425,8 @@ def annotate_figure(doc, result_item, taskid, image_data, base_url):
                 pdf_gly_box = pdf_context_instance.to_pdf_bbox(bbox)
                 gly_annot = page.add_rect_annot(pdf_gly_box.bbox())
 
-                gid = f"G{image_count}.{glycan.get('fig_glycan_count', '?')}"
+                # gid = f"G{image_count}.{glycan.get('fig_glycan_count', '?')}"
+                gid = glycan.get('GID')
 
                 url = (
                     f"{base_url}/result/{taskid}"
