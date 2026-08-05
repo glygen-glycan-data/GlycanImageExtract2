@@ -357,9 +357,16 @@ class FigureSemantics(ImageSemantics):
                 continue
             
             figure_obj.set('pdf_fig_bbox', PDFBoundingBox(bbox=figure['pdf_fig_bbox']))
-            if figure.get('image_path'):
-                figure_obj.set('image_path', figure['image_path'])
-                
+            # Keep figure metadata so we can reconstruct the same PNG
+            # (processjob: page.get_pixmap(clip=pdf_fig_bbox, dpi=...)).
+            for key in (
+                'image_path', 'xref', 'dpi', 'width', 'height',
+                'pdf_fig_width', 'pdf_fig_height', 'page_width', 'page_height',
+                'page_number', 'image_count', 'image_number', 'file_name',
+            ):
+                if figure.get(key) is not None:
+                    figure_obj.set(key, figure[key])
+
             for glycan in figure.get('glycans', []):
                 figure_obj.add_glycan(GlycanSemantics.from_json_data(glycan))
 

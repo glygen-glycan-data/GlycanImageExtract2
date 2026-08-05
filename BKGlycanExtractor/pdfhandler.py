@@ -78,27 +78,28 @@ class PDFHandler(object):
         
         # 2) Use provided dimensions if xref didn't work or wasn't available
         if width_px == 0 or height_px == 0:
-            width_px = image_info.get('width', 0)
-            height_px = image_info.get('height', 0)
-        
-        if width_px == 0 or height_px == 0:
+            # .get('width', 0) still returns None when the key exists with value None
+            width_px = image_info.get('width') or 0
+            height_px = image_info.get('height') or 0
+
+        if not width_px or not height_px:
             return None
 
         # Get PDF bbox dimensions (in points)
-        pdf_fig_width = image_info.get('pdf_fig_width')
-        pdf_fig_height = image_info.get('pdf_fig_height')
-        
+        pdf_fig_width = image_info.get('pdf_fig_width') or 0
+        pdf_fig_height = image_info.get('pdf_fig_height') or 0
+
         if not pdf_fig_width or not pdf_fig_height:
             return None
 
         # Convert points to inches (72 points = 1 inch)
-        width_in = pdf_fig_width / 72.0
-        height_in = pdf_fig_height / 72.0
+        width_in = float(pdf_fig_width) / 72.0
+        height_in = float(pdf_fig_height) / 72.0
 
         # Calculate effective DPI
         if width_in > 0 and height_in > 0:
-            dpi_x = width_px / width_in
-            dpi_y = height_px / height_in
+            dpi_x = float(width_px) / width_in
+            dpi_y = float(height_px) / height_in
             return int((dpi_x + dpi_y) / 2)  # dpi should be an integer
 
         return None

@@ -25,15 +25,20 @@ Note: Figures with no annotations will also be stored along with a semantics/map
 import os
 import argparse
 import fitz
-import glob
 import shutil
 import csv
+import tempfile
+import cv2
 from BKGlycanExtractor.semantics import FigureSemantics
 from BKGlycanExtractor.pdfhandler import STANDARD_DPI, POINTS_PER_INCH, PDFHandler
 from BKGlycanExtractor.image_manager import Manuscript_Manager
 
+MIN_FIGURE_SIZE = 90
+
 parser = argparse.ArgumentParser(description="Extract annotated figures and comments from PDFs")
 
+
+MIN_FIGURE_SIZE = 90
 parser.add_argument(
     "-m", "--manuscripts", 
     type=str, 
@@ -66,8 +71,6 @@ parser.add_argument(
 )
 
 args = parser.parse_args()
-
-MIN_FIGURE_SIZE = 90
 
 def parse_comment(comment):
     """Parse annotation comment into (glycan_id, url).
@@ -192,6 +195,47 @@ def write_link_data(sem_file, link):
     sem_file.write(f"l\t{id1}\t{parent_bond}\t{child_bond}\t{id2}\n")
     write_metadata(sem_file, dict(link.items()))
 
+def extract_figure(doc, page, figure_data, xref=None):
+    # similar to processjob: pixmap of pdf_fig_bbox at calculated dpi, then load as cv2 image.
+    pdf_bbox = figure_data.get('pdf_fig_bbox')
+    if pdf_bbox is None:
+        raise ValueError("figure JSON missing pdf_fig_bbox")
+    clip = fitz.Rect(pdf_bbox.bbox() if hasattr(pdf_bbox, 'bbox') else pdf_bbox)
+
+    if figure_data.get('xref') is not None:
+        xref = figure_data.get('xref')
+    try:
+        xref = int(xref) if xref is not None else None
+    except (TypeError, ValueError):
+        xref = None
+
+    # processjob already has dpi on the figure dict, but if its not present re-compute it 
+    dpi = figure_data.get('dpi') or PDFHandler.calculate_dpi({
+        'xref': xref,
+        'width': figure_data.get('width'),
+        'height': figure_data.get('height'),
+        'pdf_fig_width': figure_data.get('pdf_fig_width') or (
+            pdf_bbox.width() if hasattr(pdf_bbox, 'width') else None),
+        'pdf_fig_height': figure_data.get('pdf_fig_height') or (
+            pdf_bbox.height() if hasattr(pdf_bbox, 'height') else None),
+    }, doc) or STANDARD_DPI
+    dpi = int(dpi)
+
+    pix = page.get_pixmap(clip=clip, dpi=dpi)
+
+    tmp_path = os.path.join(tempfile.gettempdir(), f"_temp_figure{os.getpid()}.png")
+    pix.save(tmp_path)
+    img = cv2.imread(tmp_path)
+    os.unlink(tmp_path)
+    if img is None:
+        raise RuntimeError("failed to read extracted figure pixmap")
+
+    target_w = figure_data.get('width')
+    target_h = figure_data.get('height')
+    if target_w and target_h and (img.shape[1] != int(target_w) or img.shape[0] != int(target_h)):
+        img = cv2.resize(img, (int(target_w), int(target_h)), interpolation=cv2.INTER_AREA)
+    return img, dpi
+
 def glycan_extraction(figure_details, other_annotations, tsv_data, output_dir):
     doc = figure_details["doc"]
     page = figure_details["page"]
@@ -233,19 +277,28 @@ def glycan_extraction(figure_details, other_annotations, tsv_data, output_dir):
                 write_semantics(sem_file, data)
 
 
-def component_extraction(figure_details, other_annotations, output_dir, json_path, tsv_data=None, extraction_type='monos'):
+def component_extraction(figure_details, other_annotations, output_dir, json_path, tsv_data=None):
 
     doc = figure_details["doc"]
     page = figure_details["page"]
     page_num = figure_details["page_num"]
     pdf_fig_box = figure_details["pdf_fig_box"]
     image_count = figure_details["image_count"]
+    xref = figure_details.get("xref")
     tsv_data = tsv_data or {}
     
     figure_data = FigureSemantics.read_json(json_path, page_number=page_num, image_count=image_count)
 
     if figure_data is None:
         return 
+
+    # Rebuild the same figure PNG processjob used (JSON pdf_fig_bbox + dpi/xref),
+    # then crop each glycan with JSON glycan.bbox (figure-pixel coords).
+    try:
+        fig_img, dpi = extract_figure(doc, page, figure_data, xref=xref)
+    except Exception as e:
+        print(f"Couldnt extract figure {image_count} on page {page_num}: {e}")
+        return
 
     for annotation, comment_map in other_annotations:
         pdf_glycan_box = annotation.rect
@@ -258,25 +311,30 @@ def component_extraction(figure_details, other_annotations, output_dir, json_pat
             continue
         if glycan.get('upvotes', 0) != 1:
             continue
+
+        gly_box = glycan.get('box')
+        if gly_box is None:
+            print(f"Skipping glycan {glycan_id}: missing bbox in JSON")
+            continue
+        glycan_img = gly_box.crop(fig_img)
+        if glycan_img is None or glycan_img.size == 0:
+            print(f"Skipping glycan {glycan_id}: empty crop {gly_box.bbox()}")
+            continue
+
         glycan_filename = f"{os.path.basename(output_dir)}_p{page_num}_f{image_count}_{glycan_id}.png"
         figure_path = os.path.join(output_dir, glycan_filename)
         semantics_file = figure_path.rsplit('.', 1)[0] + '_map.txt'
         with open(semantics_file, 'w') as sem_file:
             try:
-                imgdata = PDFHandler.save_image(
-                    doc, page, pdf_glycan_box, figure_path,
-                    xref=None, dpi=STANDARD_DPI, annots=False
-                )
-                write_figure_header(sem_file, imgdata)
-                w = round(imgdata["width"])
-                h = round(imgdata["height"])
+                cv2.imwrite(figure_path, glycan_img)
+                out_h, out_w = glycan_img.shape[:2]
+                write_figure_header(sem_file, {"height": out_h, "width": out_w})
             except Exception as e:
                 print(f"Couldnt extract figure: {image_count}, glycan: {glycan_id}, exception: {e}")
                 continue
-            # one glycan = this cropped image
-            sem_file.write(f"### GLYCAN: 0 0 {w} {h} (bbox: x y w h)\n")
 
-            # metadata from TSV + fields from glycan JSON (same idea as write_semantics)
+            sem_file.write(f"### GLYCAN: 0 0 {out_w} {out_h} (bbox: x y w h)\n")
+
             meta = {}
             tsv_row = tsv_data.get(glycan_id, {})
             for k, v in tsv_row.items():
@@ -295,10 +353,9 @@ def component_extraction(figure_details, other_annotations, output_dir, json_pat
             meta['figure_num'] = image_count
             meta['page_num'] = page_num
             meta['figure_name'] = glycan_filename
+            meta['dpi'] = dpi
             write_metadata(sem_file, meta, skip_keys=GLYCAN_META_SKIP, prefix="#")
 
-            # always write monos + links into the same map file
-            # (extraction_type monos/root/links/components all produce this full map)
             for mono in glycan.monos():
                 write_mono_data(sem_file, mono)
             for link in glycan.all_links():
@@ -338,7 +395,6 @@ def extract_annotations(output_dir, pdf_path, tsv_path, json_path=None):
                 xref = fig_comments.get('xref', None)
                 xref = int(xref) if xref is not None else None
                 pdf_fig_box = figure_annot.rect
-                
 
                 figure_details = dict(
                     doc=doc, page=page, page_num=page_num,
@@ -360,7 +416,7 @@ def extract_annotations(output_dir, pdf_path, tsv_path, json_path=None):
                     # components write one full map (GLYCAN + m + l)
                     component_extraction(
                         figure_details, glycan_annotations, output_dir, json_path,
-                        tsv_data=tsv_data, extraction_type=args.extract
+                        tsv_data=tsv_data
                     )
 
 
