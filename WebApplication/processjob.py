@@ -348,7 +348,8 @@ class MultiImageJob:
         # Retrieve Glymage, download and save the images to the correct folder
         for j, result in self.glymage_client.retrieve_many(*[t[1] for t in glymage_jobs]):
             glycan = glycans[glymage_jobs[j][0]]
-            glymage_error = result.get('error') or []
+            glymage_error = ', '.join(map(str, result.get('error') or []))
+
             glyImage_path = result.get('result')
 
             
@@ -377,11 +378,11 @@ class MultiImageJob:
                         glycan.set('linkexpl', 'Extracted structure.')
 
             except (urllib.error.URLError, ValueError, OSError) as e:
-                err_msg = f"Failed to download glymage image: {e}"
+                err_msg = f"Failed to download glymage image"
                 glycan.set('glymage_error', err_msg)
                 glycan.set('glymage_status', 'DOWNLOAD_ERROR')
 
-                print(f'Job no: {j}' + err_msg, file=sys.stderr)
+                print(f'Job no: {j}, {err_msg}: {e}', file=sys.stderr)
                 self.log_file.write(msg + "\n")
 
                 # glycan.set('glyImage', '')
