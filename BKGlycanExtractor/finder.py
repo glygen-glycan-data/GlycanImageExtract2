@@ -83,7 +83,7 @@ class Finder(object):
         # or user provided file        
         if not self._labels:
             raise ValueError(
-                "No labels loaded. Labels file needs to be provided else a .labels files need to exist for the finder"
+                "No labels loaded. Labels file needs to be provided else a .labels files needs to exist among the weights and config file of the YOLO finder"
             )
         return list(self._labels)
 
