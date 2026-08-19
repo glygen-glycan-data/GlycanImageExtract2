@@ -115,7 +115,7 @@ class KnownGlycanBoxes(KnownFinder,GlycanFinder):
                 # classlabel = glycan.get(self.label_type,self.default_label)
                 classlabel = glycan.get(self.label_type)
                 if classlabel is None or not str(classlabel).strip():
-                    classlabel = self.default_label
+                    classlabel = self.default_label if self.default_label is not None else 'glycan'
                 else:
                     if classlabel in self.exclude_labels:
                         continue
@@ -123,7 +123,7 @@ class KnownGlycanBoxes(KnownFinder,GlycanFinder):
                         classlabel = self.label_substitutions.get(classlabel, classlabel)
 
             else:   
-                classlabel = glycan.get('classlabel', self.default_label)
+                classlabel = glycan.get('classlabel')
                 
             if classlabel is None or not str(classlabel).strip():
                 continue

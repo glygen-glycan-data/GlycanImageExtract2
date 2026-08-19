@@ -127,7 +127,8 @@ class KnownFinder(Finder):
         # this will be provided to the respective known finders - create_boxes/find_boxes - so that the labels can be updated
         # based on cmd line args (which is optional) during the activity of buildign training data
         self.label_type = kwargs.get('label_type')
-        self.default_label = kwargs.get('default_label','glycan')
+        # self.default_label = kwargs.get('default_label','glycan')
+        self.default_label = kwargs.get('default_label', None)
         self.exclude_labels = kwargs.get('exclude_labels',[])
         self.label_substitutions = kwargs.get('label_substitutions', {})
 
@@ -215,7 +216,7 @@ class KnownFinder(Finder):
                 elif data_points[0] == '###' and data_points[1] == 'GLYCAN:':
                     # Create new glycan dictionary
                     current_glycan = {
-                        'classlabel': self.default_label,
+                        'classlabel': self.default_label if self.default_label is not None else 'glycan',
                         'bbox': list(map(int, data_points[2:6])),
                         'monos': {},
                         'links': {},
