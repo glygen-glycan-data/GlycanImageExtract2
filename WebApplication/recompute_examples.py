@@ -75,6 +75,7 @@ def update_votes(instance):
     correct = json.loads(open("static/answers/"+instance+"/correct.json").read())
     correctcnt = 0; incorrectcnt = 0; correctdetcnt = 0; othercnt = 0
     for i,(f1,f2) in enumerate(zip(result["result"]["figures"],correct["result"]["figures"])):
+        nmatchedcorrect = 0
         for j,g1 in enumerate(f1["glycans"]):
             g1bb = BoundingBox(**dict(zip("xywh",g1['bbox'])))
             bestg2 = None
@@ -90,6 +91,7 @@ def update_votes(instance):
                 incorrectcnt += 1
                 print("Warning: No %s figure %s answer matches to glycan %d predicted box."%(instance,i,j),file=sys.stderr)
                 continue
+            nmatchedcorrect += 1
             g2 = bestg2
             if g1.get("IUPAC"):
                 if g1.get("IUPAC") == g2.get("IUPAC","__XXXXXX__"):
@@ -119,6 +121,8 @@ def update_votes(instance):
                 else:
                     g1['upvotes'] = 0; g1['downvotes'] = 1
                     incorrectcnt += 1
+        # false negatives we didn't see from answers...
+        incorrectcnt += (len(f2['glycans'])-nmatchedcorrect)
     with open("static/examples/"+instance+"/results.json",'wt') as wh:
         json.dump(result,wh,indent=2)
     return correctcnt,correctdetcnt,(correctcnt+incorrectcnt+correctdetcnt+othercnt)
@@ -133,7 +137,7 @@ def add_citation_captions(instance):
             result["result"][key] = correct["result"][key]
 
     for f1,f2 in zip(result["result"]["figures"],correct["result"]["figures"]):
-        for k in ('figure_number', 'caption'):
+        for k in ('figure_number', 'caption','figure_label'):
             if f2.get(k):
                 f1[k] = f2[k]
 
@@ -174,10 +178,14 @@ for exampledir,taskid in tasks:
         shutil.rmtree("static/examples/"+exampledir)
         shutil.copytree("static/files/"+taskid,
                         "static/examples/"+exampledir)
-        correct,correctdet,total = update_votes(exampledir)
-        add_citation_captions(exampledir)
+        if os.path.exists("static/answers/"+exampledir+"/correct.json"):
+            correct,correctdet,total = update_votes(exampledir)
+            add_citation_captions(exampledir)
         remove_changable_fields(exampledir)
-        print("Example %s done, %d/%d correct, %d/%d detpart correct (%s)."%(exampledir,correct,total,correct+correctdet,total,taskid))
+        if os.path.exists("static/answers/"+exampledir+"/correct.json"):
+            print("Example %s done, %d/%d correct, %d/%d detpart correct (%s)."%(exampledir,correct,total,correct+correctdet,total,taskid))
+        else:
+            print("Example %s done (%s)."%(exampledir,taskid))
     else:
         print("Example %s not updated (%s)."%(exampledir,taskid))
 

@@ -40,6 +40,16 @@ class GlyImageExtractor(APIFramework):
         google_analytics_id = "G-47WSZ1WYRZ"
     )
 
+    task_params = [
+        "filename",    
+        "submission_type",   
+        "submission_mode",           # derived   
+        "pmid",
+        "image_search_strategy",     # optional, but if provided, it gets the highest priorityfor PDFJob (Synthetic PDF Jobs cannot be updated)
+        "processor",                 # derived
+        "pipeline_name"              # optional, but if provided - it gets the highest priority (compared to using the optional name provided in GlyImageExtractor.ini or default pipeline in the processor job class)
+    ]
+
     def __init__(self):
         super().__init__()
 
@@ -50,10 +60,6 @@ class GlyImageExtractor(APIFramework):
         for k,v in self.default_render_kwargs.items():
             self.set_template_render_kwarg(**{k: config.get(k,v)})
         
-        # default figure search type for PDF files...
-        self._image_search_type = config.get('image_search_type')
-        assert self._image_search_type in (None,"fitz", "hybrid", "figcap")
-
     def process(self):
         submission_type = flask.request.args.get("type")
 
@@ -99,16 +105,6 @@ class GlyImageExtractor(APIFramework):
             return result
 
         return {"Error": "resultid (%s) not found" % (resultid,)}
-
-    task_params = [
-        "filename",    
-        "submission_type",   
-        "submission_mode",           # derived   
-        "pmid",
-        "image_search_strategy",     # derived
-        "processor",                 # derived
-        "pipeline_name"              # optional, but if provided - it gets the highest priority (compared to using the optional name provided in GlyImageExtractor.ini or default pipeline in the processor job class)
-    ]
 
     def form_task(self, p: dict):
         '''
@@ -165,13 +161,20 @@ class GlyImageExtractor(APIFramework):
         else:
             processor = 'PDFJob' 
 
-        image_search_strategy = p.get('image_search_strategy',self._image_search_type)
                   
         params_dict = dict(p)
         params_dict['submission_mode'] = submission_mode
         params_dict['processor'] = processor
-        if image_search_strategy:
-            params_dict['image_search_strategy'] = image_search_strategy
+
+        # client supplied image_search_strategy will be added to task_detail if the processor (PDFJob) allows it.
+        strategy = params_dict.pop('image_search_strategy', None)
+        if strategy and processor in MultiImageJob.update_image_search_strategy_allowed:
+            if strategy not in MultiImageJob.image_search_strategies:
+                raise APIParameterError(
+                    f"Provided image_search_strategy {strategy!r} is not allowed."
+                )
+            params_dict['image_search_strategy'] = strategy
+
         if pmid:
             params_dict['pmid'] =  pmid
 
@@ -414,9 +417,8 @@ class GlyImageExtractor(APIFramework):
             # so the original user submitted input is still present in the json in its original format.
             pdf_path = None
             if filename:
-                pdf_filename = filename.rsplit('.')[0] + '.pdf'
+                pdf_filename = filename.rsplit('.',1)[0] + '.pdf'
                 pdf_path = os.path.join(base_dir, "input", pdf_filename)
-            # print(pdf_path)
             if not pdf_path or not os.path.isfile(pdf_path):
                 print(f"Input file not found for job {resultid}.", file=sys.stderr)
                 return flask.jsonify(dict(error=f"Input file not found for job {resultid}.", valid=False)), 404

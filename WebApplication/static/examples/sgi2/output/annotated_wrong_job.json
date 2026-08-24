@@ -27,7 +27,9 @@
         "glycans": [],
         "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?GlcNAc=4&NeuAc=1&Fuc=1&Man=4&Gal=2",
         "height": 261,
+        "image_count": 1,
         "image_name": "wrong-1.png",
+        "image_number": 1,
         "image_path": "extracted_figures/images/wrong-1.png",
         "linkexpl": "Extracted structure using Composition.",
         "log": [
@@ -465,6 +467,17 @@
           }
         ],
         "orientation": "BT",
+        "page_height": 792.0,
+        "page_number": 1,
+        "page_width": 612.0,
+        "pdf_fig_bbox": [
+          72.0,
+          72.00001525878906,
+          540.0,
+          198.66943359375
+        ],
+        "pdf_fig_height": 127.66941833496094,
+        "pdf_fig_width": 469.0,
         "rejected_roots": [
           {
             "bbox": [
@@ -757,7 +770,6 @@
           "mono_id": 12,
           "width": 56
         },
-        "status_message": "Processing image",
         "undirected_links": [
           {
             "bbox": [
@@ -953,8 +965,20 @@
       }
     ],
     "height": 262,
+    "image_count": 1,
+    "image_number": 1,
     "image_path": "input/wrong.png",
-    "status_message": "Processing image",
+    "page_height": 792.0,
+    "page_number": 1,
+    "page_width": 612.0,
+    "pdf_fig_bbox": [
+      72.0,
+      72.00001525878906,
+      540.0,
+      198.66943359375
+    ],
+    "pdf_fig_height": 127.66941833496094,
+    "pdf_fig_width": 469.0,
     "width": 968
   }
 ]

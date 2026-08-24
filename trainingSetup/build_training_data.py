@@ -7,6 +7,8 @@ reference: https://github.com/AlexeyAB/darknet#how-to-train-to-detect-your-custo
 
 2) classes.txt: which contains all the labels for the training
 
+Label arguments are only for Glycan boxes currently, can be extended for other components but get_know_data() will have to be extended 
+
 Note: If no known finder is supplied via cmd flag (--finder), then KnownGlycanBoxes finder will be used automatically.
 Else, specify a known finder like: KnownMono, KnownRoot, KnownLink...
 '''
@@ -34,11 +36,18 @@ parser.add_argument(
 )
 
 parser.add_argument(
+    '--labels',
+    type=str,
+    default=None,
+    metavar='PATH',
+    help=('Component labels file. Provide labels file for reference classes.txt or .labels file. Use when training data should follow a specific ordering of labels'),)
+
+parser.add_argument(
     '--label_type',
     type = str,
     required = False,
     default = None,
-    help = 'Label type used to build training data. The type can be selected from the TSV file.'
+    help = 'Label type used to build glycan training data. The type can be selected from the TSV file.'
 )
 
 parser.add_argument(
@@ -47,7 +56,7 @@ parser.add_argument(
     required = False,
     nargs = '+',
     default = [],
-    help = 'Substitute label name(s) with alternative label(s). Format <current_label_name>:<new_label_name>'
+    help = 'Substitute glycan label name(s) with alternative label(s). Format <current_label_name>:<new_label_name>'
 )
 
 parser.add_argument(
@@ -55,7 +64,7 @@ parser.add_argument(
     type = str,
     required = False,
     default = None,
-    help = 'Default label used for boxes to build training data.'
+    help = 'Default glycan label used for boxes to build training data.'
 )
 
 parser.add_argument(
@@ -64,7 +73,7 @@ parser.add_argument(
     required = False,
     nargs="+",
     default = [],
-    help = 'Labels to exclude from training data.'
+    help = 'Glycan Labels to exclude from training data.'
 )
 
 parser.add_argument(
@@ -100,7 +109,7 @@ parser.add_argument(
     '--split_seed',
     type = int,
     default = None,
-    help = 'Random seed for train/test image split (only used when --test_percent > 0)'
+    help = 'Random seed for train/test image split (only used when --test_percent > 0). Optional argument and will be automatcially applied for train/test split if no seed value is provided'
 )
 
 parser.add_argument(
@@ -152,25 +161,32 @@ def parse_label_substitutions(pairs):
     return subs
 
 
-# if a label_type was provided for substitution, then it will be picked 
-# from the semantics file and substituted as the
-# classlabel for the known boxes
+if args.labels:
+    finder.load_labels_file(args.labels)
 
-# Note: - all exclude labels items are removed first and then label substitutions for the
-# remaining data is done.
-finder.set_default_label(None)
-if args.default_label is not None:
-    finder.set_default_label(args.default_label)
+# Only meant for glycan training data - you can 'substitute labels', 'exclude labels', 'default_labels'
+elif args.finder == 'KnownGlycanBoxes':
+    
 
-if args.label_type is not None:
-    finder.set_label_type(args.label_type)
+    # if a label_type was provided for substitution, then it will be picked 
+    # from the semantics file and substituted as the
+    # classlabel for the known boxes
 
-    finder.set_exclude_labels([])
-    if args.exclude_labels:
-        finder.set_exclude_labels(args.exclude_labels)
+    # Note: - all exclude labels items are removed first and then label substitutions for the
+    # remaining data is done.
+    finder.set_default_label(None)
+    if args.default_label is not None:
+        finder.set_default_label(args.default_label)
 
-    if args.label_substitutions:
-        finder.set_label_substitutions(parse_label_substitutions(args.label_substitutions))
+    if args.label_type is not None:
+        finder.set_label_type(args.label_type)
+
+        finder.set_exclude_labels([])
+        if args.exclude_labels:
+            finder.set_exclude_labels(args.exclude_labels)
+
+        if args.label_substitutions:
+            finder.set_label_substitutions(parse_label_substitutions(args.label_substitutions))
 
 images = Image_Manager(args.images,strategy=StructuredSampling())
 images.exclude() # *.annotated*.{png,jpg,jpeg} by default

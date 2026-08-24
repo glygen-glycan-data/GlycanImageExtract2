@@ -39,7 +39,7 @@ from BKGlycanExtractor.compareboxes import CompareBoxes
 from BKGlycanExtractor.bbox import BoundingBox
 from BKGlycanExtractor.glyomicsclient import ExtractorDevClient, APIUnfinishedError
 
-extractor = ExtractorDevClient(port=10981, verbose=False)
+extractor = ExtractorDevClient(port=10982, verbose=False)
 
 SINGLE_GLYCAN_PREFIX = "SingleGlycanImage"
 MULTI_GLYCAN_PREFIX = "MultipleGlycanImage"
@@ -184,6 +184,7 @@ def update_votes(instance, exampledir):
     for i, (f1, f2) in enumerate(
         zip(figure_list(result["result"]), figure_list(correct["result"]))
     ):
+        nmatchedcorrect = 0
         for j, g1 in enumerate(f1["glycans"]):
             g1bb = BoundingBox(**dict(zip("xywh", g1["bbox"])))
             bestg2 = None
@@ -203,6 +204,7 @@ def update_votes(instance, exampledir):
                     file=sys.stderr,
                 )
                 continue
+            nmatchedcorrect += 1
             g2 = bestg2
             if g1.get("IUPAC"):
                 if g1.get("IUPAC") == g2.get("IUPAC", "__XXXXXX__"):
@@ -253,6 +255,9 @@ def update_votes(instance, exampledir):
                     g1["upvotes"] = 0
                     g1["downvotes"] = 1
                     incorrectcnt += 1
+        
+        # false negatives we didn't see from answers...
+        incorrectcnt += (len(f2['glycans'])-nmatchedcorrect)
     with open("static/examples/" + instance + "/results.json", "wt") as wh:
         json.dump(result, wh, indent=2)
     return correctcnt, correctdetcnt, (correctcnt + incorrectcnt + correctdetcnt + othercnt)
@@ -435,21 +440,28 @@ def main():
             if os.path.isdir(outpath):
                 shutil.rmtree(outpath)
             shutil.copytree(srcdir, outpath)
-            correct, correctdet, total = update_votes(out_instance, exampledir)
-            add_citation_captions(out_instance, exampledir)
+            if os.path.exists("static/answers/" + exampledir + "/correct.json"):
+                correct, correctdet, total = update_votes(out_instance, exampledir)
+                add_citation_captions(out_instance, exampledir)
             remove_changable_fields(out_instance)
-            print(
-                "Example %s pipeline %s done, %d/%d correct, %d/%d detpart correct (%s)."
-                % (
-                    exampledir,
-                    resolved_pipeline,
-                    correct,
-                    total,
-                    correct + correctdet,
-                    total,
-                    taskid,
+            if os.path.exists("static/answers/" + exampledir + "/correct.json"):
+                print(
+                    "Example %s pipeline %s done, %d/%d correct, %d/%d detpart correct (%s)."
+                    % (
+                        exampledir,
+                        resolved_pipeline,
+                        correct,
+                        total,
+                        correct + correctdet,
+                        total,
+                        taskid,
+                    )
                 )
-            )
+            else:
+                print(
+                    "Example %s pipeline %s done (%s)."
+                    % (exampledir, pipeline_label(resolved_pipeline), taskid)
+                )
         else:
             print(
                 "Example %s pipeline %s not updated (%s)."

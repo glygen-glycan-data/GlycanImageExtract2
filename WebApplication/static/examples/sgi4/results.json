@@ -4,7 +4,7 @@
     "filename": "G16150CJ.png",
     "submission_type": "Simple Glycan Image",
     "submission_mode": "URL",
-    "processor": "SimpleImageJob",
+    "processor": "SimpleImageSyntheticPDFJob",
     "id": "sgi4"
   },
   "state": "Complete",
@@ -40,7 +40,9 @@
             "glycans": [],
             "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G05314WL",
             "height": 165,
+            "image_count": 1,
             "image_name": "G16150CJ-1.png",
+            "image_number": 1,
             "image_path": "extracted_figures/images/G16150CJ-1.png",
             "linkexpl": "Extracted successfully using accession",
             "monos": [
@@ -596,6 +598,17 @@
               }
             ],
             "orientation": "BT",
+            "page_height": 792.0,
+            "page_number": 1,
+            "page_width": 612.0,
+            "pdf_fig_bbox": [
+              178.125,
+              72.0,
+              433.875,
+              196.5
+            ],
+            "pdf_fig_height": 125.5,
+            "pdf_fig_width": 256.75,
             "rejected_roots": [
               {
                 "bbox": [
@@ -850,7 +863,6 @@
               "mono_id": 3,
               "width": 34
             },
-            "status_message": "Processing image",
             "undirected_links": [
               {
                 "bbox": [
@@ -1132,11 +1144,27 @@
           }
         ],
         "height": 166,
+        "image_count": 1,
+        "image_number": 1,
         "image_path": "input/G16150CJ.png",
-        "status_message": "Processing image",
+        "page_height": 792.0,
+        "page_number": 1,
+        "page_width": 612.0,
+        "pdf_fig_bbox": [
+          178.125,
+          72.0,
+          433.875,
+          196.5
+        ],
+        "pdf_fig_height": 125.5,
+        "pdf_fig_width": 256.75,
         "width": 341
       }
-    ]
+    ],
+    "pipeline_name": "SingleGlycanImage-YOLOFinders",
+    "image_search_strategy": "fitz",
+    "annotated_pdf_file": "G16150CJ.annotated.pdf",
+    "annotated_tsv_file": "G16150CJ.annotated.tsv"
   },
   "error": [],
   "location": "examples"

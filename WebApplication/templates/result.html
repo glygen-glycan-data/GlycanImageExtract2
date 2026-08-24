@@ -113,9 +113,13 @@
     }
 
     /* Highlight on scroll */
-    .row-highlight { 
-        background-color: #f4f1e5; 
-        transition: background-color 0.3s; 
+    tr.nav-highlight {
+        background-color: #f4f1e5 !important;
+        transition: background-color 0.2s;
+    }
+    
+    a.nav-highlight {
+        background-color: rgba(200, 150, 40, 0.7) !important;  /* brighter overlay wash so that smaller glycan are highlighed more brigtly */
     }
 
     /* Vote area */
@@ -250,6 +254,17 @@
         }
     }
 
+    function voteValue(upvotes, downvotes) {
+        return (upvotes || 0) - (downvotes || 0);
+    }
+
+    function overlayColorFromVotes(upvotes, downvotes) {
+        const value = voteValue(upvotes, downvotes);
+        if (value < 0) return "#FF0000";  // downvote --> red
+        if (value > 0) return "#00D900";    // upvote --> green
+        return "#0000FF";                 // default --> blue
+    }
+
     function mark(figid, glyid, note) {
         const markurl = "{{urlprefix}}/mark?resultid=" + list_id + "&glycanid=" + figid + "." + glyid + "&note=" + note;
         jQuery.getJSON(markurl, function (d) {
@@ -258,12 +273,25 @@
                 const noteEl = document.getElementById("note-" + figid + "-" + glyid);
                 votesEl.innerHTML = d.upvotes + d.downvotes;
                 if (d.upvotes > 0) {
-                    votesEl.style.color = "green"; noteEl.innerHTML = "GOOD";
+                    if (d.upvotes == 1) {
+                        votesEl.style.color = "green"; noteEl.innerHTML = "GOOD";
+                    } else if (d.upvotes == 2) {
+                        votesEl.style.color = "green"; noteEl.innerHTML = "GOOD<br>(partial)";
+                    } else {
+                        votesEl.style.color = "green"; noteEl.innerHTML = "GOOD<br>(other)";
+                    }
                 } else if (d.downvotes > 0) {
                     votesEl.style.color = "#ff3333"; noteEl.innerHTML = "&nbsp;BAD&nbsp;";
                 } else {
                     votesEl.style.color = "black"; noteEl.innerHTML = "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;";
                 }
+
+                // change colors of the overlaid glycan boxes dynamically based on votes
+                const overlayEl = document.getElementById("overlay-" + figid + "-" + glyid);
+                if (overlayEl) {
+                    overlayEl.style.borderColor = overlayColorFromVotes(d.upvotes, d.downvotes);
+                }
+
             }
         });
     }
@@ -431,16 +459,27 @@
         
         // console.log(result_doc)
         // Header row (kept minimal)
-        innerdiv += `<tr style='background-color:#7c7d7d;'>`;
-        innerdiv += `<th colspan='3' style='color:#ffffff; text-align:center;'></th>`;
-        innerdiv += `</tr>`;
+        innerdiv += `<tr id="figure-${fig_id}" style='background-color:#7c7d7d;'>`;
+        innerdiv += `<th colspan='3' style='color:#ffffff; text-align:center'>`;
+        if (fig_id > 0) {
+            innerdiv += `<div style="float: left"><A href='#figure-${fig_id-1}' style='text-decoration: none; color: white;'>Prev</A></div>`
+        }
+        if (fig_id < (figures.length-1)) {
+            innerdiv += `<div style="float: right"><A href='#figure-${fig_id+1}' style='text-decoration: none; color: white;'>Next</A></div>`
+        }
+        if (figure.figure_number != null && figure.figure_number !== '') {
+            let label = (figure.figure_label || "Figure");
+            label += (" " + figure.figure_number);
+            innerdiv += `<b><A href='#figure-${fig_id}' style='text-decoration: none; color: white;'>${label}</A></b>`;
+        }
+        innerdiv += `</th></tr>`;
 
         // Annotated figure block
         innerdiv += `
             <tr>
             <td colspan='3' style='padding: 20px; text-align: center;'>
-                <div id="figure-${fig_id}" class="figure-wrap">
-                <img class="figure-img" src='{{urlprefix}}/static/${location}/${list_id}/${figure.annotated_image_path}' />
+                <div class="figure-wrap">
+                <img class="figure-img" src='{{urlprefix}}/static/${location}/${list_id}/${figure.image_path}' />
         `;
 
         // Glycan overlays
@@ -449,10 +488,21 @@
             const [x, y, w, h] = glycan['bbox'];
             const sx = x * scale, sy = y * scale, sw = w * scale, sh = h * scale;
 
+            const overlayColor = overlayColorFromVotes(glycan.upvotes, glycan.downvotes);
+
             innerdiv += `
-            <a href="#glycan-${fig_id}-${gly_idx + 1}" 
+            <a id="overlay-${fig_id}-${gly_idx}"  
+                href="#glycan-${fig_id}-${gly_idx + 1}" 
                 onclick="scrollAndHighlight('glycan-${fig_id}-${gly_idx + 1}', event)"
-                style="position:absolute; left:${sx}px; top:${sy}px; width:${sw}px; height:${sh}px; pointer-events:auto; cursor:pointer; box-sizing:border-box; text-decoration:none;">
+                style="
+                    border:1px solid ${overlayColor};
+                    position:absolute; 
+                    left:${sx}px; top:${sy}px; width:${sw}px; height:${sh}px; 
+                    pointer-events:auto; 
+                    cursor:pointer; 
+                    box-sizing:border-box; 
+                    text-decoration:none;"
+                >
                 <div class="figure-badge">${gly_idx + 1}</div>
             </a>
             `;
@@ -462,8 +512,9 @@
             let label = '';
             let labelHtml = '';
             if (figure.figure_number != null && figure.figure_number !== '') {
-                label = "Figure " + figure.figure_number;
-                labelHtml = '<b>' + label + ':</b> ';
+                label = (figure.figure_label || "Figure");
+                label += (" " + figure.figure_number);
+                labelHtml = '<b>' + label + '.</b> ';
             }
 
             innerdiv += `<div class="figure-caption-block">
@@ -487,9 +538,12 @@
             let note = "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;";
             if ((glycan.upvotes || 0) > 0) { 
                 color = "green"; 
-                note = "GOOD"; 
-                if (glycan.upvotes == 2) {
-                    note = "GOOD<br>(partial)"
+                if (glycan.upvotes == 1) {
+                    note = "GOOD";
+                } else if (glycan.upvotes == 2) {
+                    note = "GOOD<br>(partial)";
+                } else {
+                    note = "GOOD<br>(other)";
                 }
             } else if ((glycan.downvotes || 0) > 0) { 
                 color = "#ff3333"; 
@@ -502,13 +556,24 @@
             // Left column: index + votes
             innerdiv += `
                 <td width="200">
-                <div onclick="scrollAndHighlight('glycan-${fig_id}-${gly_idx + 1}', event);" class="figure-badge" style="position:static; display:inline-block; cursor:pointer;">
+                <div onclick="scrollAndHighlight('overlay-${fig_id}-${gly_idx}', event, 'figure-${fig_id}');" 
+                    class="figure-badge" 
+                    style="position:static; display:inline-block; cursor:pointer;"
+                >
                     ${gly_idx + 1}
                 </div>
                 <div class="vote-box">
-                    <img class="vote-updown" width="15" src="{{urlprefix}}/static/images/up-arrow.svg" onclick="mark(${fig_id},${gly_idx},'upvote');">
+                    <img class="vote-updown" 
+                        width="15" 
+                        src="{{urlprefix}}/static/images/up-arrow.svg" 
+                        onclick="event.stopPropagation(); mark(${fig_id},${gly_idx},'upvote');"
+                    >
                     <span id="votes-${fig_id}-${gly_idx}" style="color:${color};">${value}</span>
-                    <img class="vote-updown" width="15" src="{{urlprefix}}/static/images/down-arrow.svg" onclick="mark(${fig_id},${gly_idx},'downvote');">
+                    <img class="vote-updown" 
+                        width="15" 
+                        src="{{urlprefix}}/static/images/down-arrow.svg" 
+                        onclick="event.stopPropagation(); mark(${fig_id},${gly_idx},'downvote');"
+                    >
                 </div>
                 <div id="note-${fig_id}-${gly_idx}" style="font-weight: 1000;">${note}</div>
                 </td>
@@ -517,7 +582,10 @@
             // Middle column: extracted glycan image
             innerdiv += `
                 <td style="vertical-align:middle;" width="50%">
-                <div class="figure-wrap" style="max-width:550px;">
+                <div class="figure-wrap" 
+                    style="max-width:550px; cursor:pointer;"
+                    onclick="scrollAndHighlight('overlay-${fig_id}-${gly_idx}', event, 'figure-${fig_id}');"
+                >
                     <img style="max-width:300px; min-width:90px; display:block; margin:auto;"
                         src="{{urlprefix}}/static/${location}/${list_id}/${glycan.extracted_image_path}"
                         alt="Glycan Image" />
@@ -531,7 +599,10 @@
             if (glycan.glyImage) {
                 if (glycan.glyImage.startsWith('https://')) {
                     innerdiv += `
-                    <figure style="margin:0;">
+                    <figure
+                        style="margin:0; cursor:pointer;"
+                        onclick="scrollAndHighlight('overlay-${fig_id}-${gly_idx}', event, 'figure-${fig_id}');"
+                    >
                         <img style="max-width:300px; min-width:90px; width:auto; height:auto; display:block; margin:auto;"
                             src="${glycan.glyImage}"
                             alt="Glycan Image" />
@@ -539,15 +610,20 @@
                     `;
                 } else {
                     innerdiv += `
-                    <figure style="margin:0;">
+                    <figure
+                        style="margin:0; cursor:pointer;"
+                        onclick="scrollAndHighlight('overlay-${fig_id}-${gly_idx}', event, 'figure-${fig_id}');"
+                    >
                         <img style="max-width:300px; min-width:90px; width:auto; height:auto; display:block; margin:auto;"
                             src="{{urlprefix}}/static/${location}/${list_id}/${glycan.glyImage}"
                             alt="Glycan Image" />
                     </figure>
                     `;
                 }
+            } else if (glycan.glymage_error){
+                innerdiv += `<div style="font-size:16px; color:#555; margin-top:10px;">${glycan.glymage_error}</div>`;
             } else {
-                innerdiv += `<div style="font-size:16px; color:#555; margin-top:10px;">Couldn't extract structure</div>`;
+                innerdiv += `<div style="font-size:16px; color:#555; margin-top:10px;">"Failed to download glymage image"</div>`;
             }
 
             // Figcaption with accession, optional errors (kept disabled)
@@ -653,19 +729,64 @@
         }
     }
 
-    function scrollAndHighlight(rowId, event) {
-        if (event) event.preventDefault();  // Prevent default jump
+    function scrollAndHighlight(rowId, event, scrollToId) {
+        if (event) event.preventDefault();
 
         const el = document.getElementById(rowId);
-        if (el) {
-            el.scrollIntoView({ behavior: "smooth", block: "center" });
-            el.style.backgroundColor = "#f4f1e5";
-            setTimeout(() => {
-                el.style.backgroundColor = "";
-            }, 1500);
+        const scrollEl = document.getElementById(scrollToId || rowId);
+        if (!scrollEl) return;
 
-            // Manually set the hash without jumping
-            history.pushState(null, null, `#${rowId}`);
+        history.pushState(null, null, `#${scrollToId || rowId}`);
+
+        const needsHighlight = el && (rowId.startsWith("glycan") || rowId.startsWith("overlay"));
+
+        function clearHighlight() {
+            if (!el) return;
+            el.classList.remove("nav-highlight");
+            el.style.removeProperty("background-color");
+            if (el._highlightTimer) {
+                clearTimeout(el._highlightTimer);
+                el._highlightTimer = null;
+            }
+        }
+
+        function applyHighlight() {
+            if (!el) return;
+            clearHighlight();
+            el.classList.add("nav-highlight");
+            el._highlightTimer = setTimeout(clearHighlight, 2000);  // goes away after 2s
+        }
+
+        const alignTop = Boolean(scrollToId) || String(rowId).startsWith("figure");
+        function scrollToTarget() {
+            if (alignTop) {
+                // Put figure at the top of the screen
+                const top = window.scrollY + scrollEl.getBoundingClientRect().top;
+                window.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
+            } else {
+                // Glycan rows stay centered
+                scrollEl.scrollIntoView({ behavior: "smooth", block: "center" });
+            }
+        }
+
+        function afterScroll(callback) {
+            let done = false;
+            const finish = () => {
+                if (done) return;
+                done = true;
+                window.removeEventListener("scrollend", finish);
+                clearTimeout(fallback);
+                callback();
+            };
+            window.addEventListener("scrollend", finish, { once: true });
+            const fallback = setTimeout(finish, 900);
+            scrollToTarget();
+        }
+
+        if (needsHighlight) {
+            afterScroll(applyHighlight);
+        } else {
+            scrollToTarget();
         }
     }
 

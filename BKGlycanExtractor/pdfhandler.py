@@ -1,4 +1,4 @@
-import fitz, os, os.path, re, difflib, traceback
+import fitz, os, os.path, re, difflib, traceback, sys
 
 from . pmc_details import PMCData
 
@@ -78,27 +78,28 @@ class PDFHandler(object):
         
         # 2) Use provided dimensions if xref didn't work or wasn't available
         if width_px == 0 or height_px == 0:
-            width_px = image_info.get('width', 0)
-            height_px = image_info.get('height', 0)
-        
-        if width_px == 0 or height_px == 0:
+            # .get('width', 0) still returns None when the key exists with value None
+            width_px = image_info.get('width') or 0
+            height_px = image_info.get('height') or 0
+
+        if not width_px or not height_px:
             return None
 
         # Get PDF bbox dimensions (in points)
-        pdf_fig_width = image_info.get('pdf_fig_width')
-        pdf_fig_height = image_info.get('pdf_fig_height')
-        
+        pdf_fig_width = image_info.get('pdf_fig_width') or 0
+        pdf_fig_height = image_info.get('pdf_fig_height') or 0
+
         if not pdf_fig_width or not pdf_fig_height:
             return None
 
         # Convert points to inches (72 points = 1 inch)
-        width_in = pdf_fig_width / 72.0
-        height_in = pdf_fig_height / 72.0
+        width_in = float(pdf_fig_width) / 72.0
+        height_in = float(pdf_fig_height) / 72.0
 
         # Calculate effective DPI
         if width_in > 0 and height_in > 0:
-            dpi_x = width_px / width_in
-            dpi_y = height_px / height_in
+            dpi_x = float(width_px) / width_in
+            dpi_y = float(height_px) / height_in
             return int((dpi_x + dpi_y) / 2)  # dpi should be an integer
 
         return None
@@ -197,12 +198,17 @@ class PDFHandler(object):
                 images = self.images_per_page(page)         # image identification is based on xrefs
                 figure_number = None
                 caption = None
+                figure_label = None
                 if len(images) == 1:
                     blocks = list(self.find_text_blocks(page=page_number))
                     # print(blocks)
-                    if len(blocks) == 1 and re.search(r'^Figure \w+. ',blocks[0]):
-                        label,caption = blocks[0].split(". ",1)
-                        figure_number = label.split()[1]
+                    if len(blocks) == 1:
+                        m = re.search(r'^(\w+(\s+\w+)*) (\w+)\. (.*)$',blocks[0])
+                        if m:
+                            figure_label = m.group(1)
+                            figure_number = m.group(3)
+                            caption = m.group(4)
+                            # print(figure_label, figure_number, caption, file=sys.stderr)
                 for image_number,image in enumerate(images,1):
                     try:
                         image.update(self.doc.extract_image(image['xref']))
@@ -218,6 +224,8 @@ class PDFHandler(object):
                     image['page_height'] = page.rect.height
                     if figure_number:
                         image['figure_number'] = figure_number
+                    if figure_label:
+                        image['figure_label'] = figure_label
                     if caption:
                         image['caption'] = caption
                         

@@ -47,7 +47,8 @@ class PDFiguesCaptionsData:
             caption = re.sub(r'^[\.:\-—–]\s*', '', caption)
             caption = re.sub(r'^\s+', '', caption)
 
-            return {"caption": caption, "figure_number": figure_number}
+            return {"caption": caption, "figure_number": figure_number, 
+                    "figure_label": prefix}
 
         return {}
 

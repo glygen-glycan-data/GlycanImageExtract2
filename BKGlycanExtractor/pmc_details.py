@@ -382,17 +382,24 @@ class PMCFigureExtractor:
         XLINK_NS = "http://www.w3.org/1999/xlink"
         XLINK_HREF = f"{{{XLINK_NS}}}href"
         figures = {}
+        figure_seq = 0
+
         # for fig in self.root.findall('.//fig', self.NAMESPACES):
         for fig in self._find_descendants(self.root, 'fig'):
             fig_info = {}
+            # m = re.search(r'^[a-zA-Z]+(\d+)$',fig.attrib["id"])
+            # assert m, f"Can't match figure element id string: {fig.attrib["id"]}."
+            # fig_info['figure_id'] = int(m.group(1))
+
             # label_elem = fig.find('label', self.NAMESPACES)
             label_elem = self._find_child(fig, 'label')
             if label_elem is not None:
                 label = (label_elem.text or "").strip()
                 if label:
-                    m = re.search(r'^\s*\w+\.?\s*(\w?\d+)\.?\s*$', label)
+                    m = re.search(r'^\s*(\w+(\s+\w+)*)\.?\s*(\w?\d+)\.?\s*$', label)
                     if m:
-                        fig_info['figure_number'] = m.group(1)
+                        fig_info['figure_number'] = m.group(3)
+                        fig_info['figure_label'] = m.group(1)
             # caption_elem = fig.find('caption', self.NAMESPACES)
             caption_elem = self._find_child(fig, 'caption')
             if caption_elem is not None:
@@ -421,6 +428,8 @@ class PMCFigureExtractor:
                         filename = os.path.basename(href)
                         break
             if filename:
+                figure_seq += 1
+                fig_info['figure_id'] = figure_seq
                 fig_info['filename'] = filename
                 base_name = os.path.splitext(filename)[0]
                 figures[base_name] = fig_info  
@@ -440,13 +449,13 @@ class PMCFigureExtractor:
         image_files.append(filename)
         seen_basenames.add(base_name)
         fig_info = self.figure_info_by_basename.get(base_name, {}).copy()
-        fig_info["figure_number"] = fig_to_label_map.get(base_name, "")
+        fig_info["figure_id"] = fig_to_label_map.get(base_name, "")
         figure_info_map[filename] = fig_info
 
     def _sorted_image_files(self, image_files, figure_info_map):
 
         def pmid_image_sort_key(imfn, figure_info_map):
-            fn = figure_info_map.get(imfn, {}).get("figure_number", "")
+            fn = figure_info_map.get(imfn, {}).get("figure_id", "")
             if fn == "":
                 return (0, 0)
             try:
@@ -468,9 +477,11 @@ class PMCFigureExtractor:
             self.root = ET.fromstring(nxml_content)
             self.figure_info_by_basename = self._extract_figure_info()
             for base_name, info in self.figure_info_by_basename.items():
-                fig_to_label_map[base_name] = info.get("figure_number", "")
+                fig_to_label_map[base_name] = info.get("figure_id", "")
         except Exception:
             traceback.print_exc()
+            self.figure_info_by_basename = {}
+            return {}
         return fig_to_label_map
 
     def collect_figures(self, figures_dir, fig_to_label_map, image_sources):
@@ -506,6 +517,8 @@ class PMCFigureExtractor:
                     "caption": fig_info.get("caption", ""),
                     "ascii_caption": fig_info.get("ascii_caption", ""),
                     "figure_number": fig_info.get("figure_number", ""),
+                    "figure_id": fig_info.get("figure_id", ""),
+                    "figure_label": fig_info.get("figure_label", ""),
                     "pmid_job": True,
                 }
                 if not image["figure_number"] and not image["caption"]:
@@ -952,14 +965,18 @@ class PMCFiles:
        
 
 if __name__ == "__main__":
-    for doi in sys.argv[1:]:
-        pmid = PMCData.lookup(doi=doi)
-        if pmid:
-            print(doi,pmid['pmid'])
-            pmid = pmid['pmid']
-        else:
-            pmid = doi
-        print(PMCData.citation_details(pmid))
+
+    pmc = PMCFiles(sys.argv[1])
+    print(json.dumps(pmc.figures_metadata('.')))
+    
+    # for doi in sys.argv[1:]:
+    #     pmid = PMCData.lookup(doi=doi)
+    #     if pmid:
+    #         print(doi,pmid['pmid'])
+    #         pmid = pmid['pmid']
+    #     else:
+    #         pmid = doi
+    #     print(PMCData.citation_details(pmid))
 
 
     # # XML parser
