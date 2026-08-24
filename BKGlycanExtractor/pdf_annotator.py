@@ -9,6 +9,7 @@ import time
 
 from .image_manager import Image_Manager
 from .bbox import PDFConversionContext
+from .pdf_display import get_glycan_display
 
 # TODO - some methods were added/updated in the glyomics client code - and I still need to make those updates which
 # currently impact local pipeline submissions. WebApp submissions are working.
@@ -445,16 +446,9 @@ def annotate_figure(doc, result_item, taskid, image_data, base_url):
                 # Insert the link on the page
                 page.insert_link(link_info)
     
-                votes = glycan.get('upvotes', 0) - glycan.get('downvotes', 0)
-                color = (0, 0, 1)
-                if votes > 0:
-                    color = (0, 1, 0)       # green
-                elif votes < 0:
-                    color = (1, 0, 0)         # red
-
+                color, dashes = get_glycan_display(glycan)
                 gly_annot.set_colors(stroke=color)
-
-                gly_annot.set_border(width=0.5)
+                gly_annot.set_border(width=0.5, dashes=dashes)
                 gly_annot.update()
 
                 votes = glycan.get('upvotes', 0) - glycan.get('downvotes', 0)

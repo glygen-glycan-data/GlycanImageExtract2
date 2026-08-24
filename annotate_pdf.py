@@ -12,6 +12,7 @@ from BKGlycanExtractor.glyomicsclient import *
 from BKGlycanExtractor.bbox import BoundingBox, PDFBoundingBox, PDFConversionContext
 from BKGlycanExtractor.image_manager import Image_Manager
 from BKGlycanExtractor.compareboxes import *
+from BKGlycanExtractor.pdf_display import get_glycan_display
 
 parser = argparse.ArgumentParser(description="Annotate PDF")
 
@@ -418,18 +419,24 @@ def match_and_merge(manual_boxes, pred_boxes, pred_raw):
             merged.append({
                 "bbox": box.bbox(),
                 "confidence": 1.0,
-                "source": "manual_high_iou"
+                "source": "manual_high_iou",
+                "color": "green",
+                "drawing_style": "solid"
             })
             TP += 1
         else: 
             merged.append({
                 "bbox": manual_boxes[i].bbox(),
                 "confidence": 1.0,
-                "source": "manual_low_iou"
+                "source": "manual_low_iou",
+                "color": "green",
+                "drawing_style": "solid"
             })
             # 也保留 pred
             g = pred_raw[j].copy()
             g["source"] = "pred_low_iou"
+            g["color"] = "red"
+            g["drawing_style"] = "dashed"
             merged.append(g)
             FN += 1
 
@@ -440,7 +447,9 @@ def match_and_merge(manual_boxes, pred_boxes, pred_raw):
             merged.append({
                 "bbox": box.bbox(),
                 "confidence": 1.0,
-                "source": "manual_only"
+                "source": "manual_only",
+                "color": "green",
+                "drawing_style": "solid"
             })
             FN += 1
 
@@ -449,6 +458,8 @@ def match_and_merge(manual_boxes, pred_boxes, pred_raw):
         if j not in matched_p:
             g = pred_raw[j].copy()
             g["source"] = "pred_only"
+            g["color"] = "red"
+            g["drawing_style"] = "dashed"
             merged.append(g)
             FP += 1
 
@@ -586,6 +597,8 @@ for i, input_item in enumerate(input_items):
         [g.copy() for g in result.get("glycans", [])]
         for result in all_json_data[i]['result']['figures']
     ]
+
+json_changed = set()
 
 for manual_file in args.manual or []:
 
@@ -793,9 +806,9 @@ for manual_file in args.manual or []:
                 total_FP += stats["FP"]
                 total_FN += stats["FN"]
                 best_result["glycans"] = merged_glycans
+                json_changed.add(i)
                 
                 print(f"[STATS] TP={stats['TP']} FP={stats['FP']} FN={stats['FN']}")
-                best_result["glycans"] = merged_glycans
 
                 print("[MANUAL] replaced predicted boxes with manual boxes")
                 if best is not None:
@@ -814,6 +827,11 @@ for manual_file in args.manual or []:
 
 manual_boxes = []
 best_ridx = None
+
+for i in sorted(json_changed):
+    with open(resultfilename[i], "w") as f:
+        json.dump(all_json_data[i], f, indent=2)
+    print("Wrote updated results JSON:", resultfilename[i])
 
 for i,input_item in enumerate(input_items):
 
@@ -876,40 +894,9 @@ for i,input_item in enumerate(input_items):
                 )
 
                 gly_annot.set_info(content=content)
-                source = glycan.get("source", "pred")
-                print(
-                source,
-                glycan.get("fig_glycan_count")
-            )
-                # if source == "manual_high_iou":
-                #     color = (1, 0, 0)      # 红
-                # elif source == "manual_low_iou":
-                #     color = (1, 1, 0)      # 黄
-                # elif source == "manual_only":
-                #     color = (1, 1, 0)      # 黄
-                # elif source == "pred_low_iou":
-                #     color = (1, 0.4, 0.8)      # 粉色
-                #     width = 2
-                # elif source == "pred_only":
-                #     color = (1, 0.4, 0.8)      # 粉色
-                #     width = 2
-                # elif source == "pred":
-                #     color = (0, 1, 0)
-                # else:
-                #     color = (0, 0, 1)
-                if source.startswith("manual"):
-                    color = (0, 1, 0)      # 绿色
-                    width = 1
-
-                elif source.startswith("pred"):
-                    color = (1, 0, 0)      # 红色
-                    width = 2
-
-                else:
-                    color = (0, 0, 1)      # 蓝色（异常情况）
-                    width = 1
+                color, dashes = get_glycan_display(glycan)
                 gly_annot.set_colors(stroke=color)
-                gly_annot.set_border(width=0.5) 
+                gly_annot.set_border(width=0.5, dashes=dashes) 
                 gly_annot.update()
 
                 votes = glycan.get('upvotes',0)-glycan.get('downvotes',0)
