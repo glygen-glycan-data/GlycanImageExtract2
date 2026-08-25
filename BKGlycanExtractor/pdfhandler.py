@@ -100,7 +100,7 @@ class PDFHandler(object):
         if width_in > 0 and height_in > 0:
             dpi_x = float(width_px) / width_in
             dpi_y = float(height_px) / height_in
-            return int((dpi_x + dpi_y) / 2)  # dpi should be an integer
+            return (dpi_x + dpi_y) / 2
 
         return None
 
@@ -164,9 +164,10 @@ class PDFHandler(object):
 
             # 2) Fallback: always try clipped page rasterization if pix is still None
             if pix is None and pdf_fig_bbox is not None:
-                clip = page.rect & pdf_fig_bbox
+                clip = fitz.Rect(pdf_fig_bbox)
+                # clip = page.rect & pdf_fig_bbox
                 if clip.is_empty:
-                    raise ValueError(f"Clip {pdf_fig_bbox} has no intersection with page rect {page.rect}")
+                    raise ValueError(f"Empty clip: {pdf_fig_bbox}")
                 pix = page.get_pixmap(clip=clip, dpi=dpi, annots=annots)
 
             if pix is None:
@@ -179,7 +180,7 @@ class PDFHandler(object):
                 pix = fitz.Pixmap(fitz.csRGB, pix)
                 pix.save(image_path)
 
-            return dict(width=pix.width,height=pix.height)
+            return dict(width=pix.width,height=pix.height, image_path=image_path)
 
         except Exception as e:
             traceback.print_exc()
@@ -190,7 +191,7 @@ class PDFHandler(object):
             '''Generator that yields image metadata when the data is already provided (images_data)'''
             for image_info in images_data.get('figures', {}):
                 if filter is None or filter.keep(image_info):
-                    # image_info['dpi'] = PDFHandler.calculate_dpi(image_info, self.doc) or self.STANDARD_DPI
+                    image_info['dpi'] = PDFHandler.calculate_dpi(image_info, self.doc) or self.STANDARD_DPI
                     yield image_info
         else:
             image_count = 1
@@ -231,7 +232,7 @@ class PDFHandler(object):
                         
                     if filter is None or filter.keep(image):
                         image['image_count'] = image_count                  # total image count so far
-                        # image['dpi'] = PDFHandler.calculate_dpi(image, self.doc) or self.STANDARD_DPI
+                        image['dpi'] = PDFHandler.calculate_dpi(image, self.doc) or self.STANDARD_DPI
                         image_count += 1
                         yield image
 

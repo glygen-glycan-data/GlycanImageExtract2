@@ -410,6 +410,10 @@ def annotate_figure(doc, result_item, taskid, image_data, base_url):
             if xref is not None and xref > 0:
                 content += f"xref: {xref}\n"
 
+            dpi = result_item.get("dpi")
+            if dpi is not None and dpi > 0:
+                content += f"dpi: {dpi}\n"
+
             fig_annot.set_info(content=content)
             fig_annot.update()
 
@@ -463,6 +467,7 @@ def annotate_figure(doc, result_item, taskid, image_data, base_url):
                 image_data.append({
                     "ID": gid,
                     "xref": result_item.get("xref"),
+                    "dpi": result_item.get("dpi"),
                     "page_num": page_num,
                     "fig_num": image_count,     # fig_num was used as a key in the past tsv file, so keep the same key for backward compatability
                     "accession": glycan.get('accession', ''),
@@ -482,7 +487,7 @@ def annotate_figure(doc, result_item, taskid, image_data, base_url):
 def write_tsv(tsv_path, image_data, anyvotes):
     ''' Write the annotation TSV for the PDF'''
 
-    headers = "ID xref page_num fig_num accession iupac composition wurcs votes url".split()
+    headers = "ID xref dpi page_num fig_num accession iupac composition wurcs votes url".split()
     if not anyvotes:
         headers.remove("votes")
 
