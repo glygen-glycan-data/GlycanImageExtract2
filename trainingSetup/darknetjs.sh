@@ -102,8 +102,8 @@ while [ "$#" -gt 0 ]; do
 	    ;;
   --weights)
         WEIGHTS="$2"
-	    shift 2
-	    ;;
+        shift 2
+            ;;
 	--split)
             SPLIT="$2"
 	    shift 2
@@ -309,8 +309,7 @@ if [ -n "$WEIGHTS" ]; then
   download "$WEIGHTS" "$YOLO_INIT_WEIGHTS"
   CLEAR_FLAG="-clear"
 else
-YOLO_INIT_WEIGHTS=`download_weights "${CONFIG}"`
-fi
+  YOLO_INIT_WEIGHTS=`download_weights "${CONFIG}"`
 fi
 
 DARKNET_DIR="$BASE/darknet"
