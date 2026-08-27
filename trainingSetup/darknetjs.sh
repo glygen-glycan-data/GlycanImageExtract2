@@ -82,6 +82,7 @@ CLEAN="0"
 IOU=""
 CONF=""
 CONFIG="yolov3-darknet53"
+WEIGHTS=""
 SPLIT="0.8"
 SHUTDOWN=""
 
@@ -97,6 +98,10 @@ while [ "$#" -gt 0 ]; do
             ;;
 	--config)
             CONFIG="$2"
+	    shift 2
+	    ;;
+  --weights)
+        WEIGHTS="$2"
 	    shift 2
 	    ;;
 	--split)
@@ -132,6 +137,10 @@ while [ "$#" -gt 0 ]; do
             echo ""
             echo "Darknet command-line parameters (optional):"
             echo "  --config         YOLO config. Default: yolov3-darknet53."
+            echo "                   If using for fine-tuning, ensure that the config used for fine-tuning is the same that was used by the pretrained yolo model being used"
+            echo "  --weights        For fine-tuning. Pretrained model weights (rclone path, Google Drive URL, or http(s))."
+            echo "                   If omitted, pretrained darknet weights for --config is downloaded."
+            echo "                   When set, training starts with Darknet -clear (fine-tune, not resume training)."
             echo "  --iou            IoU for mAP evaluation. Default: 0.5."
             echo "  --conf           Confidence threshold for mAP evaluation. Default: 0.25."
             echo "  --split          Proportion of images to use for training. Default: 0.8."
@@ -165,6 +174,11 @@ if [ "$CONF" != "" ]; then
 fi
 if [ "$IOU" != "" ]; then
     IOU="-iou_thresh $IOU"
+fi
+
+WEIGHTS_ARGS=()
+if [ -n "$WEIGHTS" ]; then
+  WEIGHTS_ARGS=(--weights "$WEIGHTS")
 fi
 
 BASE="$PWD"
@@ -208,7 +222,9 @@ fi
 
 echo "Image folder: $RESULTS"
 echo "Job name: $NAME"
-echo "Darknet parameters:" --config "$CONFIG" "$IOU" "$CONF" --split "$SPLIT"
+# echo "Darknet parameters:" --config "$CONFIG" "$IOU" "$CONF" --split "$SPLIT"
+echo "Darknet parameters:" --config "$CONFIG" "${WEIGHTS_ARGS[@]}" "$IOU" "$CONF" --split "$SPLIT"
+
 echo "Training parameters:" "$@"
 
 EXP="$NAME"
@@ -234,7 +250,8 @@ cd "$EXPROOT"
 touch "$PARAMS_LOG"
 echo "Image folder: $RESULTS" >> "$PARAMS_LOG"
 echo "Job name: $NAME"  >> "$PARAMS_LOG"
-echo "Darknet parameters:" --config "$CONFIG" "$IOU" "$CONF" --split "$SPLIT" >> "$PARAMS_LOG"
+# echo "Darknet parameters:" --config "$CONFIG" "$IOU" "$CONF" --split "$SPLIT" >> "$PARAMS_LOG"
+echo "Darknet parameters:" --config "$CONFIG" "${WEIGHTS_ARGS[@]}" "$IOU" "$CONF" --split "$SPLIT" >> "$PARAMS_LOG"
 echo "Training parameters:" "$@" >> "$PARAMS_LOG"
 
 echo "INFO: Download $RESULTS/images.zip from Google Drive..."
@@ -275,7 +292,26 @@ EOF
 # need to create training and validation sets
 python3 $SCRIPTS/split_data.py --image_dir $YOLO_DATA --train_txt $TRAINING_FILE --val_txt $VALIDATION_FILE --split_ratio "$SPLIT"
 
+# Check if a weights file was provided (via rclone gd, https link)
+# IF TRUE: The model will use the provided weights to fine tune model the selected model. For fine tuning on top
+# of existing weights, its important to set the clear flag, and the below code sets it automatically if you provide --weights and uses it in the darknet train command.
+# If -clear is not provided then darknet assumes that we want to resume training on the provided weights - which is not the same as fine tuning.
+# IF FALSE: the model will use the provided base weights in this script for training
+
+# The pretrained weights (either user provided or default), will be downloaded in the job_name folder,
+# referencing these base weights, the checkpoints of trained weights will be added to
+# YOLO_INIT_WEIGHTS=`download_weights "${CONFIG}"`
+CLEAR_FLAG=""
+if [ -n "$WEIGHTS" ]; then
+  YOLO_INIT_WEIGHTS="${CONFIG}_${EXP}.weights"
+  echo "INFO: Fine-tuning from $WEIGHTS (config $CONFIG, Darknet -clear)"
+  echo "INFO: Fine-tuning from $WEIGHTS (config $CONFIG, Darknet -clear)" >> "$PARAMS_LOG"
+  download "$WEIGHTS" "$YOLO_INIT_WEIGHTS"
+  CLEAR_FLAG="-clear"
+else
 YOLO_INIT_WEIGHTS=`download_weights "${CONFIG}"`
+fi
+fi
 
 DARKNET_DIR="$BASE/darknet"
 # get the original yolo config everytime (-f flag ensures this behaviour)
@@ -303,8 +339,10 @@ BEST_WEIGHTS_FILE="$YOLO_WEIGHTS/${CONFIG}_${EXP}_best.weights"
 sudo docker pull glyomics/darknet:latest
 DARKNET="sudo docker run --rm --gpus all -v .:/src glyomics/darknet darknet"
 
-echo darknet train "$TRAIN_CONFIG" "$YOLO_CONFIG" "$YOLO_INIT_WEIGHTS" -dont_show -map -random -nocolour $CONF $IOU
-nohup $DARKNET detector train "$TRAIN_CONFIG" "$YOLO_CONFIG" "$YOLO_INIT_WEIGHTS" -dont_show -map -random -nocolour $CONF $IOU </dev/null >$TRAIN_LOG 2>&1 &
+# echo darknet train "$TRAIN_CONFIG" "$YOLO_CONFIG" "$YOLO_INIT_WEIGHTS" -dont_show -map -random -nocolour $CONF $IOU
+echo darknet train "$TRAIN_CONFIG" "$YOLO_CONFIG" "$YOLO_INIT_WEIGHTS" -dont_show -map -random -nocolour $CLEAR_FLAG $CONF $IOU
+# nohup $DARKNET detector train "$TRAIN_CONFIG" "$YOLO_CONFIG" "$YOLO_INIT_WEIGHTS" -dont_show -map -random -nocolour $CONF $IOU </dev/null >$TRAIN_LOG 2>&1 &
+nohup $DARKNET detector train "$TRAIN_CONFIG" "$YOLO_CONFIG" "$YOLO_INIT_WEIGHTS" -dont_show -map -random -nocolour $CLEAR_FLAG $CONF $IOU </dev/null >$TRAIN_LOG 2>&1 &
 
 if [ "$SHUTDOWN" -eq 1 ]; then
   rm -f $HOME/.noshutdown
