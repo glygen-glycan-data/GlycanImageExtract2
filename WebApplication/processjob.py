@@ -282,9 +282,9 @@ class MultiImageJob:
         glymage_jobs = []
         
         for idx, glycan in enumerate(glycans):
-            if not glycan.get('composition_str'):
+            if glycan.get('composition_str',"") == "":
                 continue
-            elif not glycan.has('IUPAC'):
+            elif glycan.get('IUPAC',"") == "":
                 glycan.set('linkexpl', 'Extracted structure using Composition.')
                 glymage_jobs.append((idx, 
                     self.glymage_client.submit_glymage(
