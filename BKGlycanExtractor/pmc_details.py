@@ -180,8 +180,6 @@ class PMCData:
             "valid": True,
             "success": f"Given PMCID: {pmcid} is Open Access",
             "resource": {
-                "href": link.get("href"),
-                "format": link.get("format"),
                 "pmcid": pmcid,
             },
         }, 200
