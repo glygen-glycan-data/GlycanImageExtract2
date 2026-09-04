@@ -16,7 +16,7 @@ class Glycan_Base(Finder):
         if iupac and not obj.has_glycan_errors():
             obj.set('IUPAC',iupac)
         compstr = obj.compstr()
-        if compstr is not None:
+        if compstr is not None and compstr.strip() != "":
             obj.set('composition_str',compstr)
             
         if self.label_type == 'none':
