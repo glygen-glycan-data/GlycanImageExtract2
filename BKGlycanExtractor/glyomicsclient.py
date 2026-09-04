@@ -1,5 +1,5 @@
 
-__all__ = [ "ExtractorClient", "ExtractorDevClient", "GlyLookupClient" , "GlyLookupClient", "GlymageClient", "GnomeClient"]
+__all__ = [ "ExtractorClient", "ExtractorDevClient", "GlyLookupClient" , "GlyLookupClient", "GlymageClient", "SubsumptionClient"]
 
 import sys, os, glob, json, re
 import requests, time
