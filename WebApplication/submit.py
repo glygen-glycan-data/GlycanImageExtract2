@@ -1,127 +1,123 @@
+#!../.venv/bin/python
+
+import argparse
+import glob
+import json
+import os
+import re
+import shutil
 import sys
 import time
-import json
-import requests
 
-from urllib.request import urlopen
-from urllib.parse import urlencode
-from urllib.error import HTTPError
+parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+sys.path.append(parent_dir)
 
-from BKGlycanExtractor.glyomicsclient import BatchAPIFrameworkClient
+from BKGlycanExtractor.compareboxes import CompareBoxes
+from BKGlycanExtractor.bbox import BoundingBox
+from BKGlycanExtractor.glyomicsclient import ExtractorDevClient, APIUnfinishedError
 
-default_dev_email="nje5+extractor@georgetown.edu"
+client = ExtractorDevClient(port=10982, verbose=False)
 
-def _create_batch_client(service_name, baseurl=None, devemail=None, delay=1, maxretry=10):
-    """
-    Factory function to create batch clients with consistent defaults.
-    """
-
-    service_urls = {
-        'glylookup': 'https://glylookup.glyomics.org',
-        'glymage': 'https://glymage.glyomics.org',
-        'subsumption': 'https://subsumption.glyomics.org',
-    }
-    
-    return BatchAPIFrameworkClient(
-        apiurl=service_urls.get(service_name, baseurl),
-        developer_email=devemail or default_dev_email,
-        request_interval=delay,
-        max_retrieve_wait=maxretry * delay
+def main():
+    parser = argparse.ArgumentParser(
+        description="Submit to specific pipelines and with specific parameters."
     )
+    parser.add_argument(
+        "--manuscript",
+        nargs="*",
+        default=[],
+        help="Manuscripts to submit",
+    )
+    parser.add_argument(
+        "--multiglycan",
+        nargs="*",
+        default=[],
+        help="Multiglycan images to submit",
+    )
+    parser.add_argument(
+        "--simpleglycan",
+        nargs="*",
+        default=[],
+        help="Simple glycan images to submit",
+    )
+    parser.add_argument(
+        "--pipeline",
+        nargs="*",
+        default=[],
+        help="Pipline to run",
+    )
+    parser.add_argument(
+        "--figure_extraction",
+        nargs="*",
+        default=[],
+        help="Figure extraction strategy",
+    )
+    args = parser.parse_args()
 
-def sendToGNOme(*seqs, baseurl=None, devemail=None):
-    """
-    Submit sequences to GNOme and return Structure Browser URL.
+    assert len(args.manuscript) > 0 or len(args.multiglycan) > 0 or len(args.simpleglycan) > 0
+    assert len(args.manuscript) + len(args.multiglycan) + len(args.simpleglycan) == max(len(args.manuscript),len(args.multiglycan),len(args.simpleglycan))
     
-    Returns: GNOme Structure Browser URL with ondemandtaskid parameter
-    """
-    client = _create_batch_client('subsumption', baseurl, devemail)
-    
-    tasks = [{"seq": seq.strip() if seq else ""} for seq in seqs]
-    jobids = client.submit_batch(tasks)
-    
-    task_id = jobids[0]
-    return f"https://gnome.glyomics.org/StructureBrowser.html?ondemandtaskid={task_id}"
-
-def searchGlyImage(*seqs, orientations=None, default_orientation='RL', display='normal',
-                   image_format='svg', accession=False, baseurl=None, devemail=None,
-                   delay=1, maxretry=10):
-    """
-    Get images for a batch of sequences or accessions.
-    """
-    # print("BATCH REQUEST IMAGES", len(seqs))
-    
-    client = _create_batch_client('glymage', baseurl, devemail, delay, maxretry)
-    
-    # Validate orientations
-    if orientations is not None:
-        if len(orientations) != len(seqs):
-            raise ValueError("orientations list must have same length as seqs")
-        orient_list = orientations
+    if len(args.simpleglycan) > 0:
+        submit_type = 'Simple Glycan Image'
+        if len(args.pipeline) == 0:
+            args.pipeline = [ "SingleGlycanImage-YOLOFinders" ]
+        else:
+            for p in args.pipeline:
+                assert p.startswith("SingleGlycanImage-")
+    elif len(args.multiglycan) > 0:
+        submit_type = 'Multi-Glycan Image'
+        if len(args.pipeline) == 0:
+            args.pipeline = [ "MultipleGlycanImage-YOLOFindersV4" ]
+        else:
+            for p in args.pipeline:
+                assert p.startswith("MultipleGlycanImage-")
     else:
-        orient_list = [default_orientation] * len(seqs)
-    
-    # Build tasks
-    key = 'acc' if accession else 'seq'
-    tasks = [
-        {
-            key: s.strip() if s else "",
-            "orientation": orient_list[i],
-            "display": display,
-            "image_format": image_format
-        }
-        for i, s in enumerate(seqs)
-    ]
-    
-    # Submit and retrieve
-    jobids = client.submit_batch(tasks)
-    results = client.retrieve_batch(jobids)
-    
-    retval = []
-    base_url = (baseurl or "https://glymage.glyomics.org").rstrip('/')
+        submit_type = "Manuscript"
+        if len(args.pipeline) == 0:
+            args.pipeline = [ "MultipleGlycanImage-YOLOFindersV4" ]
+        else:
+            for p in args.pipeline:
+                assert p.startswith("MultipleGlycanImage-")
 
-    urls = []
-    for job in results:
-        result_path = job.get('result', '')
-        if not result_path:
-            urls.append(None)
-            continue
-        if not result_path.startswith('/'):
-            result_path = '/' + result_path
-        urls.append(f"{base_url}{result_path}")
+    if len(args.figure_extraction) == 0:
+        args.figure_extraction = ['hybrid']
 
-    return urls[0] if len(seqs) == 1 else urls
+    items = args.manuscript + args.multiglycan + args.simpleglycan
+    tasks = dict()
+    for it in items:
+        for pipeline in args.pipeline:
+            for figex in args.figure_extraction:
+                if os.path.exists(it):
+                    taskid = client.submit_file(submit_type,it,
+                                    pipeline_name=pipeline,
+                                    image_search_strategy=figex)
+                elif re.search(r'^\d+$',it):
+                    taskid = client.submit_pmid(submit_type,it,
+                                        pipeline_name=pipeline,
+                                        image_search_strategy=figex)
+                elif re.search(r'^\d+\.pdf$',it.lower()):
+                    taskid = client.submit_pmid(submit_type,it.rsplit('.',1)[0],aspdf=True,
+                                        pipeline_name=pipeline,
+                                        image_search_strategy=figex)
+                elif re.search(r'^http'):
+                    taskid = client.submit_url(submit_type,it,
+                                        pipeline_name=pipeline,
+                                        image_search_strategy=figex)
+                tasks[taskid] = dict(id=taskid,query=it,pipeline=pipeline,figure_extraction=figex)
+                print(f"Task {taskid}: Submitted {it} ({pipeline},{figex}).")
 
-def searchGlyLookup(*seqs, baseurl=None, devemail=None, delay=1, maxretry=10):
-    """
-    Lookup accessions and WURCS for a batch of IUPAC sequences.
-    
-    *seqs: Variable number of IUPAC sequence strings
-    
-    returns: a list of tuples - (accession, wurcs)
-    """
-    # print("BATCH REQUEST LOOKUP", len(seqs))
-    
-    client = _create_batch_client('glylookup', baseurl, devemail, delay, maxretry)
-    
-    # Build tasks
-    tasks = [{"seq": seq.strip() if seq is not None else ""} for seq in seqs]
-    
-    # Submit and retrieve
-    jobids = client.submit_batch(tasks)
-    results = client.retrieve_batch(jobids)
-    
-    retval = []
-    for job in results:
-        result = (None, None)
-        for res in job.get("result", []):
-            wurcs = None
-            for seqrec in res.get("sequences", []):
-                if seqrec['format'] == 'WURCS':
-                    wurcs = seqrec['seq']
-                    break
-            result = (res['accession'], wurcs)
-            break
-        retval.append(result)
-    
-    return retval[0] if len(seqs) == 1 else retval
+    for tid in tasks:
+        while True:
+            try:
+                result = client.retrieve(tid)
+            except APIUnfinishedError:
+                pass
+            if result.get('finished',False):
+                if len(result.get('error',[])) == 0:
+                    print(f"Task {tid}: Completed {tasks[tid]["query"]} ({tasks[tid]["pipeline"]},{tasks[tid]["figure_extraction"]}).")
+                else:
+                    print(f"Task {tid}: Error {tasks[tid]["query"]} ({tasks[tid]["pipeline"]},{tasks[tid]["figure_extraction"]}).")
+                break
+
+if __name__ == "__main__":
+    sys.exit(main())
