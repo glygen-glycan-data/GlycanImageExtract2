@@ -139,7 +139,8 @@ class PMCData:
     
     @staticmethod
     def validate_pmcid_resources(pmid, pmcid):
-        pmc_api = f"https://www.ncbi.nlm.nih.gov/pmc/utils/oa/oa.fcgi?id={pmcid}"
+        # pmc_api = f"https://www.ncbi.nlm.nih.gov/pmc/utils/oa/oa.fcgi?id={pmcid}"
+        pmc_api = f"https://pmc.ncbi.nlm.nih.gov/api/oai/v1/mh/?verb=GetRecord&identifier=oai:pubmedcentral.nih.gov:{pmcid[3:]}&metadataPrefix=pmc_fm"
         try:
             r = requests.get(pmc_api, timeout=10)
         except requests.exceptions.RequestException as e:
@@ -165,8 +166,12 @@ class PMCData:
                 "valid": False,
                 "error": "PMC Open Access service returned invalid XML (try again)",
             }, 502
-        link = root.find(".//link[@format='tgz']")
-        if link is None:
+        ns = {"art":"https://jats.nlm.nih.gov/ns/archiving/1.4/"}
+        meta = root.find('.//art:custom-meta[art:meta-name="pmc-prop-open-access"]',ns)
+        isoa = ((meta is not None) and \
+                (meta.find("./art:meta-value",ns) is not None) and \
+                (meta.find("./art:meta-value",ns).text == "yes"))
+        if not isoa:
             return {
                 "valid": False,
                 "error": f"PMID {pmid} is not Open Access in PubMed Central",
