@@ -303,6 +303,12 @@ def write_mono_data(map_file, mono):
     write_metadata(map_file, dict(mono.items()))
     map_file.write(f"m\t{mid}\t{symbol}\t{anomer}\t{x1},{y1}\t{x2},{y2}\t_\n")
 
+
+def write_root_data(map_file, root):
+    rootid = root.mono_id()
+    map_file.write(f"## ROOT: {root.bbox()} (bbox: x y w h)\n")
+    map_file.write(f"# root: {rootid}\n") 
+
 def write_link_data(map_file, link):
     # parser: data_points[1]=id1, [2]=carbon, [4]=id2
     # randimgs / SVG format: l  fromid  parent_bond  child_bond  toid
@@ -425,6 +431,13 @@ def extract_components(annotated_pdf, json_data, tsv_data, output_dir):
 
                     for mono in glycan.monos():
                         write_mono_data(map_file, mono)
+
+                    # randimgs.py - makes sure that the mono with the lowest id is always the root,
+                    # but that is not true for the annotated json data, root can have any
+                    # mono_id, so explicitly write root data in the map file
+                    # else consider the lowest mono_id as the root - default case
+                    write_root_data(map_file, glycan.root())
+
                     for link in glycan.all_links():
                         write_link_data(map_file, link)
         finally:

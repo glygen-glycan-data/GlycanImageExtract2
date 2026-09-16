@@ -249,10 +249,12 @@ class KnownFinder(Finder):
                         current_glycan['monos'].update(mono_data)
                         
                         # Update root to be the minimum mono_id
-                        if current_glycan['root'] is None:
-                            current_glycan['root'] = mono_id
-                        else:
-                            current_glycan['root'] = min(current_glycan['root'], mono_id)
+                        # if current_glycan['root'] is None:
+                        #     current_glycan['root'] = mono_id
+                        # else:
+                        #     current_glycan['root'] = min(current_glycan['root'], mono_id)
+
+                # elif data_points[0] == ''
 
                 elif data_points[0] == 'l':
                     if current_glycan is not None:
@@ -277,6 +279,7 @@ class KnownFinder(Finder):
 
                         current_glycan['links'].update(link_data)
 
+                # for the reducing end squiggle
                 elif data_points[0] == 'r':
                     if current_glycan is not None:
                         x_coords = []
@@ -297,6 +300,14 @@ class KnownFinder(Finder):
                     key = data_points[1][:-1]
                     value = ' '.join(data_points[2:])
                     current_glycan[key] = value
+
+            # if map file has the root - then use that 
+            # i.e map file will have this line # root: root_mono_id
+            # else the smallest mono_id is the root - randimgs.py.
+            # This change was made because when randimgs.py is used, the lowest mono_id is assumed to be the root in the map files,
+            # but this is not if the map files are built out of Yolo predicted json results - root_id could map to any mono_id
+            if current_glycan['root'] is None:
+                current_glycan['root'] = min(current_glycan['monos'].keys())
 
         # Boolean to indicate if map file contains SGI or MGI
         map_dict["SGI"] = (glycan_count == 1)
