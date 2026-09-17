@@ -38,7 +38,7 @@ class Semantics(object):
 
     def update(self,kvdict=None,**kwargs):
         if kvdict is not None:
-            for k,v in kvdict:
+            for k,v in kvdict.items():
                 self.set(k,v)
         for k,v in kwargs.items():
             self.set(k,v)
