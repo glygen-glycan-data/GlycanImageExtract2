@@ -477,6 +477,10 @@ class FigureSemantics(ImageSemantics):
                 return glycan
         return None
 
+    def scaleimg(self, factor):
+        for glycan in self.glycans():
+            glycan.scaleimg(factor)
+
     def random_color(self):
         return tuple(random.randint(0, 255) for _ in range(3))
 
