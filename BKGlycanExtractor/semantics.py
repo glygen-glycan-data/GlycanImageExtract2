@@ -270,12 +270,14 @@ class UndirectedLinkSemantics(BoxPredictionSemantics):
 
 # Base class for any thing (figure, glycan) which has an image with width and height
 class ImageSemantics(BoxPredictionSemantics):
-    def __init__(self,image_path=None,image=None,**kwargs):
+    def __init__(self,image_path=None,image=None,image_url=None,**kwargs):
         super().__init__(**kwargs)
         if image_path:
             self.set_image_path(image_path)
         elif image:
             self.set_image(image)
+        elif image_url:
+            self.set_image_url(image_url)
 
     def set_image(self, image):
         height, width, _ = image.shape
@@ -293,6 +295,11 @@ class ImageSemantics(BoxPredictionSemantics):
         else:
             self.set('image_path',abs_image_path)
         self.set('file_name',os.path.basename(image_path))
+    
+    def set_image_url(self, image_url):
+        imagedata = urllib.request.urlopen(image_url).read()
+        nparr = np.frombuffer(imagedata, np.uint8)
+        self.set_image(cv2.imdecode(nparr, cv2.IMREAD_COLOR))
 
     # Do we need to handle the numpy array stuff here?
     def read_image(self,image):
