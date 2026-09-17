@@ -129,6 +129,12 @@ class BoxPredictionSemantics(Semantics):
     def height(self):
         return self.get('height')
 
+    def scaleimg(self,factor):
+        if self.box():
+            box = copy.copy(self.box())
+            box.scaleimg(factor)
+            self.set_box(box)
+
     def confidence(self):
         return self.get('confidence')
 
