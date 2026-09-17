@@ -511,70 +511,19 @@ class FigureSemantics(ImageSemantics):
         for glycan in self.glycans():
             x1,y1,x2,y2 = glycan.box().corners()
             self.annotate(x1,y1,x2,y2,color=color) # green for glycan
-
-    def annotate_monos(self,color=(128, 0, 128),root_color=(0, 100, 0),alternative_color=(0, 165, 255)):
+    
+    def annotate_monos(self,*args,**kwargs):
         for glycan in self.glycans():
-            # monosaccharides and root labelling
-            root_id = None
-            if glycan.has_root():
-                root_id = glycan.root().mono_id()
-            # print("root_id",root_id)
-            for mono in glycan.monos():
-                x1,y1,x2,y2 = mono.box().corners()
-                text = mono.classlabel() + ":" + str(mono.id())
-                # color = (128, 0, 128) # purple for monos
-                # if mono['id'] == root_id:
-                #     color = (0, 100, 0) # dark green for root
-                # if mono.get('alternative') is not None:
-                #     color = (0, 165, 255) # orange for alternatives
-                self.annotate(x1,y1,x2,y2,text=text,xtoff=2,ytoff=-2,color=color,thickness=1)   
-                color1 = color
-                if mono.id() == root_id:
-                    color1 = root_color if root_color else color # dark green for root
-                # if mono.get('alternative') is not None:
-                #     color1 = alternative_color if alternative_color else color # orange for alternatives
-                self.annotate(x1,y1,x2,y2,text=text,xtoff=2,ytoff=-2,color=color1,thickness=1)   
-
-    def annotate_root(self,color=(0, 100, 0),labels=False):
+            glycan.annotate_monos(*args,**kwargs)
+    
+    def annotate_links(self,*args,**kwargs):
         for glycan in self.glycans():
-            # monosaccharides and root labelling
-            root = glycan.root()
-            if not root:
-                return
-            box = root.corners()
-            x_min,y_min,x_max,y_max = box.corners()
-
-            text=''                                                                                       
-            if labels:
-                text = root.get('classlabel','')
-            self.annotate(x_min,y_min,x_max,y_max,color=color,text=text,thickness=1)
-
-    def annotate_links(self,color=(255, 255, 0),labels=False):
+            glycan.annotate_links(*args,**kwargs)
+    
+    def annotate_root(self,*args,**kwargs):
         for glycan in self.glycans():
-            for link in glycan.undirected_links():
-                box = link.box()
-                x_min,y_min,x_max,y_max = box.corners()
-                text=''
-                if labels:
-                    text = str(link.classlabel())
-                self.annotate(x_min,y_min,x_max,y_max,color=color,text=text,thickness=1)
-
-    def annotate_boxes(self,boxes,colors=None,color=(255, 255, 0),labels=False,label=None,anchor="TR"):
-        for box in boxes:
-            x_min,y_min,x_max,y_max = box.corners()
-            text=''
-            if label:
-                text = label
-            if labels:
-                text = str(box.get('classlabel',''))
-            if not colors:
-                colors = [ color ]
-            color = colors[box.get('classid',0)%len(colors)]
-            self.annotate(x_min,y_min,x_max,y_max,color=color,text=text,thickness=1,textanchor=anchor)
-
-    def write_image(self,**kwargs):
-        cv2.imwrite(self.make_filename(**kwargs), self.image())
-
+            glycan.annotate_root(*args,**kwargs)
+    
 class ManuscriptSemantics(Semantics):
     '''
     Supports Multiple figures
@@ -1149,7 +1098,153 @@ class GlycanSemantics(ImageSemantics):
         
         # catch all default to avoid error...
         return "BT"
+    
+    def annotate_monos(self,color=(128, 0, 128),root_color=(0, 100, 0),alternative_color=(0, 165, 255),
+                       label="MONO+INDEX",**kwargs):
+        root_id = None
+        if self.has_root():
+            root_id = self.root().mono_id()
+        tanchor = kwargs.get("textanchor","CENTER")
+        if "textanchor" in kwargs:
+            del kwargs["textanchor"]
+        for mono in self.monos():
+            x1,y1,x2,y2 = mono.box().corners()
+            text = mono.classlabel() + ":" + str(mono.id())
+            # color = (128, 0, 128) # purple for monos
+            # if mono['id'] == root_id:
+            #     color = (0, 100, 0) # dark green for root
+            # if mono.get('alternative') is not None:
+            #     color = (0, 165, 255) # orange for alternatives
+            # self.annotate(x1,y1,x2,y2,text=text,xtoff=2,ytoff=-2,color=color,thickness=1)   
+            color1 = color
+            if mono.id() == root_id:
+                color1 = root_color if root_color else color # dark green for root
+            # if mono.get('alternative') is not None:
+            #     color1 = alternative_color if alternative_color else color # orange for alternatives
+            if label == "MONO:INDEX":
+                self.annotate(x1,y1,x2,y2,text=text,
+                              xtoff=2,ytoff=-2,
+                              color=color1,thickness=1,**kwargs)                
+            elif label == "INDEX":
+                if tanchor not in ("TR",):
+                    self.annotate(x1,y1,x2,y2,text=str(mono.id()),
+                                  textanchor="CENTER",xtoff=-2,ytoff=2,
+                                  color=color1,thickness=1,**kwargs)
+                elif tanchor == "TR":
+                    self.annotate(x1,y1,x2,y2,text=str(mono.id()),
+                                  textanchor=tanchor,xtoff=2,ytoff=-2,
+                                  color=color1,thickness=1,**kwargs)
+            else:
+                self.annotate(x1,y1,x2,y2,color=color1,thickness=1,**kwargs)
 
+    def annotate_root(self,color=(0, 100, 0),labels=False):
+        root = self.root()
+        if not root:
+            return
+        box = root.corners()
+        x_min,y_min,x_max,y_max = box.corners()
+
+        text=''                                                                                       
+        if labels:
+            text = root.get('classlabel','')
+        self.annotate(x_min,y_min,x_max,y_max,color=color,text=text,thickness=1)
+
+    def annotate_links(self,color=(255, 255, 0),labels=False):
+        for link in self.undirected_links():
+            box = link.box()
+            x_min,y_min,x_max,y_max = box.corners()
+            text=''
+            if labels:
+                text = str(link.classlabel())
+            self.annotate(x_min,y_min,x_max,y_max,color=color,text=text,thickness=1)
+
+try:
+    import tkinter as tk
+    from PIL import Image, ImageTk
+except ImportError:
+    pass
+
+import io
+
+class ShowImage:
+    def __init__(self,image,title="Image",scale=None,extraimageurl=None):
+        self.root = tk.Tk()
+        self.root.title(title)
+        self.extraimageurl = extraimageurl
+        if self.extraimageurl:
+            self.window2 = tk.Toplevel(self.root)
+            self.window2.title("Glymage")
+
+        h,w = image.shape[:2]
+        self.h = h
+        self.w = w
+        if scale is not None and scale > 0.0 and scale != 1.0:
+            self.root.geometry(f"{int(w*scale)}x{int(h*scale)}")
+        else:
+            self.root.geometry(f"{w}x{h}")
+        self.root.rowconfigure(0, weight=1)
+        self.root.columnconfigure(0, weight=1)
+
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        self.pilimage = Image.fromarray(image)
+ 
+        self.set_image()
+        self.root.bind("<Button-1>", self.close_window)
+        self.image_label.bind("<Configure>", self.resize_image)
+
+        if self.extraimageurl:
+            data = urllib.request.urlopen(self.extraimageurl).read()
+            self.pilimage2 = Image.open(io.BytesIO(data))
+            self.w2,self.h2 = self.pilimage2.size
+
+            self.window2.geometry(f"{self.w2}x{self.h2}")
+            self.window2.rowconfigure(0, weight=1)
+            self.window2.columnconfigure(0, weight=1)
+
+            self.set_image2()
+            self.window2.bind("<Button-1>", self.close_window)
+            self.image_label2.bind("<Configure>", self.resize_image2)
+        
+        self.root.mainloop()
+
+    def set_image(self,scale=None):
+        if scale is not None:
+            self.image = ImageTk.PhotoImage(image=self.pilimage.resize((int(self.w*scale), int(self.h*scale)), Image.Resampling.LANCZOS))
+        else:
+            self.image = ImageTk.PhotoImage(image=self.pilimage)
+        if not hasattr(self,"image_label"):
+            self.image_label = tk.Label(self.root, image=self.image, bg="black")
+            self.image_label.grid(row=0, column=0, sticky="nsew")
+        else:
+            self.image_label.config(image=self.image)
+        self.image_label.image = self.image
+
+    def set_image2(self,scale=None):
+        if scale is not None:
+            self.image2 = ImageTk.PhotoImage(image=self.pilimage2.resize((int(self.w2*scale), int(self.h2*scale)), Image.Resampling.LANCZOS))
+        else:
+            self.image2 = ImageTk.PhotoImage(image=self.pilimage2)
+        if not hasattr(self,"image_label2"):
+            self.image_label2 = tk.Label(self.window2, image=self.image2, bg="black")
+            self.image_label2.grid(row=0, column=0, sticky="nsew")
+        else:
+            self.image_label2.config(image=self.image2)
+        self.image_label2.image = self.image2
+
+    def resize_image(self,event):
+        new_width = event.width
+        new_height = event.height
+        scale = min(new_width/self.w,new_height/self.h)
+        self.set_image(scale=scale)
+
+    def resize_image2(self,event):
+        new_width = event.width
+        new_height = event.height
+        scale = min(new_width/self.w2,new_height/self.h2)
+        self.set_image2(scale=scale)
+
+    def close_window(self,event):
+        self.root.destroy()
 
 if __name__ == "__main__":
 
