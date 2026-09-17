@@ -705,6 +705,22 @@ class GlycanSemantics(ImageSemantics):
         for r in rejected:
             self.append('rejected_roots',r)
 
+    def swap_roots(self,mono,**kwargs):
+        orig = self.root()
+        rrs = self.get('rejected_roots',[])
+        rri = None
+        for i,rr in enumerate(rrs):
+            if rr.mono_id() == mono.id():
+                rri = i
+        if rri is not None:
+            nr = rrs.pop(rri)
+            nr.update(**kwargs)
+        else:
+            nr = RootSemantics(mono_id=mono.id(), box=m.box(), **kargs)
+        if orig is not None:
+            rrs += [orig]
+        self.set_roots(nr,rrs)
+
     def reset_undirected_links(self):
         self.set('undirected_links',[])
 
