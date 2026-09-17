@@ -797,6 +797,7 @@ class GlycanSemantics(ImageSemantics):
         mono.add_link(link)
 
     def create_links(self):
+        self.reset_all_links()
         adj = self.build_adjacency_list()
         root_id = self.root().mono_id()
 
