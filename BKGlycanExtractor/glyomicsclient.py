@@ -320,6 +320,9 @@ class ExtractorClient(APIFrameworkClient):
     def makeurl(self,path):
         return self.url() + '/' + path.lstrip('/')
     
+    def makeresulturl(self,task_id,path):
+        return self.makeurl('static/files/' + task_id + '/' + path.lstrip('/'))
+    
     def status(self, task_id):
         res = self.request("job_status/"+task_id).json()
         if not res[u"finished"]:
