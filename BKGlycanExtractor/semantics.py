@@ -850,16 +850,17 @@ class GlycanSemantics(ImageSemantics):
         glycan_obj.set_roots(accepted_root, rejected_roots)
 
         # TODO - add undirected links?
-        # # undirected links
-        # accepted_ulinks = [
-        #     cls._undirected_link_fromjson(u)
-        #     for u in glycan.get('undirected_links', [])
-        # ]
-        # rejected_ulinks = [
-        #     cls._undirected_link_fromjson(u)
-        #     for u in glycan.get('rejected_undirected_links', [])
-        # ]
-        # glycan_obj.set_undirected_links(accepted_ulinks, rejected_ulinks)
+        # undirected links
+        accepted_ulinks = [
+            cls._undirected_link_fromjson(u)
+            for u in glycan.get('undirected_links', [])
+        ]
+        rejected_ulinks = [
+            dict(link=cls._undirected_link_fromjson(u['link']),
+                 reason=u['reason'])
+            for u in glycan.get('rejected_undirected_links', [])
+        ]
+        glycan_obj.set_undirected_links(accepted_ulinks, rejected_ulinks)
 
         return glycan_obj
 
