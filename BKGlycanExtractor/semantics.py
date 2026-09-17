@@ -314,7 +314,9 @@ class ImageSemantics(BoxPredictionSemantics):
             return image
         raise ValueError("Can't handle image format: ",image)
 
-    def image(self):
+    def image(self,**kwargs):
+        if kwargs.get('copy',False):
+            return copy.copy(self.get('image'))
         return self.get('image')
 
     def image_path(self):
