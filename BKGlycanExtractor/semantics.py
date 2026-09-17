@@ -4,6 +4,8 @@ import numpy as np
 import json
 import copy
 import random
+import urllib.request
+import numpy as np
 from . bbox import BoundingBox, PDFBoundingBox
 from collections import defaultdict, deque
 try:
