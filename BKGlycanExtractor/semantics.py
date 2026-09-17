@@ -612,9 +612,9 @@ class GlycanSemantics(ImageSemantics):
     JSON_ULINK_SKIP_KEYS = {'bbox', 'box', 'image', 'mono_ids'}
 
     
-    def __init__(self,*,figure=None,box,**kwargs):
+    def __init__(self,*,figure=None,box=None,**kwargs):
         super().__init__(box=box,**kwargs)  
-        if figure is not None:      # its possible to have glycan information without the glycan image stored locally (CV version) for annotated pdf's
+        if figure is not None and box is not None:      # its possible to have glycan information without the glycan image stored locally (CV version) for annotated pdf's
             self.set_image(box.crop(figure))
         self.reset_monos()
         self.reset_root()
