@@ -671,6 +671,15 @@ class GlycanSemantics(ImageSemantics):
             for m in self.rejected_monos():
                 yield m.box()
     
+    def scaleimg(self,factor):
+        super().scaleimg(factor)
+        for m in self.monos():
+            m.scaleimg(factor)
+        if self.root():
+            self.root().scaleimg(factor)
+        for l in self.undirected_links():
+            l.scaleimg(factor)
+
     def mono_count(self):
         return len(self.monoids())
 
