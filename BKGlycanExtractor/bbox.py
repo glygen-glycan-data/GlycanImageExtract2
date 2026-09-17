@@ -227,7 +227,9 @@ class BoundingBox(BaseBoundingBox):
 
     def crop(self,image):
         (x1, y1, x2, y2) = self.corners()
-        return image[y1:y2, x1:x2].copy()
+        img = image[y1:(y2+1), x1:(x2+1)].copy()
+        assert (self.h,self.w) == img.shape[:2]
+        return img
 
     def pad(self, padding):
         self.x -= int(padding)
