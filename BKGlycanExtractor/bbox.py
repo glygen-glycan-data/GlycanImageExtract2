@@ -251,6 +251,18 @@ class BoundingBox(BaseBoundingBox):
         self.h += int(round(2*padding*self.h))
         self.normalize()
 
+    def scaleimg(self,factor=1.0):
+        if factor == 1.0 or factor < 0.0:
+            return
+        self.x = int(round(factor*self.x))
+        self.y = int(round(factor*self.y))
+        self.w = int(round(factor*self.w))
+        self.h = int(round(factor*self.h))
+        if self.imwidth is not None:
+            self.imwidth *= int(round(factor*self.imwidth))
+        if self.imheight is not None:
+            self.imheight *= int(round(factor*self.imheight))
+
     def normalize(self):
         if self.imwidth is None or self.imheight is None:                                                                          
             raise RuntimeError("Image dimensions not provided.")                                          
