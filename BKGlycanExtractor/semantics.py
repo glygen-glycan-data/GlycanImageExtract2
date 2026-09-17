@@ -328,6 +328,71 @@ class ImageSemantics(BoxPredictionSemantics):
 
     def height(self):
         return self.get('height')
+    
+    def shape(self):
+        return self.height(),self.width()
+    
+    def scaleimg(self,factor=1.0):
+        img = copy.copy(self.image())
+        if factor > 1.0:
+            img = cv2.resize(img, (0, 0), fx=factor, fy=factor, interpolation=cv2.INTER_CUBIC)
+        elif 0.0 < factor < 1.0:
+            img = cv2.resize(img, (0, 0), fx=factor, fy=factor, interpolation=cv2.INTER_AREA)
+        self.set_image(img)
+
+    def annotate(self,x1,y1,x2,y2,**kwargs):
+        assert self.image() is not None
+
+        font_scale = kwargs.get('font_scale',0.5)
+        color = kwargs.get('color',(0,255,0))
+        thickness = kwargs.get('thickness',1)
+        text = kwargs.get('text','')
+        textanchor = kwargs.get('textanchor',"TR")
+        if textanchor == "TR":
+            xt=kwargs.get('xt',x2)
+            yt=kwargs.get('yt',y1)
+        elif textanchor == "BR":
+            xt=kwargs.get('xt',x2)
+            yt=kwargs.get('yt',y2)
+        elif textanchor == "CENTER":
+            xt=kwargs.get('xt',int((x1+x2)/2))
+            yt=kwargs.get('yt',int((y1+y2)/2))
+        xtoff=kwargs.get('xtoff',0)
+        ytoff=kwargs.get('ytoff',0)
+        xt += xtoff
+        yt += ytoff
+
+        # uncomment below to apply random colors for monos, links, root
+        # # Define overlay for transparency
+        # overlay = image.copy()
+        # cv2.rectangle(overlay,(x1,y1),(x2,y2),color=color,thickness=thickness)
+        # # Apply the overlay with transparency
+        # alpha = 0.5  # Transparency factor
+        # cv2.addWeighted(overlay, alpha, image, 1 - alpha, 0, image)
+
+        cv2.rectangle(self.image(),(x1,y1),(x2,y2),color=color,thickness=thickness)
+        if text:
+            cv2.putText(self.image(),org=(xt,yt),fontFace=cv2.FONT_HERSHEY_PLAIN,text=text,fontScale=font_scale,thickness=1,color=(0,0,0),lineType=cv2.LINE_AA)
+
+    def annotate_boxes(self,boxes,colors=None,color=(255, 255, 0),labels=False,label=None,anchor="TR"):
+        for box in boxes:
+            x_min,y_min,x_max,y_max = box.corners()
+            text=''
+            if label:
+                text = label
+            if labels:
+                text = str(box.get('classlabel',''))
+            if not colors:
+                colors = [ color ]
+            color = colors[box.get('classid',0)%len(colors)]
+            self.annotate(x_min,y_min,x_max,y_max,color=color,text=text,thickness=1,textanchor=anchor)
+
+    def write_image(self,**kwargs):
+        cv2.imwrite(self.make_filename(**kwargs), self.image())
+
+    def show_image(self,*args,**kwargs):
+        ShowImage(self.image(),*args,**kwargs)
+
 
 # Class for whole figure/image containing glycans
 # add pdf data - like xref, page_no, etc
