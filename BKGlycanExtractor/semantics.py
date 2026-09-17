@@ -484,35 +484,6 @@ class FigureSemantics(ImageSemantics):
     def random_color(self):
         return tuple(random.randint(0, 255) for _ in range(3))
 
-    def annotate(self,x1,y1,x2,y2,**kwargs):
-        font_scale = kwargs.get('font_scale',0.5)
-        color = kwargs.get('color',(0,255,0))
-        thickness = kwargs.get('thickness',1)
-        text = kwargs.get('text','')
-        textanchor = kwargs.get('textanchor',"TR")
-        if textanchor == "TR":
-            xt=kwargs.get('xt',x2)
-            yt=kwargs.get('yt',y1)
-        elif textanchor == "BR":
-            xt=kwargs.get('xt',x2)
-            yt=kwargs.get('yt',y2)
-        xtoff=kwargs.get('xtoff',0)
-        ytoff=kwargs.get('ytoff',0)
-        xt += xtoff
-        yt += ytoff
-
-        # uncomment below to apply random colors for monos, links, root
-        # # Define overlay for transparency
-        # overlay = image.copy()
-        # cv2.rectangle(overlay,(x1,y1),(x2,y2),color=color,thickness=thickness)
-        # # Apply the overlay with transparency
-        # alpha = 0.5  # Transparency factor
-        # cv2.addWeighted(overlay, alpha, image, 1 - alpha, 0, image)
-
-        cv2.rectangle(self.image(),(x1,y1),(x2,y2),color=color,thickness=thickness)
-        if text:
-            cv2.putText(self.image(),org=(xt,yt),fontFace=cv2.FONT_HERSHEY_PLAIN,text=text,fontScale=font_scale,thickness=1,color=(0,0,0),lineType=cv2.LINE_AA)
-
     def make_filename(self,filename=None,outdir=None,basename=None,extension=None,overwrite=False,filename_template=None):
         if filename is None or outdir is None:
             idr,ifn = os.path.split(self.image_path())
