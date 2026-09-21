@@ -199,6 +199,12 @@ class MonoSemantics(BoxPredictionSemantics):
     def symbol(self):
         return self['symbol']
 
+    def set_symbol(self,symbol):
+        self.set('symbol',symbol)
+
+    def set_label(self,label):
+        self.set('classlabel',label)
+
     def id(self):
         return self.get('id')
 
@@ -654,6 +660,15 @@ class GlycanSemantics(ImageSemantics):
         del self['monos'][id]
         return m
 
+    def delete_mono_and_ulinks(self,mid):
+        m = self.remove_mono(mid)
+        ruls = self.get('rejected_undirected_links',[])
+        uls = []
+        for ul in self.undirected_links():
+            if mid not in ul.mono_ids():
+                uls.append(ul)
+        self.set_undirected_links(uls,ruls)
+
     def set_monos(self, accepted, rejected=[]):
         self.reset_monos()
         for m in accepted:
@@ -716,22 +731,67 @@ class GlycanSemantics(ImageSemantics):
             nr = rrs.pop(rri)
             nr.update(**kwargs)
         else:
-            nr = RootSemantics(mono_id=mono.id(), box=m.box(), **kargs)
+            nr = RootSemantics(mono_id=mono.id(), box=mono.box(), **kwargs)
         if orig is not None:
             rrs += [orig]
         self.set_roots(nr,rrs)
 
     def reset_undirected_links(self):
         self.set('undirected_links',[])
+        self.unset('rejected_undirected_links')
 
     def undirected_links(self):
         return self['undirected_links']
+
+    def rejected_undirected_links(self):
+        return self.get('rejected_undirected_links',[])
+    
+    def remove_undirected_link(self,mid1,mid2):
+        uls = []
+        ruls = self.rejected_undirected_links()
+        mids = tuple(sorted([mid1,mid2]))
+        found = False
+        for ul in self.undirected_links():
+            if ul.mono_ids() != mids:
+                uls.append(ul)
+            else:
+                found = True
+        if not found:
+            return False
+        self.set_undirected_links(uls,ruls)
+        return True
+
+    def recover_rejected_undirected_link(self,mid1,mid2):
+        mids = tuple(sorted([mid1,mid2]))
+        theul = None
+        for ul in self.rejected_undirected_links():
+            if ul['link'].mono_ids() == mids:
+                theul = copy.deepcopy(ul['link'])
+                break
+        if theul:
+            self.add_undirected_link(theul)
+            return True
+        return False
 
     def add_undirected_link(self,link: UndirectedLinkSemantics):
         mono_ids = link.mono_ids()
         if not self.has_mono(mono_ids[0]) or not self.has_mono(mono_ids[1]):
             raise ValueError(f"Invalid monosaccharide ids for link: {link.get('mono_ids')}")
         self.append('undirected_links',link)
+
+    def has_undirected_link(self, mid1, mid2):
+        mids = tuple(sorted([mid1,mid2]))
+        for ul in self.undirected_links():
+            if ul.mono_ids() == mids:
+                return True
+        return False
+
+    def has_rejected_undirected_link(self, mid1, mid2):
+        mids = tuple(sorted([mid1,mid2]))
+        for rul in self.rejected_undirected_links():
+            if rul['link'].mono_ids() == mids:
+                return True
+        return False
 
     def set_undirected_links(self, accepted, rejected=[]):
         self.reset_undirected_links()
@@ -838,8 +898,13 @@ class GlycanSemantics(ImageSemantics):
                         ]
                 
         # Rejected Mono Semantics (doesnt include Link Semantics)
-        rejected_monos = [cls._mono_fromjson(m, include_links=False)
-                          for m in glycan.get('rejected_monos', [])
+        rejected_monos = [
+                            dict(confidence=m['confidence'],
+                                 iou=m['iou'],
+                                 object=cls._mono_fromjson(m['object'], include_links=False),
+                                 primary=cls._mono_fromjson(m['primary'], include_links=False),
+                                 reason=m['reason'])
+                            for m in glycan.get('rejected_monos', [])
                         ]
 
         glycan_obj.set_monos(accepted_monos, rejected_monos)
@@ -1127,7 +1192,7 @@ class GlycanSemantics(ImageSemantics):
         return "BT"
     
     def annotate_monos(self,color=(128, 0, 128),root_color=(0, 100, 0),alternative_color=(0, 165, 255),
-                       label="MONO+INDEX",**kwargs):
+                       label="MONO:INDEX",**kwargs):
         root_id = None
         if self.has_root():
             root_id = self.root().mono_id()
