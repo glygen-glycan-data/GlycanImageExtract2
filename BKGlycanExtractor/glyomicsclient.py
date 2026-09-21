@@ -221,6 +221,13 @@ class GlyLookupClient(APIFrameworkClient):
             else:
                 yield index,{}
 
+    def get_wurcs(self,seq):
+        for index,data in self.getmany([seq]):
+            for seq in data.get('sequences',[]):
+                if seq.get('format') == "WURCS" and seq.get("source").startswith("GlyTouCan:"):
+                    return data.get('accession'),seq.get('seq')
+        return None,None
+    
     def get_accessions(self,*seqs):
         seqs = self.tolist(seqs)
         for index,data in self.getmany(seqs):
@@ -320,8 +327,10 @@ class ExtractorClient(APIFrameworkClient):
     def makeurl(self,path):
         return self.url() + '/' + path.lstrip('/')
     
-    def makeresulturl(self,task_id,path):
-        return self.makeurl('static/files/' + task_id + '/' + path.lstrip('/'))
+    def makeresulturl(self,task_id,path,location=None):
+        if not location:
+            location = 'files'
+        return self.makeurl('static/' + location + '/' + task_id + '/' + path.lstrip('/'))
     
     def status(self, task_id):
         res = self.request("job_status/"+task_id).json()
