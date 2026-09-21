@@ -10,10 +10,11 @@ class Glycan_Base(Finder):
     
     def __init__(self,params):
         self.label_type = params.get('label_type')
+        self.ignore_errors = params.get('ignore_errors',False)
 
     def get_label(self,obj):
         iupac = obj.IUPAC()
-        if iupac and not obj.has_glycan_errors():
+        if iupac and (not obj.has_glycan_errors() or self.ignore_errors):
             obj.set('IUPAC',iupac)
         compstr = obj.compstr()
         if compstr is not None and compstr.strip() != "":
@@ -46,12 +47,14 @@ class Glycan_Base(Finder):
 class YOLO_Glycan(Glycan_Base):
 
     defaults = {
-        'label_type': 'none'
+        'label_type': 'none',
+        'ignore_errors': False,
     }
 
     def __init__(self,**kwargs):
         params = dict(
            label_type = Config.get_param('label_type', Config.STR, kwargs, self.defaults),
+           ignore_errors = Config.get_param('ignore_errors', Config.BOOL, kwargs, self.defaults),
         )
         super().__init__(params)
 
@@ -73,7 +76,7 @@ class YOLO_Glycan(Glycan_Base):
         
         label = self.get_label(obj)
 
-        if obj.has_glycan_errors():
+        if obj.has_glycan_errors() and not self.ignore_errors:
             return []
 
         if label:    
