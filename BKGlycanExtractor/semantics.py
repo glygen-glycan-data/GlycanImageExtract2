@@ -1267,7 +1267,7 @@ except ImportError:
 import io
 
 class ShowImage:
-    def __init__(self,image,title="Image",scale=None,extraimageurl=None):
+    def __init__(self,image,title="Image",scale=None,extraimageurl=None,block=True):
         self.root = tk.Tk()
         self.root.title(title)
         self.extraimageurl = extraimageurl
@@ -1305,7 +1305,8 @@ class ShowImage:
             self.window2.bind("<Button-1>", self.close_window)
             self.image_label2.bind("<Configure>", self.resize_image2)
         
-        self.root.mainloop()
+        if block:
+            self.root.mainloop()
 
     def set_image(self,scale=None):
         if scale is not None:
@@ -1345,6 +1346,102 @@ class ShowImage:
 
     def close_window(self,event):
         self.root.destroy()
+
+
+class SideBySideImage:
+    """Persistent single Tk window showing two images side by side, updated in place."""
+    def __init__(self, title="Glycan Editor"):
+        self.root = tk.Tk()
+        self.root.title(title)
+        self._frame = tk.Frame(self.root, bg="black")
+        self._frame.pack(fill=tk.BOTH, expand=True)
+        self._container = tk.Frame(self._frame, bg="black")
+        self._container.pack(expand=True)
+        self._label1 = tk.Label(self._container, bg="black")
+        self._label1.pack(side=tk.LEFT)
+        self._label2 = tk.Label(self._container, bg="black")
+        self._photo1 = None
+        self._photo2 = None
+        self._pil1_orig = None
+        self._pil2_orig = None
+        self._resize_job = None
+        self._first_display = True
+        self.root.bind("<Configure>", self._on_resize)
+
+    def update(self, cv_image, extraimageurl=None):
+        """Replace displayed images. cv_image is a BGR numpy array."""
+        rgb = cv2.cvtColor(cv_image, cv2.COLOR_BGR2RGB)
+        self._pil1_orig = Image.fromarray(rgb)
+        self._pil2_orig = None
+        if extraimageurl:
+            try:
+                data = urllib.request.urlopen(extraimageurl).read()
+                self._pil2_orig = Image.open(io.BytesIO(data))
+            except Exception:
+                pass
+        if self._pil2_orig is not None:
+            self._label2.pack(side=tk.LEFT)
+        else:
+            self._label2.pack_forget()
+        if self._first_display:
+            self._first_display = False
+            nat_w, nat_h = self._natural_size()
+            self.root.geometry(f"{nat_w}x{nat_h}")
+            self.root.after(0, lambda: self._render(nat_w, nat_h))
+        else:
+            # Settle layout changes from pack/pack_forget before measuring
+            self.root.update_idletasks()
+            cur_w = self.root.winfo_width()
+            cur_h = self.root.winfo_height()
+            if cur_w > 1 and cur_h > 1:
+                self._render(cur_w, cur_h)
+            else:
+                nat_w, nat_h = self._natural_size()
+                self.root.geometry(f"{nat_w}x{nat_h}")
+                self.root.after(0, lambda: self._render(nat_w, nat_h))
+
+    def _natural_size(self):
+        if self._pil2_orig is not None:
+            nat_h = max(self._pil1_orig.height, self._pil2_orig.height)
+            ar1 = self._pil1_orig.width / self._pil1_orig.height
+            ar2 = self._pil2_orig.width / self._pil2_orig.height
+            return int((ar1 + ar2) * nat_h), nat_h
+        return self._pil1_orig.width, self._pil1_orig.height
+
+    def _render(self, avail_w, avail_h):
+        if self._pil1_orig is None or avail_w < 2 or avail_h < 2:
+            return
+        if self._pil2_orig is not None:
+            ar1 = self._pil1_orig.width / self._pil1_orig.height
+            ar2 = self._pil2_orig.width / self._pil2_orig.height
+            total_ar = ar1 + ar2
+            h = max(1, int(min(avail_h, avail_w / total_ar if total_ar > 0 else avail_h)))
+            pil1 = self._pil1_orig.resize((max(1, int(ar1 * h)), h), Image.Resampling.LANCZOS)
+            pil2 = self._pil2_orig.resize((max(1, int(ar2 * h)), h), Image.Resampling.LANCZOS)
+            self._photo2 = ImageTk.PhotoImage(pil2)
+            self._label2.config(image=self._photo2)
+            self._label2.image = self._photo2
+        else:
+            scale = min(avail_w / self._pil1_orig.width, avail_h / self._pil1_orig.height)
+            pil1 = self._pil1_orig.resize(
+                (max(1, int(self._pil1_orig.width * scale)),
+                 max(1, int(self._pil1_orig.height * scale))),
+                Image.Resampling.LANCZOS)
+        self._photo1 = ImageTk.PhotoImage(pil1)
+        self._label1.config(image=self._photo1)
+        self._label1.image = self._photo1
+
+    def _on_resize(self, event):
+        if event.widget is not self.root or self._pil1_orig is None:
+            return
+        if event.width < 2 or event.height < 2:
+            return
+        # Debounce: coalesce rapid resize events into one render
+        if self._resize_job is not None:
+            self.root.after_cancel(self._resize_job)
+        w, h = event.width, event.height
+        self._resize_job = self.root.after(50, lambda: self._render(w, h))
+
 
 if __name__ == "__main__":
 
