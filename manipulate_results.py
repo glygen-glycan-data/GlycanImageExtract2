@@ -656,20 +656,6 @@ parser.add_argument(
     help='JSON format extractor result file.'
 )
 
-parser.add_argument(
-    '--extractorurl',
-    type=str,
-    default='https://extractor.glyomics.org/',
-    help='Extractor URL.'
-)
-
-parser.add_argument(
-    '--glycan',
-    type=str,
-    default=None,
-    help='Glycan identifier to select at startup.'
-)
-
 args = parser.parse_args()
 
 assert args.json.endswith(".json") and os.path.exists(args.json)
