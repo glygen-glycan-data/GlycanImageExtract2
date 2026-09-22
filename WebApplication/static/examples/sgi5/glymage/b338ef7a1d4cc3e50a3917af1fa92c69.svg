@@ -19,8 +19,8 @@
       <clipPath clipPathUnits="userSpaceOnUse" id="clipPath5:3f5a8fc9dc68569ab8e3bbb0b1bb5874">
         <path d="M104 171 C104 177.0751 99.0751 182 93 182 C86.9249 182 82 177.0751 82 171 C82 164.9249 86.9249 160 93 160 C99.0751 160 104 164.9249 104 171 Z"/>
       </clipPath>
-      <clipPath clipPathUnits="userSpaceOnUse" id="clipPath6:7dd3c4eaaa38fca0b5f729bf5f443fc9">
-        <path d="M93 130 L82 108 L104 108 Z" style="fill-rule:evenodd;"/>
+      <clipPath clipPathUnits="userSpaceOnUse" id="clipPath6:db65ebbbbed73b13d4d05c80cbe51c24">
+        <path d="M93 108 L104 130 L82 130 Z" style="fill-rule:evenodd;"/>
       </clipPath>
       <clipPath clipPathUnits="userSpaceOnUse" id="clipPath7:7711f4d764d91c849c5ba35dc9d">
         <path d="M30 160 L52 160 L52 182 L30 182 L30 160 Z"/>
@@ -105,10 +105,10 @@
       <circle cx="93" cy="171" r="11" style="fill:none; stroke:black;"/>
     </g>
     <g ID="r-1:9" data.residueAnomericState="?" data.residueChirality="L" data.residueIndex="8" data.residueName="Fuc" data.residueRingSize="p" data.type="Monosaccharide" style="fill:white; text-rendering:optimizeSpeed; stroke:white;">
-      <polygon points=" 93 130 82 108 104 108" style="stroke:none; clip-path:url(#clipPath6:7dd3c4eaaa38fca0b5f729bf5f443fc9);"/>
-      <rect height="22" style="clip-path:url(#clipPath6:7dd3c4eaaa38fca0b5f729bf5f443fc9); fill:rgb(237,28,36); stroke:none;" width="22" x="82" y="108"/>
-      <rect height="22" style="clip-path:url(#clipPath6:7dd3c4eaaa38fca0b5f729bf5f443fc9); fill:none; stroke:black;" width="22" x="82" y="108"/>
-      <polygon points=" 93 130 82 108 104 108" style="fill:none; stroke:black;"/>
+      <polygon points=" 93 108 104 130 82 130" style="stroke:none; clip-path:url(#clipPath6:db65ebbbbed73b13d4d05c80cbe51c24);"/>
+      <rect height="22" style="clip-path:url(#clipPath6:db65ebbbbed73b13d4d05c80cbe51c24); fill:rgb(237,28,36); stroke:none;" width="22" x="82" y="108"/>
+      <rect height="22" style="clip-path:url(#clipPath6:db65ebbbbed73b13d4d05c80cbe51c24); fill:none; stroke:black;" width="22" x="82" y="108"/>
+      <polygon points=" 93 108 104 130 82 130" style="fill:none; stroke:black;"/>
     </g>
     <g ID="r-1:10" data.residueAnomericState="?" data.residueChirality="D" data.residueIndex="9" data.residueName="GalNAc" data.residueRingSize="p" data.type="Monosaccharide" style="fill:white; text-rendering:optimizeSpeed; stroke:white;">
       <rect height="22" style="clip-path:url(#clipPath7:7711f4d764d91c849c5ba35dc9d); stroke:none;" width="22" x="30" y="160"/>

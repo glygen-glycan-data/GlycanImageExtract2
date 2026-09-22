@@ -4,8 +4,8 @@
   <defs id="genericDefs"/>
   <g>
     <defs id="defs1">
-      <clipPath clipPathUnits="userSpaceOnUse" id="clipPath1:ab2e6e78a637a7303ec49a82c10fa">
-        <path d="M41 71 L30 49 L52 49 Z" style="fill-rule:evenodd;"/>
+      <clipPath clipPathUnits="userSpaceOnUse" id="clipPath1:97d43c4bda4d1c4842396602b203c17">
+        <path d="M41 49 L52 71 L30 71 Z" style="fill-rule:evenodd;"/>
       </clipPath>
       <clipPath clipPathUnits="userSpaceOnUse" id="clipPath2:b7223fbb4d73c8bf4d588799c26b64">
         <path d="M82 49 L104 49 L104 71 L82 71 L82 49 Z"/>
@@ -21,10 +21,10 @@
       <rect height="197" style="stroke:none;" width="238" x="0" y="0"/>
     </g>
     <g ID="r-1:2" data.residueAnomericState="?" data.residueChirality="L" data.residueIndex="1" data.residueName="Fuc" data.residueRingSize="?" data.residueUndeterminedChildPos="?" data.residueUndeterminedMultiplicity="1" data.residueUndeterminedParentPos="?" data.type="Monosaccharide" style="stroke:white; text-rendering:optimizeSpeed; fill:white;">
-      <polygon points=" 41 71 30 49 52 49" style="stroke:none; clip-path:url(#clipPath1:ab2e6e78a637a7303ec49a82c10fa);"/>
-      <rect height="22" style="clip-path:url(#clipPath1:ab2e6e78a637a7303ec49a82c10fa); fill:rgb(237,28,36); stroke:none;" width="22" x="30" y="49"/>
-      <rect height="22" style="clip-path:url(#clipPath1:ab2e6e78a637a7303ec49a82c10fa); fill:none; stroke:black;" width="22" x="30" y="49"/>
-      <polygon points=" 41 71 30 49 52 49" style="fill:none; stroke:black;"/>
+      <polygon points=" 41 49 52 71 30 71" style="stroke:none; clip-path:url(#clipPath1:97d43c4bda4d1c4842396602b203c17);"/>
+      <rect height="22" style="clip-path:url(#clipPath1:97d43c4bda4d1c4842396602b203c17); fill:rgb(237,28,36); stroke:none;" width="22" x="30" y="49"/>
+      <rect height="22" style="clip-path:url(#clipPath1:97d43c4bda4d1c4842396602b203c17); fill:none; stroke:black;" width="22" x="30" y="49"/>
+      <polygon points=" 41 49 52 71 30 71" style="fill:none; stroke:black;"/>
     </g>
     <g ID="r-1:3" data.residueAnomericState="?" data.residueChirality="D" data.residueIndex="2" data.residueName="GlcNAc" data.residueRingSize="?" data.residueUndeterminedChildPos="?" data.residueUndeterminedMultiplicity="4" data.residueUndeterminedParentPos="?" data.type="Monosaccharide" style="stroke:white; text-rendering:optimizeSpeed; fill:white;">
       <rect height="22" style="clip-path:url(#clipPath2:b7223fbb4d73c8bf4d588799c26b64); stroke:none;" width="22" x="82" y="49"/>

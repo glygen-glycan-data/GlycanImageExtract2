@@ -19,8 +19,8 @@
       <clipPath clipPathUnits="userSpaceOnUse" id="clipPath5:e9964f95812294721ef92db2a35ee78">
         <path d="M104 41 C104 47.0751 99.0751 52 93 52 C86.9249 52 82 47.0751 82 41 C82 34.9249 86.9249 30 93 30 C99.0751 30 104 34.9249 104 41 Z"/>
       </clipPath>
-      <clipPath clipPathUnits="userSpaceOnUse" id="clipPath6:eca6cba8afd34766ba71db87b967cb2">
-        <path d="M108 197 L130 208 L130 186 Z" style="fill-rule:evenodd;"/>
+      <clipPath clipPathUnits="userSpaceOnUse" id="clipPath6:76b0a5328d856dbc6571ac72b3d9e1ab">
+        <path d="M119 186 L130 208 L108 208 Z" style="fill-rule:evenodd;"/>
       </clipPath>
     </defs>
     <g style="fill:white; text-rendering:optimizeSpeed; stroke:white;">
@@ -78,10 +78,10 @@
       <circle cx="93" cy="41" r="11" style="fill:none; stroke:black;"/>
     </g>
     <g ID="r-1:4" data.residueAnomericState="?" data.residueChirality="L" data.residueIndex="3" data.residueName="Fuc" data.residueRingSize="p" data.type="Monosaccharide" style="fill:white; text-rendering:optimizeSpeed; stroke:white;">
-      <polygon points=" 108 197 130 208 130 186" style="stroke:none; clip-path:url(#clipPath6:eca6cba8afd34766ba71db87b967cb2);"/>
-      <rect height="22" style="clip-path:url(#clipPath6:eca6cba8afd34766ba71db87b967cb2); fill:rgb(237,28,36); stroke:none;" width="22" x="108" y="186"/>
-      <rect height="22" style="clip-path:url(#clipPath6:eca6cba8afd34766ba71db87b967cb2); fill:none; stroke:black;" width="22" x="108" y="186"/>
-      <polygon points=" 108 197 130 208 130 186" style="fill:none; stroke:black;"/>
+      <polygon points=" 119 186 130 208 108 208" style="stroke:none; clip-path:url(#clipPath6:76b0a5328d856dbc6571ac72b3d9e1ab);"/>
+      <rect height="22" style="clip-path:url(#clipPath6:76b0a5328d856dbc6571ac72b3d9e1ab); fill:rgb(237,28,36); stroke:none;" width="22" x="108" y="186"/>
+      <rect height="22" style="clip-path:url(#clipPath6:76b0a5328d856dbc6571ac72b3d9e1ab); fill:none; stroke:black;" width="22" x="108" y="186"/>
+      <polygon points=" 119 186 130 208 108 208" style="fill:none; stroke:black;"/>
     </g>
     <g ID="legend-1:0" style="text-rendering:optimizeSpeed; font-size:10; font-family:ariel, sans-serif;">
       <text style="stroke:none;" x="30" xml:space="preserve" y="273"/>

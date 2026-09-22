@@ -7,8 +7,8 @@
       <clipPath clipPathUnits="userSpaceOnUse" id="clipPath1:943950b7542572e1ec9b5ea19fa71d0">
         <path d="M82 290 L104 290 L104 312 L82 312 L82 290 Z"/>
       </clipPath>
-      <clipPath clipPathUnits="userSpaceOnUse" id="clipPath2:e0de919ec27228ec22b00b49f4962">
-        <path d="M134 301 L156 312 L156 290 Z" style="fill-rule:evenodd;"/>
+      <clipPath clipPathUnits="userSpaceOnUse" id="clipPath2:338ad92745676a98e79b1c7d718a1db6">
+        <path d="M145 290 L156 312 L134 312 Z" style="fill-rule:evenodd;"/>
       </clipPath>
       <clipPath clipPathUnits="userSpaceOnUse" id="clipPath3:1414b8b06bf726e878e66f82b193765a">
         <path d="M82 238 L104 238 L104 260 L82 260 L82 238 Z"/>
@@ -60,10 +60,10 @@
       <rect height="22" style="fill:none; stroke:black;" width="22" x="82" y="290"/>
     </g>
     <g ID="r-1:3" data.residueAnomericState="?" data.residueChirality="L" data.residueIndex="2" data.residueName="Fuc" data.residueRingSize="p" data.type="Monosaccharide" style="fill:white; text-rendering:optimizeSpeed; stroke:white;">
-      <polygon points=" 134 301 156 312 156 290" style="stroke:none; clip-path:url(#clipPath2:e0de919ec27228ec22b00b49f4962);"/>
-      <rect height="22" style="clip-path:url(#clipPath2:e0de919ec27228ec22b00b49f4962); fill:rgb(237,28,36); stroke:none;" width="22" x="134" y="290"/>
-      <rect height="22" style="clip-path:url(#clipPath2:e0de919ec27228ec22b00b49f4962); fill:none; stroke:black;" width="22" x="134" y="290"/>
-      <polygon points=" 134 301 156 312 156 290" style="fill:none; stroke:black;"/>
+      <polygon points=" 145 290 156 312 134 312" style="stroke:none; clip-path:url(#clipPath2:338ad92745676a98e79b1c7d718a1db6);"/>
+      <rect height="22" style="clip-path:url(#clipPath2:338ad92745676a98e79b1c7d718a1db6); fill:rgb(237,28,36); stroke:none;" width="22" x="134" y="290"/>
+      <rect height="22" style="clip-path:url(#clipPath2:338ad92745676a98e79b1c7d718a1db6); fill:none; stroke:black;" width="22" x="134" y="290"/>
+      <polygon points=" 145 290 156 312 134 312" style="fill:none; stroke:black;"/>
     </g>
     <g ID="l-1:4,5" data.childPositions="1" data.childResidueIndex="4" data.parentPositions="?" data.parentResidueIndex="3" data.type="Linkage" style="text-rendering:optimizeSpeed;">
       <polygon points=" 93 249 93 197" style="fill:none;"/>

@@ -31,8 +31,8 @@
       <clipPath clipPathUnits="userSpaceOnUse" id="clipPath9:9829fb1981cc54d04f6e81238901f1">
         <path d="M82 134 L104 134 L104 156 L82 156 L82 134 Z"/>
       </clipPath>
-      <clipPath clipPathUnits="userSpaceOnUse" id="clipPath10:30aceee923cc56a36918eb9e871737">
-        <path d="M108 353 L130 364 L130 342 Z" style="fill-rule:evenodd;"/>
+      <clipPath clipPathUnits="userSpaceOnUse" id="clipPath10:264037df3e1cf6a27383267cb32cc6fc">
+        <path d="M119 342 L130 364 L108 364 Z" style="fill-rule:evenodd;"/>
       </clipPath>
     </defs>
     <g style="fill:white; text-rendering:optimizeSpeed; stroke:white;">
@@ -126,10 +126,10 @@
       <rect height="22" style="fill:none; stroke:black;" width="22" x="82" y="134"/>
     </g>
     <g ID="r-1:4" data.residueAnomericState="?" data.residueChirality="L" data.residueIndex="3" data.residueName="Fuc" data.residueRingSize="p" data.type="Monosaccharide" style="fill:white; text-rendering:optimizeSpeed; stroke:white;">
-      <polygon points=" 108 353 130 364 130 342" style="stroke:none; clip-path:url(#clipPath10:30aceee923cc56a36918eb9e871737);"/>
-      <rect height="22" style="clip-path:url(#clipPath10:30aceee923cc56a36918eb9e871737); fill:rgb(237,28,36); stroke:none;" width="22" x="108" y="342"/>
-      <rect height="22" style="clip-path:url(#clipPath10:30aceee923cc56a36918eb9e871737); fill:none; stroke:black;" width="22" x="108" y="342"/>
-      <polygon points=" 108 353 130 364 130 342" style="fill:none; stroke:black;"/>
+      <polygon points=" 119 342 130 364 108 364" style="stroke:none; clip-path:url(#clipPath10:264037df3e1cf6a27383267cb32cc6fc);"/>
+      <rect height="22" style="clip-path:url(#clipPath10:264037df3e1cf6a27383267cb32cc6fc); fill:rgb(237,28,36); stroke:none;" width="22" x="108" y="342"/>
+      <rect height="22" style="clip-path:url(#clipPath10:264037df3e1cf6a27383267cb32cc6fc); fill:none; stroke:black;" width="22" x="108" y="342"/>
+      <polygon points=" 119 342 130 364 108 364" style="fill:none; stroke:black;"/>
     </g>
     <g ID="legend-1:0" style="text-rendering:optimizeSpeed; font-size:10; font-family:ariel, sans-serif;">
       <text style="stroke:none;" x="30" xml:space="preserve" y="429"/>

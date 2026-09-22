@@ -17,6 +17,7 @@
         "file_name": "pdf7_extra.png",
         "glycans": [
           {
+            "GID": "G1.1",
             "IUPAC": "Gal?1-?GlcNAc?1-?Man?1-?(GlcNAc?1-?)(Gal?1-?GlcNAc?1-?(Gal?1-?GlcNAc?1-?)Man?1-?)Man?1-?GlcNAc?1-?(Fuc?1-?)GlcNAc",
             "WURCS": "WURCS=2.0/4,13,12/[a2122h-1x_1-5_2*NCC/3=O][a1122h-1x_1-5][a2112h-1x_1-5][a1221m-1x_1-5]/1-1-2-2-1-3-1-3-2-1-3-1-4/a?-b1_a?-m1_b?-c1_c?-d1_c?-i1_c?-l1_d?-e1_d?-g1_e?-f1_g?-h1_i?-j1_j?-k1",
             "accession": "G78130XL",
@@ -38,188 +39,87 @@
             "fig_glycan_count": 1,
             "glyImage": "glymage/651f575c11369f07331fae1b9a8a5ac5.svg",
             "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G78130XL",
-            "height": 430,
+            "height": 431,
             "image_name": "pdf7_extra-1.png",
             "image_path": "extracted_figures/images/pdf7_extra-1.png",
             "linkexpl": "Extracted successfully using accession",
             "monos": [
               {
                 "bbox": [
-                  76,
-                  64,
-                  43,
-                  43
+                  157,
+                  65,
+                  45,
+                  41
                 ],
                 "center": [
-                  97.5,
+                  179.5,
                   85.5
                 ],
                 "classid": 1,
                 "classlabel": "Gal",
-                "confidence": 0.9997348189353943,
-                "height": 43,
+                "confidence": 0.9997175335884094,
+                "height": 41,
                 "id": 1,
+                "links": [],
+                "symbol": "Gal",
+                "width": 45
+              },
+              {
+                "bbox": [
+                  76,
+                  64,
+                  43,
+                  42
+                ],
+                "center": [
+                  97.5,
+                  85.0
+                ],
+                "classid": 1,
+                "classlabel": "Gal",
+                "confidence": 0.9997121691703796,
+                "height": 42,
+                "id": 2,
                 "links": [],
                 "symbol": "Gal",
                 "width": 43
               },
               {
                 "bbox": [
-                  157,
-                  65,
-                  45,
-                  42
-                ],
-                "center": [
-                  179.5,
-                  86.0
-                ],
-                "classid": 1,
-                "classlabel": "Gal",
-                "confidence": 0.9996325969696045,
-                "height": 42,
-                "id": 2,
-                "links": [],
-                "symbol": "Gal",
-                "width": 45
-              },
-              {
-                "bbox": [
-                  18,
-                  64,
-                  44,
-                  44
-                ],
-                "center": [
-                  40.0,
-                  86.0
-                ],
-                "classid": 1,
-                "classlabel": "Gal",
-                "confidence": 0.9995852708816528,
-                "height": 44,
-                "id": 3,
-                "links": [],
-                "symbol": "Gal",
-                "width": 44
-              },
-              {
-                "bbox": [
-                  101,
-                  233,
-                  45,
-                  42
-                ],
-                "center": [
-                  123.5,
-                  254.0
-                ],
-                "classid": 5,
-                "classlabel": "Man",
-                "confidence": 0.9994748830795288,
-                "height": 42,
-                "id": 4,
-                "links": [
-                  {
-                    "bbox": [
-                      102,
-                      176,
-                      45,
-                      100
-                    ],
-                    "center": [
-                      124.5,
-                      226.0
-                    ],
-                    "child_bond": 1,
-                    "classid": 0,
-                    "classlabel": "link",
-                    "confidence": 0.9999220371246338,
-                    "from_id": 4,
-                    "height": 100,
-                    "to_id": 13,
-                    "width": 45
-                  },
-                  {
-                    "bbox": [
-                      47,
-                      173,
-                      98,
-                      105
-                    ],
-                    "center": [
-                      96.0,
-                      225.5
-                    ],
-                    "child_bond": 1,
-                    "classid": 0,
-                    "classlabel": "link",
-                    "confidence": 0.9997525215148926,
-                    "from_id": 4,
-                    "height": 105,
-                    "to_id": 11,
-                    "width": 98
-                  },
-                  {
-                    "bbox": [
-                      103,
-                      175,
-                      98,
-                      104
-                    ],
-                    "center": [
-                      152.0,
-                      227.0
-                    ],
-                    "child_bond": 1,
-                    "classid": 0,
-                    "classlabel": "link",
-                    "confidence": 0.9996156692504883,
-                    "from_id": 4,
-                    "height": 104,
-                    "to_id": 10,
-                    "width": 98
-                  }
-                ],
-                "symbol": "Man",
-                "width": 45
-              },
-              {
-                "bbox": [
                   103,
                   347,
-                  43,
+                  42,
                   40
                 ],
                 "center": [
-                  124.5,
+                  124.0,
                   367.0
                 ],
                 "classid": 3,
                 "classlabel": "GlcNAc",
-                "confidence": 0.9994447231292725,
+                "confidence": 0.9996095895767212,
                 "height": 40,
-                "id": 5,
+                "id": 3,
                 "links": [
                   {
                     "bbox": [
                       103,
-                      291,
-                      43,
-                      96
+                      292,
+                      44,
+                      94
                     ],
                     "center": [
-                      124.5,
+                      125.0,
                       339.0
                     ],
                     "child_bond": 1,
                     "classid": 0,
                     "classlabel": "link",
-                    "confidence": 0.9998449087142944,
-                    "from_id": 5,
-                    "height": 96,
+                    "confidence": 0.999849796295166,
+                    "from_id": 3,
+                    "height": 94,
                     "to_id": 8,
-                    "width": 43
+                    "width": 44
                   },
                   {
                     "bbox": [
@@ -235,52 +135,153 @@
                     "child_bond": 1,
                     "classid": 0,
                     "classlabel": "link",
-                    "confidence": 0.9995840191841125,
-                    "from_id": 5,
+                    "confidence": 0.9997842907905579,
+                    "from_id": 3,
                     "height": 46,
                     "to_id": 12,
                     "width": 99
                   }
                 ],
                 "symbol": "GlcNAc",
-                "width": 43
+                "width": 42
               },
               {
                 "bbox": [
-                  156,
+                  18,
+                  64,
+                  45,
+                  44
+                ],
+                "center": [
+                  40.5,
+                  86.0
+                ],
+                "classid": 1,
+                "classlabel": "Gal",
+                "confidence": 0.9995862245559692,
+                "height": 44,
+                "id": 4,
+                "links": [],
+                "symbol": "Gal",
+                "width": 45
+              },
+              {
+                "bbox": [
+                  101,
+                  233,
+                  45,
+                  42
+                ],
+                "center": [
+                  123.5,
+                  254.0
+                ],
+                "classid": 5,
+                "classlabel": "Man",
+                "confidence": 0.9993822574615479,
+                "height": 42,
+                "id": 5,
+                "links": [
+                  {
+                    "bbox": [
+                      103,
+                      177,
+                      44,
+                      99
+                    ],
+                    "center": [
+                      125.0,
+                      226.5
+                    ],
+                    "child_bond": 1,
+                    "classid": 0,
+                    "classlabel": "link",
+                    "confidence": 0.9999328851699829,
+                    "from_id": 5,
+                    "height": 99,
+                    "to_id": 13,
+                    "width": 44
+                  },
+                  {
+                    "bbox": [
+                      102,
+                      175,
+                      99,
+                      102
+                    ],
+                    "center": [
+                      151.5,
+                      226.0
+                    ],
+                    "child_bond": 1,
+                    "classid": 0,
+                    "classlabel": "link",
+                    "confidence": 0.9997434616088867,
+                    "from_id": 5,
+                    "height": 102,
+                    "to_id": 9,
+                    "width": 99
+                  },
+                  {
+                    "bbox": [
+                      47,
+                      173,
+                      98,
+                      105
+                    ],
+                    "center": [
+                      96.0,
+                      225.5
+                    ],
+                    "child_bond": 1,
+                    "classid": 0,
+                    "classlabel": "link",
+                    "confidence": 0.9997078776359558,
+                    "from_id": 5,
+                    "height": 105,
+                    "to_id": 11,
+                    "width": 98
+                  }
+                ],
+                "symbol": "Man",
+                "width": 45
+              },
+              {
+                "bbox": [
+                  157,
                   123,
                   45,
                   37
                 ],
                 "center": [
-                  178.5,
+                  179.5,
                   141.5
                 ],
                 "classid": 3,
                 "classlabel": "GlcNAc",
-                "confidence": 0.9992777109146118,
+                "confidence": 0.9993141293525696,
                 "height": 37,
                 "id": 6,
                 "links": [
                   {
                     "bbox": [
                       156,
-                      65,
-                      46,
-                      96
+                      66,
+                      45,
+                      95
                     ],
                     "center": [
-                      179.0,
-                      113.0
+                      178.5,
+                      113.5
                     ],
                     "child_bond": 1,
                     "classid": 0,
                     "classlabel": "link",
-                    "confidence": 0.9999628067016602,
+                    "confidence": 0.9999595880508423,
                     "from_id": 6,
-                    "height": 96,
-                    "to_id": 2,
-                    "width": 46
+                    "height": 95,
+                    "to_id": 1,
+                    "width": 45
                   }
                 ],
                 "symbol": "GlcNAc",
@@ -288,18 +289,18 @@
               },
               {
                 "bbox": [
-                  20,
+                  21,
                   123,
                   39,
                   37
                 ],
                 "center": [
-                  39.5,
+                  40.5,
                   141.5
                 ],
                 "classid": 3,
                 "classlabel": "GlcNAc",
-                "confidence": 0.9991198182106018,
+                "confidence": 0.9990257620811462,
                 "height": 37,
                 "id": 7,
                 "links": [
@@ -307,21 +308,21 @@
                     "bbox": [
                       19,
                       65,
-                      42,
+                      43,
                       97
                     ],
                     "center": [
-                      40.0,
+                      40.5,
                       113.5
                     ],
                     "child_bond": 1,
                     "classid": 0,
                     "classlabel": "link",
-                    "confidence": 0.9999504089355469,
+                    "confidence": 0.9999500513076782,
                     "from_id": 7,
                     "height": 97,
-                    "to_id": 3,
-                    "width": 42
+                    "to_id": 4,
+                    "width": 43
                   }
                 ],
                 "symbol": "GlcNAc",
@@ -340,7 +341,7 @@
                 ],
                 "classid": 3,
                 "classlabel": "GlcNAc",
-                "confidence": 0.9984756112098694,
+                "confidence": 0.9989486932754517,
                 "height": 41,
                 "id": 8,
                 "links": [
@@ -358,51 +359,10 @@
                     "child_bond": 1,
                     "classid": 0,
                     "classlabel": "link",
-                    "confidence": 0.9999145269393921,
+                    "confidence": 0.9999055862426758,
                     "from_id": 8,
                     "height": 99,
-                    "to_id": 4,
-                    "width": 44
-                  }
-                ],
-                "symbol": "GlcNAc",
-                "width": 43
-              },
-              {
-                "bbox": [
-                  76,
-                  121,
-                  43,
-                  40
-                ],
-                "center": [
-                  97.5,
-                  141.0
-                ],
-                "classid": 3,
-                "classlabel": "GlcNAc",
-                "confidence": 0.9983587861061096,
-                "height": 40,
-                "id": 9,
-                "links": [
-                  {
-                    "bbox": [
-                      76,
-                      64,
-                      44,
-                      98
-                    ],
-                    "center": [
-                      98.0,
-                      113.0
-                    ],
-                    "child_bond": 1,
-                    "classid": 0,
-                    "classlabel": "link",
-                    "confidence": 0.9999264478683472,
-                    "from_id": 9,
-                    "height": 98,
-                    "to_id": 1,
+                    "to_id": 5,
                     "width": 44
                   }
                 ],
@@ -413,42 +373,83 @@
                 "bbox": [
                   157,
                   177,
-                  43,
+                  44,
                   42
                 ],
                 "center": [
-                  178.5,
+                  179.0,
                   198.0
                 ],
                 "classid": 5,
                 "classlabel": "Man",
-                "confidence": 0.9972884058952332,
+                "confidence": 0.9983927607536316,
                 "height": 42,
-                "id": 10,
+                "id": 9,
                 "links": [
                   {
                     "bbox": [
                       157,
-                      122,
+                      121,
                       44,
-                      96
+                      97
                     ],
                     "center": [
                       179.0,
-                      170.0
+                      169.5
                     ],
                     "child_bond": 1,
                     "classid": 0,
                     "classlabel": "link",
-                    "confidence": 0.9998894929885864,
-                    "from_id": 10,
-                    "height": 96,
+                    "confidence": 0.9999023675918579,
+                    "from_id": 9,
+                    "height": 97,
                     "to_id": 6,
                     "width": 44
                   }
                 ],
                 "symbol": "Man",
-                "width": 43
+                "width": 44
+              },
+              {
+                "bbox": [
+                  77,
+                  122,
+                  41,
+                  38
+                ],
+                "center": [
+                  97.5,
+                  141.0
+                ],
+                "classid": 3,
+                "classlabel": "GlcNAc",
+                "confidence": 0.9980705976486206,
+                "height": 38,
+                "id": 10,
+                "links": [
+                  {
+                    "bbox": [
+                      76,
+                      64,
+                      43,
+                      98
+                    ],
+                    "center": [
+                      97.5,
+                      113.0
+                    ],
+                    "child_bond": 1,
+                    "classid": 0,
+                    "classlabel": "link",
+                    "confidence": 0.9999266862869263,
+                    "from_id": 10,
+                    "height": 98,
+                    "to_id": 2,
+                    "width": 43
+                  }
+                ],
+                "symbol": "GlcNAc",
+                "width": 41
               },
               {
                 "bbox": [
@@ -463,7 +464,7 @@
                 ],
                 "classid": 5,
                 "classlabel": "Man",
-                "confidence": 0.994818925857544,
+                "confidence": 0.996540367603302,
                 "height": 43,
                 "id": 11,
                 "links": [
@@ -472,19 +473,19 @@
                       47,
                       121,
                       75,
-                      99
+                      98
                     ],
                     "center": [
                       84.5,
-                      170.5
+                      170.0
                     ],
                     "child_bond": 1,
                     "classid": 0,
                     "classlabel": "link",
-                    "confidence": 0.9999415874481201,
+                    "confidence": 0.9999445676803589,
                     "from_id": 11,
-                    "height": 99,
-                    "to_id": 9,
+                    "height": 98,
+                    "to_id": 10,
                     "width": 75
                   },
                   {
@@ -501,7 +502,7 @@
                     "child_bond": 1,
                     "classid": 0,
                     "classlabel": "link",
-                    "confidence": 0.999634861946106,
+                    "confidence": 0.9997138381004333,
                     "from_id": 11,
                     "height": 102,
                     "to_id": 7,
@@ -513,19 +514,19 @@
               },
               {
                 "bbox": [
-                  160,
-                  344,
+                  158,
+                  343,
                   45,
-                  47
+                  46
                 ],
                 "center": [
-                  182.5,
-                  367.5
+                  180.5,
+                  366.0
                 ],
                 "classid": 4,
                 "classlabel": "Fuc",
-                "confidence": 0.980870246887207,
-                "height": 47,
+                "confidence": 0.992678165435791,
+                "height": 46,
                 "id": 12,
                 "links": [],
                 "symbol": "Fuc",
@@ -534,41 +535,41 @@
               {
                 "bbox": [
                   104,
-                  179,
-                  41,
+                  178,
+                  40,
                   40
                 ],
                 "center": [
-                  124.5,
-                  199.0
+                  124.0,
+                  198.0
                 ],
                 "classid": 3,
                 "classlabel": "GlcNAc",
-                "confidence": 0.9500603079795837,
+                "confidence": 0.9049327969551086,
                 "height": 40,
                 "id": 13,
                 "links": [],
                 "symbol": "GlcNAc",
-                "width": 41
+                "width": 40
               }
             ],
             "orientation": "BT",
             "rejected_roots": [
               {
                 "bbox": [
-                  157,
-                  338,
+                  158,
+                  339,
                   43,
-                  57
+                  54
                 ],
                 "center": [
-                  178.5,
-                  366.5
+                  179.5,
+                  366.0
                 ],
                 "classid": 0,
                 "classlabel": "redend",
-                "confidence": 0.007048964500427246,
-                "height": 57,
+                "confidence": 0.004628181457519531,
+                "height": 54,
                 "mono_id": 12,
                 "width": 43
               },
@@ -585,9 +586,9 @@
                 ],
                 "classid": 0,
                 "classlabel": "redend",
-                "confidence": 0.0027579665184020996,
+                "confidence": 0.0018485188484191895,
                 "height": 42,
-                "mono_id": 10,
+                "mono_id": 9,
                 "width": 44
               },
               {
@@ -595,33 +596,33 @@
                   45,
                   176,
                   44,
-                  44
+                  45
                 ],
                 "center": [
                   67.0,
-                  198.0
+                  198.5
                 ],
                 "classid": 0,
                 "classlabel": "redend",
-                "confidence": 0.0026205778121948242,
-                "height": 44,
+                "confidence": 0.0014916062355041504,
+                "height": 45,
                 "mono_id": 11,
                 "width": 44
               },
               {
                 "bbox": [
                   104,
-                  177,
+                  178,
                   39,
                   42
                 ],
                 "center": [
                   123.5,
-                  198.0
+                  199.0
                 ],
                 "classid": 0,
                 "classlabel": "redend",
-                "confidence": 0.0017037391662597656,
+                "confidence": 0.0009726285934448242,
                 "height": 42,
                 "mono_id": 13,
                 "width": 39
@@ -629,19 +630,19 @@
               {
                 "bbox": [
                   104,
-                  233,
+                  232,
                   42,
                   43
                 ],
                 "center": [
                   125.0,
-                  254.5
+                  253.5
                 ],
                 "classid": 0,
                 "classlabel": "redend",
-                "confidence": 0.0008252263069152832,
+                "confidence": 0.0008708834648132324,
                 "height": 43,
-                "mono_id": 4,
+                "mono_id": 5,
                 "width": 42
               },
               {
@@ -657,27 +658,9 @@
                 ],
                 "classid": 0,
                 "classlabel": "redend",
-                "confidence": 0.0005651116371154785,
+                "confidence": 0.0006144046783447266,
                 "height": 38,
                 "mono_id": 7,
-                "width": 40
-              },
-              {
-                "bbox": [
-                  159,
-                  122,
-                  40,
-                  39
-                ],
-                "center": [
-                  179.0,
-                  141.5
-                ],
-                "classid": 0,
-                "classlabel": "redend",
-                "confidence": 0.0005041360855102539,
-                "height": 39,
-                "mono_id": 6,
                 "width": 40
               },
               {
@@ -693,28 +676,28 @@
                 ],
                 "classid": 0,
                 "classlabel": "redend",
-                "confidence": 0.00045877695083618164,
+                "confidence": 0.00045043230056762695,
                 "height": 39,
-                "mono_id": 9,
+                "mono_id": 10,
                 "width": 39
               },
               {
                 "bbox": [
-                  156,
-                  62,
-                  46,
-                  44
+                  159,
+                  122,
+                  40,
+                  39
                 ],
                 "center": [
                   179.0,
-                  84.0
+                  141.5
                 ],
                 "classid": 0,
                 "classlabel": "redend",
-                "confidence": 0.00044971704483032227,
-                "height": 44,
-                "mono_id": 2,
-                "width": 46
+                "confidence": 0.00040531158447265625,
+                "height": 39,
+                "mono_id": 6,
+                "width": 40
               },
               {
                 "bbox": [
@@ -729,10 +712,28 @@
                 ],
                 "classid": 0,
                 "classlabel": "redend",
-                "confidence": 0.00039517879486083984,
+                "confidence": 0.0003846883773803711,
                 "height": 42,
                 "mono_id": 8,
                 "width": 42
+              },
+              {
+                "bbox": [
+                  157,
+                  63,
+                  46,
+                  44
+                ],
+                "center": [
+                  180.0,
+                  85.0
+                ],
+                "classid": 0,
+                "classlabel": "redend",
+                "confidence": 0.0003458857536315918,
+                "height": 44,
+                "mono_id": 1,
+                "width": 46
               },
               {
                 "bbox": [
@@ -747,9 +748,9 @@
                 ],
                 "classid": 0,
                 "classlabel": "redend",
-                "confidence": 0.00026792287826538086,
+                "confidence": 0.0002662539482116699,
                 "height": 45,
-                "mono_id": 3,
+                "mono_id": 4,
                 "width": 43
               },
               {
@@ -765,9 +766,9 @@
                 ],
                 "classid": 0,
                 "classlabel": "redend",
-                "confidence": 0.00023156404495239258,
+                "confidence": 0.00024014711380004883,
                 "height": 43,
-                "mono_id": 1,
+                "mono_id": 2,
                 "width": 44
               }
             ],
@@ -784,116 +785,116 @@
               ],
               "classid": 0,
               "classlabel": "redend",
-              "confidence": 0.8815398812294006,
+              "confidence": 0.9254952669143677,
               "height": 40,
-              "mono_id": 5,
+              "mono_id": 3,
               "width": 42
             },
             "undirected_links": [
               {
                 "bbox": [
                   156,
-                  65,
-                  46,
-                  96
+                  66,
+                  45,
+                  95
                 ],
                 "center": [
-                  179.0,
-                  113.0
+                  178.5,
+                  113.5
                 ],
                 "classid": 0,
                 "classlabel": "link",
-                "confidence": 0.9999628067016602,
-                "height": 96,
+                "confidence": 0.9999595880508423,
+                "height": 95,
                 "mono_ids": [
-                  2,
+                  1,
                   6
                 ],
-                "width": 46
+                "width": 45
               },
               {
                 "bbox": [
                   19,
                   65,
-                  42,
+                  43,
                   97
                 ],
                 "center": [
-                  40.0,
+                  40.5,
                   113.5
                 ],
                 "classid": 0,
                 "classlabel": "link",
-                "confidence": 0.9999504089355469,
+                "confidence": 0.9999500513076782,
                 "height": 97,
                 "mono_ids": [
-                  3,
+                  4,
                   7
                 ],
-                "width": 42
+                "width": 43
               },
               {
                 "bbox": [
                   47,
                   121,
                   75,
-                  99
+                  98
                 ],
                 "center": [
                   84.5,
-                  170.5
+                  170.0
                 ],
                 "classid": 0,
                 "classlabel": "link",
-                "confidence": 0.9999415874481201,
-                "height": 99,
+                "confidence": 0.9999445676803589,
+                "height": 98,
                 "mono_ids": [
-                  9,
+                  10,
                   11
                 ],
                 "width": 75
               },
               {
                 "bbox": [
-                  76,
-                  64,
+                  103,
+                  177,
                   44,
-                  98
+                  99
                 ],
                 "center": [
-                  98.0,
-                  113.0
+                  125.0,
+                  226.5
                 ],
                 "classid": 0,
                 "classlabel": "link",
-                "confidence": 0.9999264478683472,
-                "height": 98,
+                "confidence": 0.9999328851699829,
+                "height": 99,
                 "mono_ids": [
-                  1,
-                  9
+                  5,
+                  13
                 ],
                 "width": 44
               },
               {
                 "bbox": [
-                  102,
-                  176,
-                  45,
-                  100
+                  76,
+                  64,
+                  43,
+                  98
                 ],
                 "center": [
-                  124.5,
-                  226.0
+                  97.5,
+                  113.0
                 ],
                 "classid": 0,
                 "classlabel": "link",
-                "confidence": 0.9999220371246338,
-                "height": 100,
+                "confidence": 0.9999266862869263,
+                "height": 98,
                 "mono_ids": [
-                  4,
-                  13
+                  2,
+                  10
                 ],
-                "width": 45
+                "width": 43
               },
               {
                 "bbox": [
@@ -908,10 +909,10 @@
                 ],
                 "classid": 0,
                 "classlabel": "link",
-                "confidence": 0.9999145269393921,
+                "confidence": 0.9999055862426758,
                 "height": 99,
                 "mono_ids": [
-                  4,
+                  5,
                   8
                 ],
                 "width": 44
@@ -919,107 +920,44 @@
               {
                 "bbox": [
                   157,
-                  122,
+                  121,
                   44,
-                  96
+                  97
                 ],
                 "center": [
                   179.0,
-                  170.0
+                  169.5
                 ],
                 "classid": 0,
                 "classlabel": "link",
-                "confidence": 0.9998894929885864,
-                "height": 96,
+                "confidence": 0.9999023675918579,
+                "height": 97,
                 "mono_ids": [
                   6,
-                  10
+                  9
                 ],
                 "width": 44
               },
               {
                 "bbox": [
                   103,
-                  291,
-                  43,
-                  96
+                  292,
+                  44,
+                  94
                 ],
                 "center": [
-                  124.5,
+                  125.0,
                   339.0
                 ],
                 "classid": 0,
                 "classlabel": "link",
-                "confidence": 0.9998449087142944,
-                "height": 96,
+                "confidence": 0.999849796295166,
+                "height": 94,
                 "mono_ids": [
-                  5,
+                  3,
                   8
                 ],
-                "width": 43
-              },
-              {
-                "bbox": [
-                  47,
-                  173,
-                  98,
-                  105
-                ],
-                "center": [
-                  96.0,
-                  225.5
-                ],
-                "classid": 0,
-                "classlabel": "link",
-                "confidence": 0.9997525215148926,
-                "height": 105,
-                "mono_ids": [
-                  4,
-                  11
-                ],
-                "width": 98
-              },
-              {
-                "bbox": [
-                  17,
-                  119,
-                  72,
-                  102
-                ],
-                "center": [
-                  53.0,
-                  170.0
-                ],
-                "classid": 0,
-                "classlabel": "link",
-                "confidence": 0.999634861946106,
-                "height": 102,
-                "mono_ids": [
-                  7,
-                  11
-                ],
-                "width": 72
-              },
-              {
-                "bbox": [
-                  103,
-                  175,
-                  98,
-                  104
-                ],
-                "center": [
-                  152.0,
-                  227.0
-                ],
-                "classid": 0,
-                "classlabel": "link",
-                "confidence": 0.9996156692504883,
-                "height": 104,
-                "mono_ids": [
-                  4,
-                  10
-                ],
-                "width": 98
+                "width": 44
               },
               {
                 "bbox": [
@@ -1034,20 +972,84 @@
                 ],
                 "classid": 0,
                 "classlabel": "link",
-                "confidence": 0.9995840191841125,
+                "confidence": 0.9997842907905579,
                 "height": 46,
                 "mono_ids": [
-                  5,
+                  3,
                   12
                 ],
                 "width": 99
+              },
+              {
+                "bbox": [
+                  102,
+                  175,
+                  99,
+                  102
+                ],
+                "center": [
+                  151.5,
+                  226.0
+                ],
+                "classid": 0,
+                "classlabel": "link",
+                "confidence": 0.9997434616088867,
+                "height": 102,
+                "mono_ids": [
+                  5,
+                  9
+                ],
+                "width": 99
+              },
+              {
+                "bbox": [
+                  17,
+                  119,
+                  72,
+                  102
+                ],
+                "center": [
+                  53.0,
+                  170.0
+                ],
+                "classid": 0,
+                "classlabel": "link",
+                "confidence": 0.9997138381004333,
+                "height": 102,
+                "mono_ids": [
+                  7,
+                  11
+                ],
+                "width": 72
+              },
+              {
+                "bbox": [
+                  47,
+                  173,
+                  98,
+                  105
+                ],
+                "center": [
+                  96.0,
+                  225.5
+                ],
+                "classid": 0,
+                "classlabel": "link",
+                "confidence": 0.9997078776359558,
+                "height": 105,
+                "mono_ids": [
+                  5,
+                  11
+                ],
+                "width": 98
               }
             ],
-            "width": 235,
+            "width": 236,
             "upvotes": 1,
             "downvotes": 0
           },
           {
+            "GID": "G1.2",
             "IUPAC": "Man?1-?(Man?1-?)Man?1-?(NeuAc?2-?Gal?1-?GlcNAc?1-?Gal?1-?GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?(Fuc?1-?)GlcNAc",
             "WURCS": "WURCS=2.0/5,13,12/[a2122h-1x_1-5_2*NCC/3=O][a1122h-1x_1-5][a2112h-1x_1-5][Aad21122h-2x_2-6_5*NCC/3=O][a1221m-1x_1-5]/1-1-2-2-1-3-1-3-4-2-2-2-5/a?-b1_a?-m1_b?-c1_c?-d1_c?-j1_d?-e1_e?-f1_f?-g1_g?-h1_h?-i2_j?-k1_j?-l1",
             "accession": "G38382KG",
@@ -1069,7 +1071,7 @@
             "fig_glycan_count": 2,
             "glyImage": "glymage/5d47a3dee0a6c95da6d7a6c799f4c93e.svg",
             "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G38382KG",
-            "height": 493,
+            "height": 494,
             "image_name": "pdf7_extra-2.png",
             "image_path": "extracted_figures/images/pdf7_extra-2.png",
             "linkexpl": "Extracted successfully using accession",
@@ -1087,7 +1089,7 @@
                 ],
                 "classid": 1,
                 "classlabel": "Gal",
-                "confidence": 0.9999436140060425,
+                "confidence": 0.9999419450759888,
                 "height": 41,
                 "id": 1,
                 "links": [
@@ -1108,7 +1110,7 @@
                     "confidence": 0.9999246597290039,
                     "from_id": 1,
                     "height": 99,
-                    "to_id": 7,
+                    "to_id": 6,
                     "width": 43
                   }
                 ],
@@ -1120,37 +1122,37 @@
                   28,
                   70,
                   44,
-                  41
+                  42
                 ],
                 "center": [
                   50.0,
-                  90.5
+                  91.0
                 ],
                 "classid": 1,
                 "classlabel": "Gal",
-                "confidence": 0.9998631477355957,
-                "height": 41,
+                "confidence": 0.9998782873153687,
+                "height": 42,
                 "id": 2,
                 "links": [
                   {
                     "bbox": [
                       29,
                       15,
-                      42,
-                      97
+                      43,
+                      96
                     ],
                     "center": [
-                      50.0,
-                      63.5
+                      50.5,
+                      63.0
                     ],
                     "child_bond": 2,
                     "classid": 0,
                     "classlabel": "link",
-                    "confidence": 0.9998791217803955,
+                    "confidence": 0.9998677968978882,
                     "from_id": 2,
-                    "height": 97,
+                    "height": 96,
                     "to_id": 12,
-                    "width": 42
+                    "width": 43
                   }
                 ],
                 "symbol": "Gal",
@@ -1158,23 +1160,64 @@
               },
               {
                 "bbox": [
-                  136,
-                  233,
-                  48,
-                  42
+                  69,
+                  344,
+                  42,
+                  41
                 ],
                 "center": [
-                  160.0,
-                  254.0
+                  90.0,
+                  364.5
                 ],
                 "classid": 5,
                 "classlabel": "Man",
-                "confidence": 0.9996872544288635,
-                "height": 42,
+                "confidence": 0.9996748566627502,
+                "height": 41,
                 "id": 3,
-                "links": [],
+                "links": [
+                  {
+                    "bbox": [
+                      28,
+                      285,
+                      87,
+                      104
+                    ],
+                    "center": [
+                      71.5,
+                      337.0
+                    ],
+                    "child_bond": 1,
+                    "classid": 0,
+                    "classlabel": "link",
+                    "confidence": 0.9997346997261047,
+                    "from_id": 3,
+                    "height": 104,
+                    "to_id": 8,
+                    "width": 87
+                  },
+                  {
+                    "bbox": [
+                      69,
+                      283,
+                      85,
+                      106
+                    ],
+                    "center": [
+                      111.5,
+                      336.0
+                    ],
+                    "child_bond": 1,
+                    "classid": 0,
+                    "classlabel": "link",
+                    "confidence": 0.9997323751449585,
+                    "from_id": 3,
+                    "height": 106,
+                    "to_id": 7,
+                    "width": 85
+                  }
+                ],
                 "symbol": "Man",
-                "width": 48
+                "width": 42
               },
               {
                 "bbox": [
@@ -1189,29 +1232,29 @@
                 ],
                 "classid": 3,
                 "classlabel": "GlcNAc",
-                "confidence": 0.9996851086616516,
+                "confidence": 0.9996401071548462,
                 "height": 39,
                 "id": 4,
                 "links": [
                   {
                     "bbox": [
                       29,
-                      178,
-                      42,
-                      100
+                      179,
+                      43,
+                      96
                     ],
                     "center": [
-                      50.0,
-                      228.0
+                      50.5,
+                      227.0
                     ],
                     "child_bond": 1,
                     "classid": 0,
                     "classlabel": "link",
-                    "confidence": 0.9998277425765991,
+                    "confidence": 0.9998568296432495,
                     "from_id": 4,
-                    "height": 100,
+                    "height": 96,
                     "to_id": 1,
-                    "width": 42
+                    "width": 43
                   }
                 ],
                 "symbol": "GlcNAc",
@@ -1219,100 +1262,100 @@
               },
               {
                 "bbox": [
-                  68,
-                  344,
-                  43,
+                  135,
+                  234,
+                  47,
                   41
                 ],
                 "center": [
-                  89.5,
-                  364.5
+                  158.5,
+                  254.5
                 ],
                 "classid": 5,
                 "classlabel": "Man",
-                "confidence": 0.9996038675308228,
+                "confidence": 0.9996055960655212,
                 "height": 41,
                 "id": 5,
+                "links": [],
+                "symbol": "Man",
+                "width": 47
+              },
+              {
+                "bbox": [
+                  29,
+                  126,
+                  42,
+                  39
+                ],
+                "center": [
+                  50.0,
+                  145.5
+                ],
+                "classid": 3,
+                "classlabel": "GlcNAc",
+                "confidence": 0.9995494484901428,
+                "height": 39,
+                "id": 6,
                 "links": [
                   {
                     "bbox": [
-                      28,
-                      284,
-                      87,
-                      104
-                    ],
-                    "center": [
-                      71.5,
-                      336.0
-                    ],
-                    "child_bond": 1,
-                    "classid": 0,
-                    "classlabel": "link",
-                    "confidence": 0.9997050166130066,
-                    "from_id": 5,
-                    "height": 104,
-                    "to_id": 10,
-                    "width": 87
-                  },
-                  {
-                    "bbox": [
+                      29,
                       70,
-                      283,
-                      85,
-                      106
+                      43,
+                      97
                     ],
                     "center": [
-                      112.5,
-                      336.0
+                      50.5,
+                      118.5
                     ],
                     "child_bond": 1,
                     "classid": 0,
                     "classlabel": "link",
-                    "confidence": 0.999692976474762,
-                    "from_id": 5,
-                    "height": 106,
-                    "to_id": 6,
-                    "width": 85
+                    "confidence": 0.9999386072158813,
+                    "from_id": 6,
+                    "height": 97,
+                    "to_id": 2,
+                    "width": 43
                   }
                 ],
-                "symbol": "Man",
-                "width": 43
+                "symbol": "GlcNAc",
+                "width": 42
               },
               {
                 "bbox": [
                   109,
                   287,
-                  48,
+                  47,
                   44
                 ],
                 "center": [
-                  133.0,
+                  132.5,
                   309.0
                 ],
                 "classid": 5,
                 "classlabel": "Man",
-                "confidence": 0.9995699524879456,
+                "confidence": 0.999541699886322,
                 "height": 44,
-                "id": 6,
+                "id": 7,
                 "links": [
                   {
                     "bbox": [
                       110,
                       232,
                       72,
-                      103
+                      102
                     ],
                     "center": [
                       146.0,
-                      283.5
+                      283.0
                     ],
                     "child_bond": 1,
                     "classid": 0,
                     "classlabel": "link",
-                    "confidence": 0.9997598528862,
-                    "from_id": 6,
-                    "height": 103,
-                    "to_id": 3,
+                    "confidence": 0.9997837543487549,
+                    "from_id": 7,
+                    "height": 102,
+                    "to_id": 5,
                     "width": 72
                   },
                   {
@@ -1329,117 +1372,15 @@
                     "child_bond": 1,
                     "classid": 0,
                     "classlabel": "link",
-                    "confidence": 0.9994421005249023,
-                    "from_id": 6,
+                    "confidence": 0.9995147585868835,
+                    "from_id": 7,
                     "height": 102,
-                    "to_id": 8,
+                    "to_id": 9,
                     "width": 73
                   }
                 ],
                 "symbol": "Man",
-                "width": 48
-              },
-              {
-                "bbox": [
-                  29,
-                  126,
-                  42,
-                  39
-                ],
-                "center": [
-                  50.0,
-                  145.5
-                ],
-                "classid": 3,
-                "classlabel": "GlcNAc",
-                "confidence": 0.9995670914649963,
-                "height": 39,
-                "id": 7,
-                "links": [
-                  {
-                    "bbox": [
-                      29,
-                      70,
-                      43,
-                      97
-                    ],
-                    "center": [
-                      50.5,
-                      118.5
-                    ],
-                    "child_bond": 1,
-                    "classid": 0,
-                    "classlabel": "link",
-                    "confidence": 0.9999383687973022,
-                    "from_id": 7,
-                    "height": 97,
-                    "to_id": 2,
-                    "width": 43
-                  }
-                ],
-                "symbol": "GlcNAc",
-                "width": 42
-              },
-              {
-                "bbox": [
-                  82,
-                  234,
-                  43,
-                  42
-                ],
-                "center": [
-                  103.5,
-                  255.0
-                ],
-                "classid": 5,
-                "classlabel": "Man",
-                "confidence": 0.9992923140525818,
-                "height": 42,
-                "id": 8,
-                "links": [],
-                "symbol": "Man",
-                "width": 43
-              },
-              {
-                "bbox": [
-                  69,
-                  398,
-                  42,
-                  42
-                ],
-                "center": [
-                  90.0,
-                  419.0
-                ],
-                "classid": 3,
-                "classlabel": "GlcNAc",
-                "confidence": 0.9992371797561646,
-                "height": 42,
-                "id": 9,
-                "links": [
-                  {
-                    "bbox": [
-                      68,
-                      343,
-                      45,
-                      97
-                    ],
-                    "center": [
-                      90.5,
-                      391.5
-                    ],
-                    "child_bond": 1,
-                    "classid": 0,
-                    "classlabel": "link",
-                    "confidence": 0.9999178647994995,
-                    "from_id": 9,
-                    "height": 97,
-                    "to_id": 5,
-                    "width": 45
-                  }
-                ],
-                "symbol": "GlcNAc",
-                "width": 42
+                "width": 47
               },
               {
                 "bbox": [
@@ -1454,9 +1395,9 @@
                 ],
                 "classid": 5,
                 "classlabel": "Man",
-                "confidence": 0.9990329742431641,
+                "confidence": 0.9990548491477966,
                 "height": 44,
-                "id": 10,
+                "id": 8,
                 "links": [
                   {
                     "bbox": [
@@ -1472,8 +1413,8 @@
                     "child_bond": 1,
                     "classid": 0,
                     "classlabel": "link",
-                    "confidence": 0.9999074935913086,
-                    "from_id": 10,
+                    "confidence": 0.9999158382415771,
+                    "from_id": 8,
                     "height": 98,
                     "to_id": 4,
                     "width": 42
@@ -1484,60 +1425,121 @@
               },
               {
                 "bbox": [
-                  68,
-                  455,
-                  42,
-                  36
+                  82,
+                  234,
+                  44,
+                  42
                 ],
                 "center": [
-                  89.0,
-                  473.0
+                  104.0,
+                  255.0
+                ],
+                "classid": 5,
+                "classlabel": "Man",
+                "confidence": 0.9990518689155579,
+                "height": 42,
+                "id": 9,
+                "links": [],
+                "symbol": "Man",
+                "width": 44
+              },
+              {
+                "bbox": [
+                  69,
+                  455,
+                  42,
+                  37
+                ],
+                "center": [
+                  90.0,
+                  473.5
                 ],
                 "classid": 3,
                 "classlabel": "GlcNAc",
-                "confidence": 0.9987368583679199,
-                "height": 36,
-                "id": 11,
+                "confidence": 0.9986831545829773,
+                "height": 37,
+                "id": 10,
                 "links": [
                   {
                     "bbox": [
-                      68,
-                      398,
-                      44,
-                      95
+                      69,
+                      450,
+                      98,
+                      44
                     ],
                     "center": [
-                      90.0,
-                      445.5
-                    ],
-                    "child_bond": 1,
-                    "classid": 0,
-                    "classlabel": "link",
-                    "confidence": 0.9995769262313843,
-                    "from_id": 11,
-                    "height": 95,
-                    "to_id": 9,
-                    "width": 44
-                  },
-                  {
-                    "bbox": [
-                      70,
-                      451,
-                      97,
-                      42
-                    ],
-                    "center": [
-                      118.5,
+                      118.0,
                       472.0
                     ],
                     "child_bond": 1,
                     "classid": 0,
                     "classlabel": "link",
-                    "confidence": 0.9992717504501343,
-                    "from_id": 11,
-                    "height": 42,
+                    "confidence": 0.9996204376220703,
+                    "from_id": 10,
+                    "height": 44,
                     "to_id": 13,
-                    "width": 97
+                    "width": 98
+                  },
+                  {
+                    "bbox": [
+                      69,
+                      398,
+                      43,
+                      96
+                    ],
+                    "center": [
+                      90.5,
+                      446.0
+                    ],
+                    "child_bond": 1,
+                    "classid": 0,
+                    "classlabel": "link",
+                    "confidence": 0.9994948506355286,
+                    "from_id": 10,
+                    "height": 96,
+                    "to_id": 11,
+                    "width": 43
+                  }
+                ],
+                "symbol": "GlcNAc",
+                "width": 42
+              },
+              {
+                "bbox": [
+                  69,
+                  398,
+                  42,
+                  42
+                ],
+                "center": [
+                  90.0,
+                  419.0
+                ],
+                "classid": 3,
+                "classlabel": "GlcNAc",
+                "confidence": 0.9985451698303223,
+                "height": 42,
+                "id": 11,
+                "links": [
+                  {
+                    "bbox": [
+                      68,
+                      343,
+                      44,
+                      98
+                    ],
+                    "center": [
+                      90.0,
+                      392.0
+                    ],
+                    "child_bond": 1,
+                    "classid": 0,
+                    "classlabel": "link",
+                    "confidence": 0.9999181032180786,
+                    "from_id": 11,
+                    "height": 98,
+                    "to_id": 3,
+                    "width": 44
                   }
                 ],
                 "symbol": "GlcNAc",
@@ -1556,7 +1558,7 @@
                 ],
                 "classid": 7,
                 "classlabel": "NeuAc",
-                "confidence": 0.9981486201286316,
+                "confidence": 0.9982025623321533,
                 "height": 40,
                 "id": 12,
                 "links": [],
@@ -1565,44 +1567,44 @@
               },
               {
                 "bbox": [
-                  126,
-                  452,
-                  43,
-                  39
+                  122,
+                  451,
+                  46,
+                  42
                 ],
                 "center": [
-                  147.5,
-                  471.5
+                  145.0,
+                  472.0
                 ],
                 "classid": 4,
                 "classlabel": "Fuc",
-                "confidence": 0.9536969661712646,
-                "height": 39,
+                "confidence": 0.9476383924484253,
+                "height": 42,
                 "id": 13,
                 "links": [],
                 "symbol": "Fuc",
-                "width": 43
+                "width": 46
               }
             ],
             "orientation": "BT",
             "rejected_roots": [
               {
                 "bbox": [
-                  122,
-                  446,
-                  48,
-                  45
+                  123,
+                  447,
+                  47,
+                  46
                 ],
                 "center": [
-                  146.0,
-                  468.5
+                  146.5,
+                  470.0
                 ],
                 "classid": 0,
                 "classlabel": "redend",
-                "confidence": 0.029958009719848633,
-                "height": 45,
+                "confidence": 0.0246925950050354,
+                "height": 46,
                 "mono_id": 13,
-                "width": 48
+                "width": 47
               },
               {
                 "bbox": [
@@ -1617,7 +1619,7 @@
                 ],
                 "classid": 0,
                 "classlabel": "redend",
-                "confidence": 0.02568000555038452,
+                "confidence": 0.021981656551361084,
                 "height": 46,
                 "mono_id": 12,
                 "width": 48
@@ -1627,17 +1629,17 @@
                   136,
                   231,
                   51,
-                  46
+                  45
                 ],
                 "center": [
                   161.5,
-                  254.0
+                  253.5
                 ],
                 "classid": 0,
                 "classlabel": "redend",
-                "confidence": 0.001831352710723877,
-                "height": 46,
-                "mono_id": 3,
+                "confidence": 0.0019099116325378418,
+                "height": 45,
+                "mono_id": 5,
                 "width": 51
               },
               {
@@ -1653,46 +1655,10 @@
                 ],
                 "classid": 0,
                 "classlabel": "redend",
-                "confidence": 0.0017879605293273926,
+                "confidence": 0.0017344951629638672,
                 "height": 49,
-                "mono_id": 8,
+                "mono_id": 9,
                 "width": 45
-              },
-              {
-                "bbox": [
-                  70,
-                  343,
-                  41,
-                  42
-                ],
-                "center": [
-                  90.5,
-                  364.0
-                ],
-                "classid": 0,
-                "classlabel": "redend",
-                "confidence": 0.0007746219635009766,
-                "height": 42,
-                "mono_id": 5,
-                "width": 41
-              },
-              {
-                "bbox": [
-                  28,
-                  287,
-                  44,
-                  45
-                ],
-                "center": [
-                  50.0,
-                  309.5
-                ],
-                "classid": 0,
-                "classlabel": "redend",
-                "confidence": 0.0005080699920654297,
-                "height": 45,
-                "mono_id": 10,
-                "width": 44
               },
               {
                 "bbox": [
@@ -1707,64 +1673,100 @@
                 ],
                 "classid": 0,
                 "classlabel": "redend",
-                "confidence": 0.0004029273986816406,
+                "confidence": 0.0012950301170349121,
                 "height": 49,
-                "mono_id": 9,
+                "mono_id": 11,
                 "width": 43
+              },
+              {
+                "bbox": [
+                  70,
+                  342,
+                  41,
+                  43
+                ],
+                "center": [
+                  90.5,
+                  363.5
+                ],
+                "classid": 0,
+                "classlabel": "redend",
+                "confidence": 0.0007709264755249023,
+                "height": 43,
+                "mono_id": 3,
+                "width": 41
+              },
+              {
+                "bbox": [
+                  27,
+                  287,
+                  44,
+                  45
+                ],
+                "center": [
+                  49.0,
+                  309.5
+                ],
+                "classid": 0,
+                "classlabel": "redend",
+                "confidence": 0.0005785822868347168,
+                "height": 45,
+                "mono_id": 8,
+                "width": 44
               },
               {
                 "bbox": [
                   29,
                   70,
-                  44,
+                  43,
                   42
                 ],
                 "center": [
-                  51.0,
+                  50.5,
                   91.0
                 ],
                 "classid": 0,
                 "classlabel": "redend",
-                "confidence": 0.0003024935722351074,
+                "confidence": 0.00029927492141723633,
                 "height": 42,
                 "mono_id": 2,
-                "width": 44
+                "width": 43
               },
               {
                 "bbox": [
-                  109,
-                  284,
-                  50,
-                  52
+                  110,
+                  285,
+                  49,
+                  51
                 ],
                 "center": [
-                  134.0,
-                  310.0
+                  134.5,
+                  310.5
                 ],
                 "classid": 0,
                 "classlabel": "redend",
-                "confidence": 0.0002830624580383301,
-                "height": 52,
-                "mono_id": 6,
-                "width": 50
+                "confidence": 0.0002713799476623535,
+                "height": 51,
+                "mono_id": 7,
+                "width": 49
               },
               {
                 "bbox": [
                   29,
                   180,
-                  43,
+                  44,
                   41
                 ],
                 "center": [
-                  50.5,
+                  51.0,
                   200.5
                 ],
                 "classid": 0,
                 "classlabel": "redend",
-                "confidence": 0.00013005733489990234,
+                "confidence": 0.00013363361358642578,
                 "height": 41,
                 "mono_id": 1,
-                "width": 43
+                "width": 44
               },
               {
                 "bbox": [
@@ -1779,7 +1781,7 @@
                 ],
                 "classid": 0,
                 "classlabel": "redend",
-                "confidence": 6.222724914550781e-05,
+                "confidence": 6.628036499023438e-05,
                 "height": 42,
                 "mono_id": 4,
                 "width": 43
@@ -1797,28 +1799,28 @@
                 ],
                 "classid": 0,
                 "classlabel": "redend",
-                "confidence": 5.459785461425781e-05,
+                "confidence": 5.125999450683594e-05,
                 "height": 42,
-                "mono_id": 7,
+                "mono_id": 6,
                 "width": 43
               }
             ],
             "root": {
               "bbox": [
-                71,
-                453,
+                70,
+                454,
                 42,
-                39
+                38
               ],
               "center": [
-                92.0,
-                472.5
+                91.0,
+                473.0
               ],
               "classid": 0,
               "classlabel": "redend",
-              "confidence": 0.9629758596420288,
-              "height": 39,
-              "mono_id": 11,
+              "confidence": 0.9621745347976685,
+              "height": 38,
+              "mono_id": 10,
               "width": 42
             },
             "undirected_links": [
@@ -1835,11 +1837,11 @@
                 ],
                 "classid": 0,
                 "classlabel": "link",
-                "confidence": 0.9999383687973022,
+                "confidence": 0.9999386072158813,
                 "height": 97,
                 "mono_ids": [
                   2,
-                  7
+                  6
                 ],
                 "width": 43
               },
@@ -1860,7 +1862,7 @@
                 "height": 99,
                 "mono_ids": [
                   1,
-                  7
+                  6
                 ],
                 "width": 43
               },
@@ -1868,22 +1870,22 @@
                 "bbox": [
                   68,
                   343,
-                  45,
-                  97
+                  44,
+                  98
                 ],
                 "center": [
-                  90.5,
-                  391.5
+                  90.0,
+                  392.0
                 ],
                 "classid": 0,
                 "classlabel": "link",
-                "confidence": 0.9999178647994995,
-                "height": 97,
+                "confidence": 0.9999181032180786,
+                "height": 98,
                 "mono_ids": [
-                  5,
-                  9
+                  3,
+                  11
                 ],
-                "width": 45
+                "width": 44
               },
               {
                 "bbox": [
@@ -1898,11 +1900,11 @@
                 ],
                 "classid": 0,
                 "classlabel": "link",
-                "confidence": 0.9999074935913086,
+                "confidence": 0.9999158382415771,
                 "height": 98,
                 "mono_ids": [
                   4,
-                  10
+                  8
                 ],
                 "width": 42
               },
@@ -1910,127 +1912,127 @@
                 "bbox": [
                   29,
                   15,
-                  42,
-                  97
+                  43,
+                  96
                 ],
                 "center": [
-                  50.0,
-                  63.5
+                  50.5,
+                  63.0
                 ],
                 "classid": 0,
                 "classlabel": "link",
-                "confidence": 0.9998791217803955,
-                "height": 97,
+                "confidence": 0.9998677968978882,
+                "height": 96,
                 "mono_ids": [
                   2,
                   12
                 ],
-                "width": 42
+                "width": 43
               },
               {
                 "bbox": [
                   29,
-                  178,
-                  42,
-                  100
+                  179,
+                  43,
+                  96
                 ],
                 "center": [
-                  50.0,
-                  228.0
+                  50.5,
+                  227.0
                 ],
                 "classid": 0,
                 "classlabel": "link",
-                "confidence": 0.9998277425765991,
-                "height": 100,
+                "confidence": 0.9998568296432495,
+                "height": 96,
                 "mono_ids": [
                   1,
                   4
                 ],
-                "width": 42
+                "width": 43
               },
               {
                 "bbox": [
                   110,
                   232,
                   72,
-                  103
+                  102
                 ],
                 "center": [
                   146.0,
-                  283.5
+                  283.0
                 ],
                 "classid": 0,
                 "classlabel": "link",
-                "confidence": 0.9997598528862,
-                "height": 103,
+                "confidence": 0.9997837543487549,
+                "height": 102,
                 "mono_ids": [
-                  3,
-                  6
+                  5,
+                  7
                 ],
                 "width": 72
               },
               {
                 "bbox": [
                   28,
-                  284,
+                  285,
                   87,
                   104
                 ],
                 "center": [
                   71.5,
-                  336.0
+                  337.0
                 ],
                 "classid": 0,
                 "classlabel": "link",
-                "confidence": 0.9997050166130066,
+                "confidence": 0.9997346997261047,
                 "height": 104,
                 "mono_ids": [
-                  5,
-                  10
+                  3,
+                  8
                 ],
                 "width": 87
               },
               {
                 "bbox": [
-                  70,
+                  69,
                   283,
                   85,
                   106
                 ],
                 "center": [
-                  112.5,
+                  111.5,
                   336.0
                 ],
                 "classid": 0,
                 "classlabel": "link",
-                "confidence": 0.999692976474762,
+                "confidence": 0.9997323751449585,
                 "height": 106,
                 "mono_ids": [
-                  5,
-                  6
+                  3,
+                  7
                 ],
                 "width": 85
               },
               {
                 "bbox": [
-                  68,
-                  398,
-                  44,
-                  95
+                  69,
+                  450,
+                  98,
+                  44
                 ],
                 "center": [
-                  90.0,
-                  445.5
+                  118.0,
+                  472.0
                 ],
                 "classid": 0,
                 "classlabel": "link",
-                "confidence": 0.9995769262313843,
-                "height": 95,
+                "confidence": 0.9996204376220703,
+                "height": 44,
                 "mono_ids": [
-                  9,
-                  11
+                  10,
+                  13
                 ],
-                "width": 44
+                "width": 98
               },
               {
                 "bbox": [
@@ -2045,41 +2047,42 @@
                 ],
                 "classid": 0,
                 "classlabel": "link",
-                "confidence": 0.9994421005249023,
+                "confidence": 0.9995147585868835,
                 "height": 102,
                 "mono_ids": [
-                  6,
-                  8
+                  7,
+                  9
                 ],
                 "width": 73
               },
               {
                 "bbox": [
-                  70,
-                  451,
-                  97,
-                  42
+                  69,
+                  398,
+                  43,
+                  96
                 ],
                 "center": [
-                  118.5,
-                  472.0
+                  90.5,
+                  446.0
                 ],
                 "classid": 0,
                 "classlabel": "link",
-                "confidence": 0.9992717504501343,
-                "height": 42,
+                "confidence": 0.9994948506355286,
+                "height": 96,
                 "mono_ids": [
-                  11,
-                  13
+                  10,
+                  11
                 ],
-                "width": 97
+                "width": 43
               }
             ],
-            "width": 199,
+            "width": 200,
             "upvotes": 1,
             "downvotes": 0
           },
           {
+            "GID": "G1.3",
             "IUPAC": "Gal?1-?GlcNAc?1-?Man?1-?(Gal?1-?GlcNAc?1-?(NeuAc?2-?Gal?1-?GlcNAc?1-?)Man?1-?)Man?1-?GlcNAc?1-?(Fuc?1-?)GlcNAc",
             "WURCS": "WURCS=2.0/5,13,12/[a2122h-1x_1-5_2*NCC/3=O][a1122h-1x_1-5][a2112h-1x_1-5][Aad21122h-2x_2-6_5*NCC/3=O][a1221m-1x_1-5]/1-1-2-2-1-3-4-1-3-2-1-3-5/a?-b1_a?-m1_b?-c1_c?-d1_c?-j1_d?-e1_d?-h1_e?-f1_f?-g2_h?-i1_j?-k1_k?-l1",
             "accession": "G66420HM",
@@ -2101,7 +2104,7 @@
             "fig_glycan_count": 3,
             "glyImage": "glymage/51c089f9b9020109b0a3a514ddf69e6f.svg",
             "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G66420HM",
-            "height": 483,
+            "height": 484,
             "image_name": "pdf7_extra-3.png",
             "image_path": "extracted_figures/images/pdf7_extra-3.png",
             "linkexpl": "Extracted successfully using accession",
@@ -2119,7 +2122,7 @@
                 ],
                 "classid": 1,
                 "classlabel": "Gal",
-                "confidence": 0.9999418258666992,
+                "confidence": 0.9999350309371948,
                 "height": 49,
                 "id": 1,
                 "links": [],
@@ -2139,7 +2142,7 @@
                 ],
                 "classid": 1,
                 "classlabel": "Gal",
-                "confidence": 0.9999194145202637,
+                "confidence": 0.9999275207519531,
                 "height": 49,
                 "id": 2,
                 "links": [
@@ -2157,7 +2160,7 @@
                     "child_bond": 2,
                     "classid": 0,
                     "classlabel": "link",
-                    "confidence": 0.999936580657959,
+                    "confidence": 0.9999321699142456,
                     "from_id": 2,
                     "height": 111,
                     "to_id": 12,
@@ -2169,60 +2172,60 @@
               },
               {
                 "bbox": [
-                  157,
+                  158,
                   65,
-                  51,
+                  50,
                   48
                 ],
                 "center": [
-                  182.5,
+                  183.0,
                   89.0
                 ],
                 "classid": 1,
                 "classlabel": "Gal",
-                "confidence": 0.9998906850814819,
+                "confidence": 0.9999229907989502,
                 "height": 48,
                 "id": 3,
                 "links": [],
                 "symbol": "Gal",
-                "width": 51
+                "width": 50
               },
               {
                 "bbox": [
                   109,
                   259,
-                  50,
+                  49,
                   47
                 ],
                 "center": [
-                  134.0,
+                  133.5,
                   282.5
                 ],
                 "classid": 5,
                 "classlabel": "Man",
-                "confidence": 0.9996958374977112,
+                "confidence": 0.9996882081031799,
                 "height": 47,
                 "id": 4,
                 "links": [
                   {
                     "bbox": [
-                      111,
-                      191,
-                      97,
+                      110,
+                      192,
+                      98,
                       117
                     ],
                     "center": [
-                      159.5,
-                      249.5
+                      159.0,
+                      250.5
                     ],
                     "child_bond": 1,
                     "classid": 0,
                     "classlabel": "link",
-                    "confidence": 0.9998636245727539,
+                    "confidence": 0.9998601675033569,
                     "from_id": 4,
                     "height": 117,
-                    "to_id": 6,
-                    "width": 97
+                    "to_id": 5,
+                    "width": 98
                   },
                   {
                     "bbox": [
@@ -2238,92 +2241,51 @@
                     "child_bond": 1,
                     "classid": 0,
                     "classlabel": "link",
-                    "confidence": 0.9998592138290405,
+                    "confidence": 0.9998539686203003,
                     "from_id": 4,
                     "height": 118,
-                    "to_id": 7,
+                    "to_id": 9,
                     "width": 99
                   }
                 ],
                 "symbol": "Man",
-                "width": 50
-              },
-              {
-                "bbox": [
-                  112,
-                  324,
-                  47,
-                  45
-                ],
-                "center": [
-                  135.5,
-                  346.5
-                ],
-                "classid": 3,
-                "classlabel": "GlcNAc",
-                "confidence": 0.9996629357337952,
-                "height": 45,
-                "id": 5,
-                "links": [
-                  {
-                    "bbox": [
-                      111,
-                      258,
-                      50,
-                      112
-                    ],
-                    "center": [
-                      136.0,
-                      314.0
-                    ],
-                    "child_bond": 1,
-                    "classid": 0,
-                    "classlabel": "link",
-                    "confidence": 0.9998644590377808,
-                    "from_id": 5,
-                    "height": 112,
-                    "to_id": 4,
-                    "width": 50
-                  }
-                ],
-                "symbol": "GlcNAc",
-                "width": 47
+                "width": 49
               },
               {
                 "bbox": [
                   158,
                   196,
                   49,
-                  46
+                  45
                 ],
                 "center": [
                   182.5,
-                  219.0
+                  218.5
                 ],
                 "classid": 5,
                 "classlabel": "Man",
-                "confidence": 0.9995395541191101,
-                "height": 46,
-                "id": 6,
+                "confidence": 0.9996230006217957,
+                "height": 45,
+                "id": 5,
                 "links": [
                   {
                     "bbox": [
-                      158,
+                      159,
                       130,
                       49,
-                      112
+                      111
                     ],
                     "center": [
-                      182.5,
-                      186.0
+                      183.5,
+                      185.5
                     ],
                     "child_bond": 1,
                     "classid": 0,
                     "classlabel": "link",
-                    "confidence": 0.9998202323913574,
-                    "from_id": 6,
-                    "height": 112,
-                    "to_id": 10,
+                    "confidence": 0.9998742341995239,
+                    "from_id": 5,
+                    "height": 111,
+                    "to_id": 8,
                     "width": 49
                   }
                 ],
@@ -2332,121 +2294,40 @@
               },
               {
                 "bbox": [
-                  59,
-                  194,
-                  55,
-                  49
-                ],
-                "center": [
-                  86.5,
-                  218.5
-                ],
-                "classid": 5,
-                "classlabel": "Man",
-                "confidence": 0.9993773102760315,
-                "height": 49,
-                "id": 7,
-                "links": [
-                  {
-                    "bbox": [
-                      63,
-                      130,
-                      81,
-                      110
-                    ],
-                    "center": [
-                      103.5,
-                      185.0
-                    ],
-                    "child_bond": 1,
-                    "classid": 0,
-                    "classlabel": "link",
-                    "confidence": 0.999465823173523,
-                    "from_id": 7,
-                    "height": 110,
-                    "to_id": 9,
-                    "width": 81
-                  },
-                  {
-                    "bbox": [
-                      28,
-                      128,
-                      83,
-                      117
-                    ],
-                    "center": [
-                      69.5,
-                      186.5
-                    ],
-                    "child_bond": 1,
-                    "classid": 0,
-                    "classlabel": "link",
-                    "confidence": 0.9986703395843506,
-                    "from_id": 7,
-                    "height": 117,
-                    "to_id": 11,
-                    "width": 83
-                  }
-                ],
-                "symbol": "Man",
-                "width": 55
-              },
-              {
-                "bbox": [
-                  113,
-                  390,
+                  112,
+                  325,
                   47,
-                  48
+                  45
                 ],
                 "center": [
-                  136.5,
-                  414.0
+                  135.5,
+                  347.5
                 ],
                 "classid": 3,
                 "classlabel": "GlcNAc",
-                "confidence": 0.9991074204444885,
-                "height": 48,
-                "id": 8,
+                "confidence": 0.9995883703231812,
+                "height": 45,
+                "id": 6,
                 "links": [
                   {
                     "bbox": [
-                      112,
-                      385,
-                      115,
-                      56
+                      110,
+                      260,
+                      51,
+                      110
                     ],
                     "center": [
-                      169.5,
-                      413.0
+                      135.5,
+                      315.0
                     ],
                     "child_bond": 1,
                     "classid": 0,
                     "classlabel": "link",
-                    "confidence": 0.9999239444732666,
-                    "from_id": 8,
-                    "height": 56,
-                    "to_id": 13,
-                    "width": 115
-                  },
-                  {
-                    "bbox": [
-                      112,
-                      324,
-                      49,
-                      112
-                    ],
-                    "center": [
-                      136.5,
-                      380.0
-                    ],
-                    "child_bond": 1,
-                    "classid": 0,
-                    "classlabel": "link",
-                    "confidence": 0.9998579025268555,
-                    "from_id": 8,
-                    "height": 112,
-                    "to_id": 5,
-                    "width": 49
+                    "confidence": 0.9998761415481567,
+                    "from_id": 6,
+                    "height": 110,
+                    "to_id": 4,
+                    "width": 51
                   }
                 ],
                 "symbol": "GlcNAc",
@@ -2456,83 +2337,205 @@
                 "bbox": [
                   95,
                   130,
-                  48,
+                  47,
                   48
                 ],
                 "center": [
-                  119.0,
+                  118.5,
                   154.0
                 ],
                 "classid": 3,
                 "classlabel": "GlcNAc",
-                "confidence": 0.9990606307983398,
+                "confidence": 0.9993654489517212,
                 "height": 48,
-                "id": 9,
+                "id": 7,
                 "links": [
                   {
                     "bbox": [
-                      94,
+                      95,
                       65,
                       49,
-                      113
+                      114
                     ],
                     "center": [
-                      118.5,
-                      121.5
+                      119.5,
+                      122.0
                     ],
                     "child_bond": 1,
                     "classid": 0,
                     "classlabel": "link",
-                    "confidence": 0.9998968839645386,
-                    "from_id": 9,
-                    "height": 113,
+                    "confidence": 0.9999127388000488,
+                    "from_id": 7,
+                    "height": 114,
                     "to_id": 1,
                     "width": 49
                   }
                 ],
                 "symbol": "GlcNAc",
-                "width": 48
+                "width": 47
               },
               {
                 "bbox": [
                   159,
                   131,
-                  48,
-                  45
+                  49,
+                  44
                 ],
                 "center": [
-                  183.0,
-                  153.5
+                  183.5,
+                  153.0
                 ],
                 "classid": 3,
                 "classlabel": "GlcNAc",
-                "confidence": 0.9989018440246582,
-                "height": 45,
-                "id": 10,
+                "confidence": 0.9993354082107544,
+                "height": 44,
+                "id": 8,
                 "links": [
                   {
                     "bbox": [
-                      158,
-                      66,
+                      159,
+                      65,
                       49,
-                      111
+                      110
                     ],
                     "center": [
-                      182.5,
-                      121.5
+                      183.5,
+                      120.0
                     ],
                     "child_bond": 1,
                     "classid": 0,
                     "classlabel": "link",
-                    "confidence": 0.9999239444732666,
-                    "from_id": 10,
-                    "height": 111,
+                    "confidence": 0.9999196529388428,
+                    "from_id": 8,
+                    "height": 110,
                     "to_id": 3,
                     "width": 49
                   }
                 ],
                 "symbol": "GlcNAc",
-                "width": 48
+                "width": 49
+              },
+              {
+                "bbox": [
+                  59,
+                  194,
+                  55,
+                  48
+                ],
+                "center": [
+                  86.5,
+                  218.0
+                ],
+                "classid": 5,
+                "classlabel": "Man",
+                "confidence": 0.9992524981498718,
+                "height": 48,
+                "id": 9,
+                "links": [
+                  {
+                    "bbox": [
+                      64,
+                      130,
+                      81,
+                      110
+                    ],
+                    "center": [
+                      104.5,
+                      185.0
+                    ],
+                    "child_bond": 1,
+                    "classid": 0,
+                    "classlabel": "link",
+                    "confidence": 0.9995918273925781,
+                    "from_id": 9,
+                    "height": 110,
+                    "to_id": 7,
+                    "width": 81
+                  },
+                  {
+                    "bbox": [
+                      31,
+                      128,
+                      80,
+                      113
+                    ],
+                    "center": [
+                      71.0,
+                      184.5
+                    ],
+                    "child_bond": 1,
+                    "classid": 0,
+                    "classlabel": "link",
+                    "confidence": 0.9991856813430786,
+                    "from_id": 9,
+                    "height": 113,
+                    "to_id": 11,
+                    "width": 80
+                  }
+                ],
+                "symbol": "Man",
+                "width": 55
+              },
+              {
+                "bbox": [
+                  113,
+                  390,
+                  46,
+                  48
+                ],
+                "center": [
+                  136.0,
+                  414.0
+                ],
+                "classid": 3,
+                "classlabel": "GlcNAc",
+                "confidence": 0.9988483190536499,
+                "height": 48,
+                "id": 10,
+                "links": [
+                  {
+                    "bbox": [
+                      111,
+                      385,
+                      116,
+                      56
+                    ],
+                    "center": [
+                      169.0,
+                      413.0
+                    ],
+                    "child_bond": 1,
+                    "classid": 0,
+                    "classlabel": "link",
+                    "confidence": 0.999873161315918,
+                    "from_id": 10,
+                    "height": 56,
+                    "to_id": 13,
+                    "width": 116
+                  },
+                  {
+                    "bbox": [
+                      112,
+                      323,
+                      49,
+                      113
+                    ],
+                    "center": [
+                      136.5,
+                      379.5
+                    ],
+                    "child_bond": 1,
+                    "classid": 0,
+                    "classlabel": "link",
+                    "confidence": 0.999864935874939,
+                    "from_id": 10,
+                    "height": 113,
+                    "to_id": 6,
+                    "width": 49
+                  }
+                ],
+                "symbol": "GlcNAc",
+                "width": 46
               },
               {
                 "bbox": [
@@ -2547,7 +2550,7 @@
                 ],
                 "classid": 3,
                 "classlabel": "GlcNAc",
-                "confidence": 0.998295783996582,
+                "confidence": 0.9986953139305115,
                 "height": 48,
                 "id": 11,
                 "links": [
@@ -2565,7 +2568,7 @@
                     "child_bond": 1,
                     "classid": 0,
                     "classlabel": "link",
-                    "confidence": 0.9999066591262817,
+                    "confidence": 0.999906063079834,
                     "from_id": 11,
                     "height": 112,
                     "to_id": 2,
@@ -2577,30 +2580,30 @@
               },
               {
                 "bbox": [
-                  30,
+                  31,
                   3,
-                  48,
+                  47,
                   44
                 ],
                 "center": [
-                  54.0,
+                  54.5,
                   25.0
                 ],
                 "classid": 7,
                 "classlabel": "NeuAc",
-                "confidence": 0.9982814192771912,
+                "confidence": 0.9983299970626831,
                 "height": 44,
                 "id": 12,
                 "links": [],
                 "symbol": "NeuAc",
-                "width": 48
+                "width": 47
               },
               {
                 "bbox": [
                   177,
-                  388,
+                  389,
                   48,
-                  49
+                  47
                 ],
                 "center": [
                   201.0,
@@ -2608,8 +2611,8 @@
                 ],
                 "classid": 4,
                 "classlabel": "Fuc",
-                "confidence": 0.9979055523872375,
-                "height": 49,
+                "confidence": 0.9976251721382141,
+                "height": 47,
                 "id": 13,
                 "links": [],
                 "symbol": "Fuc",
@@ -2620,57 +2623,39 @@
             "rejected_roots": [
               {
                 "bbox": [
-                  176,
+                  177,
                   383,
-                  49,
-                  60
+                  48,
+                  58
                 ],
                 "center": [
-                  200.5,
-                  413.0
+                  201.0,
+                  412.0
                 ],
                 "classid": 0,
                 "classlabel": "redend",
-                "confidence": 0.0019435882568359375,
-                "height": 60,
+                "confidence": 0.0018888115882873535,
+                "height": 58,
                 "mono_id": 13,
-                "width": 49
+                "width": 48
               },
               {
                 "bbox": [
                   30,
-                  1,
+                  2,
                   49,
                   47
                 ],
                 "center": [
                   54.5,
-                  24.5
+                  25.5
                 ],
                 "classid": 0,
                 "classlabel": "redend",
-                "confidence": 0.0010894536972045898,
+                "confidence": 0.0010325312614440918,
                 "height": 47,
                 "mono_id": 12,
                 "width": 49
-              },
-              {
-                "bbox": [
-                  158,
-                  196,
-                  48,
-                  46
-                ],
-                "center": [
-                  182.0,
-                  219.0
-                ],
-                "classid": 0,
-                "classlabel": "redend",
-                "confidence": 0.0005259513854980469,
-                "height": 46,
-                "mono_id": 6,
-                "width": 48
               },
               {
                 "bbox": [
@@ -2685,7 +2670,7 @@
                 ],
                 "classid": 0,
                 "classlabel": "redend",
-                "confidence": 0.0004207491874694824,
+                "confidence": 0.00044983625411987305,
                 "height": 48,
                 "mono_id": 4,
                 "width": 50
@@ -2693,20 +2678,38 @@
               {
                 "bbox": [
                   159,
-                  65,
+                  196,
                   48,
-                  48
+                  46
                 ],
                 "center": [
                   183.0,
-                  89.0
+                  219.0
                 ],
                 "classid": 0,
                 "classlabel": "redend",
-                "confidence": 0.0003508925437927246,
+                "confidence": 0.00041669607162475586,
+                "height": 46,
+                "mono_id": 5,
+                "width": 48
+              },
+              {
+                "bbox": [
+                  160,
+                  64,
+                  47,
+                  48
+                ],
+                "center": [
+                  183.5,
+                  88.0
+                ],
+                "classid": 0,
+                "classlabel": "redend",
+                "confidence": 0.0003153681755065918,
                 "height": 48,
                 "mono_id": 3,
-                "width": 48
+                "width": 47
               },
               {
                 "bbox": [
@@ -2721,64 +2724,64 @@
                 ],
                 "classid": 0,
                 "classlabel": "redend",
-                "confidence": 0.0002243518829345703,
+                "confidence": 0.00022149085998535156,
                 "height": 46,
-                "mono_id": 5,
+                "mono_id": 6,
                 "width": 48
               },
               {
                 "bbox": [
                   96,
-                  128,
+                  129,
                   48,
                   49
                 ],
                 "center": [
                   120.0,
-                  152.5
+                  153.5
                 ],
                 "classid": 0,
                 "classlabel": "redend",
-                "confidence": 0.0002034306526184082,
+                "confidence": 0.00021892786026000977,
                 "height": 49,
-                "mono_id": 9,
+                "mono_id": 7,
                 "width": 48
               },
               {
                 "bbox": [
                   61,
-                  194,
-                  51,
+                  193,
+                  52,
                   50
                 ],
                 "center": [
-                  86.5,
-                  219.0
+                  87.0,
+                  218.0
                 ],
                 "classid": 0,
                 "classlabel": "redend",
-                "confidence": 0.00018364191055297852,
+                "confidence": 0.0001804828643798828,
                 "height": 50,
-                "mono_id": 7,
-                "width": 51
+                "mono_id": 9,
+                "width": 52
               },
               {
                 "bbox": [
                   160,
                   130,
-                  47,
+                  48,
                   46
                 ],
                 "center": [
-                  183.5,
+                  184.0,
                   153.0
                 ],
                 "classid": 0,
                 "classlabel": "redend",
-                "confidence": 0.0001766681671142578,
+                "confidence": 0.0001404285430908203,
                 "height": 46,
-                "mono_id": 10,
-                "width": 47
+                "mono_id": 8,
+                "width": 48
               },
               {
                 "bbox": [
@@ -2793,7 +2796,7 @@
                 ],
                 "classid": 0,
                 "classlabel": "redend",
-                "confidence": 0.00013589859008789062,
+                "confidence": 0.0001347064971923828,
                 "height": 49,
                 "mono_id": 1,
                 "width": 49
@@ -2811,25 +2814,25 @@
                 ],
                 "classid": 0,
                 "classlabel": "redend",
-                "confidence": 0.00011909008026123047,
+                "confidence": 0.00012505054473876953,
                 "height": 49,
                 "mono_id": 2,
                 "width": 49
               },
               {
                 "bbox": [
-                  29,
+                  30,
                   130,
                   47,
                   47
                 ],
                 "center": [
-                  52.5,
+                  53.5,
                   153.5
                 ],
                 "classid": 0,
                 "classlabel": "redend",
-                "confidence": 0.00011849403381347656,
+                "confidence": 0.0001226663589477539,
                 "height": 47,
                 "mono_id": 11,
                 "width": 47
@@ -2848,9 +2851,9 @@
               ],
               "classid": 0,
               "classlabel": "redend",
-              "confidence": 0.9920181632041931,
+              "confidence": 0.9911161661148071,
               "height": 46,
-              "mono_id": 8,
+              "mono_id": 10,
               "width": 42
             },
             "undirected_links": [
@@ -2867,7 +2870,7 @@
                 ],
                 "classid": 0,
                 "classlabel": "link",
-                "confidence": 0.999936580657959,
+                "confidence": 0.9999321699142456,
                 "height": 111,
                 "mono_ids": [
                   2,
@@ -2877,45 +2880,45 @@
               },
               {
                 "bbox": [
-                  158,
-                  66,
+                  159,
+                  65,
                   49,
-                  111
+                  110
                 ],
                 "center": [
-                  182.5,
-                  121.5
+                  183.5,
+                  120.0
                 ],
                 "classid": 0,
                 "classlabel": "link",
-                "confidence": 0.9999239444732666,
-                "height": 111,
+                "confidence": 0.9999196529388428,
+                "height": 110,
                 "mono_ids": [
                   3,
-                  10
+                  8
                 ],
                 "width": 49
               },
               {
                 "bbox": [
-                  112,
-                  385,
-                  115,
-                  56
+                  95,
+                  65,
+                  49,
+                  114
                 ],
                 "center": [
-                  169.5,
-                  413.0
+                  119.5,
+                  122.0
                 ],
                 "classid": 0,
                 "classlabel": "link",
-                "confidence": 0.9999239444732666,
-                "height": 56,
+                "confidence": 0.9999127388000488,
+                "height": 114,
                 "mono_ids": [
-                  8,
-                  13
+                  1,
+                  7
                 ],
-                "width": 115
+                "width": 49
               },
               {
                 "bbox": [
@@ -2930,7 +2933,7 @@
                 ],
                 "classid": 0,
                 "classlabel": "link",
-                "confidence": 0.9999066591262817,
+                "confidence": 0.999906063079834,
                 "height": 112,
                 "mono_ids": [
                   2,
@@ -2940,66 +2943,108 @@
               },
               {
                 "bbox": [
-                  94,
-                  65,
-                  49,
-                  113
+                  110,
+                  260,
+                  51,
+                  110
                 ],
                 "center": [
-                  118.5,
-                  121.5
+                  135.5,
+                  315.0
                 ],
                 "classid": 0,
                 "classlabel": "link",
-                "confidence": 0.9998968839645386,
-                "height": 113,
+                "confidence": 0.9998761415481567,
+                "height": 110,
                 "mono_ids": [
-                  1,
-                  9
+                  4,
+                  6
+                ],
+                "width": 51
+              },
+              {
+                "bbox": [
+                  159,
+                  130,
+                  49,
+                  111
+                ],
+                "center": [
+                  183.5,
+                  185.5
+                ],
+                "classid": 0,
+                "classlabel": "link",
+                "confidence": 0.9998742341995239,
+                "height": 111,
+                "mono_ids": [
+                  5,
+                  8
                 ],
                 "width": 49
               },
               {
                 "bbox": [
                   111,
-                  258,
-                  50,
-                  112
+                  385,
+                  116,
+                  56
                 ],
                 "center": [
-                  136.0,
-                  314.0
+                  169.0,
+                  413.0
                 ],
                 "classid": 0,
                 "classlabel": "link",
-                "confidence": 0.9998644590377808,
-                "height": 112,
+                "confidence": 0.999873161315918,
+                "height": 56,
+                "mono_ids": [
+                  10,
+                  13
+                ],
+                "width": 116
+              },
+              {
+                "bbox": [
+                  112,
+                  323,
+                  49,
+                  113
+                ],
+                "center": [
+                  136.5,
+                  379.5
+                ],
+                "classid": 0,
+                "classlabel": "link",
+                "confidence": 0.999864935874939,
+                "height": 113,
+                "mono_ids": [
+                  6,
+                  10
+                ],
+                "width": 49
+              },
+              {
+                "bbox": [
+                  110,
+                  192,
+                  98,
+                  117
+                ],
+                "center": [
+                  159.0,
+                  250.5
+                ],
+                "classid": 0,
+                "classlabel": "link",
+                "confidence": 0.9998601675033569,
+                "height": 117,
                 "mono_ids": [
                   4,
                   5
                 ],
-                "width": 50
-              },
-              {
-                "bbox": [
-                  111,
-                  191,
-                  97,
-                  117
-                ],
-                "center": [
-                  159.5,
-                  249.5
-                ],
-                "classid": 0,
-                "classlabel": "link",
-                "confidence": 0.9998636245727539,
-                "height": 117,
-                "mono_ids": [
-                  4,
-                  6
-                ],
-                "width": 97
+                "width": 98
               },
               {
                 "bbox": [
@@ -3014,70 +3059,28 @@
                 ],
                 "classid": 0,
                 "classlabel": "link",
-                "confidence": 0.9998592138290405,
+                "confidence": 0.9998539686203003,
                 "height": 118,
                 "mono_ids": [
                   4,
-                  7
+                  9
                 ],
                 "width": 99
               },
               {
                 "bbox": [
-                  112,
-                  324,
-                  49,
-                  112
-                ],
-                "center": [
-                  136.5,
-                  380.0
-                ],
-                "classid": 0,
-                "classlabel": "link",
-                "confidence": 0.9998579025268555,
-                "height": 112,
-                "mono_ids": [
-                  5,
-                  8
-                ],
-                "width": 49
-              },
-              {
-                "bbox": [
-                  158,
-                  130,
-                  49,
-                  112
-                ],
-                "center": [
-                  182.5,
-                  186.0
-                ],
-                "classid": 0,
-                "classlabel": "link",
-                "confidence": 0.9998202323913574,
-                "height": 112,
-                "mono_ids": [
-                  6,
-                  10
-                ],
-                "width": 49
-              },
-              {
-                "bbox": [
-                  63,
+                  64,
                   130,
                   81,
                   110
                 ],
                 "center": [
-                  103.5,
+                  104.5,
                   185.0
                 ],
                 "classid": 0,
                 "classlabel": "link",
-                "confidence": 0.999465823173523,
+                "confidence": 0.9995918273925781,
                 "height": 110,
                 "mono_ids": [
                   7,
@@ -3087,27 +3090,27 @@
               },
               {
                 "bbox": [
-                  28,
+                  31,
                   128,
-                  83,
-                  117
+                  80,
+                  113
                 ],
                 "center": [
-                  69.5,
-                  186.5
+                  71.0,
+                  184.5
                 ],
                 "classid": 0,
                 "classlabel": "link",
-                "confidence": 0.9986703395843506,
-                "height": 117,
+                "confidence": 0.9991856813430786,
+                "height": 113,
                 "mono_ids": [
-                  7,
+                  9,
                   11
                 ],
-                "width": 83
+                "width": 80
               }
             ],
-            "width": 240,
+            "width": 241,
             "upvotes": 1,
             "downvotes": 0
           }
@@ -3130,7 +3133,7 @@
         "width": 660
       }
     ],
-    "pipeline_name": "MultipleGlycanImage-YOLOFindersV4",
+    "pipeline_name": "MultipleGlycanImage-YOLOFindersV5",
     "image_search_strategy": "fitz",
     "annotated_pdf_file": "pdf7_extra.annotated.pdf",
     "annotated_tsv_file": "pdf7_extra.annotated.tsv"

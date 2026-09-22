@@ -31,8 +31,8 @@
       <clipPath clipPathUnits="userSpaceOnUse" id="clipPath9:6be8cdb2419c235af443e69b9a9d28">
         <path d="M104 145 C104 151.0751 99.0751 156 93 156 C86.9249 156 82 151.0751 82 145 C82 138.9249 86.9249 134 93 134 C99.0751 134 104 138.9249 104 145 Z"/>
       </clipPath>
-      <clipPath clipPathUnits="userSpaceOnUse" id="clipPath10:30aceee923cc56a36918eb9e871737">
-        <path d="M108 353 L130 364 L130 342 Z" style="fill-rule:evenodd;"/>
+      <clipPath clipPathUnits="userSpaceOnUse" id="clipPath10:264037df3e1cf6a27383267cb32cc6fc">
+        <path d="M119 342 L130 364 L108 364 Z" style="fill-rule:evenodd;"/>
       </clipPath>
     </defs>
     <g style="fill:white; text-rendering:optimizeSpeed; stroke:white;">
@@ -126,10 +126,10 @@
       <circle cx="93" cy="145" r="11" style="fill:none; stroke:black;"/>
     </g>
     <g ID="r-1:4" data.residueAnomericState="?" data.residueChirality="L" data.residueIndex="3" data.residueName="Fuc" data.residueRingSize="p" data.type="Monosaccharide" style="fill:white; text-rendering:optimizeSpeed; stroke:white;">
-      <polygon points=" 108 353 130 364 130 342" style="stroke:none; clip-path:url(#clipPath10:30aceee923cc56a36918eb9e871737);"/>
-      <rect height="22" style="clip-path:url(#clipPath10:30aceee923cc56a36918eb9e871737); fill:rgb(237,28,36); stroke:none;" width="22" x="108" y="342"/>
-      <rect height="22" style="clip-path:url(#clipPath10:30aceee923cc56a36918eb9e871737); fill:none; stroke:black;" width="22" x="108" y="342"/>
-      <polygon points=" 108 353 130 364 130 342" style="fill:none; stroke:black;"/>
+      <polygon points=" 119 342 130 364 108 364" style="stroke:none; clip-path:url(#clipPath10:264037df3e1cf6a27383267cb32cc6fc);"/>
+      <rect height="22" style="clip-path:url(#clipPath10:264037df3e1cf6a27383267cb32cc6fc); fill:rgb(237,28,36); stroke:none;" width="22" x="108" y="342"/>
+      <rect height="22" style="clip-path:url(#clipPath10:264037df3e1cf6a27383267cb32cc6fc); fill:none; stroke:black;" width="22" x="108" y="342"/>
+      <polygon points=" 119 342 130 364 108 364" style="fill:none; stroke:black;"/>
     </g>
     <g ID="legend-1:0" style="text-rendering:optimizeSpeed; font-size:10; font-family:ariel, sans-serif;">
       <text style="stroke:none;" x="30" xml:space="preserve" y="429"/>
