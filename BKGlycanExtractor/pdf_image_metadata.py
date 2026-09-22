@@ -43,10 +43,11 @@ class ImageSearch:
         raise NotImplementedError
 
     @staticmethod
-    def figures_metadata_with_paths(pdf_path, figures_dir, metadata, image_path_dict=None, dpi=STANDARD_DPI):
+    def figures_metadata_with_paths(pdf_path, figures_dir, metadata, image_path_dict=None, dpi=STANDARD_DPI, use_annotations=True, bbox_override_dict=None):
         """metadata: {page: {image_number: fig_dict}} --> list[dict] with image_path."""
         os.makedirs(figures_dir, exist_ok=True)
-        image_path_dict = image_path_dict or {}
+        image_path_dict  = image_path_dict  or {}
+        bbox_override_dict = bbox_override_dict or {}
         pdf = PDFHandler(pdf_path)
         res = []
         for page_num in sorted(metadata):
@@ -54,13 +55,23 @@ class ImageSearch:
             for image_number in sorted(metadata[page_num]):
                 fig = dict(metadata[page_num][image_number])
                 ic = fig["image_count"]
+                if ic in bbox_override_dict:
+                    fig["pdf_fig_bbox"] = bbox_override_dict[ic]
                 if ic in image_path_dict:
-                    fig["image_path"] = image_path_dict[ic]
+                    dest = image_path_dict[ic]
+                    if not os.path.exists(dest):
+                        saved = PDFHandler.save_image(
+                            pdf.doc, page, fig["pdf_fig_bbox"], dest,
+                            xref=fig.get("xref"), dpi=dpi, annots=use_annotations,
+                        )
+                        fig["image_path"] = (saved or {}).get("image_path", dest)
+                    else:
+                        fig["image_path"] = dest
                 else:
                     dest = os.path.join(figures_dir, f"fig{ic}.png")
                     saved = PDFHandler.save_image(
                         pdf.doc, page, fig["pdf_fig_bbox"], dest,
-                        xref=fig.get("xref"), dpi=dpi, annots=True,
+                        xref=fig.get("xref"), dpi=dpi, annots=use_annotations,
                     )
                     fig["image_path"] = (saved or {}).get("image_path", dest)
                 res.append(fig)
@@ -121,10 +132,10 @@ class FitzImageSearch:
         return pdf_metadata
 
 class FigCapImageSearch:
-    def get_metadata(self, input_filepath, figures_dir, image_path_dict=None, dpi=300, **kwargs):
+    def get_metadata(self, input_filepath, figures_dir, image_path_dict=None, dpi=300, use_annotations=True, bbox_override_dict=None, **kwargs):
         metadata = self._build_metadata(input_filepath)
         return ImageSearch.figures_metadata_with_paths(
-            input_filepath, figures_dir, metadata, image_path_dict, dpi
+            input_filepath, figures_dir, metadata, image_path_dict, dpi, use_annotations, bbox_override_dict
         )
     
     
