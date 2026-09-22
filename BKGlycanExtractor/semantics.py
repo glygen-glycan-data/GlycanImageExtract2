@@ -912,8 +912,14 @@ class GlycanSemantics(ImageSemantics):
         glycan_obj.set_monos(accepted_monos, rejected_monos)
 
         # Root Semantics
-        accepted_root = cls._root_fromjson(glycan['root']) if glycan.get('root') else None
-        rejected_roots = [cls._root_fromjson(r) for r in glycan.get('rejected_roots', [])]
+        accepted_mono_ids = {m.id() for m in accepted_monos}
+        raw_root = glycan.get('root')
+        if raw_root and raw_root.get('mono_id') in accepted_mono_ids:
+            accepted_root = cls._root_fromjson(raw_root)
+        else:
+            accepted_root = None
+        rejected_roots = [cls._root_fromjson(r) for r in glycan.get('rejected_roots', [])
+                          if r.get('mono_id') in accepted_mono_ids]
         glycan_obj.set_roots(accepted_root, rejected_roots)
 
         # TODO - add undirected links?
