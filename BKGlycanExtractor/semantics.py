@@ -668,6 +668,8 @@ class GlycanSemantics(ImageSemantics):
             if mid not in ul.mono_ids():
                 uls.append(ul)
         self.set_undirected_links(uls,ruls)
+        if self.has_root() and self.root().mono_id() == mid:
+            self.reset_root()
 
     def set_monos(self, accepted, rejected=[]):
         self.reset_monos()
