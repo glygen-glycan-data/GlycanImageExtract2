@@ -536,24 +536,6 @@ class MultiImageJob:
             status_message = self._status_message(**kwargs)
             self.update_status(f"{status_message}, analyzed {index}/{nglycan} glycan(s)")
 
-    accepted_pipeline_args = {
-        "caption",
-        "figure_number",
-        "figure_label",
-        "image_count",
-        "page_number",
-        "image_number",
-        "fig_bbox",
-        "pdf_fig_bbox",
-        "pdf_fig_width",
-        "pdf_fig_height",
-        "page_width",
-        "page_height",
-        "pmid_job",
-        "figure_name",
-        "status_message",
-    }
-
     def find_glycans(self, image_path, **kwargs):
         
         config = Config_Manager()
