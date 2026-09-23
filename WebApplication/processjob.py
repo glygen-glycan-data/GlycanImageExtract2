@@ -39,6 +39,27 @@ class MultiImageJob:
         'figcap',
         'hybrid'
     )
+
+    accepted_pipeline_args = {
+        "caption",
+        "figure_number",
+        "figure_label",
+        "image_count",
+        "page_number",
+        "image_number",
+        "fig_bbox",
+        "pdf_fig_bbox",
+        "pdf_fig_width",
+        "pdf_fig_height",
+        "page_width",
+        "page_height",
+        "pmid_job",
+        "figure_name",
+        "status_message",
+        "xref",
+        "dpi"
+    }
+
     
     def __init__(self, task_detail, config = {}, msg_queue = None):
         self.task_detail = task_detail
