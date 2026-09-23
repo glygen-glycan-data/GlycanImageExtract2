@@ -146,7 +146,8 @@ class _PersistentDisplay:
 
 
 def update_annotated(display, glycan, figure, seq, glymage,
-                     img_scale=4.0, font_scale=1.0, label_style="INDEX", text_anchor="CENTER"):
+                     img_scale=4.0, font_scale=1.0, 
+                     label_style="INDEX", text_anchor="CENTER"):
     display_glycan = copy.deepcopy(glycan)
     display_glycan.set_image(display_glycan.box().crop(figure.image()))
     display_glycan.scaleimg(factor=img_scale)
@@ -668,7 +669,6 @@ figuresdir = jsonfile.replace('.json', '.figs')
 assert os.path.exists(tsvfilename), f"TSV not found: {tsvfilename}"
 assert os.path.exists(pdffilename), f"PDF not found: {pdffilename}"
 
-client = ExtractorClient(apiurl=args.extractorurl)
 glymage = GlymageClient(image_format="png")
 glylookup = GlyLookupClient()
 
@@ -748,9 +748,5 @@ for f in results.figures():
 editor = GlycanEditor(results, jsonfile, tsvresults, tsvfilename, tsvfieldnames, glymage, glylookup)
 print(editor.intro)
 
-if args.glycan:
-    editor.do_glycan(args.glycan)
-else:
-    editor.do_next('')
-
+editor.do_next('')
 editor.cmdloop(intro="")
