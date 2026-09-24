@@ -129,7 +129,7 @@ class PDFHandler(object):
             '''Generator that yields image metadata when the data is already provided (images_data)'''
             for image_info in images_data.get('figures', {}):
                 if filter is None or filter.keep(image_info):
-                    image_info['dpi'] = self.STANDARD_DPI
+                    image_info['dpi'] = STANDARD_DPI
                     yield image_info
         else:
             image_count = 1
@@ -170,7 +170,7 @@ class PDFHandler(object):
                         
                     if filter is None or filter.keep(image):
                         image['image_count'] = image_count                  # total image count so far
-                        image['dpi'] = self.STANDARD_DPI
+                        image['dpi'] = STANDARD_DPI
                         image_count += 1
                         yield image
 
