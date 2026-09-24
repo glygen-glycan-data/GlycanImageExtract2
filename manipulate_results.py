@@ -1,14 +1,17 @@
 #!.venv/bin/python
 
-import sys, os, os.path, copy, shutil
+import sys, os, os.path, copy, shutil, re, json
 import readline, queue, threading
-import numpy as np
 import argparse, cmd, csv
+import urllib.request
 from BKGlycanExtractor.bbox import BoundingBox
 from BKGlycanExtractor.semantics import ManuscriptSemantics, UndirectedLinkSemantics, MonoSemantics, SideBySideImage
 from BKGlycanExtractor.glyomicsclient import ExtractorClient, GlymageClient, GlyLookupClient
 from BKGlycanExtractor.glycansemantics import YOLO_Glycan
+from BKGlycanExtractor.glycanfinding import CleanGlycanImageV2
 from BKGlycanExtractor.pdf_image_metadata import ImageSearch
+
+_clean_finder = CleanGlycanImageV2(remove_background=True)
 
 
 def _parse(arg, *types):
@@ -135,8 +138,8 @@ class _PersistentDisplay:
     def __init__(self):
         self._win = SideBySideImage(title="Glycan Editor")
 
-    def update_images(self, cv_image, glymageurl=None):
-        self._win.update(cv_image, glymageurl)
+    def update_images(self, cv_image, cleaned_image=None, glymageurl=None):
+        self._win.update(cv_image, extraimage=cleaned_image, extraimageurl=glymageurl)
 
     def update(self):
         try:
@@ -146,12 +149,20 @@ class _PersistentDisplay:
 
 
 def update_annotated(display, glycan, figure, seq, glymage,
-                     img_scale=4.0, font_scale=1.0, 
+                     img_scale=4.0, font_scale=1.0,
                      label_style="INDEX", text_anchor="CENTER"):
-    display_glycan = copy.deepcopy(glycan)
-    display_glycan.set_image(display_glycan.box().crop(figure.image()))
-    display_glycan.scaleimg(factor=img_scale)
-    display_glycan.annotate_monos(label=label_style, textanchor=text_anchor, font_scale=font_scale)
+    raw_img = glycan.box().crop(figure.image())
+    _, cleaned_img = _clean_finder.process_image(raw_img)
+
+    display_raw = copy.deepcopy(glycan)
+    display_raw.set_image(raw_img)
+    display_raw.scaleimg(factor=img_scale)
+
+    display_clean = copy.deepcopy(glycan)
+    display_clean.set_image(cleaned_img)
+    display_clean.scaleimg(factor=img_scale)
+    display_clean.annotate_monos(label=label_style, textanchor=text_anchor, font_scale=font_scale)
+
     glymageurl = None
     if seq:
         try:
@@ -160,7 +171,7 @@ def update_annotated(display, glycan, figure, seq, glymage,
             glymageurl = glymage.url() + result.get('result')
         except Exception:
             print("Warning: glymage unavailable, reference image not shown.")
-    display.update_images(display_glycan.image(), glymageurl)
+    display.update_images(display_raw.image(), display_clean.image(), glymageurl)
 
 
 def write_files(results, jsonfile, tsvfilename, tsvresults, tsvfieldnames):
@@ -653,11 +664,63 @@ parser = argparse.ArgumentParser(description="Interactively edit glycan results 
 parser.add_argument(
     '--json',
     type=str,
-    required=True,
     help='JSON format extractor result file.'
 )
 
+parser.add_argument(
+    '--resulturl',
+    type=str,
+    help='Extractor results URL.'
+)
+
+parser.add_argument(
+    '--downloaddir',
+    type=str,
+    default = ".",
+    help='Extractor results download directory.'
+)
+
 args = parser.parse_args()
+
+if args.resulturl:
+    # https://extractor.glyomics.org/static/files/xx5fgpkbwl/results.json
+    # https://extractor.glyomics.org/result/xx5fgpkbwl
+    jsonurl = args.resulturl.replace('/result/','/static/files/').rstrip('/') + "/results.json"
+    data = json.loads(urllib.request.urlopen(jsonurl).read())
+    results = ManuscriptSemantics.from_json_data(data)
+    sd = results["submission_detail"]
+    filename = sd["filename"]
+    basename = filename.rsplit('.',1)[0]
+    submode = sd["submission_mode"]
+    subtype = sd["submission_type"]
+    if subtype == "Manuscript":
+        if sd["submission_mode"] == "PMID":
+            jsonfilename = basename.replace("PMID","PMIDFIG") + ".json"
+        elif sd["submission_mode"] == "PMID.PDF":
+            jsonfilename = basename + ".json"
+        else:
+            jsonfilename = basename + ".json"
+    elif subtype == "Multi-Glycan Image":
+        jsonfilename = basename + ".json"
+    jsonfilename = os.path.join(args.downloaddir,jsonfilename)
+    tsvfilename = jsonfilename.replace('.json', '.tsv')
+    pdffilename = jsonfilename.replace('.json', '.pdf')
+    assert not os.path.exists(jsonfilename)
+    assert not os.path.exists(tsvfilename)
+    assert not os.path.exists(pdffilename)
+    print("Writing:",jsonfilename)
+    with open(jsonfilename, 'w') as wh:
+        wh.write(results.tojson())
+    annresurl = args.resulturl.replace('/result/','/annotate_results/')
+    data = urllib.request.urlopen(annresurl,urllib.parse.urlencode({"location": results.get("location","files")}).encode("utf8")).read()
+    # https://extractor.glyomics.org/static/files/xx5fgpkbwl/annotated_files/PMID-34010560.annotated.tsv?ts=1790187495992
+    tsvurl = args.resulturl.replace('/result/','/static/files/').rstrip('/') + '/annotated_files/' + results.get("annotated_tsv_file")
+    print("Writing:",tsvfilename)
+    urllib.request.urlretrieve(tsvurl,tsvfilename)
+    pdfurl = args.resulturl.replace('/result/','/static/files/').rstrip('/') + '/annotated_files/' + results.get("annotated_pdf_file")
+    print("Writing:",pdffilename)
+    urllib.request.urlretrieve(pdfurl,pdffilename)
+    args.json = jsonfilename
 
 assert args.json.endswith(".json") and os.path.exists(args.json)
 
