@@ -1,6 +1,7 @@
 [
   {
     "annotated_image_path": "extracted_figures/annotated_figures/mass-spectrometry-glycans-fig-2.jpg",
+    "dpi": 200.35497846348179,
     "file_name": "mass-spectrometry-glycans-fig-2.jpg",
     "glycans": [
       {
@@ -7613,6 +7614,7 @@
     ],
     "pdf_fig_height": 589.0,
     "pdf_fig_width": 345.19512939453125,
-    "width": 960
+    "width": 960,
+    "xref": 5
   }
 ]

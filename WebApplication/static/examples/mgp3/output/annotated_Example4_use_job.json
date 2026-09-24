@@ -1,6 +1,7 @@
 [
   {
     "annotated_image_path": "extracted_figures/annotated_figures/fig1.png",
+    "dpi": 298.9344216942765,
     "file_name": "fig1.png",
     "glycans": [
       {
@@ -5714,7 +5715,7 @@
         "image_path": "extracted_figures/images/fig1-11.png",
         "linkexpl": "Extracted structure using Composition.",
         "log": [
-          "[semantics.py:805 GlycanSemantics.add_glycan_error] Count of monos: 10, count of links: 8"
+          "[semantics.py:807 GlycanSemantics.add_glycan_error] Count of monos: 10, count of links: 8"
         ],
         "monos": [
           {
@@ -15484,10 +15485,12 @@
     ],
     "pdf_fig_height": 236.4373016357422,
     "pdf_fig_width": 342.7491111755371,
-    "width": 1424
+    "width": 1424,
+    "xref": 33
   },
   {
     "annotated_image_path": "extracted_figures/annotated_figures/fig2.png",
+    "dpi": 298.55947579933184,
     "file_name": "fig2.png",
     "glycans": [
       {
@@ -15518,7 +15521,7 @@
         "image_path": "extracted_figures/images/fig2-1.png",
         "linkexpl": "Extracted structure using Composition.",
         "log": [
-          "[semantics.py:805 GlycanSemantics.add_glycan_error] Couldn't find a reducing end for the glycan"
+          "[semantics.py:807 GlycanSemantics.add_glycan_error] Couldn't find a reducing end for the glycan"
         ],
         "monos": [
           {
@@ -16201,7 +16204,7 @@
         "image_path": "extracted_figures/images/fig2-2.png",
         "linkexpl": "Extracted structure using Composition.",
         "log": [
-          "[semantics.py:805 GlycanSemantics.add_glycan_error] Count of monos: 10, count of links: 8"
+          "[semantics.py:807 GlycanSemantics.add_glycan_error] Count of monos: 10, count of links: 8"
         ],
         "monos": [
           {
@@ -16831,8 +16834,8 @@
         "image_path": "extracted_figures/images/fig2-3.png",
         "linkexpl": "Extracted structure using Composition.",
         "log": [
-          "[semantics.py:805 GlycanSemantics.add_glycan_error] Couldn't find a reducing end for the glycan",
-          "[semantics.py:805 GlycanSemantics.add_glycan_error] Count of monos: 10, count of links: 7"
+          "[semantics.py:807 GlycanSemantics.add_glycan_error] Couldn't find a reducing end for the glycan",
+          "[semantics.py:807 GlycanSemantics.add_glycan_error] Count of monos: 10, count of links: 7"
         ],
         "monos": [
           {
@@ -17449,7 +17452,7 @@
         "image_path": "extracted_figures/images/fig2-4.png",
         "linkexpl": "Extracted structure using Composition.",
         "log": [
-          "[semantics.py:805 GlycanSemantics.add_glycan_error] Count of monos: 10, count of links: 6"
+          "[semantics.py:807 GlycanSemantics.add_glycan_error] Count of monos: 10, count of links: 6"
         ],
         "monos": [
           {
@@ -18016,8 +18019,8 @@
         "image_path": "extracted_figures/images/fig2-5.png",
         "linkexpl": "Extracted structure using Composition.",
         "log": [
-          "[semantics.py:805 GlycanSemantics.add_glycan_error] Couldn't find a reducing end for the glycan",
-          "[semantics.py:805 GlycanSemantics.add_glycan_error] Count of monos: 10, count of links: 8"
+          "[semantics.py:807 GlycanSemantics.add_glycan_error] Couldn't find a reducing end for the glycan",
+          "[semantics.py:807 GlycanSemantics.add_glycan_error] Count of monos: 10, count of links: 8"
         ],
         "monos": [
           {
@@ -18679,7 +18682,7 @@
         "image_path": "extracted_figures/images/fig2-6.png",
         "linkexpl": "Extracted structure using Composition.",
         "log": [
-          "[semantics.py:805 GlycanSemantics.add_glycan_error] Count of monos: 11, count of links: 9"
+          "[semantics.py:807 GlycanSemantics.add_glycan_error] Count of monos: 11, count of links: 9"
         ],
         "monos": [
           {
@@ -19524,6 +19527,7 @@
     ],
     "pdf_fig_height": 218.9846954345703,
     "pdf_fig_width": 146.05258178710938,
-    "width": 605
+    "width": 605,
+    "xref": 34
   }
 ]

@@ -14,6 +14,7 @@
     "figures": [
       {
         "annotated_image_path": "extracted_figures/annotated_figures/fig1.jpeg",
+        "dpi": 304.4735682330754,
         "file_name": "fig1.jpeg",
         "glycans": [],
         "height": 1021,
@@ -32,11 +33,13 @@
         "pdf_fig_height": 241.6392059326172,
         "pdf_fig_width": 497.3665084838867,
         "width": 2105,
+        "xref": 22,
         "figure_number": "1",
         "caption": "Segregation of PGM3 mutations with disease status in families with AR-HIES. A-D, Family A,p.Glu340del; families B and D, p.Leu83Ser; and family C, p.Asp502Tyr. Circles, Female subjects; squares, male subjects; solid symbols, affected subjects with homozygous mutations; half-solid symbols, heterozygous carriers; open symbols, healthy members with wild-type PGM3; slashes, deceased subjects; double horizontal lines, consanguinity; black dots, miscarriages. Asterisks indicate mutations confirmed by using sequencing. E-H, Sequence analyses of unaffected subjects without PGM3 mutations (top), unaffected heterozygous carriers (middle in Fig 1, E-G), and homozygous affected subjects (bottom)."
       },
       {
         "annotated_image_path": "extracted_figures/annotated_figures/fig2.jpeg",
+        "dpi": 303.8759046382112,
         "file_name": "fig2.jpeg",
         "glycans": [],
         "height": 513,
@@ -55,12 +58,14 @@
         "pdf_fig_height": 121.82119750976562,
         "pdf_fig_width": 377.07679748535156,
         "width": 1595,
+        "xref": 25,
         "figure_number": "2",
         "caption": "Homozygous p.Glu340del mutations within the sugar-binding domain cause reduced PGM3 expression. A, Identified mutations localize to distinct protein domains. Numbers indicate amino acid residues. B, Western blotting shows reduced PGM3 abundance in EBV-transformed B cells from both homozygous carriers of family A. Mutational status is indicated below each lane. Glyceraldehyde-3-phosphate dehydrogenase (GAPDH) confirms equal loading. HD, Healthy donor. C, Normal PGM3 expression in immortalized T cells from the patient in family C who had insufficient B-cell numbers. b-actin was used as a loading control."
       },
       {
         "annotated_image_path": "extracted_figures/annotated_figures/fig3.jpeg",
         "caption": "Incomplete assembly of complex-type glycans in patients with PGM3 mutations. A, PGM3 links to N-glycosylation through UDP-GlcNAc (red). The common substrate for assembly of the complex-type N-glycans in the Golgi apparatus (vertical arrows) is used by 4 GlcNAc transferases (transferase [T] I, II, IV, and V; red arrows) with decreasing catalytic activity (increasing Km values [mmol/L UDP-GlcNAc]).27 UDP-GlcNAc produced by mutant PGM3 might be insufficient to allow for completion of N-glycan antenna formation. ER, Endoplasmic reticulum. B, Accumulation of bi-antennary N-glycans in neutrophils28 from patients with PGM3 mutations. Decreased relative abundance of tri-antennary and tetra-antennary glycans (percentage values of N-glycans detected by using glycomic profiling; see Figs E4 and E5) in affected patients B.V.7 (p.Leu83Ser; catalytic domain) and to a lesser extent in affected patient C.IV.7 (p.Asp502Tyr; phosphate-binding domain). C, The homozygous PGM3 mutation p.Glu340del causes accumulation of the hybrid-type N-glycans, with a simultaneous decrease in bi-antennary, tri-antennary, and tetra-antennary N-glycan levels in EBV B cells from patient A.V.13 (p.Glu340del; sugar-binding domain). B cells from patient B.V.7 (p.Leu83Ser; catalytic domain) have decreased tri-antennary and tetra-antennary N-glycan levels and increased bi-antennary N-glycan levels. Percentage values indicate the relative abundance of glycan types.",
+        "dpi": 304.4539632101797,
         "figure_label": "FIG",
         "figure_number": "4",
         "file_name": "fig3.jpeg",
@@ -9550,11 +9555,13 @@
         ],
         "pdf_fig_height": 353.9938049316406,
         "pdf_fig_width": 329.9302062988281,
-        "width": 1395
+        "width": 1395,
+        "xref": 31
       },
       {
         "annotated_image_path": "extracted_figures/annotated_figures/fig4.jpeg",
         "caption": "TH2 skewing but normal TH17 cell numbers in a patient with PGM3 mutations. Freshly isolated PBMCs from patient B.V.6 were stimulated, and cytokine profiles were determined by using FACS analysis, as indicated. Left panels: upper left gate, IL-4\u2013producing TH2 cells; lower right gate, IFN-g\u2013producing TH1 cells. Middle panels: upper left gate, IL-17\u2013producing TH17 cells; lower right gate, IFN-g\u2013producing TH1 cells. Right panels: Gate shows the proportion of CD25high/forkhead box protein 3 (FoxP3)1 regulatory T cells.",
+        "dpi": 304.62071664525695,
         "figure_label": "FIG",
         "figure_number": "E1",
         "file_name": "fig4.jpeg",
@@ -9574,11 +9581,13 @@
         ],
         "pdf_fig_height": 301.9107971191406,
         "pdf_fig_width": 482.75498962402344,
-        "width": 2043
+        "width": 2043,
+        "xref": 35
       },
       {
         "annotated_image_path": "extracted_figures/annotated_figures/fig5.jpeg",
         "caption": "Normal transferrin glycoform patterns in sera from patients with PGM3 mutations. A and B, Asialo-, mono-, di-, tri-, tetra-, and pentasialo-transferrin glycoform patterns in a control serum were analyzed by using HPLC (quality control [QC] level 1 and 2). C and D, Normal HPLC chromatograms demonstrate normal relative distribution of transferrin glycoforms in sera from patients carrying PGM3 mutations: A.V.12 (p.Glu340del) and C.IV.7 (p.Asp502Tyr). Transferrin carries 2 bi-antennary N-linked glycans with terminal sialic acid residues, which are used for diagnostic testing for CDGs. Defective transferrin glycosylation would be indicated by an increase of at least one of the asialotransferrin, mono-sialotransferrin, di-sialotransferrin, or tri-sialotransferrin glycoform levels and a decrease in tetra-sialotransferrin levels.",
+        "dpi": 304.730393676752,
         "figure_label": "FIG",
         "figure_number": "E3",
         "file_name": "fig5.jpeg",
@@ -9598,11 +9607,13 @@
         ],
         "pdf_fig_height": 513.4174194335938,
         "pdf_fig_width": 394.5289001464844,
-        "width": 1669
+        "width": 1669,
+        "xref": 40
       },
       {
         "annotated_image_path": "extracted_figures/annotated_figures/fig6.jpeg",
         "caption": "Accumulation of bi-antennary N-glycans in neutrophils from patients with PGM3 mutations. Mass spectra of permethylated N-glycans of neutrophils from a healthy control subject and the affected subjects B.V.7 and C.IV.7. Results are summarized in Fig 4, B, with consistent color codes. Glycomic data of the control is from Babu et al.E16",
+        "dpi": 304.68833429669087,
         "figure_label": "FIG",
         "figure_number": "E4",
         "file_name": "fig6.jpeg",
@@ -46584,7 +46595,8 @@
         ],
         "pdf_fig_height": 555.3065185546875,
         "pdf_fig_width": 379.9173812866211,
-        "width": 1607
+        "width": 1607,
+        "xref": 44
       }
     ],
     "pipeline_name": "MultipleGlycanImage-YOLOFindersV5",

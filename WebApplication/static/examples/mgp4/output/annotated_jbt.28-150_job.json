@@ -1,6 +1,7 @@
 [
   {
     "annotated_image_path": "extracted_figures/annotated_figures/fig1.jpeg",
+    "dpi": 199.42844678992392,
     "file_name": "fig1.jpeg",
     "glycans": [],
     "height": 1197,
@@ -18,10 +19,12 @@
     ],
     "pdf_fig_height": 431.75299072265625,
     "pdf_fig_width": 245.3690185546875,
-    "width": 679
+    "width": 679,
+    "xref": 133
   },
   {
     "annotated_image_path": "extracted_figures/annotated_figures/fig2.jpeg",
+    "dpi": 199.23529366597418,
     "file_name": "fig2.jpeg",
     "glycans": [],
     "height": 597,
@@ -39,10 +42,12 @@
     ],
     "pdf_fig_height": 215.75299072265625,
     "pdf_fig_width": 245.3690185546875,
-    "width": 679
+    "width": 679,
+    "xref": 134
   },
   {
     "annotated_image_path": "extracted_figures/annotated_figures/fig3.jpeg",
+    "dpi": 199.11835156877072,
     "file_name": "fig3.jpeg",
     "glycans": [],
     "height": 389,
@@ -60,10 +65,12 @@
     ],
     "pdf_fig_height": 140.7480010986328,
     "pdf_fig_width": 245.3690185546875,
-    "width": 679
+    "width": 679,
+    "xref": 140
   },
   {
     "annotated_image_path": "extracted_figures/annotated_figures/fig4.jpeg",
+    "dpi": 198.92711819089217,
     "file_name": "fig4.jpeg",
     "glycans": [],
     "height": 387,
@@ -81,10 +88,12 @@
     ],
     "pdf_fig_height": 140.29400634765625,
     "pdf_fig_width": 245.3690185546875,
-    "width": 679
+    "width": 679,
+    "xref": 139
   },
   {
     "annotated_image_path": "extracted_figures/annotated_figures/fig5.jpeg",
+    "dpi": 199.0108128101404,
     "file_name": "fig5.jpeg",
     "glycans": [
       {
@@ -9126,10 +9135,12 @@
     ],
     "pdf_fig_height": 130.88299560546875,
     "pdf_fig_width": 329.25502014160156,
-    "width": 912
+    "width": 912,
+    "xref": 141
   },
   {
     "annotated_image_path": "extracted_figures/annotated_figures/fig6.jpeg",
+    "dpi": 199.46872943291356,
     "file_name": "fig6.jpeg",
     "glycans": [
       {
@@ -11284,10 +11295,12 @@
     ],
     "pdf_fig_height": 248.29400634765625,
     "pdf_fig_width": 329.25502014160156,
-    "width": 912
+    "width": 912,
+    "xref": 142
   },
   {
     "annotated_image_path": "extracted_figures/annotated_figures/fig7.jpeg",
+    "dpi": 199.41948737003509,
     "file_name": "fig7.jpeg",
     "glycans": [
       {
@@ -13205,10 +13218,12 @@
     ],
     "pdf_fig_height": 250.2220001220703,
     "pdf_fig_width": 329.2550048828125,
-    "width": 912
+    "width": 912,
+    "xref": 143
   },
   {
     "annotated_image_path": "extracted_figures/annotated_figures/fig8.jpeg",
+    "dpi": 199.4433600208842,
     "file_name": "fig8.jpeg",
     "glycans": [
       {
@@ -15600,10 +15615,12 @@
     ],
     "pdf_fig_height": 229.58599853515625,
     "pdf_fig_width": 329.2550048828125,
-    "width": 912
+    "width": 912,
+    "xref": 144
   },
   {
     "annotated_image_path": "extracted_figures/annotated_figures/fig9.jpeg",
+    "dpi": 199.39504373065643,
     "file_name": "fig9.jpeg",
     "glycans": [
       {
@@ -18237,6 +18254,7 @@
     ],
     "pdf_fig_height": 226.80799865722656,
     "pdf_fig_width": 329.25502014160156,
-    "width": 912
+    "width": 912,
+    "xref": 146
   }
 ]

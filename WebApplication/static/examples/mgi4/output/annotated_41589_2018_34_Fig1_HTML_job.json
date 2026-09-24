@@ -1,6 +1,7 @@
 [
   {
     "annotated_image_path": "extracted_figures/annotated_figures/41589_2018_34_Fig1_HTML.jpg",
+    "dpi": 236.23879171111983,
     "file_name": "41589_2018_34_Fig1_HTML.jpg",
     "glycans": [
       {
@@ -26376,6 +26377,7 @@
     ],
     "pdf_fig_height": 425.8187255859375,
     "pdf_fig_width": 469.0,
-    "width": 1539
+    "width": 1539,
+    "xref": 5
   }
 ]

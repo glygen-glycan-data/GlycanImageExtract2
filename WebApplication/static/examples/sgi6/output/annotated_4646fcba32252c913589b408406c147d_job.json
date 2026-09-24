@@ -1,6 +1,7 @@
 [
   {
     "annotated_image_path": "extracted_figures/annotated_figures/4646fcba32252c913589b408406c147d.png",
+    "dpi": 95.58952048453853,
     "file_name": "4646fcba32252c913589b408406c147d.png",
     "glycans": [
       {
@@ -21,6 +22,7 @@
         "classid": 0,
         "classlabel": "glycan",
         "composition_str": "GlcNAc(5)NeuAc(2)Fuc(1)Man(3)Gal(3)NeuGc(1)",
+        "dpi": 95.58952048453853,
         "extracted_image_path": "extracted_figures/extracted_images/4646fcba32252c913589b408406c147d-1.png",
         "fig_glycan_count": 1,
         "file_name": "4646fcba32252c913589b408406c147d.png",
@@ -1206,7 +1208,8 @@
             "width": 34
           }
         ],
-        "width": 238
+        "width": 238,
+        "xref": 5
       }
     ],
     "height": 446,
@@ -1224,6 +1227,7 @@
     ],
     "pdf_fig_height": 335.5,
     "pdf_fig_width": 179.5,
-    "width": 238
+    "width": 238,
+    "xref": 5
   }
 ]

@@ -1,6 +1,7 @@
 [
   {
     "annotated_image_path": "extracted_figures/annotated_figures/fig1.png",
+    "dpi": 149.0819436868377,
     "file_name": "fig1.png",
     "glycans": [
       {
@@ -5728,6 +5729,7 @@
     ],
     "pdf_fig_height": 336.79998779296875,
     "pdf_fig_width": 468.70001220703125,
-    "width": 971
+    "width": 971,
+    "xref": 9
   }
 ]

@@ -2,6 +2,7 @@
   {
     "annotated_image_path": "extracted_figures/annotated_figures/fig1.png",
     "caption": "Summary of snRNA-seq analysis of glycogenes in heart cells from COVID-19(+/) patients. A, schematic summary of the bio- informatic analysis of 950 glycosylation-related genes from 19 pathways interrogated from previously published snRNA-seq data (19, 20). B, relative distribution of glycogenes within individual cells of the left and right ventricular regions of the heart is presented as a radial heat map. The outer circle represents the gene expression pro\ufb01le of glycogenes having log2FC > \u00b11 and FDR <0.05. The inner circle represents the percentage contribution of each glycosylation-related pathway normalized to the total abundance. Glycogenes of N-glycan biosynthesis having 15 to 20% variation are indicated within the inner circle. The color gradients for the inner and outer circles in B correspond to the legend for glycosylation- related pathways in A and gene expression fold changes, respectively. Parts of this \ufb01gure were generated with Biorender.comMultiomics Reveals N-Glycan Alterations in COVID-19 Hearts",
+    "dpi": 409.1146935097545,
     "figure_label": "FIG",
     "figure_number": "1",
     "file_name": "fig1.png",
@@ -26,6 +27,7 @@
   {
     "annotated_image_path": "extracted_figures/annotated_figures/fig2.png",
     "caption": "Overview of experimental design for glycomics and imaging and results of histopathological analyses. A, FFPE tissue sections were analyzed by histopathology, MS-based glycomics, and lectin-based imaging. Cardiomyocytes were analyzed by MS-based glycomics. B, histopathological \ufb01ndings in COVID-19(+/\u2212) cardiac tissues showing normal cardiac tissue for COVID-19(\u2212) with intact myocyte array and COVID-19(+) tissue with cardiac hypertrophy, in\ufb02ammatory in\ufb01ltrate, focal interstitial \ufb01brosis, and fat in\ufb01ltration. Scale bar = 100 \u03bcm. Parts of this \ufb01gure were generated with Biorender.com.",
+    "dpi": 371.8085718712922,
     "figure_label": "FIG",
     "figure_number": "2",
     "file_name": "fig2.png",
@@ -50,6 +52,7 @@
   {
     "annotated_image_path": "extracted_figures/annotated_figures/fig3.png",
     "caption": "Qualitative N-glycan pro\ufb01le of cardiac tissue and isolated cardiomyocytes. A, graph of relatedness of observed N-glycan compositions identi\ufb01ed in FFPE cardiac tissue slices and isolated cardiomyocytes. Each node represents a unique glycan composition, and two adjacent nodes differ by one monosaccharide residue. Blue nodes are observed only in FFPE tissue, and purple is observed in both FFPE tissue and isolated cardiomyocytes. B, distribution of inferred N-glycan composition properties. Graphs in A and B were generated using Glyco- mpozitor (31). C, Pie charts summarizing the percentage distribution of each N-glycan class calculated from the relative abundance values. D, graphical representation of glycan types identi\ufb01ed, and modi\ufb01cations observed at the core and terminal branches.",
+    "dpi": 337.096037672493,
     "figure_label": "FIG",
     "figure_number": "3",
     "file_name": "fig3.png",
@@ -5948,6 +5951,7 @@
   {
     "annotated_image_path": "extracted_figures/annotated_figures/fig4.png",
     "caption": "Quantitative differences in the N-glycome of cardiac tissues (FFPE) from COVID-19(+) and COVID-19(\u2212) patients. A, compo- sitional analysis of N-glycans in cardiac tissue. Graphical results display output from differential expression analysis using Glynsight. Hex (H), HexNAc (N), Fuc (F), and Sia (S) are monosaccharide moieties that form glycan structures. Red and blue bars depict differences in relative abundance. Colored lines indicate the addition of monosaccharide moieties to a given composition. A downward trend (blue bar) in HnN2, corresponding to paucimannose, and oligo mannose indicates reduced levels, and an upward trend (red bars) corresponding to HnNnFS for complex and hybrid structures, indicates an overall increase in abundance. B, Volcano plot displaying N-glycan structures that are most signi\ufb01cantly different between cardiac tissues from each patient group.Multiomics Reveals N-Glycan Alterations in COVID-19 Hearts",
+    "dpi": 333.71132567601444,
     "figure_label": "FIG",
     "figure_number": "4",
     "file_name": "fig4.png",
@@ -14745,6 +14749,7 @@
   {
     "annotated_image_path": "extracted_figures/annotated_figures/fig5.png",
     "caption": "Quantitative differences in the N-glycome of isolated cardiomyocytes from COVID-19(+) and COVID-19(\u2212) patients. A, compositional analysis of N-glycans from cardiomyocytes. Graphical results display output from differential expression analysis using Glynsight. Hex (H), HexNAc (N), Fuc (F), and Sia (S) are monosaccharide moieties that form glycan structures. Red and blue bars depict differences in relative abundance. Colored lines indicate the addition of monosaccharide moieties to a given composition. A mixed trend in abundance was observed. Overall changes were indicative of increased complex type structures. B, Volcano plot displaying N-glycan structures that are most signi\ufb01cantly different between isolated cardiomyocytes from each patient group.Multiomics Reveals N-Glycan Alterations in COVID-19 Hearts",
+    "dpi": 329.80124612445695,
     "figure_label": "FIG",
     "figure_number": "5",
     "file_name": "fig5.png",
@@ -22229,6 +22234,7 @@
   {
     "annotated_image_path": "extracted_figures/annotated_figures/fig6.png",
     "caption": "Differences in FFPE tissue N-glycans that are independent of confounding variables. A, median normalized data were subjected to multivariate analysis to determine glycosylation changes independent of confounding factors such as age, sex, and comorbidities. Volcano plot represents differential abundance of glycans between COVID-19(\u2212) and COVID-19(+) groups. Paucimannoses were reduced exclusively due to COVID-19. B, heat map representing log2FC changes in expression of various enzymes in N-glycan biosynthesis obtained from snRNA-seq analysis (Fig. 1). LV-left ventricle, RV-right ventricle.",
+    "dpi": 362.9427935893651,
     "figure_label": "FIG",
     "figure_number": "6",
     "file_name": "fig6.png",
