@@ -41,68 +41,6 @@ class PDFHandler(object):
     def create_box(bbox):
         return fitz.Rect(bbox)
 
-    @staticmethod
-    def calculate_dpi(image_info, doc=None):
-        '''
-            - If xref available: Extract pixel dimensions from xref, then calculate effective DPI based on how the image
-            is displayed in the pdf
-            - Otherwise: Use provided width/height from image_info, then calculate effective DPI
-
-            Args:
-                image_info: Dict with keys:
-                    - 'xref': xref of embedded image (checked first if available)
-                    - 'width', 'height': pixel dimensions (used if no xref)
-                    - 'pdf_fig_width', 'pdf_fig_height': bbox dimensions in PDF points (required)
-                doc: PyMuPDF Document object (required if using xref)
-
-            This ensures reproducible extractions - same DPI whether you have xref or not.
-        '''
-        
-        width_px = 0
-        height_px = 0
-        
-        # 1) Check if xref is available and use it
-        xref = image_info.get('xref')
-        if xref and xref > 0:
-            if doc is None:
-                # Can't use xref without doc, fall through to provided dimensions
-                pass
-            else:
-                try:
-                    native_pix = fitz.Pixmap(doc, xref)
-                    width_px = native_pix.width
-                    height_px = native_pix.height
-                    del native_pix  
-                except Exception as e:
-                    print(f"Warning: Failed to extract image from xref {xref}: {e}")
-        
-        # 2) Use provided dimensions if xref didn't work or wasn't available
-        if width_px == 0 or height_px == 0:
-            # .get('width', 0) still returns None when the key exists with value None
-            width_px = image_info.get('width') or 0
-            height_px = image_info.get('height') or 0
-
-        if not width_px or not height_px:
-            return None
-
-        # Get PDF bbox dimensions (in points)
-        pdf_fig_width = image_info.get('pdf_fig_width') or 0
-        pdf_fig_height = image_info.get('pdf_fig_height') or 0
-
-        if not pdf_fig_width or not pdf_fig_height:
-            return None
-
-        # Convert points to inches (72 points = 1 inch)
-        width_in = float(pdf_fig_width) / 72.0
-        height_in = float(pdf_fig_height) / 72.0
-
-        # Calculate effective DPI
-        if width_in > 0 and height_in > 0:
-            dpi_x = float(width_px) / width_in
-            dpi_y = float(height_px) / height_in
-            return (dpi_x + dpi_y) / 2
-
-        return None
 
     def write_image(self,image,filename=None):
         if filename is None:
@@ -191,7 +129,7 @@ class PDFHandler(object):
             '''Generator that yields image metadata when the data is already provided (images_data)'''
             for image_info in images_data.get('figures', {}):
                 if filter is None or filter.keep(image_info):
-                    image_info['dpi'] = PDFHandler.calculate_dpi(image_info, self.doc) or self.STANDARD_DPI
+                    image_info['dpi'] = self.STANDARD_DPI
                     yield image_info
         else:
             image_count = 1
@@ -232,7 +170,7 @@ class PDFHandler(object):
                         
                     if filter is None or filter.keep(image):
                         image['image_count'] = image_count                  # total image count so far
-                        image['dpi'] = PDFHandler.calculate_dpi(image, self.doc) or self.STANDARD_DPI
+                        image['dpi'] = self.STANDARD_DPI
                         image_count += 1
                         yield image
 

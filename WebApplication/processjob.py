@@ -57,7 +57,6 @@ class MultiImageJob:
         "figure_name",
         "status_message",
         "xref",
-        "dpi"
     }
 
     
