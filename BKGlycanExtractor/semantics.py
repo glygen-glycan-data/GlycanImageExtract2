@@ -1360,29 +1360,44 @@ class SideBySideImage:
         self._label1 = tk.Label(self._container, bg="black")
         self._label1.pack(side=tk.LEFT)
         self._label2 = tk.Label(self._container, bg="black")
+        self._label3 = tk.Label(self._container, bg="black")
         self._photo1 = None
         self._photo2 = None
+        self._photo3 = None
         self._pil1_orig = None
         self._pil2_orig = None
+        self._pil3_orig = None
         self._resize_job = None
         self._first_display = True
         self.root.bind("<Configure>", self._on_resize)
 
-    def update(self, cv_image, extraimageurl=None):
-        """Replace displayed images. cv_image is a BGR numpy array."""
+    def update(self, cv_image, extraimage=None, extraimageurl=None):
+        """Replace displayed images. cv_image is a BGR numpy array; extraimage is an optional
+        second BGR numpy array (centre panel); extraimageurl is an optional URL for the third panel."""
         rgb = cv2.cvtColor(cv_image, cv2.COLOR_BGR2RGB)
         self._pil1_orig = Image.fromarray(rgb)
         self._pil2_orig = None
-        if extraimageurl:
+        if extraimage is not None:
             try:
-                data = urllib.request.urlopen(extraimageurl).read()
-                self._pil2_orig = Image.open(io.BytesIO(data))
+                rgb2 = cv2.cvtColor(extraimage, cv2.COLOR_BGR2RGB)
+                self._pil2_orig = Image.fromarray(rgb2)
             except Exception:
                 pass
         if self._pil2_orig is not None:
             self._label2.pack(side=tk.LEFT)
         else:
             self._label2.pack_forget()
+        self._pil3_orig = None
+        if extraimageurl:
+            try:
+                data = urllib.request.urlopen(extraimageurl).read()
+                self._pil3_orig = Image.open(io.BytesIO(data))
+            except Exception:
+                pass
+        if self._pil3_orig is not None:
+            self._label3.pack(side=tk.LEFT)
+        else:
+            self._label3.pack_forget()
         if self._first_display:
             self._first_display = False
             nat_w, nat_h = self._natural_size()
@@ -1401,35 +1416,40 @@ class SideBySideImage:
                 self.root.after(0, lambda: self._render(nat_w, nat_h))
 
     def _natural_size(self):
-        if self._pil2_orig is not None:
-            nat_h = max(self._pil1_orig.height, self._pil2_orig.height)
-            ar1 = self._pil1_orig.width / self._pil1_orig.height
-            ar2 = self._pil2_orig.width / self._pil2_orig.height
-            return int((ar1 + ar2) * nat_h), nat_h
+        pils = [p for p in (self._pil1_orig, self._pil2_orig, self._pil3_orig) if p is not None]
+        if len(pils) > 1:
+            nat_h = max(p.height for p in pils)
+            total_ar = sum(p.width / p.height for p in pils)
+            return int(total_ar * nat_h), nat_h
         return self._pil1_orig.width, self._pil1_orig.height
 
     def _render(self, avail_w, avail_h):
         if self._pil1_orig is None or avail_w < 2 or avail_h < 2:
             return
-        if self._pil2_orig is not None:
-            ar1 = self._pil1_orig.width / self._pil1_orig.height
-            ar2 = self._pil2_orig.width / self._pil2_orig.height
-            total_ar = ar1 + ar2
+        panels = [(self._pil1_orig, self._label1, '_photo1'),
+                  (self._pil2_orig, self._label2, '_photo2'),
+                  (self._pil3_orig, self._label3, '_photo3')]
+        active = [(pil, lbl, attr) for pil, lbl, attr in panels if pil is not None]
+        if len(active) > 1:
+            ars = [pil.width / pil.height for pil, _, _ in active]
+            total_ar = sum(ars)
             h = max(1, int(min(avail_h, avail_w / total_ar if total_ar > 0 else avail_h)))
-            pil1 = self._pil1_orig.resize((max(1, int(ar1 * h)), h), Image.Resampling.LANCZOS)
-            pil2 = self._pil2_orig.resize((max(1, int(ar2 * h)), h), Image.Resampling.LANCZOS)
-            self._photo2 = ImageTk.PhotoImage(pil2)
-            self._label2.config(image=self._photo2)
-            self._label2.image = self._photo2
+            for (pil, lbl, attr), ar in zip(active, ars):
+                resized = pil.resize((max(1, int(ar * h)), h), Image.Resampling.LANCZOS)
+                photo = ImageTk.PhotoImage(resized)
+                setattr(self, attr, photo)
+                lbl.config(image=photo)
+                lbl.image = photo
         else:
-            scale = min(avail_w / self._pil1_orig.width, avail_h / self._pil1_orig.height)
-            pil1 = self._pil1_orig.resize(
-                (max(1, int(self._pil1_orig.width * scale)),
-                 max(1, int(self._pil1_orig.height * scale))),
+            pil, lbl, attr = active[0]
+            scale = min(avail_w / pil.width, avail_h / pil.height)
+            resized = pil.resize(
+                (max(1, int(pil.width * scale)), max(1, int(pil.height * scale))),
                 Image.Resampling.LANCZOS)
-        self._photo1 = ImageTk.PhotoImage(pil1)
-        self._label1.config(image=self._photo1)
-        self._label1.image = self._photo1
+            photo = ImageTk.PhotoImage(resized)
+            setattr(self, attr, photo)
+            lbl.config(image=photo)
+            lbl.image = photo
 
     def _on_resize(self, event):
         if event.widget is not self.root or self._pil1_orig is None:
