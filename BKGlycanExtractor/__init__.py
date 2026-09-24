@@ -13,7 +13,7 @@ from . glycanconnections import LinkFinder
 from . rootmonofinding import RootFinder
 from . glycanfinding import GlycanFinder
 from . pdf_annotator import annotate, annotate_from_webapp
-from . pdfhandler import STANDARD_DPI, POINTS_PER_INCH, PDFHandler, PDFXRefImageFilter, PDFImageSizeFilter, PDFLargeImageSizeFilter
+from . pdfhandler import STANDARD_DPI, PDFHandler, PDFXRefImageFilter, PDFImageSizeFilter, PDFLargeImageSizeFilter
 from . pdf_image_metadata import ImageSearch
 from . compareboxes import CompareBoxes
 from . image_manager import Image_Manager

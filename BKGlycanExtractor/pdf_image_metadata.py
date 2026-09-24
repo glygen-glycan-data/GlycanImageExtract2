@@ -124,6 +124,8 @@ class FitzImageSearch:
                 'width', 'height', 'xref', 'pdf_fig_bbox', 'pdf_fig_width', 
                 'pdf_fig_height', 'page_width', 'page_height', 'dpi', 'caption', 'figure_number', 'figure_label',
             )}
+
+            pdf_metadata[page_number][image_number]['image_source'] = 'fitz'
           
             # self.log_file.write(
             #     f"\nXREF: {fig_metadata.get('xref')}, Page number: {page_number}, Image number: {image_number},  bbox: {fig_metadata["pdf_fig_bbox"]}, Width: {fig_metadata['pdf_fig_width']}, Height: {fig_metadata['pdf_fig_height']}\n"
@@ -197,6 +199,8 @@ class FigCapImageSearch:
                 'page_width', 'page_height', 'caption_bbox', 'figure_name',
                 'width', 'height', 'caption', 'dpi', 'figure_number','figure_label',
             )} 
+
+            pdf_metadata[page_number][image_number]['image_source'] = 'figcap'
 
         try:
             # delete the json file after loading the semantics data obtained from PDFigCapX

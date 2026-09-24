@@ -57,6 +57,7 @@ class MultiImageJob:
         "figure_name",
         "status_message",
         "xref",
+        "image_source"      # either fitz or figcap - documents what method was used to find each image
     }
 
     
