@@ -1355,6 +1355,9 @@ class SideBySideImage:
         self.root.title(title)
         self._frame = tk.Frame(self.root, bg="black")
         self._frame.pack(fill=tk.BOTH, expand=True)
+        self._info_label = tk.Label(self._frame, text="", fg="white", bg="black",
+                                    font=("Helvetica", 11, "bold"))
+        self._info_label.pack(side=tk.BOTTOM, pady=2)
         self._container = tk.Frame(self._frame, bg="black")
         self._container.pack(expand=True)
         self._label1 = tk.Label(self._container, bg="black")
@@ -1369,7 +1372,15 @@ class SideBySideImage:
         self._pil3_orig = None
         self._resize_job = None
         self._first_display = True
+        self._center_click_cb = None
+        self._center_cancel_cb = None
+        self._center_render_info = None
+        self._label2.bind("<Button-1>", self._on_center_click)
+        self._label2.bind("<Button-3>", self._on_center_right_click)
         self.root.bind("<Configure>", self._on_resize)
+
+    def set_info(self, text):
+        self._info_label.config(text=text)
 
     def update(self, cv_image, extraimage=None, extraimageurl=None):
         """Replace displayed images. cv_image is a BGR numpy array; extraimage is an optional
@@ -1426,6 +1437,8 @@ class SideBySideImage:
     def _render(self, avail_w, avail_h):
         if self._pil1_orig is None or avail_w < 2 or avail_h < 2:
             return
+        if self._pil2_orig is None:
+            self._center_render_info = None
         panels = [(self._pil1_orig, self._label1, '_photo1'),
                   (self._pil2_orig, self._label2, '_photo2'),
                   (self._pil3_orig, self._label3, '_photo3')]
@@ -1435,21 +1448,26 @@ class SideBySideImage:
             total_ar = sum(ars)
             h = max(1, int(min(avail_h, avail_w / total_ar if total_ar > 0 else avail_h)))
             for (pil, lbl, attr), ar in zip(active, ars):
-                resized = pil.resize((max(1, int(ar * h)), h), Image.Resampling.LANCZOS)
+                disp_w = max(1, int(ar * h))
+                resized = pil.resize((disp_w, h), Image.Resampling.LANCZOS)
                 photo = ImageTk.PhotoImage(resized)
                 setattr(self, attr, photo)
                 lbl.config(image=photo)
                 lbl.image = photo
+                if attr == '_photo2':
+                    self._center_render_info = (pil.width, pil.height, disp_w, h)
         else:
             pil, lbl, attr = active[0]
             scale = min(avail_w / pil.width, avail_h / pil.height)
-            resized = pil.resize(
-                (max(1, int(pil.width * scale)), max(1, int(pil.height * scale))),
-                Image.Resampling.LANCZOS)
+            disp_w = max(1, int(pil.width * scale))
+            disp_h = max(1, int(pil.height * scale))
+            resized = pil.resize((disp_w, disp_h), Image.Resampling.LANCZOS)
             photo = ImageTk.PhotoImage(resized)
             setattr(self, attr, photo)
             lbl.config(image=photo)
             lbl.image = photo
+            if attr == '_photo2':
+                self._center_render_info = (pil.width, pil.height, disp_w, disp_h)
 
     def _on_resize(self, event):
         if event.widget is not self.root or self._pil1_orig is None:
@@ -1461,6 +1479,28 @@ class SideBySideImage:
             self.root.after_cancel(self._resize_job)
         w, h = event.width, event.height
         self._resize_job = self.root.after(50, lambda: self._render(w, h))
+
+    def set_center_click_callback(self, cb):
+        self._center_click_cb = cb
+
+    def set_center_cancel_callback(self, cb):
+        self._center_cancel_cb = cb
+
+    def _on_center_click(self, event):
+        if self._center_click_cb is None or self._center_render_info is None:
+            return
+        pil_w, pil_h, disp_w, disp_h = self._center_render_info
+        if disp_w < 1 or disp_h < 1:
+            return
+        orig_x = event.x * pil_w / disp_w
+        orig_y = event.y * pil_h / disp_h
+        orig_x = max(0.0, min(orig_x, pil_w - 1))
+        orig_y = max(0.0, min(orig_y, pil_h - 1))
+        self._center_click_cb(orig_x, orig_y)
+
+    def _on_center_right_click(self, event):
+        if self._center_cancel_cb is not None:
+            self._center_cancel_cb()
 
 
 if __name__ == "__main__":

@@ -14,6 +14,7 @@
     "figures": [
       {
         "annotated_image_path": "extracted_figures/annotated_figures/pdf7_extra.png",
+        "dpi": 101.28568751726456,
         "file_name": "pdf7_extra.png",
         "glycans": [
           {
@@ -3130,7 +3131,8 @@
         ],
         "pdf_fig_height": 351.2909240722656,
         "pdf_fig_width": 469.0,
-        "width": 660
+        "width": 660,
+        "xref": 5
       }
     ],
     "pipeline_name": "MultipleGlycanImage-YOLOFindersV5",

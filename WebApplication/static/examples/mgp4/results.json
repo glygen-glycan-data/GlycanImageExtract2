@@ -14,6 +14,7 @@
     "figures": [
       {
         "annotated_image_path": "extracted_figures/annotated_figures/fig1.jpeg",
+        "dpi": 199.42844678992392,
         "file_name": "fig1.jpeg",
         "glycans": [],
         "height": 1197,
@@ -32,11 +33,13 @@
         "pdf_fig_height": 431.75299072265625,
         "pdf_fig_width": 245.3690185546875,
         "width": 679,
+        "xref": 133,
         "figure_number": "1",
         "caption": "The experimental workflow used to study the kinetics of the PNGase F deglycosylation reaction."
       },
       {
         "annotated_image_path": "extracted_figures/annotated_figures/fig2.jpeg",
+        "dpi": 199.23529366597418,
         "file_name": "fig2.jpeg",
         "glycans": [],
         "height": 597,
@@ -55,11 +58,13 @@
         "pdf_fig_height": 215.75299072265625,
         "pdf_fig_width": 245.3690185546875,
         "width": 679,
+        "xref": 134,
         "figure_number": "2",
         "caption": "The LC-SRM chromatograms show the appearance of de-glycosylated peptides and the disappearance of glycopeptide in the sample from 0 min to overnight."
       },
       {
         "annotated_image_path": "extracted_figures/annotated_figures/fig3.jpeg",
+        "dpi": 199.11835156877072,
         "file_name": "fig3.jpeg",
         "glycans": [],
         "height": 389,
@@ -78,11 +83,13 @@
         "pdf_fig_height": 140.7480010986328,
         "pdf_fig_width": 245.3690185546875,
         "width": 679,
+        "xref": 140,
         "figure_number": "3",
         "caption": "The decay profile of the IgG1 glycopeptide carrying the fucosylated glycan with 0 galactoses (H3N4F1) following the addition of PNGase F at a concentration of 2.5 U/\u03bcl. The [GP] signal was obtained by dividing the peak area of this glycopeptide by the integrated peak area of internal standard (GluFib) at each time point."
       },
       {
         "annotated_image_path": "extracted_figures/annotated_figures/fig4.jpeg",
+        "dpi": 198.92711819089217,
         "file_name": "fig4.jpeg",
         "glycans": [],
         "height": 387,
@@ -101,11 +108,13 @@
         "pdf_fig_height": 140.29400634765625,
         "pdf_fig_width": 245.3690185546875,
         "width": 679,
+        "xref": 139,
         "figure_number": "4",
         "caption": "The plot of ln[GP] vs. time for the IgG1 glycopeptide carrying the fucosylated glycan with 0 galactoses (H3N4F1). These data were obtained following the addition of PNGase F at a concentration of 2.5 U/\u03bcl. The [GP] signal was achieved by dividing the peak area of this glycopeptide by the integrated peak area of internal standard (GluFib) at each time point."
       },
       {
         "annotated_image_path": "extracted_figures/annotated_figures/fig5.jpeg",
+        "dpi": 199.0108128101404,
         "file_name": "fig5.jpeg",
         "glycans": [
           {
@@ -9172,11 +9181,13 @@
         "pdf_fig_height": 130.88299560546875,
         "pdf_fig_width": 329.25502014160156,
         "width": 912,
+        "xref": 141,
         "figure_number": "5",
         "caption": "The amino acid sequences of the tryptic glycopeptide of IgG1, IgG2/3, and IgG4 and the glycan structures investigated, which were categorized into 4 groups: fucosylated, nonfucosylated, bisecting-GlcNAc, and sialylated."
       },
       {
         "annotated_image_path": "extracted_figures/annotated_figures/fig6.jpeg",
+        "dpi": 199.46872943291356,
         "file_name": "fig6.jpeg",
         "glycans": [
           {
@@ -11338,11 +11349,13 @@
         "pdf_fig_height": 248.29400634765625,
         "pdf_fig_width": 329.25502014160156,
         "width": 912,
+        "xref": 142,
         "figure_number": "6",
         "caption": "Plots of ln[GP] vs. time for the fucosylated glycopeptides. These data were obtained following the addition of PNGase F at a concentration of 2.5 U/\u03bcl. The [GP] signal was achieved by dividing the peak area of this glycopeptide by the integrated peak area of internal standard (GluFib) at each time point."
       },
       {
         "annotated_image_path": "extracted_figures/annotated_figures/fig7.jpeg",
+        "dpi": 199.41948737003509,
         "file_name": "fig7.jpeg",
         "glycans": [
           {
@@ -13267,11 +13280,13 @@
         "pdf_fig_height": 250.2220001220703,
         "pdf_fig_width": 329.2550048828125,
         "width": 912,
+        "xref": 143,
         "figure_number": "7",
         "caption": "Plots of ln[GP] vs. time for the nonfucosylated glycopeptides. These data were obtained following the addition of PNGase F at a concentration of 2.5 U/\u03bcl. The [GP] signal was achieved by dividing the peak area of this glycopeptide by the integrated peak area of internal standard (GluFib) at each time point."
       },
       {
         "annotated_image_path": "extracted_figures/annotated_figures/fig8.jpeg",
+        "dpi": 199.4433600208842,
         "file_name": "fig8.jpeg",
         "glycans": [
           {
@@ -15670,11 +15685,13 @@
         "pdf_fig_height": 229.58599853515625,
         "pdf_fig_width": 329.2550048828125,
         "width": 912,
+        "xref": 144,
         "figure_number": "8",
         "caption": "Plots of ln[GP] vs. time for the glycopeptides whose glycans contain a bisecting-GlcNAc. These data were obtained following the addition of PNGase F at a concentration of 2.5 U/\u03bcl. The [GP] signal was obtained by dividing the peak area of this glycopeptide by the integrated peak area of internal standard (GluFib) at each time point."
       },
       {
         "annotated_image_path": "extracted_figures/annotated_figures/fig9.jpeg",
+        "dpi": 199.39504373065643,
         "file_name": "fig9.jpeg",
         "glycans": [
           {
@@ -18315,6 +18332,7 @@
         "pdf_fig_height": 226.80799865722656,
         "pdf_fig_width": 329.25502014160156,
         "width": 912,
+        "xref": 146,
         "figure_number": "9",
         "caption": "Plots of ln[GP] vs. time for the sialylated glycopeptides. These data were obtained following the addition of PNGase F at a concentration of 2.5 U/\u03bcl. The [GP] signal was obtained by dividing the peak area of this glycopeptide by the integrated peak area of internal standard (GluFib) at each time point."
       }

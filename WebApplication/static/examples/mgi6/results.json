@@ -14,6 +14,7 @@
     "figures": [
       {
         "annotated_image_path": "extracted_figures/annotated_figures/pr1c00245_0002.jpg",
+        "dpi": 111.26984173311672,
         "file_name": "pr1c00245_0002.jpg",
         "glycans": [
           {
@@ -1615,6 +1616,7 @@
         "pdf_fig_height": 184.0743865966797,
         "pdf_fig_width": 469.0,
         "width": 726,
+        "xref": 5,
         "figure_number": "2",
         "caption": "An example of annotated glycopeptide spectrum, where peaks annotated as b/c/y/z ions are colored as purple, and those annotated as Y ions as red."
       }

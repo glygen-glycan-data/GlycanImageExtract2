@@ -15,6 +15,7 @@
     "figures": [
       {
         "annotated_image_path": "extracted_figures/annotated_figures/fig1.png",
+        "dpi": 297.06361024940713,
         "file_name": "fig1.png",
         "glycans": [],
         "height": 259,
@@ -32,11 +33,13 @@
         ],
         "pdf_fig_height": 63.135009765625,
         "pdf_fig_width": 238.82699584960938,
-        "width": 991
+        "width": 991,
+        "xref": 56
       },
       {
         "annotated_image_path": "extracted_figures/annotated_figures/fig2.png",
         "caption": "Work\ufb02ow of the GlycoHybridSeq algorithm.Journal of Proteome Research pubs.acs.org/jpr Article",
+        "dpi": 298.4240874061478,
         "figure_label": "Figure",
         "figure_number": "1",
         "file_name": "fig2.png",
@@ -56,11 +59,13 @@
         ],
         "pdf_fig_height": 116.427001953125,
         "pdf_fig_width": 465.8249969482422,
-        "width": 1937
+        "width": 1937,
+        "xref": 437
       },
       {
         "annotated_image_path": "extracted_figures/annotated_figures/fig3.png",
         "caption": "An example of annotated glycopeptide spectrum, where peaks annotated as b/c/y/z ions are colored as purple, and those annotated as Y ions as red.",
+        "dpi": 298.51427357496954,
         "figure_label": "Figure",
         "figure_number": "2",
         "file_name": "fig3.png",
@@ -1715,11 +1720,13 @@
         ],
         "pdf_fig_height": 137.06300354003906,
         "pdf_fig_width": 349.4349822998047,
-        "width": 1452
+        "width": 1452,
+        "xref": 450
       },
       {
         "annotated_image_path": "extracted_figures/annotated_figures/fig4.png",
         "caption": "Comparison of (A) unique peptide sequences, (B) unique glycopeptides, and (C) spectra identi\ufb01ed by GlycoHybridSeq, Byonic, and MSFragger, respectively.Journal of Proteome Research pubs.acs.org/jpr Article",
+        "dpi": 298.2223181659169,
         "figure_label": "Figure",
         "figure_number": "3",
         "file_name": "fig4.png",
@@ -1739,11 +1746,13 @@
         ],
         "pdf_fig_height": 102.48001098632812,
         "pdf_fig_width": 387.3619842529297,
-        "width": 1610
+        "width": 1610,
+        "xref": 449
       },
       {
         "annotated_image_path": "extracted_figures/annotated_figures/fig5.png",
         "caption": "Two EThcD spectra with high cosine similarity were identi\ufb01ed as two di\ufb00erent glycopeptides by Byonic.Journal of Proteome Research pubs.acs.org/jpr Article",
+        "dpi": 298.68341177204644,
         "figure_label": "Figure",
         "figure_number": "4",
         "file_name": "fig5.png",
@@ -1763,7 +1772,8 @@
         ],
         "pdf_fig_height": 151.91700744628906,
         "pdf_fig_width": 385.43499755859375,
-        "width": 1602
+        "width": 1602,
+        "xref": 451
       }
     ],
     "pipeline_name": "MultipleGlycanImage-YOLOFindersV5",

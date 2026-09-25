@@ -13,6 +13,39 @@ from BKGlycanExtractor.pdf_image_metadata import ImageSearch
 
 _clean_finder = CleanGlycanImageV2(remove_background=True)
 
+_mono_finder = None
+_mono_finder_failed = False
+
+
+def _get_mono_finder():
+    global _mono_finder, _mono_finder_failed
+    if _mono_finder is not None or _mono_finder_failed:
+        return _mono_finder
+    try:
+        from BKGlycanExtractor import Config_Manager
+        _mono_finder = Config_Manager().get_finder('YOLOMono_58')
+    except Exception as e:
+        print(f"Warning: could not load YOLOMono_58 finder: {e}")
+        _mono_finder_failed = True
+    return _mono_finder
+
+
+def find_uncleaned_monos(glycan, raw_img):
+    """Return (glycan_copy_with_monos, compstr) or (None, None) on failure."""
+    finder = _get_mono_finder()
+    if finder is None:
+        return None, None
+    g = copy.deepcopy(glycan)
+    g.set_image(raw_img)
+    g.reset_monos()
+    try:
+        finder.find_objects(g)
+    except Exception as e:
+        print(f"Warning: YOLO mono finder failed on uncleaned crop: {e}")
+        return None, None
+    return g, g.compstr()
+
+
 
 def _parse(arg, *types):
     parts = arg.split()
@@ -52,8 +85,20 @@ def op_add_mono(glycan, mid, dirn, scale, label):
     }
     dx, dy = offsets[dirn]
     newcent = (mcent[0] + dx, mcent[1] + dy)
-    x = int(round(newcent[0] - ref_w / 2))
-    y = int(round(newcent[1] - ref_h / 2))
+    _place_mono_at(glycan, mid, label, newcent[0], newcent[1])
+
+
+def op_add_mono_at(glycan, mid, label, cx, cy):
+    if not glycan.has_mono(mid):
+        raise ValueError(f"No monosaccharide with id {mid}")
+    _place_mono_at(glycan, mid, label, cx, cy)
+
+
+def _place_mono_at(glycan, mid, label, cx, cy):
+    m = glycan.mono(mid)
+    ref_w, ref_h = m.width(), m.height()
+    x = int(round(cx - ref_w / 2))
+    y = int(round(cy - ref_h / 2))
     bbox = BoundingBox(x=x, y=y, w=ref_w, h=ref_h)
     newm = MonoSemantics(symbol=label, classlabel=label, box=bbox, confidence=1.0)
     glycan.add_mono(newm)
@@ -79,6 +124,17 @@ def op_adjust_box(glycan, mid, dim, delta):
     if dim in ('w', 'h') and new_val < 1:
         raise ValueError(f"Resulting {dim}={new_val} would be < 1")
     box.update_bbox(**{dim: new_val})
+
+
+def op_move_mono_to(glycan, mid, cx, cy):
+    if not glycan.has_mono(mid):
+        raise ValueError(f"No monosaccharide with id {mid}")
+    m = glycan.mono(mid)
+    box = m.box()
+    new_x = int(round(cx - box.w / 2))
+    new_y = int(round(cy - box.h / 2))
+    box.update_bbox(x=new_x, y=new_y)
+    m.set_box(box)
 
 
 def op_delete_link(glycan, mid1, mid2):
@@ -141,22 +197,52 @@ class _PersistentDisplay:
     def update_images(self, cv_image, cleaned_image=None, glymageurl=None):
         self._win.update(cv_image, extraimage=cleaned_image, extraimageurl=glymageurl)
 
+    def update_info(self, gid, votes):
+        self._win.set_info(f"GID: {gid}   Votes: {votes}")
+
+    def set_status(self, text):
+        self._win.set_info(text)
+
+    def show_loading(self):
+        self._win.set_info("Loading...")
+        try:
+            self._win.root.update()
+        except Exception:
+            pass
+
     def update(self):
         try:
             self._win.root.update()
         except Exception:
             pass
 
+    def set_click_callback(self, cb):
+        self._win.set_center_click_callback(cb)
+
+    def set_cancel_callback(self, cb):
+        self._win.set_center_cancel_callback(cb)
+
 
 def update_annotated(display, glycan, figure, seq, glymage,
                      img_scale=4.0, font_scale=1.0,
-                     label_style="INDEX", text_anchor="CENTER"):
+                     label_style="INDEX", text_anchor="CENTER",
+                     yolo_uncleaned_glycan=None):
     raw_img = glycan.box().crop(figure.image())
     _, cleaned_img = _clean_finder.process_image(raw_img)
 
     display_raw = copy.deepcopy(glycan)
     display_raw.set_image(raw_img)
     display_raw.scaleimg(factor=img_scale)
+
+    if yolo_uncleaned_glycan is not None:
+        for m in yolo_uncleaned_glycan.monos():
+            x1, y1, x2, y2 = m.box().corners()
+            text = str(m.get('classlabel') or m.get('symbol') or '')
+            display_raw.annotate(
+                int(round(x1 * img_scale)), int(round(y1 * img_scale)),
+                int(round(x2 * img_scale)), int(round(y2 * img_scale)),
+                color=(0, 0, 255), thickness=2, text=text,
+                font_scale=font_scale, textanchor="TR")
 
     display_clean = copy.deepcopy(glycan)
     display_clean.set_image(cleaned_img)
@@ -166,9 +252,9 @@ def update_annotated(display, glycan, figure, seq, glymage,
     glymageurl = None
     if seq:
         try:
-            task_id = glymage.submit_glymage(seq=seq, redend=True, orientation=glycan.get('orientation'))
-            result = glymage.retrieve(task_id)
-            glymageurl = glymage.url() + result.get('result')
+            task_id = glymage.submit_glymage(seq=seq, redend=True, image_format="png", 
+                                             orientation=glycan.get('orientation'))
+            glymageurl = glymage.url() + f'getimage?task_id={task_id}.png'
         except Exception:
             print("Warning: glymage unavailable, reference image not shown.")
     display.update_images(display_raw.image(), display_clean.image(), glymageurl)
@@ -212,11 +298,40 @@ class GlycanEditor(cmd.Cmd):
         self._dirty_gids = set()
         self.next_filter = 'bad'  # 'bad', 'all', or int (specific votes value)
         self._quit_pending = False
+        self._win_quit_pending = False
         self._display = _PersistentDisplay()
+        self._key_queue = queue.Queue()
+        self._display._win.root.bind_all("n", lambda e: self._on_win_key_n())
+        self._display._win.root.bind_all("p", lambda e: self._key_queue.put("prev"))
+        self._display._win.root.bind_all("y", lambda e: self._on_win_key_y())
+        self._display._win.root.bind_all("q", lambda e: self._key_queue.put("_win_quit"))
+        self._display._win.root.bind_all("w", lambda e: self._key_queue.put("write"))
+        self._display._win.root.bind_all("r", lambda e: self._key_queue.put("redend"))
+        self._display._win.root.bind_all("l", lambda e: self._key_queue.put("add link"))
+        self._display._win.root.bind_all("1", lambda e: self._key_queue.put("_key_1"))
+        self._display._win.root.bind_all("2", lambda e: self._key_queue.put("_key_2"))
+        self._display._win.root.bind_all("!", lambda e: self._key_queue.put("_key_neg1"))
+        self._reader_in_input = False
         self.img_scale = 4.0
         self.font_scale = 1.0
         self.label_style = "INDEX"
         self.text_anchor = "CENTER"
+        self._pending = None
+        self._click_queue = queue.Queue()
+        self._display.set_click_callback(
+            lambda x, y: self._click_queue.put(('click', (x, y))))
+        self._display.set_cancel_callback(
+            lambda: self._click_queue.put(('cancel', None)))
+
+    def _on_win_key_n(self):
+        if self._win_quit_pending:
+            self._key_queue.put("_win_quit_n")
+        else:
+            self._key_queue.put("next")
+
+    def _on_win_key_y(self):
+        if self._win_quit_pending:
+            self._key_queue.put("_win_quit_y")
 
     def _after_modify(self):
         try:
@@ -235,13 +350,19 @@ class GlycanEditor(cmd.Cmd):
             print("IUPAC:", seq)
         if compstr:
             print("Composition:", compstr)
+        yolo_uncleaned, yolo_compstr = self._maybe_yolo_uncleaned()
+        if yolo_compstr:
+            print("Uncleaned composition:", yolo_compstr)
         if acc:
             print("Accession:", acc)
         if wurcs:
             print("WURCS:", wurcs)
         print("Votes:", self.tsvresults[self.glycan_gid].get('votes'))
+        self._display.show_loading()
         update_annotated(self._display, self.glycan, self.figure, seq, self.glymage,
-                         self.img_scale, self.font_scale, self.label_style, self.text_anchor)
+                         self.img_scale, self.font_scale, self.label_style, self.text_anchor,
+                         yolo_uncleaned_glycan=yolo_uncleaned)
+        self._display.update_info(self.glycan_gid, self.tsvresults[self.glycan_gid].get('votes'))
 
     def _display_current(self):
         seq = self.glycan.get('IUPAC')
@@ -259,8 +380,175 @@ class GlycanEditor(cmd.Cmd):
         if wurcs:
             print("WURCS:", wurcs)
         print("Votes:", row.get('votes'))
+        yolo_uncleaned, yolo_compstr = self._maybe_yolo_uncleaned()
+        if yolo_compstr:
+            print("Uncleaned composition:", yolo_compstr)
+        self._display.show_loading()
         update_annotated(self._display, self.glycan, self.figure, seq, self.glymage,
-                         self.img_scale, self.font_scale, self.label_style, self.text_anchor)
+                         self.img_scale, self.font_scale, self.label_style, self.text_anchor,
+                         yolo_uncleaned_glycan=yolo_uncleaned)
+        self._display.update_info(self.glycan_gid, row.get('votes'))
+
+    def _maybe_yolo_uncleaned(self):
+        if self.glycan is None or self.glycan_gid is None or self.figure is None:
+            return None, None
+        row = self.tsvresults.get(self.glycan_gid, {})
+        try:
+            votes = int(row.get('votes', 0))
+        except (TypeError, ValueError):
+            return None, None
+        if votes != 2:
+            return None, None
+        raw_img = self.glycan.box().crop(self.figure.image())
+        return find_uncleaned_monos(self.glycan, raw_img)
+
+    def _mono_at(self, pil_x, pil_y):
+        if self.glycan is None:
+            return None
+        gx = pil_x / self.img_scale
+        gy = pil_y / self.img_scale
+        hits = []
+        for m in self.glycan.monos():
+            x1, y1, x2, y2 = m.box().corners()
+            if x1 <= gx <= x2 and y1 <= gy <= y2:
+                hits.append(m)
+        if not hits:
+            return None
+        return min(hits, key=lambda m: m.box().w * m.box().h)
+
+    def _start_pending(self, kind, prompt_text, **fields):
+        self._pending = dict(kind=kind, **fields)
+        self._display.set_status(prompt_text)
+        print(prompt_text)
+
+    def _clear_pending(self, reason=None):
+        self._pending = None
+        if reason:
+            self._display.set_status(reason)
+            print(reason)
+        elif self.glycan_gid is not None:
+            row = self.tsvresults.get(self.glycan_gid, {})
+            self._display.update_info(self.glycan_gid, row.get('votes'))
+
+    def _process_click_event(self, kind, payload):
+        if kind == 'cancel':
+            if self._pending is not None:
+                self._clear_pending("Cancelled.")
+            return
+        if kind != 'click' or self._pending is None:
+            return
+        pil_x, pil_y = payload
+        mono = self._mono_at(pil_x, pil_y)
+        pkind = self._pending['kind']
+        if pkind == 'add_link':
+            if mono is None:
+                self._clear_pending("Click missed any mono. Cancelled.")
+                return
+            if self._pending.get('first_mid') is None:
+                self._pending['first_mid'] = mono.id()
+                msg = f"add link: first mono {mono.id()} selected; click second mono (right-click to cancel)"
+                self._display.set_status(msg)
+                print(msg)
+                return
+            mid1 = self._pending['first_mid']
+            mid2 = mono.id()
+            if mid1 == mid2:
+                self._clear_pending("Same mono clicked twice. Cancelled.")
+                return
+            self._pending = None
+            try:
+                try:
+                    op_recover_link(self.glycan, mid1, mid2)
+                except ValueError:
+                    op_add_link(self.glycan, mid1, mid2)
+                self._after_modify()
+            except (ValueError, KeyError, IndexError) as e:
+                print(f"Error: {e}")
+                self._clear_pending()
+        elif pkind == 'add_mono':
+            if self._pending.get('source_mid') is None:
+                if mono is None:
+                    self._clear_pending("Click missed any mono. Cancelled.")
+                    return
+                self._pending['source_mid'] = mono.id()
+                msg = (f"add mono: source mono {mono.id()} selected; "
+                       "click placement for new mono (right-click to cancel)")
+                self._display.set_status(msg)
+                print(msg)
+                return
+            source_mid = self._pending['source_mid']
+            label = self._pending['label']
+            cx = pil_x / self.img_scale
+            cy = pil_y / self.img_scale
+            self._pending = None
+            try:
+                op_add_mono_at(self.glycan, source_mid, label, cx, cy)
+                self._after_modify()
+            except (ValueError, KeyError, IndexError) as e:
+                print(f"Error: {e}")
+                self._clear_pending()
+        elif pkind == 'adjust':
+            if mono is None:
+                self._clear_pending("Click missed any mono. Cancelled.")
+                return
+            dim = self._pending['dim']
+            delta = self._pending['delta']
+            self._pending = None
+            try:
+                op_adjust_box(self.glycan, mono.id(), dim, delta)
+                self._after_modify()
+            except (ValueError, KeyError, IndexError) as e:
+                print(f"Error: {e}")
+                self._clear_pending()
+        elif pkind == 'monolabel':
+            label = self._pending['label']
+            if mono is None:
+                msg = (f"monolabel {label}: click missed any mono. "
+                       "Continue clicking (right-click to cancel)")
+                self._display.set_status(msg)
+                print(msg)
+                return
+            try:
+                op_set_monolabel(self.glycan, mono.id(), label)
+                self._after_modify()
+            except (ValueError, KeyError, IndexError) as e:
+                print(f"Error: {e}")
+            if self._pending is not None:
+                msg = f"monolabel {label}: click next mono to relabel (right-click to cancel)"
+                self._display.set_status(msg)
+        elif pkind == 'redend':
+            if mono is None:
+                self._clear_pending("Click missed any mono. Cancelled.")
+                return
+            mid = mono.id()
+            self._pending = None
+            try:
+                op_set_redend(self.glycan, mid)
+                self._after_modify()
+            except (ValueError, KeyError, IndexError) as e:
+                print(f"Error: {e}")
+                self._clear_pending()
+        elif pkind == 'adjust_move':
+            if self._pending.get('source_mid') is None:
+                if mono is None:
+                    self._clear_pending("Click missed any mono. Cancelled.")
+                    return
+                self._pending['source_mid'] = mono.id()
+                msg = (f"adjust: mono {mono.id()} selected; "
+                       "click new center position (right-click to cancel)")
+                self._display.set_status(msg)
+                print(msg)
+                return
+            source_mid = self._pending['source_mid']
+            cx = pil_x / self.img_scale
+            cy = pil_y / self.img_scale
+            self._pending = None
+            try:
+                op_move_mono_to(self.glycan, source_mid, cx, cy)
+                self._after_modify()
+            except (ValueError, KeyError, IndexError) as e:
+                print(f"Error: {e}")
+                self._clear_pending()
 
     def cmdloop(self, intro=None):
         self.preloop()
@@ -277,6 +565,7 @@ class GlycanEditor(cmd.Cmd):
             while True:
                 ready.wait()
                 ready.clear()
+                self._reader_in_input = True
                 try:
                     q.put(input(self.prompt))
                 except EOFError:
@@ -284,6 +573,8 @@ class GlycanEditor(cmd.Cmd):
                     return
                 except KeyboardInterrupt:
                     q.put('')
+                finally:
+                    self._reader_in_input = False
 
         threading.Thread(target=_reader, daemon=True).start()
 
@@ -297,6 +588,59 @@ class GlycanEditor(cmd.Cmd):
         while not stop:
             if self._display:
                 self._display.update()
+            try:
+                key_cmd = self._key_queue.get_nowait()
+                _echo = {"_win_quit": "quit", "_win_quit_y": "y", "_win_quit_n": "n",
+                         "_key_1": "1", "_key_2": "2", "_key_neg1": "!"}
+                echo = _echo.get(key_cmd, key_cmd)
+                prefix = "" if self._reader_in_input else self.prompt
+                sys.stdout.write(prefix + echo + "\n")
+                sys.stdout.flush()
+                if self._pending is not None:
+                    self._clear_pending("Cancelled.")
+                if key_cmd == "_win_quit":
+                    if self.any_modified:
+                        self._win_quit_pending = True
+                        self._display.set_status("Unsaved changes — save? [y/n]")
+                    else:
+                        stop = True
+                elif key_cmd == "_win_quit_y":
+                    self._win_quit_pending = False
+                    self.do_write('')
+                    stop = True
+                elif key_cmd == "_win_quit_n":
+                    self._win_quit_pending = False
+                    stop = True
+                elif not self._quit_pending and not self._win_quit_pending:
+                    if key_cmd in ("_key_1", "_key_2", "_key_neg1"):
+                        vote = "-1" if key_cmd == "_key_neg1" else key_cmd[-1]
+                        line = self.precmd(f"votes {vote}")
+                        self.onecmd(line)
+                        self.postcmd(False, line)
+                        line = self.precmd("next")
+                        stop = self.onecmd(line)
+                        stop = self.postcmd(stop, line)
+                    else:
+                        line = self.precmd(key_cmd)
+                        stop = self.onecmd(line)
+                        stop = self.postcmd(stop, line)
+                    if not stop and not self._reader_in_input:
+                        ready.set()
+                if self._reader_in_input:
+                    sys.stdout.write(self.prompt)
+                    sys.stdout.flush()
+                continue
+            except queue.Empty:
+                pass
+            if not self._quit_pending and not self._win_quit_pending:
+                try:
+                    click_kind, click_payload = self._click_queue.get_nowait()
+                    self._process_click_event(click_kind, click_payload)
+                    if self._pending is None and not self._reader_in_input:
+                        ready.set()
+                    continue
+                except queue.Empty:
+                    pass
             try:
                 raw = q.get(timeout=0.05)
             except queue.Empty:
@@ -328,6 +672,9 @@ class GlycanEditor(cmd.Cmd):
             if not stop:
                 ready.set()
         self.postloop()
+
+    def emptyline(self):
+        return False
 
     def _require_glycan(self):
         if self.glycan is None:
@@ -363,26 +710,45 @@ class GlycanEditor(cmd.Cmd):
         print(f"GID not found: {gid}")
 
     def do_add(self, arg):
-        """add mono <mid> <UP|DOWN|LEFT|RIGHT|UPLEFT|UPRIGHT|DOWNLEFT|DOWNRIGHT> <scale> <label> | add link <mid1> <mid2>"""
+        """add mono <label> | add mono <mid> <UP|DOWN|LEFT|RIGHT|UPLEFT|UPRIGHT|DOWNLEFT|DOWNRIGHT> <scale> <label> | add link [<mid1> <mid2>]
+
+        Short forms select monosaccharides by clicking on the center panel
+        (right-click cancels):
+          add mono <label> : click source mono, then click placement of new mono.
+          add link         : click first mono, then click second mono."""
         if not self._require_glycan():
             return
         parts = arg.split()
         if not parts:
-            print("Usage: add mono <mid> <dirn> <scale> <label> | add link <mid1> <mid2>")
+            print("Usage: add mono <label> | add mono <mid> <dirn> <scale> <label> | add link [<mid1> <mid2>]")
             return
         subcmd, rest = parts[0], ' '.join(parts[1:])
+        rest_parts = rest.split()
         try:
             if subcmd == 'mono':
-                mid, dirn, scale, label = _parse(rest, int, str, float, str)
-                op_add_mono(self.glycan, mid, dirn, scale, label)
-                self._after_modify()
+                if len(rest_parts) == 1:
+                    [label] = _parse(rest, str)
+                    self._start_pending(
+                        'add_mono',
+                        f'add mono {label}: click source mono in center panel (right-click to cancel)',
+                        label=label, source_mid=None)
+                else:
+                    mid, dirn, scale, label = _parse(rest, int, str, float, str)
+                    op_add_mono(self.glycan, mid, dirn, scale, label)
+                    self._after_modify()
             elif subcmd == 'link':
-                mid1, mid2 = _parse(rest, int, int)
-                try:
-                    op_recover_link(self.glycan, mid1, mid2)
-                except ValueError:
-                    op_add_link(self.glycan, mid1, mid2)
-                self._after_modify()
+                if len(rest_parts) == 0:
+                    self._start_pending(
+                        'add_link',
+                        'add link: click first mono in center panel (right-click to cancel)',
+                        first_mid=None)
+                else:
+                    mid1, mid2 = _parse(rest, int, int)
+                    try:
+                        op_recover_link(self.glycan, mid1, mid2)
+                    except ValueError:
+                        op_add_link(self.glycan, mid1, mid2)
+                    self._after_modify()
             else:
                 print(f"Unknown subcommand: {subcmd!r}. Use 'mono' or 'link'.")
         except (ValueError, KeyError, IndexError) as e:
@@ -412,35 +778,74 @@ class GlycanEditor(cmd.Cmd):
             print(f"Error: {e}")
 
     def do_monolabel(self, arg):
-        """monolabel <mid> <label>  — Change the label and symbol of a monosaccharide."""
+        """monolabel <label> | monolabel <mid> <label>  — Change mono label and symbol.
+
+        With one arg (label): click monos in the center panel to relabel them; the
+        mode stays active until right-click cancels.
+        With mid and label: relabel the given mono once (no clicks)."""
         if not self._require_glycan():
             return
+        parts = arg.split()
         try:
-            mid, label = _parse(arg, int, str)
-            op_set_monolabel(self.glycan, mid, label)
-            self._after_modify()
+            if len(parts) == 1:
+                [label] = _parse(arg, str)
+                self._start_pending(
+                    'monolabel',
+                    f'monolabel {label}: click mono to relabel (right-click to cancel)',
+                    label=label)
+            else:
+                mid, label = _parse(arg, int, str)
+                op_set_monolabel(self.glycan, mid, label)
+                self._after_modify()
         except (ValueError, KeyError, IndexError) as e:
             print(f"Error: {e}")
 
     def do_redend(self, arg):
-        """redend <mid>  — Set the reducing end (root) monosaccharide."""
+        """redend [<mid>]  — Set the reducing end (root) monosaccharide.
+
+        With no argument, click a mono in the center panel (right-click cancels).
+        Also bound to the 'r' key in the display window."""
         if not self._require_glycan():
             return
+        parts = arg.split()
         try:
-            [mid] = _parse(arg, int)
-            op_set_redend(self.glycan, mid)
-            self._after_modify()
+            if len(parts) == 0:
+                self._start_pending(
+                    'redend',
+                    'redend: click mono to set as reducing end (right-click to cancel)')
+            else:
+                [mid] = _parse(arg, int)
+                op_set_redend(self.glycan, mid)
+                self._after_modify()
         except (ValueError, KeyError, IndexError) as e:
             print(f"Error: {e}")
 
     def do_adjust(self, arg):
-        """adjust <mid> <x|y|w|h> <delta>  — Shift/resize a mono bounding box by delta pixels."""
+        """adjust | adjust <x|y|w|h> <delta> | adjust <mid> <x|y|w|h> <delta>
+
+        No args        : click a mono, then click its new center position.
+        dim/delta      : click a mono to shift/resize its box by delta.
+        mid/dim/delta  : shift/resize the given mono's box by delta (no clicks).
+        Right-click cancels a pending click action."""
         if not self._require_glycan():
             return
+        parts = arg.split()
         try:
-            mid, dim, delta = _parse(arg, int, str, int)
-            op_adjust_box(self.glycan, mid, dim, delta)
-            self._after_modify()
+            if len(parts) == 0:
+                self._start_pending(
+                    'adjust_move',
+                    'adjust: click mono to move in center panel (right-click to cancel)',
+                    source_mid=None)
+            elif len(parts) == 2:
+                dim, delta = _parse(arg, str, int)
+                self._start_pending(
+                    'adjust',
+                    f'adjust {dim} {delta}: click mono to adjust in center panel (right-click to cancel)',
+                    dim=dim, delta=delta)
+            else:
+                mid, dim, delta = _parse(arg, int, str, int)
+                op_adjust_box(self.glycan, mid, dim, delta)
+                self._after_modify()
         except (ValueError, KeyError, IndexError) as e:
             print(f"Error: {e}")
 

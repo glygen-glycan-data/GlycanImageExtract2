@@ -1,6 +1,7 @@
 [
   {
     "annotated_image_path": "extracted_figures/annotated_figures/pr1c00245_0002.jpg",
+    "dpi": 111.26984173311672,
     "file_name": "pr1c00245_0002.jpg",
     "glycans": [
       {
@@ -1593,6 +1594,7 @@
     ],
     "pdf_fig_height": 184.0743865966797,
     "pdf_fig_width": 469.0,
-    "width": 726
+    "width": 726,
+    "xref": 5
   }
 ]

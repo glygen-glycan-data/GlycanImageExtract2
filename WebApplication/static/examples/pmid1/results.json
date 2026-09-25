@@ -16,6 +16,7 @@
       {
         "annotated_image_path": "extracted_figures/annotated_figures/pr1c00245_0001.jpg",
         "caption": "Workflow of the GlycoHybridSeq algorithm.",
+        "dpi": 118.44150872401403,
         "figure_label": "Figure",
         "figure_number": "1",
         "file_name": "pr1c00245_0001.jpg",
@@ -35,11 +36,13 @@
         ],
         "pdf_fig_height": 117.093017578125,
         "pdf_fig_width": 468.99998474121094,
-        "width": 774
+        "width": 774,
+        "xref": 11
       },
       {
         "annotated_image_path": "extracted_figures/annotated_figures/pr1c00245_0002.jpg",
         "caption": "An example of annotated glycopeptide spectrum, where peaks annotated as b/c/y/z ions are colored as purple, and those annotated as Y ions as red.",
+        "dpi": 111.26984173311672,
         "figure_label": "Figure",
         "figure_number": "2",
         "file_name": "pr1c00245_0002.jpg",
@@ -1642,11 +1645,13 @@
         ],
         "pdf_fig_height": 184.0743865966797,
         "pdf_fig_width": 469.0,
-        "width": 726
+        "width": 726,
+        "xref": 16
       },
       {
         "annotated_image_path": "extracted_figures/annotated_figures/pr1c00245_0003.jpg",
         "caption": "Comparison of (A) unique peptide sequences, (B) unique glycopeptides, and (C) spectra identified by GlycoHybridSeq, Byonic, and MSFragger, respectively.",
+        "dpi": 98.57119596179606,
         "figure_label": "Figure",
         "figure_number": "3",
         "file_name": "pr1c00245_0003.jpg",
@@ -1666,11 +1671,13 @@
         ],
         "pdf_fig_height": 123.81365966796875,
         "pdf_fig_width": 468.99998474121094,
-        "width": 644
+        "width": 644,
+        "xref": 21
       },
       {
         "annotated_image_path": "extracted_figures/annotated_figures/pr1c00245_0004.jpg",
         "caption": "Two EThcD spectra with high cosine similarity were identified as two different glycopeptides by Byonic.",
+        "dpi": 98.08979943498261,
         "figure_label": "Figure",
         "figure_number": "4",
         "file_name": "pr1c00245_0004.jpg",
@@ -1690,7 +1697,8 @@
         ],
         "pdf_fig_height": 184.5437469482422,
         "pdf_fig_width": 469.0,
-        "width": 640
+        "width": 640,
+        "xref": 26
       }
     ],
     "pipeline_name": "MultipleGlycanImage-YOLOFindersV5",

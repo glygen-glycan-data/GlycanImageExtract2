@@ -14,6 +14,7 @@
     "figures": [
       {
         "annotated_image_path": "extracted_figures/annotated_figures/41589_2018_34_Fig1_HTML.jpg",
+        "dpi": 236.23879171111983,
         "file_name": "41589_2018_34_Fig1_HTML.jpg",
         "glycans": [
           {
@@ -26460,6 +26461,7 @@
         "pdf_fig_height": 425.8187255859375,
         "pdf_fig_width": 469.0,
         "width": 1539,
+        "xref": 5,
         "figure_number": "1",
         "caption": "Representative overlaid chromatograms of mouse and human IgG glycans separated by uPLC. Mouse IgG glycans (red) were separated into 26 chromatographic glycan peaks while human IgG glycans (black) were separated into 24 chromatographic glycan peaks as in Pu\u010di\u0107 et al. Shown are structural schemes of all identified glycans of mouse and human IgG. These experiments were repeated 589 times (the number of mice studied) with similar results."
       }
