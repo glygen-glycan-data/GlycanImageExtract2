@@ -102,9 +102,11 @@ class YOLORootFinder(YOLOFinder, RootFinder):
 class KnownRoot(RootFinder,KnownFinder):
 
     filters = [ DiscardClass(todiscard=["not_redend"]) ]
+    DEFAULT_LABELS = ['redend', 'not_redend']
 
     def __init__(self,**kwargs):
-        KnownFinder.__init__(self,**kwargs)
+        labels = kwargs.pop('labels', self.DEFAULT_LABELS)  # ensures that the default labels can be overwritten while initilazing the class
+        KnownFinder.__init__(self, labels = labels, **kwargs)
         RootFinder.__init__(self)
 
     # map_dict structure is present in KnownFinder class
@@ -152,6 +154,12 @@ class YOLORootPlusAnomerFinder(YOLORootFinder):
         return rootobj
 
 class KnownRootPlusAnomer(KnownRoot):
+
+    DEFAULT_LABELS = ['redenda', 'redendb', 'redendx', 'not_redend'] 
+
+    def __init__(self, **kwargs):
+        KnownFinder.__init__(self, labels=kwargs.pop('labels', self.DEFAULT_LABELS), **kwargs)
+        RootFinder.__init__(self)
     
     def create_boxes(self, map_dict):
         boxes = []

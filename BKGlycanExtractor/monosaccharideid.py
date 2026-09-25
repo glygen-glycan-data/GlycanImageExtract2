@@ -69,8 +69,11 @@ class YOLOMonos(YOLOFinder,MonoFinder):
 
 class KnownMono(MonoFinder,KnownFinder):
 
+    DEFAULT_LABELS = ["GlcNAc","NeuAc","Fuc","Man","GalNAc","Gal","Glc","NeuGc","Xyl"]
+
     def __init__(self,**kwargs):
-        KnownFinder.__init__(self,**kwargs)
+        labels = kwargs.pop('labels', self.DEFAULT_LABELS)  # ensures that the default labels can be overwritten while initilazing the class
+        KnownFinder.__init__(self,labels=labels, **kwargs)
         MonoFinder.__init__(self)
 
     # map_dict structure is present in KnownFinder class

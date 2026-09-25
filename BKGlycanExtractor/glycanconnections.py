@@ -246,8 +246,11 @@ class ConnectYOLO(YOLOFinder,LinkFinder):
 
 class KnownLink(LinkFinder,KnownFinder):
 
+    DEFAULT_LABELS = ['link']
+
     def __init__(self,**kwargs):
-        KnownFinder.__init__(self,**kwargs)
+        labels = kwargs.pop('labels', self.DEFAULT_LABELS)
+        KnownFinder.__init__(self, labels=labels, **kwargs)
         LinkFinder.__init__(self)
 
     def create_boxes(self, map_dict):
@@ -275,8 +278,11 @@ class KnownLink(LinkFinder,KnownFinder):
 
 class KnownLinkNoLink(LinkFinder,KnownFinder):
 
+    DEFAULT_LABELS = ['link', 'nolink'] 
+
     def __init__(self,**kwargs):
-        KnownFinder.__init__(self,**kwargs)
+        labels = kwargs.pop('labels', self.DEFAULT_LABELS)
+        KnownFinder.__init__(self, labels=labels, **kwargs)
         LinkFinder.__init__(self)
 
     def create_boxes(self, map_dict):
@@ -334,6 +340,14 @@ class KnownLinkNoLink(LinkFinder,KnownFinder):
         return None
 
 class KnownLinkWithInfo(KnownLink):
+
+    DEFAULT_LABELS = ['a1', 'a2', 'a3', 'a4', 'a5', 'a6', 'a8', 'ax',                                  
+                        'b1', 'b2', 'b3', 'b4', 'b5', 'b6', 'b8', 'bx',                                 
+                        'x1', 'x2', 'x3', 'x4', 'x5', 'x6', 'x8', 'xx']  
+
+    def __init__(self, **kwargs):
+        KnownLink.__init__(self, labels=kwargs.pop('labels', self.DEFAULT_LABELS), **kwargs)
+        LinkFinder.__init__(self)
     
     def create_boxes(self, map_dict):
         boxes = []

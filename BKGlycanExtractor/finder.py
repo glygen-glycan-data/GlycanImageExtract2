@@ -80,7 +80,7 @@ class Finder(object):
 
     def get_labels(self):
         # provides all labels/classes - from the ".labels" (placed alongside YOLO weights file) 
-        # or user provided file        
+        # or user provided file     
         if not self._labels:
             raise ValueError(
                 "No labels loaded. Labels file needs to be provided else a .labels files needs to exist among the weights and config file of the YOLO finder"
@@ -118,7 +118,8 @@ class KnownFinder(Finder):
 
     def __init__(self,**kwargs):
         super().__init__(name=kwargs.get('name'),
-                         cfgmgr=kwargs.get('cfgmgr'))
+                         cfgmgr=kwargs.get('cfgmgr'),
+                         labels=kwargs.get('labels'))
         self.params.update(dict(
             boxpadding = Config.get_param('boxpadding', Config.FLOAT, kwargs, self.defaults),
         ))
@@ -306,7 +307,7 @@ class KnownFinder(Finder):
             # else the smallest mono_id is the root - randimgs.py.
             # This change was made because when randimgs.py is used, the lowest mono_id is assumed to be the root in the map files,
             # but this is not if the map files are built out of Yolo predicted json results - root_id could map to any mono_id
-            if current_glycan['root'] is None:
+            if current_glycan and current_glycan.get('monos') and current_glycan['root'] is None:
                 current_glycan['root'] = min(current_glycan['monos'].keys())
 
         # Boolean to indicate if map file contains SGI or MGI
