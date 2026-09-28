@@ -353,6 +353,8 @@ class GlycanEditor(cmd.Cmd):
         yolo_uncleaned, yolo_compstr = self._maybe_yolo_uncleaned()
         if yolo_compstr:
             print("Uncleaned composition:", yolo_compstr)
+            if args.add_uncleaned_composition:
+                self.tsvresults[self.glycan_gid]['uncleaned_composition'] = yolo_compstr
         if acc:
             print("Accession:", acc)
         if wurcs:
@@ -383,6 +385,9 @@ class GlycanEditor(cmd.Cmd):
         yolo_uncleaned, yolo_compstr = self._maybe_yolo_uncleaned()
         if yolo_compstr:
             print("Uncleaned composition:", yolo_compstr)
+            if args.add_uncleaned_composition:
+                self.tsvresults[self.glycan_gid]['uncleaned_composition'] = yolo_compstr
+                self.any_modified = True
         self._display.show_loading()
         update_annotated(self._display, self.glycan, self.figure, seq, self.glymage,
                          self.img_scale, self.font_scale, self.label_style, self.text_anchor,
@@ -1072,6 +1077,14 @@ parser.add_argument(
     help='JSON format extractor result file.'
 )
 
+# 
+# parser.add_argument(
+#     '--add_uncleaned_composition',
+#     action="store_true",
+#     default=False,
+#     help='Add uncleaned composition for vote 2 glycans when checked.'
+# )
+
 parser.add_argument(
     '--resulturl',
     type=str,
@@ -1086,6 +1099,7 @@ parser.add_argument(
 )
 
 args = parser.parse_args()
+args.add_uncleaned_composition = True
 
 if args.resulturl:
     # https://extractor.glyomics.org/static/files/xx5fgpkbwl/results.json
@@ -1143,6 +1157,8 @@ glylookup = GlyLookupClient()
 tsvreader = csv.DictReader(open(tsvfilename), dialect="excel-tab")
 tsvresults = dict((row['ID'], row) for row in tsvreader)
 tsvfieldnames = tsvreader.fieldnames
+if args.add_uncleaned_composition:
+    tsvfieldnames.insert(tsvfieldnames.index("composition")+1,"uncleaned_composition")
 
 results = ManuscriptSemantics.read_json(jsonfile)
 image_search_strategy = results.get('image_search_strategy')
