@@ -51,28 +51,28 @@ class ImageSearch:
         pdf = PDFHandler(pdf_path)
         res = []
         for page_num in sorted(metadata):
-            page = pdf.doc[page_num - 1]
+            # page = pdf.doc[page_num - 1]
             for image_number in sorted(metadata[page_num]):
                 fig = dict(metadata[page_num][image_number])
+                fig["page_number"] = page_num
+                fig["dpi"] = dpi
                 ic = fig["image_count"]
                 if ic in bbox_override_dict:
                     fig["pdf_fig_bbox"] = bbox_override_dict[ic]
                 if ic in image_path_dict:
                     dest = image_path_dict[ic]
                     if not os.path.exists(dest):
-                        saved = PDFHandler.save_image(
-                            pdf.doc, page, fig["pdf_fig_bbox"], dest,
-                            xref=fig.get("xref"), dpi=dpi, annots=use_annotations,
+                        saved = pdf.write_image(
+                            fig, image_path=dest, image_annotations=use_annotations,
                         )
                         fig["image_path"] = (saved or {}).get("image_path", dest)
                     else:
                         fig["image_path"] = dest
                 else:
                     dest = os.path.join(figures_dir, f"fig{ic}.png")
-                    saved = PDFHandler.save_image(
-                        pdf.doc, page, fig["pdf_fig_bbox"], dest,
-                        xref=fig.get("xref"), dpi=dpi, annots=use_annotations,
-                    )
+                    saved = pdf.write_image(
+                            fig, image_path=dest, image_annotations=use_annotations,
+                        )
                     fig["image_path"] = (saved or {}).get("image_path", dest)
                 res.append(fig)
         return res
@@ -134,7 +134,7 @@ class FitzImageSearch:
         return pdf_metadata
 
 class FigCapImageSearch:
-    def get_metadata(self, input_filepath, figures_dir, image_path_dict=None, dpi=300, use_annotations=True, bbox_override_dict=None, **kwargs):
+    def get_metadata(self, input_filepath, figures_dir, image_path_dict=None, dpi=STANDARD_DPI, use_annotations=True, bbox_override_dict=None, **kwargs):
         metadata = self._build_metadata(input_filepath)
         return ImageSearch.figures_metadata_with_paths(
             input_filepath, figures_dir, metadata, image_path_dict, dpi, use_annotations, bbox_override_dict
@@ -173,13 +173,27 @@ class FigCapImageSearch:
 
         # PDFigCapX repository - saves the pdf pages as a pixmap and processing it using openCV to identify the different components present on the page.
         # The higher the dpi, better the resolution, the more accurate the figure detection will be.
-        page_dpi = 300    
-
-        json_data_path = PDFiguesCaptionsData.figures_info(input_filepath,page_dpi) 
-        with open(json_data_path) as f:
-            figures_data = json.load(f)
-
+        page_dpi = STANDARD_DPI   
+        
+        # Figure identification using figcapX should be done on a clean unmodified pdf (which doesnt have any additional/manual annotations)
+        # FigcapX rasterises the pdf page and then looks for images, so the drawn annotations can cause disturbance and a slight difference in
+        # the data that PDFFigCapX returns back i.e pdf_fig_bbox can be different from the manual annotations.
+        # Solution: strip all the annotations from the pdf and save it as a temporary file --> run FigCap extraction 
+        # on the cleaned un-annoated pdf - this ensures that the extarcted pdf_fig_bbox will be the same as the originally annotated bbox.
+        # Solution: strip annotations into a temp PDF, when FigCap run on that copy
+        # re-detection is not skewed by annotation boxes that were drawn. pdf_fig_bbox then tends to
+        # match the original job/JSON boxes (but override pdf_fig_box still remains a safety net).
         pdf = PDFHandler(input_filepath)
+        search_path = pdf.path_without_annotations()
+        try:
+            json_data_path = PDFiguesCaptionsData.figures_info(search_path, page_dpi)
+            with open(json_data_path) as f:
+                figures_data = json.load(f)
+        finally:
+            if search_path != input_filepath:
+                os.remove(search_path)
+
+        # pdf = PDFHandler(input_filepath)
 
         filter = CompoundPDFImageFilter(
             PDFImageSizeFilter(width=90,height=90),
@@ -370,6 +384,6 @@ if __name__ == '__main__':
         ) from e
 
     pdf_path = sys.argv[1]      # pdf path
-    page_dpi = 300
+    page_dpi = STANDARD_DPI
     # fig_json_path = fs.figures_info(pdf_path, page_dpi)
     fig_json_data = PDFiguesCaptionsData.figures_info(pdf_path, page_dpi)

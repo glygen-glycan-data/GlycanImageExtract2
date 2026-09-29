@@ -1,11 +1,13 @@
 import fitz, os, os.path, re, difflib, traceback, sys
 
 from . pmc_details import PMCData
+from .bbox import PDFBoundingBox
+from .compareboxes import CompareBoxes
 
 
 # if more constants are added, then create a Enum class 
 STANDARD_DPI = 300
-POINTS_PER_INCH = 72.0
+XREF_MATCH_IOU_THRESHOLD = 0.8
 
 class PDFHandler(object):
     def __init__(self,filepath):
@@ -13,7 +15,7 @@ class PDFHandler(object):
         self.dir,self.base = os.path.split(filepath)
         self.base,self.extn = self.base.rsplit('.',1)
     
-    def make_figure_filename(self,image):
+    def make_figure_path(self,image):
         return os.path.join(self.dir,self.base+"-xref"+str(image['xref'])+"."+image.get("ext","png"))
 
     def pages(self):
@@ -40,92 +42,198 @@ class PDFHandler(object):
     @staticmethod
     def create_box(bbox):
         return fitz.Rect(bbox)
-
-
-    def write_image(self,image,filename=None):
-        if filename is None:
-            filename = self.make_figure_filename(image)
-        if 'image' in image and 'ext' in image:
-            with open(filename,'wb') as fh:
-                fh.write(image['image'])
-            return
-        
-        pic = fitz.Pixmap(self.doc, image['xref'])
-        failed = False
+    
+    def path_without_annotations(self):
+        '''
+        Path to an annotation free copy of this pdf, or the original path when it has
+        no annotations. FigCapX detects figures from the rendered page, so boxes drawn
+        on a figure shift the detected pdf_fig_bbox on a re-run.
+        Caller deletes the copy when it differs from the original.
+        '''
+        doc = fitz.open(self.doc.name)
         try:
-            pic.save(filename)
+            removed = False
+            for page in doc:
+                for annot in list(page.annots() or []):
+                    page.delete_annot(annot)
+                    removed = True
+            if not removed:
+                return self.doc.name
+            output_path = self.doc.name.replace('.pdf', '.noannots.pdf')
+            doc.save(output_path, garbage=3, clean=True)
+            return output_path
+        finally:
+            doc.close()
+            
+    def _with_ext(self, path, ext):
+        if path.endswith('.' + ext):
+            return path
+        return path.rsplit('.', 1)[0] + '.' + ext
+    
+    def _write_bytes(self, image, image_path):
+        # ensure that the provided image_path extension matches with the original 
+        # image bytes extension, if not update it to the orginal
+        image_path = self._with_ext(image_path, image['ext'])
+        with open(image_path, 'wb') as fh:
+            fh.write(image['image'])
+        return dict(width=image.get('width'), height=image.get('height'), image_path=image_path)
+    
+    def _save_pixmap(self, pix, image_path):
+        try:
+            pix.save(image_path)
         except ValueError:
-            failed = True
-        if failed:
-            # If save fails, try to convert to RGB and try again
-            pic = fitz.Pixmap(fitz.csRGB, pic)
-            pic.save(filename)
-
+            # unsupported colorspace (e.g. CMYK) --> convert and retry
+            pix = fitz.Pixmap(fitz.csRGB, pix)
+            pix.save(image_path)
+        return dict(width=pix.width, height=pix.height, image_path=image_path)
+    
     @staticmethod
-    def save_image(doc, page, pdf_fig_bbox, image_path, xref=None, dpi=STANDARD_DPI, annots=True):
-        pix = None
+    def _to_xref(value):
+        '''xref may arrive as a string (pdf comments) or None - normalize to int/None'''
+        try:
+            xref = int(value) if value is not None else None
+        except (TypeError, ValueError):
+            print(f"invalid xref {value!r}")
+            return None
+        return xref if xref and xref > 0 else None
 
-        # Normalize bbox: list/tuple -> fitz.Rect
-        if pdf_fig_bbox is not None and isinstance(pdf_fig_bbox, (list, tuple)):
+    def resolve_xref(self, page, pdf_fig_bbox, original_xref=None,
+                 iou_threshold=XREF_MATCH_IOU_THRESHOLD):
+        """
+        Find the image xref on the current given page whose bbox matches provided pdf_fig_bbox.
+
+        Note: Annotating a pdf and saving a copy renumbers its objects, so the xref stored
+        in the json/pdf comments can point at a non-image object even though the
+        figure itself did not move. 
+        The bbox (pdf_fig_bbox) is the stable authority, so it is used for sanity check, by looking up
+        the current xref's on the page and comparing it with the provided xref. By comparing the bounding
+        boxes of the provided xref vs the bounding boxes on the currently on the page using IOU or containment -
+        it is possible to determine if the provided xref is good, or an updated xref should be used or fallback to
+        clipping the image using pdf_fig_bbox.
+
+        returns the resolved xref
+        """
+
+        if page is None or pdf_fig_bbox is None:
+            return None
+        try:
+            fig_box = PDFBoundingBox(bbox=list(fitz.Rect(pdf_fig_bbox)))
+        except (ValueError, TypeError):
+            print(f"invalid figure bbox {pdf_fig_bbox!r}")
+            return None
+        original_xref = self._to_xref(original_xref)
+        matches = []
+        for image_info in self.images_per_page(page):
+            page_xref = self._to_xref(image_info.get('xref'))
+            if page_xref is None:
+                continue
             try:
-                pdf_fig_bbox = fitz.Rect(*pdf_fig_bbox)
-            except Exception:
-                pdf_fig_bbox = None  # bad bbox; will fall back or error later
+                img_box = PDFBoundingBox(bbox=list(image_info['bbox']))
+            except (KeyError, ValueError, TypeError):
+                continue
+            # a figure bbox drawn slightly bigger/smaller than the embedded image
+            # lowers the iou, so full containment (either way) also counts as a match
+            if CompareBoxes.iou(fig_box, img_box) >= iou_threshold \
+                    or CompareBoxes.get_containment(fig_box, img_box) is not None:
+                matches.append(page_xref)
 
-        if xref is not None:
-            xref = int(xref)
+        # the caller's original xref wins whenever it still matches, so a pdf that was never
+        # rewritten keeps extracting the exact same image as before
+        if original_xref in matches:
+            return original_xref
+        
+        # exactly one image fits the bbox - it must be this figure.
+        # several images fit (panels inside the figure box), so which one is the
+        # figure cannot be decided here - clipping the bbox gives the whole figure
+        return matches[0] if len(matches) == 1 else None
+    
+    def _get_image_by_xref(self, image_path, xref):        
+        # 1) original embedded bytes
+        try:
+            image_info = self.doc.extract_image(xref)
+            return self._write_bytes(image_info, image_path)
+        except (ValueError, RuntimeError, OSError) as e:
+            print(f"extract_image(xref={xref}) failed: {type(e).__name__}: {e}")
+        
+        # 2)rasterize that image object - using Pixmap (uses xref)
+        try:
+            image_info = fitz.Pixmap(self.doc, xref)     
+            return self._save_pixmap(image_info, image_path)  
+        except (ValueError, RuntimeError, OSError) as e:
+            print(f"Pixmap(xref={xref}) failed: {type(e).__name__}: {e}")
+        
+        # both xref based extraction failed; so caller so fallback to clipping the image uisng pdf_fig_box
+        return None
+    
+
+    def write_image(self, image, image_path=None, image_annotations=True):
+        if image_path is None:
+            image_path = self.make_figure_path(image)
+
+        result = None
 
         try:
-            # 1) Try xref if we have one
-            if xref is not None and xref > 0:
-
+            # 1) raw bytes of the image are already on dict (i.e image dict), so directly save it
+            if image.get('image') is not None and image.get('ext'):
+                return self._write_bytes(image, image_path)
+            
+            pdf_fig_bbox = image.get('pdf_fig_bbox')
+            page_number = image.get('page_number')
+            page = None
+            
+            if page_number is not None:
                 try:
-                    image_info = doc.extract_image(xref)
-                    image_path1 = image_path
-                    if not image_path.endswith("."+image_info["ext"]):
-                        image_path1 = image_path.rsplit('.',1)[0] + "." + image_info["ext"]
-                    with open(image_path1,'wb') as fh:
-                        fh.write(image_info['image'])
-                    return dict(width=image_info['width'],
-                                height=image_info['height'],
-                                image_path=image_path1)
-                except Exception as e:
-                    # traceback.print_exc()
-                    pix = None
+                    page = self.doc[int(page_number) - 1]
+                except (TypeError, ValueError, IndexError):
+                    page = None
 
+            # 2) try to extract raw bytes (embedded orginal form of image) using xref,
+            # if not possible, then attempt fitz Pixmap extraction
+            original_xref = self._to_xref(image.get('xref'))
+
+            resolved_xref = None
+            if original_xref is not None:
+                if page is not None and pdf_fig_bbox is not None:
+                    resolved_xref = self.resolve_xref(page, pdf_fig_bbox, original_xref=original_xref)
+                else:
+                    resolved_xref = original_xref  # no bbox to validate against
+                if resolved_xref and resolved_xref > 0:
+                    result = self._get_image_by_xref(image_path, resolved_xref)
+
+                    # print("original vs new xref", original_xref, resolved_xref)
+
+            # 3) clip the image based on the bbox provided - generally used
+            # for figcap extractions when original xref is not available
+            if result is None and pdf_fig_bbox is not None and page is not None:
                 try:
-                    pix = fitz.Pixmap(doc, xref)
-                except Exception as e:
-                    # print(f"Pixmap(doc, {xref}) failed with: {e} - falling back to get_pixmap()")
-                    # exception - if xref is valid but it still fails, then fallback to using pixmap
-                    pix = None
+                    clip = fitz.Rect(pdf_fig_bbox)
+                    if not clip.is_empty:
+                        dpi = STANDARD_DPI
+                        image_info = page.get_pixmap(
+                            clip=clip, dpi=dpi, annots=image_annotations
+                        )
+                        # print("USED CLIP")
+                        result = self._save_pixmap(image_info, image_path)
+                except (ValueError, TypeError, IndexError, RuntimeError) as e:
+                    print(f"clip failed: {type(e).__name__}: {e}")
 
-            # 2) Fallback: always try clipped page rasterization if pix is still None
-            if pix is None and pdf_fig_bbox is not None:
-                clip = fitz.Rect(pdf_fig_bbox)
-                # clip = page.rect & pdf_fig_bbox
-                if clip.is_empty:
-                    raise ValueError(f"Empty clip: {pdf_fig_bbox}")
-                pix = page.get_pixmap(clip=clip, dpi=dpi, annots=annots)
-
-            if pix is None:
-                raise RuntimeError("No pixmap could be created (xref and clip both failed)")
-
-            # 3) Save
-            try:
-                pix.save(image_path)
-            except Exception:
-                pix = fitz.Pixmap(fitz.csRGB, pix)
-                pix.save(image_path)
-
-            return dict(width=pix.width,height=pix.height, image_path=image_path)
-
-        except Exception as e:
+            if result is None:
+                raise RuntimeError("embedded image and clip image - both failed")
+            
+            return result
+        except OSError as e:
+            print(f"write_image I/O error: {e}")
             traceback.print_exc()
             return None
-    
+        except RuntimeError as e:
+            print(f"write_image failed: {e}")
+            traceback.print_exc()
+            return None
+
     def figures(self,images_data=None,filter=None):
-        if images_data is not None:         # images_data is provided by figcap 
+        # if images_data is provided (not None) --> it is from figcap 
+        # else fitz based image data will be created
+        if images_data is not None:         
             '''Generator that yields image metadata when the data is already provided (images_data)'''
             for image_info in images_data.get('figures', {}):
                 if filter is None or filter.keep(image_info):

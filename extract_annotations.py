@@ -10,7 +10,7 @@ then that information will be exctracted.
 
 The information about the figure extraction and other associated information will be extracted and stored in the output file.
 
-Input: Accepts a folder with annotated pdf's and their associated TSV's and optionally JSON file i.e results.json (if you want to extract components).
+Input: Accepts a folder with annotated pdf's and their associated TSV's and optionally JSON file (if you want to extract components).
 Provide extraction type through command line arguments - glycans or components (monos/root/links - all in one map file)
 
 For component modes, one map file is written per glycan with GLYCAN + # metadata + m/l
@@ -24,12 +24,12 @@ Note: Figures with no annotations will also be stored along with a semantics/map
 
 import os
 import argparse
-import fitz
 import shutil
 import csv
 import cv2
+import traceback
 from BKGlycanExtractor.semantics import ManuscriptSemantics
-from BKGlycanExtractor.pdfhandler import STANDARD_DPI, POINTS_PER_INCH, PDFHandler
+from BKGlycanExtractor.pdfhandler import PDFHandler
 from BKGlycanExtractor.image_manager import Manuscript_Manager
 from BKGlycanExtractor.glycanannotator import Config_Manager
 
@@ -40,8 +40,8 @@ GLYCAN_META_SKIP = {
     'box', 'image', 'links', 'monos', 'root', 'undirected_links',
     'rejected_monos', 'rejected_roots', 'rejected_undirected_links',
     'non_tree_links', 'center', 'glycans', 'log', 'glycan_errors', 'squiggle',
-    'extracted_image', 'iupac', 'wurcs', 'composition_str', 'linkexpl',
-    'extracted_image_path', 'glyImage', 'image_name'
+    'extracted_image', 'linkexpl',
+    'extracted_image_path', 'glyImage', 'image_name', 'upvotes', 'downvotes'
 }
 
 parser = argparse.ArgumentParser(description="Extract annotated figures and comments from PDFs")
@@ -106,6 +106,29 @@ def parse_comment(comment):
             comment_dict['id'] = lines[0]
     return comment_dict
 
+def resolve_manuscript_paths(pdf_path, require_json=False):
+    # Pair PDF with filename with same .tsv / .json in the same folder.
+    
+    pdf_dir, pdf_file = os.path.split(pdf_path)
+    stem, ext = os.path.splitext(pdf_file)  # 'a.b.pdf' --> ('a.b', '.pdf')
+    if ext.lower() != '.pdf':
+        print(f"  Skipping: {pdf_file} - not a PDF")
+        return None
+    tsv_path = os.path.join(pdf_dir, stem + '.tsv')
+    json_path = os.path.join(pdf_dir, stem + '.json')
+    if not os.path.isfile(tsv_path):
+        print(f"  Skipping: {pdf_file} - no matching TSV. Require {tsv_path}")
+        return None
+    if require_json and not os.path.isfile(json_path):
+        print(f"  Skipping: {pdf_file} - no matching JSON. Require {json_path}")
+        return None
+    return {
+        'stem': stem,
+        'pdf_path': pdf_path,
+        'tsv_path': tsv_path,
+        'json_path': json_path if os.path.isfile(json_path) else None,
+    }
+
 def load_tsv_data(tsv_path):
     """Load TSV into dictionary keyed by ID"""
     tsv_data = {}
@@ -119,56 +142,46 @@ def load_tsv_data(tsv_path):
                     tsv_data[row_id] = row
     return tsv_data
 
-# TODO write a static method for this in bbox class
-def pixel_coordinates(doc, page, annot_box, fig_box, xref=None, dpi=STANDARD_DPI):
-
-    # Scale: from xref image size if available, else from DPI
-    scale_x = scale_y = None
-
-    if xref is not None and int(xref) > 0:
-        try: 
-            pix = fitz.Pixmap(doc, int(xref))
-            scale_x = pix.width / fig_box.width
-            scale_y = pix.height / fig_box.height
-        except Exception as e:
-            pass
-
-    if scale_x is None or scale_y is None:
-        pixels_per_point = float(dpi) / POINTS_PER_INCH
-        scale_x = scale_y = pixels_per_point
-
-    # Convert annotation coordinates to pixel coordinates
-    px_gly_x0 = round((annot_box.x0 - fig_box.x0) * scale_x)
-    px_gly_y0 = round((annot_box.y0 - fig_box.y0) * scale_y)
-    px_gly_w = round(annot_box.width * scale_x)
-    px_gly_h = round(annot_box.height * scale_y)
-
-    return [px_gly_x0, px_gly_y0, px_gly_w, px_gly_h]
+def pixel_coordinates(annot_box, fig_box, *, image_width=None, image_height=None):
+    """PDF annot rect --> pixel bbox [x, y, w, h] relative to the figure image."""
+    scale_x = float(image_width) / fig_box.width
+    scale_y = float(image_height) / fig_box.height
+    return [
+        round((annot_box.x0 - fig_box.x0) * scale_x),
+        round((annot_box.y0 - fig_box.y0) * scale_y),
+        round(annot_box.width * scale_x),
+        round(annot_box.height * scale_y),
+    ]
 
 def write_figure_header(semantics_file, fig_data):
     semantics_file.write(
         f'##### WHOLEIMAGE: {round(fig_data["height"])} x {round(fig_data["width"])} (height x width)\n'
     )
 
-def write_glycans(annotated_pdf, page, page_num, pdf_fig_box, fig_comments,
+def write_glycans(annotated_pdf, page_num, pdf_fig_box, fig_comments,
                  glycan_annotations, tsv_data, output_dir):
     
     # pdf_fig_box - is fitz.rect format which is [x1, y1, x2, y2]
     image_count = fig_comments['fig']
     xref = fig_comments.get('xref')
-    dpi = fig_comments.get('dpi') or STANDARD_DPI
 
-    figure_filename = f"{os.path.basename(output_dir)}_p{page_num}_f{image_count}.png"   # default is png file but PDFHandler.save_image() will decide what format the original image was embedded in the pdf and accordingly get png, jpeg
+    # default is png file but PDFHandler.write_image() will decide what format the original image was embedded in the pdf and accordingly get png, jpeg
+    figure_filename = f"{os.path.basename(output_dir)}_p{page_num}_f{image_count}.png"   
     figure_path = os.path.join(output_dir, figure_filename)
     
     # Save Glycan Figure (Figure can have single/multiple glycans)
     try:
-        fig_data = PDFHandler.save_image(
-            annotated_pdf, page, pdf_fig_box, figure_path,
-            xref=xref, dpi=dpi, annots=False
-        )
+        fig = {
+            "xref": int(xref) if xref else None,
+            "pdf_fig_bbox": pdf_fig_box,
+            "page_number": page_num,
+        }
+
+        fig_data = annotated_pdf.write_image(fig, image_path=figure_path, image_annotations=False)
+
         if not fig_data:
-            raise RuntimeError("save_image returned None")
+            raise RuntimeError("write_image returned None")
+        
         figure_path = fig_data.get("image_path", figure_path)
         figure_filename = os.path.basename(figure_path)
     except Exception as e:
@@ -191,17 +204,18 @@ def write_glycans(annotated_pdf, page, page_num, pdf_fig_box, fig_comments,
                 continue
 
             tsv_row_data = tsv_data.get(glycan_id, {})
-            # Note: pixel_coordinates method is needed because glycan extractions work without a json document, so it doesnt get the refernce bbox
-            # and needs to compute it based on the annotated pdf based rectangle. Access to json document would directly provide glycan bbox in pixel coordinates.
+
+            # Note: pixel_coordinates method is needed because glycan extractions work without a json document - so the 
+            # coordinates need to be computed and we already have width and height of the entire figure on which the glycan is present. 
             gly_bbox = pixel_coordinates(
-                annotated_pdf, page, pdf_glycan_box, pdf_fig_box, xref=xref, dpi=dpi
+                pdf_glycan_box, pdf_fig_box, image_width=fig_data.get('width'), 
+                image_height=fig_data.get('height')
             )
 
             data = {
                 'xref': xref,   # if xref is already present in tsv, then tsv will overwrite this
-                'dpi': dpi,     # if dpi is already present in tsv, then tsv will overwrite this
-                **{k: str(v).strip() for k, v in tsv_row_data.items() if v is not None},
-                'pdf_fig_bbox': pdf_fig_box,
+                **{k: str(v).strip() for k, v in tsv_row_data.items() if v is not None}, # TSV data
+                'pdf_fig_bbox': list(pdf_fig_box),
                 'figure_name': figure_filename,
                 'figure_path': figure_path,
                 'gly_bbox': gly_bbox,
@@ -239,7 +253,7 @@ def extract_glycans(annotated_pdf, tsv_data, output_dir):
                 continue
 
             write_glycans(
-                annotated_pdf, page, page_num, pdf_fig_box, fig_comments,
+                annotated_pdf, page_num, pdf_fig_box, fig_comments,
                 glycan_annotations, tsv_data, output_dir
             )
 
@@ -336,27 +350,28 @@ def extract_components(annotated_pdf, json_data, tsv_data, output_dir):
     for figure in json_data.figures():
         page_number = figure.get('page_number')
         image_count = figure.get('image_count')
-        page = annotated_pdf[page_number - 1]
 
         pdf_fig_bbox = figure.get('pdf_fig_bbox')   # [x1, y1, x2, y2]
 
         xref = figure.get('xref')
-        dpi = figure.get('dpi') or STANDARD_DPI
 
         figure_path = os.path.join(
             output_dir, f"{os.path.basename(output_dir)}_p{page_number}_f{image_count}.png",
         )
 
         try:
+            fig = {
+                "xref": int(xref) if xref else None,
+                "pdf_fig_bbox": pdf_fig_bbox,
+                "page_number": page_number,
+            }
+                
             # save the entire figure with glycan(s) - so that you can clip individuals glycans from it
             # and at the end the figure will be deleted 
-            figure_details = PDFHandler.save_image(
-                annotated_pdf, page, pdf_fig_bbox, figure_path,
-                xref=xref, dpi=dpi, annots=False,
-            )
+            figure_details = annotated_pdf.write_image(fig, image_path=figure_path, image_annotations=False)
 
             if not figure_details:
-                raise RuntimeError("save_image returned None")
+                raise RuntimeError("write_image returned None")
             
             figure_path = figure_details.get("image_path", figure_path)
             fig_ext = os.path.splitext(figure_path)[1] or ".png"
@@ -378,10 +393,11 @@ def extract_components(annotated_pdf, json_data, tsv_data, output_dir):
                 gid = glycan.get('GID')
                 tsv_row = tsv_data.get(gid, {})
 
-                # only accept glycans which were voted as GOOD
-                if int(tsv_row.get('votes') or 0) != 1:
-                    continue
+                # only accept glycans which were voted as GOOD (vote=1) or PARTIALLY GOOD (vote=2, clean image will remove the bad parts)
+                if int(tsv_row.get('votes') or 0) not in (1, 2):
 
+                    continue
+                    
                 gly_box = glycan.get('box')
                 if gly_box is None:
                     print(f"Skipping glycan {gid}: missing bbox in JSON")
@@ -389,15 +405,12 @@ def extract_components(annotated_pdf, json_data, tsv_data, output_dir):
                 
                 # get glycan image and clean it
                 glycan_img = gly_box.crop(glycan_figure)
-                
                 if glycan_img is None or glycan_img.size == 0:
                     print(f"Skipping glycan {gid}: empty crop {gly_box.bbox()}")
                     continue
-
                 if clean_image_step is not None:
                     _cropped, glycan_img = clean_image_step.process_image(glycan_img)
 
-                gx, gy, gw, gh = gly_box.bbox()
                 glycan_filename = (f"{os.path.basename(output_dir)}_p{page_number}_f{image_count}_{gid}{fig_ext}")
                 glycan_image_path = os.path.join(output_dir, glycan_filename)
                 semantics_file = glycan_image_path.rsplit('.', 1)[0] + '_map.txt'
@@ -413,6 +426,10 @@ def extract_components(annotated_pdf, json_data, tsv_data, output_dir):
                     write_figure_header(map_file, {"height": out_h, "width": out_w})
                     map_file.write(f"### GLYCAN: 0 0 {out_w} {out_h} (bbox: x y w h)\n")
 
+                    # Note: Data from TSV file and JSON data for the components will be
+                    # written out to the map file.
+                    # BUT, the important part is manual corrections could have been made
+                    # on the JSON file, but TSV file might still have stale data which is incorrect (eg IUPAC)
                     meta = {}
                     for k, v in tsv_row.items():
                         if v is not None and str(v).strip():
@@ -422,11 +439,17 @@ def extract_components(annotated_pdf, json_data, tsv_data, output_dir):
                             continue
                         if isinstance(v, (dict, list, tuple)):
                             continue
-                        meta[k] = v
+                        for existing in list(meta):     # clean up to ensure manually edited information in JSON has higher priority over TSV data (eg. updated IUPAC in JSON vs stale IUPAC in TSV)
+                            if existing.lower() == k.lower():
+                                del meta[existing]
+                        meta[k] = str(v).strip() if isinstance(v, str) else v
+                    
+                    if 'composition_str' in meta:   # JSON has composition_str as key and TSV has 'composition' col -- both are the same, but the names have an inconsistency but JSON data gets higher priority
+                        meta.pop('composition', None)
+
                     meta['figure_number'] = image_count
                     meta['page_number'] = page_number
                     meta['figure_name'] = glycan_filename
-                    # meta['dpi'] = dpi
                     write_metadata(map_file, meta,  prefix="#")
 
                     for mono in glycan.monos():
@@ -436,7 +459,8 @@ def extract_components(annotated_pdf, json_data, tsv_data, output_dir):
                     # but that is not true for the annotated json data, root can have any
                     # mono_id, so explicitly write root data in the map file
                     # else consider the lowest mono_id as the root - default case
-                    write_root_data(map_file, glycan.root())
+                    if glycan.has_root():
+                        write_root_data(map_file, glycan.root())
 
                     for link in glycan.all_links():
                         write_link_data(map_file, link)
@@ -456,52 +480,37 @@ assert args.extract in ('glycans', 'components')
 
 pdf_files = Manuscript_Manager(args.manuscripts)
 for pdf_path in pdf_files:
+    file_paths = resolve_manuscript_paths(pdf_path, require_json=(args.extract != 'glycans'))
 
-    pdf_dir,pdf_file = os.path.split(pdf_path)
-    pdf_basename,pdf_extn = pdf_file.rsplit('.',1)
-
-    # check if a corresponding tsv file exists for the pdf
-    tsv_path = os.path.join(pdf_dir,pdf_basename + '.tsv')
-
-    if not os.path.exists(tsv_path):
-        print(f"  Skipping:   {pdf_file} - no matching TSV found. Require {tsv_path}")
+    if file_paths is None:
         continue
 
-    if pdf_basename.rsplit('.',1)[-1] in ("annotated","annotated_Manual"):
-        pdf_basename = pdf_basename.rsplit(".",1)[0]
-
-    # if extraction type is glycans - then JSON file is optional. Otherwise required
-    json_path = os.path.join(pdf_dir , 'results.json')
-    if args.extract != 'glycans':
-        if not os.path.exists(json_path):
-            print(f"  Skipping:   {pdf_file} - no matching JSON found. Require {json_path}")
-            continue
-            
-    output_dir = os.path.join(output_folder, pdf_basename)
-
+    output_dir = os.path.join(output_folder, file_paths['stem'])
     if os.path.exists(output_dir):
-        print(f"  Skipping: {pdf_file} - already processed.")
+        print(f"  Skipping: {os.path.basename(pdf_path)} - already processed.")
         continue
-    
-    os.makedirs(output_dir)
 
-    print("Processing:", os.path.split(pdf_path)[1])
+    os.makedirs(output_dir)
+    print("Processing:", os.path.basename(pdf_path))
 
     # main step for extraction, based on extraction type - 'glycans' or 'component' - monos, root, links
-    # extract_annotations(output_dir,pdf_path,tsv_path,json_path,extraction_type=args.extract)
-
     # load all the existing tsv data as a dict
     # key: id, val: all other data
-    tsv_data = load_tsv_data(tsv_path)
-
-    with fitz.open(pdf_path) as annotated_pdf:
+    tsv_data = load_tsv_data(file_paths['tsv_path'])
+    pdf = PDFHandler(file_paths['pdf_path'])
+    try:
         if args.extract == 'glycans':
-            extract_glycans(annotated_pdf, tsv_data, output_dir)
+            extract_glycans(pdf, tsv_data, output_dir)
         else:
-            json_data = ManuscriptSemantics.read_json(json_path)
+            json_data = ManuscriptSemantics.read_json(file_paths['json_path'])
             if json_data is None:
-                print(f"Skipping: could not read {json_path}")
+                print(f"Skipping: could not read {file_paths['json_path']}")
                 continue
-            extract_components(annotated_pdf, json_data, tsv_data, output_dir)
+            extract_components(pdf, json_data, tsv_data, output_dir)
+    except Exception as e:
+        traceback.print_exc()
+        print("Exception occured while processing file", e)
+    finally:
+        pdf.doc.close()
 
 
