@@ -308,6 +308,11 @@ class GlycanEditor(cmd.Cmd):
         self._display._win.root.bind_all("w", lambda e: self._key_queue.put("write"))
         self._display._win.root.bind_all("r", lambda e: self._key_queue.put("redend"))
         self._display._win.root.bind_all("l", lambda e: self._key_queue.put("add link"))
+        self._display._win.root.bind_all("N", lambda e: self._key_queue.put("add mono GlcNAc"))
+        self._display._win.root.bind_all("G", lambda e: self._key_queue.put("add mono Gal"))
+        self._display._win.root.bind_all("M", lambda e: self._key_queue.put("add mono Man"))
+        self._display._win.root.bind_all("F", lambda e: self._key_queue.put("add mono Fuc"))
+        self._display._win.root.bind_all("S", lambda e: self._key_queue.put("add mono NeuAc"))
         self._display._win.root.bind_all("1", lambda e: self._key_queue.put("_key_1"))
         self._display._win.root.bind_all("2", lambda e: self._key_queue.put("_key_2"))
         self._display._win.root.bind_all("!", lambda e: self._key_queue.put("_key_neg1"))
@@ -317,6 +322,7 @@ class GlycanEditor(cmd.Cmd):
         self.label_style = "INDEX"
         self.text_anchor = "CENTER"
         self._pending = None
+        self._display_pending = False
         self._click_queue = queue.Queue()
         self._display.set_click_callback(
             lambda x, y: self._click_queue.put(('click', (x, y))))
@@ -333,7 +339,7 @@ class GlycanEditor(cmd.Cmd):
         if self._win_quit_pending:
             self._key_queue.put("_win_quit_y")
 
-    def _after_modify(self):
+    def _after_modify(self, defer_display=False):
         try:
             recompute_iupac(self.glycan)
         except Exception as e:
@@ -345,6 +351,10 @@ class GlycanEditor(cmd.Cmd):
         self.modified = True
         self.any_modified = True
         self._dirty_gids.add(self.glycan_gid)
+        if defer_display:
+            self._display_pending = True
+            return
+        self._display_pending = False
         print("GID:", self.glycan_gid)
         if seq:
             print("IUPAC:", seq)
@@ -367,6 +377,7 @@ class GlycanEditor(cmd.Cmd):
         self._display.update_info(self.glycan_gid, self.tsvresults[self.glycan_gid].get('votes'))
 
     def _display_current(self):
+        self._display_pending = False
         seq = self.glycan.get('IUPAC')
         compstr = self.glycan.get('composition_str')
         row = self.tsvresults.get(self.glycan_gid, {})
@@ -428,6 +439,8 @@ class GlycanEditor(cmd.Cmd):
 
     def _clear_pending(self, reason=None):
         self._pending = None
+        if self._display_pending and self.glycan is not None:
+            self._display_current()
         if reason:
             self._display.set_status(reason)
             print(reason)
@@ -446,34 +459,48 @@ class GlycanEditor(cmd.Cmd):
         mono = self._mono_at(pil_x, pil_y)
         pkind = self._pending['kind']
         if pkind == 'add_link':
-            if mono is None:
-                self._clear_pending("Click missed any mono. Cancelled.")
-                return
             if self._pending.get('first_mid') is None:
+                if mono is None:
+                    msg = "add link: click missed any mono. Continue clicking (right-click to cancel)"
+                    self._display.set_status(msg)
+                    print(msg)
+                    return
                 self._pending['first_mid'] = mono.id()
                 msg = f"add link: first mono {mono.id()} selected; click second mono (right-click to cancel)"
+                self._display.set_status(msg)
+                print(msg)
+                return
+            if mono is None:
+                msg = "add link: click missed any mono. Continue clicking (right-click to cancel)"
                 self._display.set_status(msg)
                 print(msg)
                 return
             mid1 = self._pending['first_mid']
             mid2 = mono.id()
             if mid1 == mid2:
-                self._clear_pending("Same mono clicked twice. Cancelled.")
+                self._pending['first_mid'] = None
+                msg = "add link: same mono clicked twice. Click first mono (right-click to cancel)"
+                self._display.set_status(msg)
+                print(msg)
                 return
-            self._pending = None
             try:
                 try:
                     op_recover_link(self.glycan, mid1, mid2)
                 except ValueError:
                     op_add_link(self.glycan, mid1, mid2)
-                self._after_modify()
+                self._after_modify(defer_display=True)
             except (ValueError, KeyError, IndexError) as e:
                 print(f"Error: {e}")
-                self._clear_pending()
+            if self._pending is not None:
+                self._pending['first_mid'] = None
+                msg = "add link: click first mono for next link (right-click to cancel)"
+                self._display.set_status(msg)
         elif pkind == 'add_mono':
             if self._pending.get('source_mid') is None:
                 if mono is None:
-                    self._clear_pending("Click missed any mono. Cancelled.")
+                    msg = "add mono: click missed any mono. Continue clicking (right-click to cancel)"
+                    self._display.set_status(msg)
+                    print(msg)
                     return
                 self._pending['source_mid'] = mono.id()
                 msg = (f"add mono: source mono {mono.id()} selected; "
@@ -485,13 +512,15 @@ class GlycanEditor(cmd.Cmd):
             label = self._pending['label']
             cx = pil_x / self.img_scale
             cy = pil_y / self.img_scale
-            self._pending = None
             try:
                 op_add_mono_at(self.glycan, source_mid, label, cx, cy)
-                self._after_modify()
+                self._after_modify(defer_display=True)
             except (ValueError, KeyError, IndexError) as e:
                 print(f"Error: {e}")
-                self._clear_pending()
+            if self._pending is not None:
+                self._pending['source_mid'] = None
+                msg = f"add mono {label}: click source mono for next add (right-click to cancel)"
+                self._display.set_status(msg)
         elif pkind == 'adjust':
             if mono is None:
                 self._clear_pending("Click missed any mono. Cancelled.")
@@ -515,7 +544,7 @@ class GlycanEditor(cmd.Cmd):
                 return
             try:
                 op_set_monolabel(self.glycan, mono.id(), label)
-                self._after_modify()
+                self._after_modify(defer_display=True)
             except (ValueError, KeyError, IndexError) as e:
                 print(f"Error: {e}")
             if self._pending is not None:
