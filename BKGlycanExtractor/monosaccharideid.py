@@ -69,7 +69,7 @@ class YOLOMonos(YOLOFinder,MonoFinder):
 
 class KnownMono(MonoFinder,KnownFinder):
 
-    DEFAULT_LABELS = ["GlcNAc","NeuAc","Fuc","Man","GalNAc","Gal","Glc","NeuGc","Xyl"]
+    DEFAULT_LABELS = ["Glc","Gal","NeuGc","GlcNAc","Fuc","Man","GalNAc","NeuAc","Xyl"]
 
     def __init__(self,**kwargs):
         labels = kwargs.pop('labels', self.DEFAULT_LABELS)  # ensures that the default labels can be overwritten while initilazing the class

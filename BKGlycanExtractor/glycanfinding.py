@@ -98,8 +98,11 @@ class SingleGlycanImage(Finder,GlycanFinder):
 
 class KnownGlycanBoxes(KnownFinder,GlycanFinder):
 
+    DEFAULT_LABELS = ['glycan']
+
     def __init__(self,**kwargs):
-        KnownFinder.__init__(self,**kwargs)
+        labels = kwargs.pop('labels', self.DEFAULT_LABELS)
+        KnownFinder.__init__(self,labels=labels,**kwargs)
         GlycanFinder.__init__(self)
 
     # method adapted to handle single/multiple glycan data

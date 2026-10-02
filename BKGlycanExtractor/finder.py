@@ -372,7 +372,7 @@ class KnownFinder(Finder):
         boxes = []
         for b in self.create_boxes(map_dict):
             b.set_image_dimensions(image=obj.image())
-            if self.params['boxpadding'] > 1:
+            if self.params['boxpadding'] >= 1:
                 b.pad(self.params['boxpadding'])
             elif self.params['boxpadding'] > 0:
                 b.pad_relative(self.params['boxpadding'])
