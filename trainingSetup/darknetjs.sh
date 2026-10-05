@@ -303,10 +303,24 @@ python3 $SCRIPTS/split_data.py --image_dir $YOLO_DATA --train_txt $TRAINING_FILE
 # YOLO_INIT_WEIGHTS=`download_weights "${CONFIG}"`
 CLEAR_FLAG=""
 if [ -n "$WEIGHTS" ]; then
-  YOLO_INIT_WEIGHTS="${CONFIG}_${EXP}.weights"
+  # Untouched start weights. Darknet loads from here; new checkpoints go only to weights/.
+  BASELINE_DIR="baseline_weights"
+  mkdir -p "$BASELINE_DIR"
+  SRC_BASE=$(basename "$WEIGHTS")
+  SRC_BASE="${SRC_BASE%%\?*}"
+  case "$SRC_BASE" in
+    ""|uc|view|open|file|d) SRC_BASE="${CONFIG}_source.weights" ;;
+  esac
+  case "$SRC_BASE" in
+    *.weights|*.conv.*) ;;
+    *) SRC_BASE="${SRC_BASE}.weights" ;;
+  esac
+  YOLO_INIT_WEIGHTS="${BASELINE_DIR}/${SRC_BASE}"
   echo "INFO: Fine-tuning from $WEIGHTS (config $CONFIG, Darknet -clear)"
   echo "INFO: Fine-tuning from $WEIGHTS (config $CONFIG, Darknet -clear)" >> "$PARAMS_LOG"
+  echo "INFO: Baseline weights snapshot: $YOLO_INIT_WEIGHTS" >> "$PARAMS_LOG"
   download "$WEIGHTS" "$YOLO_INIT_WEIGHTS"
+  upload "$YOLO_INIT_WEIGHTS" "$DRIVEROOT/$YOLO_INIT_WEIGHTS"
   CLEAR_FLAG="-clear"
 else
   YOLO_INIT_WEIGHTS=`download_weights "${CONFIG}"`
