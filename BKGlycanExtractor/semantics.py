@@ -1088,34 +1088,40 @@ class GlycanSemantics(ImageSemantics):
         # Filter adjacent nodes to only include unvisited ones
         filtered_adj = [v[0] for v in adj[u] if v[0] not in visited]
 
-        # Order children by increasing clockwise angle between the
-        # (parent -> u) reference direction and each (u -> child) direction.
-        # For the root (no parent), use the centroid of children to define a
-        # virtual parent on the opposite side of u.
+        # Order children by increasing clockwise angle around u, using the
+        # (u -> parent) link direction as the 0 reference. Clockwise angle is
+        # computed via dot and cross products in image coordinates (y-down),
+        # where atan2(cross, dot) is positive for clockwise rotation.
+        # For the root (no parent), place a virtual parent on the opposite side
+        # of the children's centroid, so the reference points away from them.
         uxy = self.mono(u).center()
         adjxy = [self.mono(v).center() for v in filtered_adj]
 
         if parent != -1:
             pxy = self.mono(parent).center()
-            ref_dx = uxy[0] - pxy[0]
-            ref_dy = uxy[1] - pxy[1]
+            ref_dx = pxy[0] - uxy[0]
+            ref_dy = pxy[1] - uxy[1]
         elif adjxy:
             cx = sum(vxy[0] for vxy in adjxy) / len(adjxy)
             cy = sum(vxy[1] for vxy in adjxy) / len(adjxy)
-            ref_dx = cx - uxy[0]
-            ref_dy = cy - uxy[1]
+            ref_dx = uxy[0] - cx
+            ref_dy = uxy[1] - cy
         else:
-            ref_dx, ref_dy = 0, -1
+            ref_dx, ref_dy = 0, 1
 
         if ref_dx == 0 and ref_dy == 0:
-            ref_dx, ref_dy = 0, -1
-
-        ref_angle = math.atan2(ref_dy, ref_dx)
+            ref_dx, ref_dy = 0, 1
 
         cw_angles = []
         for vxy in adjxy:
-            tgt_angle = math.atan2(vxy[1] - uxy[1], vxy[0] - uxy[0])
-            cw_angles.append((tgt_angle - ref_angle) % (2 * math.pi))
+            tx = vxy[0] - uxy[0]
+            ty = vxy[1] - uxy[1]
+            dot = ref_dx * tx + ref_dy * ty
+            cross = ref_dx * ty - ref_dy * tx
+            angle = math.atan2(cross, dot)
+            if angle < 0:
+                angle += 2 * math.pi
+            cw_angles.append(angle)
 
         branch_strings = []
         for i,v in enumerate(filtered_adj):
