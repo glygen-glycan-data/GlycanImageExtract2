@@ -3,6 +3,7 @@ import os
 import numpy as np
 import json
 import copy
+import math
 import random
 import urllib.request
 import numpy as np
@@ -1087,60 +1088,46 @@ class GlycanSemantics(ImageSemantics):
         # Filter adjacent nodes to only include unvisited ones
         filtered_adj = [v[0] for v in adj[u] if v[0] not in visited]
 
-        # Use monosaccharide positions, if possible, for branch order
+        # Order children by increasing clockwise angle between the
+        # (parent -> u) reference direction and each (u -> child) direction.
+        # For the root (no parent), use the centroid of children to define a
+        # virtual parent on the opposite side of u.
         uxy = self.mono(u).center()
-        scale = (self.mono(u).width()+self.mono(u).height())/2 #average of width + height
-        approx = round(0.2*scale) #pixel to tolerance for "equal"
-        adjxy = [ self.mono(v).center() for v in filtered_adj ]
-        
-        # print(self.mono(u).get('symbol'),[self.mono(v).get('symbol') for v in filtered_adj])
+        adjxy = [self.mono(v).center() for v in filtered_adj]
 
-        # figure out if they are all on one side of u
-        dircnt = defaultdict(int)
+        if parent != -1:
+            pxy = self.mono(parent).center()
+            ref_dx = uxy[0] - pxy[0]
+            ref_dy = uxy[1] - pxy[1]
+        elif adjxy:
+            cx = sum(vxy[0] for vxy in adjxy) / len(adjxy)
+            cy = sum(vxy[1] for vxy in adjxy) / len(adjxy)
+            ref_dx = cx - uxy[0]
+            ref_dy = cy - uxy[1]
+        else:
+            ref_dx, ref_dy = 0, -1
+
+        if ref_dx == 0 and ref_dy == 0:
+            ref_dx, ref_dy = 0, -1
+
+        ref_angle = math.atan2(ref_dy, ref_dx)
+
+        cw_angles = []
         for vxy in adjxy:
-            if (vxy[0] - uxy[0]) > approx:
-                dircnt['right'] += 1
-            elif (uxy[0] - vxy[0]) > approx:
-                dircnt['left'] += 1
-            if (vxy[1] - uxy[1]) > approx:
-                dircnt['down'] += 1
-            elif (uxy[1] - vxy[1]) > approx:
-                dircnt['up'] += 1
-      
-        xyorder = [0]*len(adjxy)
-        if len(adjxy) > 1 and max(dircnt.values()) == len(adjxy):
-            # all are on one side
-            dirn = max(dircnt.items(),key=lambda t: t[1])[0]
-            if dirn in ("up","down"):
-                cy = sum(vxy[1] for vxy in adjxy)/len(adjxy)
-                maxdel = max(abs(vxy[1]-cy) for vxy in adjxy)
-                # check they are all in a "line"
-                if maxdel <= approx:
-                    if dirn == "up":
-                        xyorder = [ vxy[0] for vxy in adjxy ]
-                    if dirn == "down":
-                        xyorder = [ -vxy[0] for vxy in adjxy ]
-            else: # left, right
-                cx = sum(vxy[0] for vxy in adjxy)/len(adjxy)
-                maxdel = max(abs(vxy[0]-cx) for vxy in adjxy)
-                # check they are all in a "line"
-                if maxdel <= approx:
-                    if dirn == "left":
-                        xyorder = [ -vxy[1] for vxy in adjxy ]
-                    if dirn == "right":
-                        xyorder = [ vxy[1] for vxy in adjxy ]
+            tgt_angle = math.atan2(vxy[1] - uxy[1], vxy[0] - uxy[0])
+            cw_angles.append((tgt_angle - ref_angle) % (2 * math.pi))
 
         branch_strings = []
         for i,v in enumerate(filtered_adj):
             branch_iupac = []
             self.generate_iupac(branch_iupac, adj, visited, u, v)  # Recurse for each child
-            
+
             # Convert the branch into a single string
             branch_str = ''.join(branch_iupac[::-1])  # Reverse the list and join it into a string
             branch_strings.append((i,branch_str))
 
-        # Sort branches lexicographically after recursion
-        branch_strings.sort(key=lambda bs: (xyorder[bs[0]],bs[1][-1],bs[1]))
+        # Sort branches by clockwise angle, with lexicographic tiebreakers
+        branch_strings.sort(key=lambda bs: (cw_angles[bs[0]],bs[1][-1],bs[1]))
 
         if len(branch_strings) > 0:
             for idx, branch in branch_strings[:-1]:
