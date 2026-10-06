@@ -71,8 +71,8 @@ def recompute_iupac(glycan):
 def update_tsv_row(tsvresults, glycan_gid, glycan, glylookup):
     seq = glycan.get('IUPAC')
     compstr = glycan.get('composition_str')
-    acc, wurcs = None, None
-    if seq:
+    acc, wurcs = "", ""
+    if seq and not glycan.has_glycan_errors():
         try:
             acc, wurcs = glylookup.get_wurcs(seq)
         except Exception:
