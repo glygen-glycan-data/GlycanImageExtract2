@@ -303,6 +303,8 @@ class MultiImageJob:
         glymage_jobs = []
         
         for idx, glycan in enumerate(glycans):
+            if glycan.has_glycan_errors():
+                glycan.unset("IUPAC") # ensure the logic for what to display is not confused
             if glycan.get('composition_str',"") == "":
                 continue
             elif glycan.get('IUPAC',"") == "":
