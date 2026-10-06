@@ -1272,6 +1272,18 @@ class GlycanEditor(cmd.Cmd):
         try:
             [votes] = _parse(arg, int)
             self.tsvresults[self.glycan_gid]['votes'] = votes
+            if votes == 2:
+                yolo_uncleaned, yolo_compstr = self._maybe_yolo_uncleaned()
+                if args.add_uncleaned_composition:
+                    self.tsvresults[self.glycan_gid]['uncleaned_composition'] = yolo_compstr or ''
+                if yolo_uncleaned is not None:
+                    extra_compstr = compstr_from_monos(extra_monos(self.glycan, yolo_uncleaned))
+                else:
+                    extra_compstr = ''
+                self.tsvresults[self.glycan_gid]['extra_composition'] = extra_compstr
+            else:
+                self.tsvresults[self.glycan_gid]['uncleaned_composition'] = ''
+                self.tsvresults[self.glycan_gid]['extra_composition'] = ''
             self.votes_overridden = True
             self.modified = True
             self.any_modified = True
