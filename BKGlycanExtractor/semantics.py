@@ -8,6 +8,7 @@ import urllib.request
 import numpy as np
 from . bbox import BoundingBox, PDFBoundingBox
 from collections import defaultdict, deque
+import re
 try:
     from . lineno import callsig
 except ImportError:
@@ -802,9 +803,11 @@ class GlycanSemantics(ImageSemantics):
         for link in rejected:
             self.append('rejected_undirected_links',link)
 
+    def reset_glycan_errors(self):
+        self.unset('glycan_errors')
+
     def add_glycan_error(self,error_msg):
         self.append('glycan_errors',error_msg)
-        self.log(error_msg)
 
     def glycan_errors(self):
         return self.get('glycan_errors',[])
@@ -1057,7 +1060,7 @@ class GlycanSemantics(ImageSemantics):
                 return link
         return None
     
-    def generate_iupac(self,iupac, adj, visited, parent, u):
+    def generate_iupac(self, iupac, adj, visited, parent, u):
         visited.add(u)
 
         # Get the current node's data
@@ -1199,6 +1202,47 @@ class GlycanSemantics(ImageSemantics):
         # catch all default to avoid error...
         return "BT"
     
+    def do_sanity_checks(self):
+        # check the data-integrity of the glycan semantic object
+        # check the IUPAC sequence uses all the monosaccharides
+        
+        if not self.has_root():
+            self.add_glycan_error("No reducing end mono identified.")
+            return 
+        
+        if len(self.monos()) > (len(self.undirected_links())+1):
+            self.add_glycan_error("Not enough links to span the monosaccharides.")
+            return
+
+        if len(self.monos()) < (len(self.undirected_links())+1):
+            self.add_glycan_error("Too many links to span the monosaccharides.")
+            return
+        
+        iupac = self.get('IUPAC')
+        if not iupac:
+            self.add_glycan_error("No IUPAC sequence generated.")
+
+        visited = defaultdict(int)
+        visited[self.root().mono_id()] = 1
+        for m in self.monos():
+            for l in m.links():
+                visited[l.to_id()] += 1
+        if any([v > 1 for v in visited.values()]):
+            self.add_glycan_error("Glycan structure visits the same monosaccharide more than once.")
+        if any([v < 1 for v in visited.values()]):
+            self.add_glycan_error("Glycan structure does not visit all monosaccharides.")
+        
+        # composition is based on accepted monos
+        comp = self.composition()
+        comp1 = defaultdict(int)
+        for m in re.split(r'\?[12]-\?[()]*',iupac):
+            comp1[m] += 1
+
+        if comp != comp1:
+            self.add_glycan_error("IUPAC sequence does not include all monosaccharides.")
+        
+        return
+
     def annotate_monos(self,color=(128, 0, 128),root_color=(0, 100, 0),alternative_color=(0, 165, 255),
                        label="MONO:INDEX",**kwargs):
         root_id = None

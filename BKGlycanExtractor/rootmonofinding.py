@@ -27,10 +27,10 @@ class RootFinder:
         else:
             obj.set_roots(None,rejected)
 
-    def log_error(self,obj,accepted,rejected):
-        # if no root is present, log it as an error
-        if len(accepted) < 1:
-            obj.add_glycan_error(f"Couldn't find a reducing end for the glycan")
+    # def log_error(self,obj,accepted,rejected):
+    #     # if no root is present, log it as an error
+    #     if len(accepted) < 1:
+    #         obj.add_glycan_error(f"Couldn't find a reducing end for the glycan")
 
     def finder_pipeline(self,config_manager=None):
         if config_manager is None:

@@ -58,8 +58,12 @@ class Finder(object):
         obj_list.sort(key=lambda o: -o.get('confidence',0.0))
         accepted, rejected = self.filter_objects(obj_list)
         self.set_results(obj, accepted, rejected)
-        self.log_error(obj, accepted, rejected)
+        # self.log_error(obj, accepted, rejected)
         return accepted
+
+    # override if useful in specific finder type
+    # def log_error(self, obj, accepeted, rejected):
+    #     pass
 
     # same for KnownFinder and YOLOFinder
     def filter_objects(self,object_list):

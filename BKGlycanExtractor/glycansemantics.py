@@ -10,33 +10,33 @@ class Glycan_Base(Finder):
     
     def __init__(self,params):
         self.label_type = params.get('label_type')
-        self.ignore_errors = params.get('ignore_errors',False)
 
     def get_label(self,obj):
         iupac = obj.IUPAC()
-        if iupac and (not obj.has_glycan_errors() or self.ignore_errors):
+        if iupac is not None and iupac.strip() != "":
             obj.set('IUPAC',iupac)
         compstr = obj.compstr()
         if compstr is not None and compstr.strip() != "":
             obj.set('composition_str',compstr)
-            
-        if self.label_type == 'none':
-            return None
+        obj.set('orientation', obj.glycan_orientation())
+
+        if self.label_type == 'iupac':
+            return obj.get('IUPAC',"")
         elif self.label_type == 'composition':
             return obj.get('composition_str',"")
-        return obj.get('IUPAC',"")
+        return None
 
     # add other metadata and lgging details about the glycan
     def add_metadata(self, obj):
-        if obj.has_glycan_errors():
-            obj.set('glycan_errors', obj.glycan_errors())
-            obj.set('log', obj.get_logs())  # maybe keep only glycan errors or logs in the json - currently there are some else checks 
-
-        obj.set('orientation', obj.glycan_orientation())
+        # if obj.has_glycan_errors():
+        # 
+        #     obj.set('glycan_errors', obj.glycan_errors())
+        #     obj.set('log', obj.get_logs())  # maybe keep only glycan errors or logs in the json - currently there are some else checks 
+        # obj.set('orientation', obj.glycan_orientation())
+        pass
 
     def semantic_compare(self,**kwargs):
         return GlycanCompare(**kwargs)
-
 
 # TODO create two different class for IUPAC AND COMPOSITION - not like this 
 # defaults = {
@@ -44,17 +44,16 @@ class Glycan_Base(Finder):
 #     }
 # TODO - move iupac() implementation from semnatics.py to this place and set iupac, composition and other
 # details here 
+
 class YOLO_Glycan(Glycan_Base):
 
     defaults = {
         'label_type': 'none',
-        'ignore_errors': False,
     }
 
     def __init__(self,**kwargs):
         params = dict(
            label_type = Config.get_param('label_type', Config.STR, kwargs, self.defaults),
-           ignore_errors = Config.get_param('ignore_errors', Config.BOOL, kwargs, self.defaults),
         )
         super().__init__(params)
 
@@ -68,15 +67,18 @@ class YOLO_Glycan(Glycan_Base):
             [link.confidence() for link in obj.all_links() if link.confidence() is not None],
             default=1.1  # or any appropriate fallback confidence
         )
-    
+
+    def log_errors(self,obj):
+        obj.do_sanity_checks()
+
     def find_objects(self, obj):
         # IUPAC and composition are set via Glycan_Base class, when get_label function is used
 
         self.add_metadata(obj)
-        
         label = self.get_label(obj)
+        self.log_errors(obj)
 
-        if obj.has_glycan_errors() and not self.ignore_errors:
+        if obj.has_glycan_errors():
             return []
 
         if label:    

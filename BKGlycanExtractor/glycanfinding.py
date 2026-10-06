@@ -33,9 +33,6 @@ class GlycanFinder:
     def set_results(self, obj, accepted, rejected):
         obj.set_glycans(accepted, rejected)
 
-    def log_error(self, obj, accepeted, rejected):
-        pass
-
     def finder_pipeline(self,config_manager=None):
         pipeline = GlycanExtractorPipeline()
         pipeline.set_steps('figure', [self])

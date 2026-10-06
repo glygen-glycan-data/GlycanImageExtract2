@@ -38,9 +38,6 @@ class MonoFinder:
     def set_results(self, obj, accepted, rejected):
         obj.set_monos(accepted, rejected)
 
-    def log_error(self, obj, accepeted, rejected):
-        pass
-
     def finder_pipeline(self,config_manager=None):
         if config_manager is None:
             config_manager = self._cfgmgr
