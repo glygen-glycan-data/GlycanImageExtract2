@@ -46,6 +46,27 @@ def find_uncleaned_monos(glycan, raw_img):
     return g, g.compstr()
 
 
+_EXTRA_IOU_THRESHOLD = 0.3
+_COMP_LABELS = ("GlcNAc", "NeuAc", "Fuc", "Man", "GalNAc", "Gal", "Glc", "NeuGc", "Xyl")
+
+
+def extra_monos(glycan, yolo_uncleaned_glycan, iou_threshold=_EXTRA_IOU_THRESHOLD):
+    """Monos found on the uncleaned crop that don't overlap any mono in glycan."""
+    cleaned_boxes = [m.box() for m in glycan.monos()]
+    result = []
+    for mu in yolo_uncleaned_glycan.monos():
+        bu = mu.box()
+        if all(bu.iou(bc) < iou_threshold for bc in cleaned_boxes):
+            result.append(mu)
+    return result
+
+
+def compstr_from_monos(monos):
+    from collections import Counter
+    counts = Counter(m.get('symbol') for m in monos)
+    return "".join(f"{sym}({counts[sym]})" for sym in _COMP_LABELS if counts.get(sym, 0) > 0)
+
+
 
 def _parse(arg, *types):
     parts = arg.split()
@@ -57,8 +78,8 @@ def _parse(arg, *types):
 def recompute_iupac(glycan):
     glycan.unset('IUPAC')
     glycan.unset('composition_str')
-    YOLO_Glycan(ignore_errors=True).find_objects(glycan)
-
+    glycan.reset_glycan_errors()
+    YOLO_Glycan().find_objects(glycan)
 
 _VALID_DIRECTIONS = ("UP", "DOWN", "LEFT", "RIGHT", "UPLEFT", "UPRIGHT", "DOWNLEFT", "DOWNRIGHT")
 _DIAG_SCALE = 1 / 2**0.5  # place diagonal at same Euclidean distance as cardinal
@@ -143,6 +164,8 @@ def op_delete_link(glycan, mid1, mid2):
 
 
 def op_recover_link(glycan, mid1, mid2):
+    if glycan.has_undirected_link(mid1, mid2):
+        raise ValueError(f"Link {mid1}-{mid2} already exists")
     if not glycan.recover_rejected_undirected_link(mid1, mid2):
         raise ValueError(f"No such rejected link to recover: {mid1}-{mid2}")
 
@@ -186,7 +209,45 @@ def update_tsv_row(tsvresults, glycan_gid, glycan, glylookup):
     tsvresults[glycan_gid]['iupac'] = seq
     tsvresults[glycan_gid]['composition'] = compstr
     tsvresults[glycan_gid]['wurcs'] = wurcs
+    tsvresults[glycan_gid]['error_count'] = len(glycan.glycan_errors())
     return seq, compstr, acc, wurcs
+
+
+def dedupe_fieldnames(fieldnames):
+    seen, out = set(), []
+    for name in fieldnames:
+        if name not in seen:
+            seen.add(name)
+            out.append(name)
+    return out
+
+
+def ensure_field(fieldnames, name, after):
+    if name in fieldnames:
+        return
+    idx = fieldnames.index(after) + 1 if after in fieldnames else len(fieldnames)
+    fieldnames.insert(idx, name)
+
+
+def move_field(fieldnames, name, after):
+    while name in fieldnames:
+        fieldnames.remove(name)
+    ensure_field(fieldnames, name, after)
+
+
+_URL_PREFIX_REWRITES = (
+    ("http://0.0.0.0:10981", "https://extractor.glyomics.org"),
+    ("http://0.0.0.0:10982", "https://edwardslab.bmcb.georgetown.edu/tandem10982"),
+)
+
+
+def fix_result_urls(tsvresults):
+    for row in tsvresults.values():
+        url = row.get('url') or ''
+        for old, new in _URL_PREFIX_REWRITES:
+            if old in url:
+                url = url.replace(old, new)
+                row['url'] = url
 
 
 class _PersistentDisplay:
@@ -276,9 +337,46 @@ def write_files(results, jsonfile, tsvfilename, tsvresults, tsvfieldnames):
     print(f"Written: {jsonfile} and {tsvfilename}")
 
 
+_WINDOW_KEY_HELP = """\
+Keyboard shortcuts in the display window:
+
+  Navigation / files:
+    n   next glycan (per current mode)
+    p   previous glycan (per current mode)
+    w   write (save JSON and TSV files, with .orig backups)
+    q   quit (prompts in window if there are unsaved changes)
+
+  Mono editing (each starts a click-based mode; right-click cancels):
+    r   set reducing-end mono (click once to pick)
+    d   delete mono (click to delete; mode stays active)
+    N   add GlcNAc       G   add Gal         M   add Man
+    F   add Fuc          S   add NeuAc
+
+  Link editing (each starts a click-based mode; right-click cancels):
+    l   add link    (click first mono, then second)
+    D   delete link (click first mono, then second)
+
+  Vote shortcuts (set vote on current glycan, write files, advance to next):
+    1   votes = 1        2   votes = 2       !   votes = -1
+
+  During the in-window quit confirmation (unsaved changes):
+    y   save and quit    n   quit without saving
+
+Mouse interaction in the center (cleaned) panel:
+  Left-click   Select the smallest mono enclosing the click, or place
+               a new mono at the clicked position (depending on pending
+               action). For add-mono / add-link / delete-link modes the
+               first click selects the source mono; the second click
+               completes the action.
+  Right-click  Cancel the current click-based pending action.
+"""
+
+
 class GlycanEditor(cmd.Cmd):
     prompt = "glycan> "
-    intro = "Glycan editor. Type 'help' for commands, 'quit' to exit."
+    intro = ("Glycan editor. Type 'help' for commands, "
+             "'help window' for GUI keyboard/mouse shortcuts, 'quit' to exit.")
+    _ALIAS_COMMANDS = frozenset(('g', 'a', 'd', 'r', 'l', 's', 'v', 'w', 'm', 'q', 'n', 'p'))
 
     def __init__(self, results, jsonfile, tsvresults, tsvfilename, tsvfieldnames, glymage, glylookup):
         super().__init__()
@@ -308,6 +406,8 @@ class GlycanEditor(cmd.Cmd):
         self._display._win.root.bind_all("w", lambda e: self._key_queue.put("write"))
         self._display._win.root.bind_all("r", lambda e: self._key_queue.put("redend"))
         self._display._win.root.bind_all("l", lambda e: self._key_queue.put("add link"))
+        self._display._win.root.bind_all("d", lambda e: self._key_queue.put("delete mono"))
+        self._display._win.root.bind_all("D", lambda e: self._key_queue.put("delete link"))
         self._display._win.root.bind_all("N", lambda e: self._key_queue.put("add mono GlcNAc"))
         self._display._win.root.bind_all("G", lambda e: self._key_queue.put("add mono Gal"))
         self._display._win.root.bind_all("M", lambda e: self._key_queue.put("add mono Man"))
@@ -365,11 +465,18 @@ class GlycanEditor(cmd.Cmd):
             print("Uncleaned composition:", yolo_compstr)
             if args.add_uncleaned_composition:
                 self.tsvresults[self.glycan_gid]['uncleaned_composition'] = yolo_compstr
+        if yolo_uncleaned is not None:
+            extra_compstr = compstr_from_monos(extra_monos(self.glycan, yolo_uncleaned))
+            self.tsvresults[self.glycan_gid]['extra_composition'] = extra_compstr
+            if extra_compstr:
+                print("Extra composition:", extra_compstr)
         if acc:
             print("Accession:", acc)
         if wurcs:
             print("WURCS:", wurcs)
         print("Votes:", self.tsvresults[self.glycan_gid].get('votes'))
+        for err in self.glycan.glycan_errors():
+            print("Error:", err)
         self._display.show_loading()
         update_annotated(self._display, self.glycan, self.figure, seq, self.glymage,
                          self.img_scale, self.font_scale, self.label_style, self.text_anchor,
@@ -393,12 +500,21 @@ class GlycanEditor(cmd.Cmd):
         if wurcs:
             print("WURCS:", wurcs)
         print("Votes:", row.get('votes'))
+        for err in self.glycan.glycan_errors():
+            print("Error:", err)
         yolo_uncleaned, yolo_compstr = self._maybe_yolo_uncleaned()
         if yolo_compstr:
             print("Uncleaned composition:", yolo_compstr)
             if args.add_uncleaned_composition:
                 self.tsvresults[self.glycan_gid]['uncleaned_composition'] = yolo_compstr
                 self.any_modified = True
+        if yolo_uncleaned is not None:
+            extra_compstr = compstr_from_monos(extra_monos(self.glycan, yolo_uncleaned))
+            if self.tsvresults[self.glycan_gid].get('extra_composition') != extra_compstr:
+                self.tsvresults[self.glycan_gid]['extra_composition'] = extra_compstr
+                self.any_modified = True
+            if extra_compstr:
+                print("Extra composition:", extra_compstr)
         self._display.show_loading()
         update_annotated(self._display, self.glycan, self.figure, seq, self.glymage,
                          self.img_scale, self.font_scale, self.label_style, self.text_anchor,
@@ -520,6 +636,54 @@ class GlycanEditor(cmd.Cmd):
             if self._pending is not None:
                 self._pending['source_mid'] = None
                 msg = f"add mono {label}: click source mono for next add (right-click to cancel)"
+                self._display.set_status(msg)
+        elif pkind == 'delete_mono':
+            if mono is None:
+                msg = "delete mono: click missed any mono. Continue clicking (right-click to cancel)"
+                self._display.set_status(msg)
+                print(msg)
+                return
+            try:
+                op_delete_mono(self.glycan, mono.id())
+                self._after_modify(defer_display=True)
+            except (ValueError, KeyError, IndexError) as e:
+                print(f"Error: {e}")
+            if self._pending is not None:
+                msg = "delete mono: click next mono to delete (right-click to cancel)"
+                self._display.set_status(msg)
+        elif pkind == 'delete_link':
+            if self._pending.get('first_mid') is None:
+                if mono is None:
+                    msg = "delete link: click missed any mono. Continue clicking (right-click to cancel)"
+                    self._display.set_status(msg)
+                    print(msg)
+                    return
+                self._pending['first_mid'] = mono.id()
+                msg = f"delete link: first mono {mono.id()} selected; click second mono (right-click to cancel)"
+                self._display.set_status(msg)
+                print(msg)
+                return
+            if mono is None:
+                msg = "delete link: click missed any mono. Continue clicking (right-click to cancel)"
+                self._display.set_status(msg)
+                print(msg)
+                return
+            mid1 = self._pending['first_mid']
+            mid2 = mono.id()
+            if mid1 == mid2:
+                self._pending['first_mid'] = None
+                msg = "delete link: same mono clicked twice. Click first mono (right-click to cancel)"
+                self._display.set_status(msg)
+                print(msg)
+                return
+            try:
+                op_delete_link(self.glycan, mid1, mid2)
+                self._after_modify(defer_display=True)
+            except (ValueError, KeyError, IndexError) as e:
+                print(f"Error: {e}")
+            if self._pending is not None:
+                self._pending['first_mid'] = None
+                msg = "delete link: click first mono for next link (right-click to cancel)"
                 self._display.set_status(msg)
         elif pkind == 'adjust':
             if mono is None:
@@ -651,6 +815,9 @@ class GlycanEditor(cmd.Cmd):
                         line = self.precmd(f"votes {vote}")
                         self.onecmd(line)
                         self.postcmd(False, line)
+                        line = self.precmd("write")
+                        self.onecmd(line)
+                        self.postcmd(False, line)
                         line = self.precmd("next")
                         stop = self.onecmd(line)
                         stop = self.postcmd(stop, line)
@@ -717,7 +884,9 @@ class GlycanEditor(cmd.Cmd):
         return True
 
     def do_glycan(self, arg):
-        """glycan <GID>  — Select which glycan to edit."""
+        """glycan <GID>  — Select which glycan to edit.
+
+        CLI shortcut: 'g'."""
         try:
             [gid] = _parse(arg, str)
         except ValueError as e:
@@ -737,7 +906,19 @@ class GlycanEditor(cmd.Cmd):
                     self.glycan_gid = gid
                     self.votes_overridden = False
                     self.modified = False
+                    row = self.tsvresults.get(gid, {})
+                    try:
+                        vote = int(row.get('votes', 0))
+                    except (TypeError, ValueError):
+                        vote = None
+                    prev_iupac = row.get('iupac') or ''
                     recompute_iupac(self.glycan)
+                    if vote in (1, 2):
+                        new_iupac = self.glycan.get('IUPAC') or ''
+                        if prev_iupac != new_iupac:
+                            print(f"Warning: {gid}: IUPAC changed on recompute (vote {vote})")
+                            print(f"    old: {prev_iupac}")
+                            print(f"    new: {new_iupac}")
                     update_tsv_row(self.tsvresults, self.glycan_gid, self.glycan, self.glylookup)
                     self._display_current()
                     return
@@ -749,7 +930,13 @@ class GlycanEditor(cmd.Cmd):
         Short forms select monosaccharides by clicking on the center panel
         (right-click cancels):
           add mono <label> : click source mono, then click placement of new mono.
-          add link         : click first mono, then click second mono."""
+          add link         : click first mono, then click second mono.
+
+        Subcommand aliases: 'm' for 'mono', 'l' for 'link'
+          (e.g., 'add m GlcNAc', 'add l').
+        CLI shortcut: 'a' (e.g., 'a l' == 'add link').
+        Window keys: N/G/M/F/S add GlcNAc/Gal/Man/Fuc/NeuAc; 'l' adds a link.
+        See 'help window' for all GUI shortcuts."""
         if not self._require_glycan():
             return
         parts = arg.split()
@@ -759,7 +946,7 @@ class GlycanEditor(cmd.Cmd):
         subcmd, rest = parts[0], ' '.join(parts[1:])
         rest_parts = rest.split()
         try:
-            if subcmd == 'mono':
+            if subcmd in ('mono', 'm'):
                 if len(rest_parts) == 1:
                     [label] = _parse(rest, str)
                     self._start_pending(
@@ -770,7 +957,7 @@ class GlycanEditor(cmd.Cmd):
                     mid, dirn, scale, label = _parse(rest, int, str, float, str)
                     op_add_mono(self.glycan, mid, dirn, scale, label)
                     self._after_modify()
-            elif subcmd == 'link':
+            elif subcmd in ('link', 'l'):
                 if len(rest_parts) == 0:
                     self._start_pending(
                         'add_link',
@@ -784,30 +971,53 @@ class GlycanEditor(cmd.Cmd):
                         op_add_link(self.glycan, mid1, mid2)
                     self._after_modify()
             else:
-                print(f"Unknown subcommand: {subcmd!r}. Use 'mono' or 'link'.")
+                print(f"Unknown subcommand: {subcmd!r}. Use 'mono' (or 'm') or 'link' (or 'l').")
         except (ValueError, KeyError, IndexError) as e:
             print(f"Error: {e}")
 
     def do_delete(self, arg):
-        """delete mono <mid> | delete link <mid1> <mid2>"""
+        """delete mono [<mid>] | delete link [<mid1> <mid2>]
+
+        Short forms select monosaccharides by clicking on the center panel
+        (right-click cancels):
+          delete mono : click mono to delete; mode stays active.
+          delete link : click first mono, then click second mono to delete their link.
+
+        Subcommand aliases: 'm' for 'mono', 'l' for 'link'
+          (e.g., 'delete m', 'delete l').
+        CLI shortcut: 'd' (e.g., 'd m' == 'delete mono').
+        Window keys: 'd' deletes a mono, 'D' deletes a link.
+        See 'help window' for all GUI shortcuts."""
         if not self._require_glycan():
             return
         parts = arg.split()
         if not parts:
-            print("Usage: delete mono <mid> | delete link <mid1> <mid2>")
+            print("Usage: delete mono [<mid>] | delete link [<mid1> <mid2>]")
             return
         subcmd, rest = parts[0], ' '.join(parts[1:])
+        rest_parts = rest.split()
         try:
-            if subcmd == 'mono':
-                [mid] = _parse(rest, int)
-                op_delete_mono(self.glycan, mid)
-                self._after_modify()
-            elif subcmd == 'link':
-                mid1, mid2 = _parse(rest, int, int)
-                op_delete_link(self.glycan, mid1, mid2)
-                self._after_modify()
+            if subcmd in ('mono', 'm'):
+                if len(rest_parts) == 0:
+                    self._start_pending(
+                        'delete_mono',
+                        'delete mono: click mono to delete (right-click to cancel)')
+                else:
+                    [mid] = _parse(rest, int)
+                    op_delete_mono(self.glycan, mid)
+                    self._after_modify()
+            elif subcmd in ('link', 'l'):
+                if len(rest_parts) == 0:
+                    self._start_pending(
+                        'delete_link',
+                        'delete link: click first mono in center panel (right-click to cancel)',
+                        first_mid=None)
+                else:
+                    mid1, mid2 = _parse(rest, int, int)
+                    op_delete_link(self.glycan, mid1, mid2)
+                    self._after_modify()
             else:
-                print(f"Unknown subcommand: {subcmd!r}. Use 'mono' or 'link'.")
+                print(f"Unknown subcommand: {subcmd!r}. Use 'mono' (or 'm') or 'link' (or 'l').")
         except (ValueError, KeyError, IndexError) as e:
             print(f"Error: {e}")
 
@@ -838,7 +1048,10 @@ class GlycanEditor(cmd.Cmd):
         """redend [<mid>]  — Set the reducing end (root) monosaccharide.
 
         With no argument, click a mono in the center panel (right-click cancels).
-        Also bound to the 'r' key in the display window."""
+
+        CLI shortcut: 'r'.
+        Window key: 'r' (same action).
+        See 'help window' for all GUI shortcuts."""
         if not self._require_glycan():
             return
         parts = arg.split()
@@ -943,7 +1156,11 @@ class GlycanEditor(cmd.Cmd):
             return [gid for gid, row in self.tsvresults.items() if int(row.get('votes', 0)) == v]
 
     def do_next(self, arg):
-        """next  — Move to the next glycan per current mode (see: mode)."""
+        """next  — Move to the next glycan per current mode (see: mode).
+
+        CLI shortcut: 'n'.
+        Window key: 'n' (same action; also used in the quit confirmation).
+        See 'help window' for all GUI shortcuts."""
         bad = self._next_gids()
         if not bad:
             print(f"No glycans matching current mode ({self._mode_desc()}).")
@@ -960,7 +1177,11 @@ class GlycanEditor(cmd.Cmd):
     do_n = do_next
 
     def do_prev(self, arg):
-        """prev  — Move to the previous glycan per current mode (see: mode)."""
+        """prev  — Move to the previous glycan per current mode (see: mode).
+
+        CLI shortcut: 'p'.
+        Window key: 'p' (same action).
+        See 'help window' for all GUI shortcuts."""
         gids = self._next_gids()
         if not gids:
             print(f"No glycans matching current mode ({self._mode_desc()}).")
@@ -984,7 +1205,9 @@ class GlycanEditor(cmd.Cmd):
         return f'votes == {self.next_filter}'
 
     def do_mode(self, arg):
-        """mode [bad | all | <votes_value>]  — Set or show what next/n cycles through."""
+        """mode [bad | all | <votes_value>]  — Set or show what next/n cycles through.
+
+        CLI shortcut: 'm'."""
         arg = arg.strip()
         if not arg:
             print(f"Current mode: {self._mode_desc()}")
@@ -1007,13 +1230,17 @@ class GlycanEditor(cmd.Cmd):
             print(f"No glycans matching current mode.")
 
     def do_show(self, arg):
-        """show  — Re-display the current annotated image and IUPAC."""
+        """show  — Re-display the current annotated image and IUPAC.
+
+        CLI shortcut: 's'."""
         if not self._require_glycan():
             return
         self._display_current()
 
     def do_list(self, arg):
-        """list  — Print monosaccharide IDs/labels/boxes and link pairs."""
+        """list  — Print monosaccharide IDs/labels/boxes and link pairs.
+
+        CLI shortcut: 'l'."""
         if not self._require_glycan():
             return
         print(f"Monosaccharides:")
@@ -1027,7 +1254,12 @@ class GlycanEditor(cmd.Cmd):
             print(f"  {ids[0]} -- {ids[1]}")
 
     def do_votes(self, arg):
-        """votes [<n>]  — Set votes for current glycan, or list vote value counts if no argument."""
+        """votes [<n>]  — Set votes for current glycan, or list vote value counts if no argument.
+
+        CLI shortcut: 'v'.
+        Window keys: '1' sets votes=1, '2' sets votes=2, '!' sets votes=-1;
+        each also saves files and advances to the next glycan.
+        See 'help window' for all GUI shortcuts."""
         arg = arg.strip()
         if not arg:
             from collections import Counter
@@ -1058,7 +1290,11 @@ class GlycanEditor(cmd.Cmd):
                 print(f"  {gid}")
 
     def do_write(self, arg):
-        """write  — Save JSON and TSV files (with .orig backups)."""
+        """write  — Save JSON and TSV files (with .orig backups).
+
+        CLI shortcut: 'w'.
+        Window key: 'w' (same action).
+        See 'help window' for all GUI shortcuts."""
         try:
             write_files(self.results, self.jsonfile, self.tsvfilename,
                         self.tsvresults, self.tsvfieldnames)
@@ -1069,7 +1305,12 @@ class GlycanEditor(cmd.Cmd):
             print(f"Error writing files: {e}")
 
     def do_quit(self, arg):
-        """quit  — Exit the editor (prompts to save if there are unsaved changes)."""
+        """quit  — Exit the editor (prompts to save if there are unsaved changes).
+
+        CLI shortcut: 'q'.
+        Window key: 'q' opens an in-window save confirmation; 'y'/'n' there
+        save-and-quit or quit-without-saving respectively.
+        See 'help window' for all GUI shortcuts."""
         if self.any_modified:
             print("Unsaved modifications.")
             self._quit_pending = True
@@ -1085,6 +1326,49 @@ class GlycanEditor(cmd.Cmd):
             self.prompt = "Save? [y/N] "
             return False
         return True
+
+    def do_help(self, arg):
+        """help [<topic>]  — List commands or show help for a specific topic.
+
+        'help' lists primary commands; single-letter CLI shortcuts are
+        hidden from the listing but remain usable.
+        'help window' describes keyboard shortcuts and mouse behavior in
+        the display window.
+        'help <command>' shows the full help for a command, including its
+        single-letter shortcut (if any)."""
+        if arg:
+            return cmd.Cmd.do_help(self, arg)
+        names = self.get_names()
+        cmds_doc = []
+        cmds_undoc = []
+        topics = set()
+        for name in names:
+            if name[:5] == 'help_':
+                topics.add(name[5:])
+        names.sort()
+        prevname = ''
+        for name in names:
+            if name[:3] == 'do_':
+                if name == prevname:
+                    continue
+                prevname = name
+                cmd_name = name[3:]
+                if cmd_name in self._ALIAS_COMMANDS:
+                    continue
+                if cmd_name in topics:
+                    cmds_doc.append(cmd_name)
+                    topics.discard(cmd_name)
+                elif getattr(self, name).__doc__:
+                    cmds_doc.append(cmd_name)
+                else:
+                    cmds_undoc.append(cmd_name)
+        self.stdout.write("%s\n" % str(self.doc_leader))
+        self.print_topics(self.doc_header, cmds_doc, 15, 80)
+        self.print_topics(self.misc_header, sorted(topics), 15, 80)
+        self.print_topics(self.undoc_header, cmds_undoc, 15, 80)
+
+    def help_window(self):
+        print(_WINDOW_KEY_HELP)
 
     do_g = do_glycan
     do_a = do_add
@@ -1185,9 +1469,12 @@ glylookup = GlyLookupClient()
 
 tsvreader = csv.DictReader(open(tsvfilename), dialect="excel-tab")
 tsvresults = dict((row['ID'], row) for row in tsvreader)
-tsvfieldnames = tsvreader.fieldnames
+tsvfieldnames = dedupe_fieldnames(list(tsvreader.fieldnames))
 if args.add_uncleaned_composition:
-    tsvfieldnames.insert(tsvfieldnames.index("composition")+1,"uncleaned_composition")
+    ensure_field(tsvfieldnames, "uncleaned_composition", after="composition")
+ensure_field(tsvfieldnames, "extra_composition", after="uncleaned_composition")
+move_field(tsvfieldnames, "error_count", after="votes")
+fix_result_urls(tsvresults)
 
 results = ManuscriptSemantics.read_json(jsonfile)
 image_search_strategy = results.get('image_search_strategy')
