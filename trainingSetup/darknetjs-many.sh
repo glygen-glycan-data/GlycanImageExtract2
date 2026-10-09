@@ -13,15 +13,34 @@ set -euo pipefail
 #   gd:YOLO/monos_finetune monos_v9_2_finetune --config yolov4-tiny --weights https://drive.google.com/uc?id=18l43XAtscph_Ywjgh6yXwIWn7geO3a5W --iou 0.85 --conf 0.9 --learning_rate 0.0005 --max_batches 20000 
 
 
-while IFS= read -r line; do
-    arg=($line)
+if [ -z "$1" ]; then
+    echo "jobs file required" >&2
+    exit 1
+fi
+infile="$1"
+
+while :; do
+    next_line=""
+    while IFS= read -r line || [ -n "$line" ]; do
+        case "$line" in
+            ''|\#*) continue ;;
+        esac
+        arg=($line)
+        jobname="${arg[1]}"
+        if [ ! -d "${jobname}" ]; then
+            next_line="$line"
+            break
+        fi
+    done < "$infile"
+
+    [ -z "$next_line" ] && break
+
+    arg=($next_line)
     imagedir="${arg[0]}"
-    jobname="${arg[1]}" 
+    jobname="${arg[1]}"
     arg=("${arg[@]:2}")
-    if [ ! -d ${jobname} ]; then
-        echo ./scripts/darknetjs.sh --image_folder ${imagedir} --job_name ${jobname} --clean --noshutdown ${arg[@]} > ${jobname}.log
-        ./scripts/darknetjs.sh --image_folder ${imagedir} --job_name ${jobname} --clean --noshutdown ${arg[@]} >> ${jobname}.log 2>&1
-    fi
+    echo ./scripts/darknetjs.sh --image_folder ${imagedir} --job_name ${jobname} --clean --noshutdown ${arg[@]} > ${jobname}.log
+    ./scripts/darknetjs.sh --image_folder ${imagedir} --job_name ${jobname} --clean --noshutdown ${arg[@]} >> ${jobname}.log 2>&1
 done
 
 if [ -f $HOME/.openrc.sh ]; then
