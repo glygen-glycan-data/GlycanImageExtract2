@@ -32,7 +32,12 @@
 
 * Training 
   - ssh exouser@IP-address
-    * ./scripts/darknetjs.sh --image_folder gd:YOLO/YOLORedEnd --job_name redend_v1 >& darknet.log &
+    Note: Before starting the training step below, explore the hyperparameters and arguments help
+    statements in darknetjs.sh. If fine-tuning, arguments like '--weights' and '--base_labels' might be necessary depending on the training data.
+    You can run multiple jobs serially (all jobs should have a unique name) using darknetjs-many.sh, below command 
+    is meant to run a single job and shelve the instance after job completion.
+    Results will be populated in the google drive location yoy provided.
+    
+    * nohup ./scripts/darknetjs.sh --image_folder gd:YOLO/YOLORedEnd --job_name redend_v1 >& darknet.log &
     * tail -f darknet.log redend_v1/*-log.txt 
     * instance should shelve itself when done (doesn't use SUs)
-

@@ -76,6 +76,19 @@ exists() {
   rclone ls "$1" 1>/dev/null 2>&1
 }
 
+backbone_layers() {
+  case "$1" in
+    yolov3-darknet53) echo 74;;
+    yolov3)           echo 81;;
+    yolov3-tiny)      echo 15;;
+    yolov4)           echo 137;;
+    yolov4-tiny)      echo 29;;
+    yolov7)           echo 133;;
+    yolov7-tiny)      echo 89;;
+    *) echo "";;
+  esac
+}
+
 RESULTS=""
 NAME=""
 CLEAN="0"
@@ -83,8 +96,13 @@ IOU=""
 CONF=""
 CONFIG="yolov3-darknet53"
 WEIGHTS=""
+BASE_LABELS_FILE=""
 SPLIT="0.8"
 SHUTDOWN=""
+FULL_WEIGHTS=""
+OLD_CLASS_COUNT=0
+BASELINE_DIR=""
+CLEAR_FLAG=""
 
 while [ "$#" -gt 0 ]; do
     case $1 in
@@ -103,6 +121,10 @@ while [ "$#" -gt 0 ]; do
   --weights)
         WEIGHTS="$2"
         shift 2
+            ;;
+        --base_labels)
+            BASE_LABELS_FILE="$2"
+            shift 2
             ;;
 	--split)
             SPLIT="$2"
@@ -138,9 +160,12 @@ while [ "$#" -gt 0 ]; do
             echo "Darknet command-line parameters (optional):"
             echo "  --config         YOLO config. Default: yolov3-darknet53."
             echo "                   If using for fine-tuning, ensure that the config used for fine-tuning is the same that was used by the pretrained yolo model being used"
-            echo "  --weights        For fine-tuning. Pretrained model weights (rclone path, Google Drive URL, or http(s))."
-            echo "                   If omitted, pretrained darknet weights for --config is downloaded."
-            echo "                   When set, training starts with Darknet -clear (fine-tune, not resume training)."
+            echo "  --weights        For fine-tuning. Pretrained model weights (via rclone path, Google Drive URL, or http(s)) needs to be provided."
+            echo "                   If omitted, the default pretrained darknet weights for --config is downloaded."
+            echo "                   When pretrained weights are provided, training starts with Darknet -clear (fine-tune, not resume training)."
+            echo "  --base_labels    For fine-tuning. Path to labels file from the previous training run (via rclone path, Google Drive URL, or local file) is needed"
+            echo "                   if additional class labels need to trained (which are not present in the base model)"
+            echo "                   If omitted, it is assumed that the class labels are unchanged when compared with the base model classes."
             echo "  --iou            IoU for mAP evaluation. Default: 0.5."
             echo "  --conf           Confidence threshold for mAP evaluation. Default: 0.25."
             echo "  --split          Proportion of images to use for training. Default: 0.8."
@@ -179,6 +204,11 @@ fi
 WEIGHTS_ARGS=()
 if [ -n "$WEIGHTS" ]; then
   WEIGHTS_ARGS=(--weights "$WEIGHTS")
+fi
+
+BASE_LABELS_ARGS=()
+if [ -n "$BASE_LABELS_FILE" ]; then
+  BASE_LABELS_ARGS=(--base_labels "$BASE_LABELS_FILE")
 fi
 
 BASE="$PWD"
@@ -223,7 +253,7 @@ fi
 echo "Image folder: $RESULTS"
 echo "Job name: $NAME"
 # echo "Darknet parameters:" --config "$CONFIG" "$IOU" "$CONF" --split "$SPLIT"
-echo "Darknet parameters:" --config "$CONFIG" "${WEIGHTS_ARGS[@]}" "$IOU" "$CONF" --split "$SPLIT"
+echo "Darknet parameters:" --config "$CONFIG" "${WEIGHTS_ARGS[@]}" "${BASE_LABELS_ARGS[@]}" "$IOU" "$CONF" --split "$SPLIT"
 
 echo "Training parameters:" "$@"
 
@@ -251,7 +281,7 @@ touch "$PARAMS_LOG"
 echo "Image folder: $RESULTS" >> "$PARAMS_LOG"
 echo "Job name: $NAME"  >> "$PARAMS_LOG"
 # echo "Darknet parameters:" --config "$CONFIG" "$IOU" "$CONF" --split "$SPLIT" >> "$PARAMS_LOG"
-echo "Darknet parameters:" --config "$CONFIG" "${WEIGHTS_ARGS[@]}" "$IOU" "$CONF" --split "$SPLIT" >> "$PARAMS_LOG"
+echo "Darknet parameters:" --config "$CONFIG" "${WEIGHTS_ARGS[@]}" "${BASE_LABELS_ARGS[@]}" "$IOU" "$CONF" --split "$SPLIT" >> "$PARAMS_LOG"
 echo "Training parameters:" "$@" >> "$PARAMS_LOG"
 
 echo "INFO: Download $RESULTS/images.zip from Google Drive..."
@@ -292,19 +322,8 @@ EOF
 # need to create training and validation sets
 python3 $SCRIPTS/split_data.py --image_dir $YOLO_DATA --train_txt $TRAINING_FILE --val_txt $VALIDATION_FILE --split_ratio "$SPLIT"
 
-# Check if a weights file was provided (via rclone gd, https link)
-# IF TRUE: The model will use the provided weights to fine tune model the selected model. For fine tuning on top
-# of existing weights, its important to set the clear flag, and the below code sets it automatically if you provide --weights and uses it in the darknet train command.
-# If -clear is not provided then darknet assumes that we want to resume training on the provided weights - which is not the same as fine tuning.
-# IF FALSE: the model will use the provided base weights in this script for training
-
-# The pretrained weights (either user provided or default), will be downloaded in the job_name folder,
-# referencing these base weights, the checkpoints of trained weights will be added to
-# YOLO_INIT_WEIGHTS=`download_weights "${CONFIG}"`
-CLEAR_FLAG=""
 if [ -n "$WEIGHTS" ]; then
-  # Untouched start weights. Darknet loads from here; new checkpoints go only to weights/.
-  BASELINE_DIR="baseline_weights"
+  BASELINE_DIR="baseline_model"
   mkdir -p "$BASELINE_DIR"
   SRC_BASE=$(basename "$WEIGHTS")
   SRC_BASE="${SRC_BASE%%\?*}"
@@ -315,15 +334,64 @@ if [ -n "$WEIGHTS" ]; then
     *.weights|*.conv.*) ;;
     *) SRC_BASE="${SRC_BASE}.weights" ;;
   esac
-  YOLO_INIT_WEIGHTS="${BASELINE_DIR}/${SRC_BASE}"
-  echo "INFO: Fine-tuning from $WEIGHTS (config $CONFIG, Darknet -clear)"
-  echo "INFO: Fine-tuning from $WEIGHTS (config $CONFIG, Darknet -clear)" >> "$PARAMS_LOG"
-  echo "INFO: Baseline weights snapshot: $YOLO_INIT_WEIGHTS" >> "$PARAMS_LOG"
-  download "$WEIGHTS" "$YOLO_INIT_WEIGHTS"
-  upload "$YOLO_INIT_WEIGHTS" "$DRIVEROOT/$YOLO_INIT_WEIGHTS"
+  FULL_WEIGHTS="${BASELINE_DIR}/${SRC_BASE}"
+  download "$WEIGHTS" "$FULL_WEIGHTS"
+  upload "$FULL_WEIGHTS" "$DRIVEROOT/$FULL_WEIGHTS"
+
+  # If --base_labels (i.e labels that the base weights file was trained for) file is provided, 
+  # the compararison between the old vs new class's will be done to decide if darknet partial is needed.
+  # If not provided, assume classes are unchanged and proceed with full weights.
+  if [ -n "$BASE_LABELS_FILE" ]; then
+    # Keep the same filename that was passed (basename only) alongside the weights copy.
+    OLD_LABELS_LOCAL="${BASELINE_DIR}/$(basename "$BASE_LABELS_FILE")"
+    download "$BASE_LABELS_FILE" "$OLD_LABELS_LOCAL"
+    upload "$OLD_LABELS_LOCAL" "$DRIVEROOT/$OLD_LABELS_LOCAL"
+    OLD_CLASS_COUNT=$(grep -v '^\s*$' "$OLD_LABELS_LOCAL" | wc -l)
+    echo "INFO: Old class count: $OLD_CLASS_COUNT, new class count: $YOLO_CLASSES"
+    echo "INFO: Old class count: $OLD_CLASS_COUNT, new class count: $YOLO_CLASSES" >> "$PARAMS_LOG"
+
+    # Validate: at least one common label exists, and every common label is at the same line number in both files
+    COMMON_COUNT=0
+    MISMATCH=0
+    while IFS= read -r new_label; do
+      [ -z "$new_label" ] && continue
+      if grep -qxF "$new_label" "$OLD_LABELS_LOCAL" 2>/dev/null; then
+        COMMON_COUNT=$((COMMON_COUNT + 1))
+        OLD_LINE=$(grep -nxF "$new_label" "$OLD_LABELS_LOCAL" 2>/dev/null | head -1 | cut -d: -f1) || OLD_LINE=""
+        NEW_LINE=$(grep -nxF "$new_label" "classes.txt" 2>/dev/null | head -1 | cut -d: -f1) || NEW_LINE=""
+        if [ "$OLD_LINE" != "$NEW_LINE" ]; then
+          echo "WARNING: Label '$new_label' is on line $OLD_LINE in base labels but line $NEW_LINE in new labels."
+          MISMATCH=1
+        fi
+      fi
+    done < "classes.txt"
+
+    if [ "$COMMON_COUNT" -eq 0 ]; then
+      echo "ERROR: No common labels found between base labels and new classes.txt. Fine-tuning requires at least one shared class. Stopping."
+      exit 1
+    fi
+    if [ "$MISMATCH" -eq 1 ]; then
+      echo "ERROR: Common label(s) are at different line positions in base and new labels. The new labels file must preserve the original positions for shared classes. Stopping."
+      exit 1
+    fi
+    echo "INFO: Label compatibility check passed — $COMMON_COUNT common label(s) at matching line positions."
+    echo "INFO: Label compatibility check passed — $COMMON_COUNT common label(s) at matching positions" >> "$PARAMS_LOG"
+  fi
+
+  YOLO_INIT_WEIGHTS="$FULL_WEIGHTS"
   CLEAR_FLAG="-clear"
+  echo "INFO: Fine-tuning from $WEIGHTS (config $CONFIG)"
+  echo "INFO: Fine-tuning from $WEIGHTS (config $CONFIG)" >> "$PARAMS_LOG"
+  echo "INFO: Baseline weights snapshot: $FULL_WEIGHTS"
+  echo "INFO: Baseline weights snapshot: $FULL_WEIGHTS" >> "$PARAMS_LOG"
+  if [ -n "$BASE_LABELS_FILE" ]; then
+    echo "INFO: Base labels from $BASE_LABELS_FILE"
+    echo "INFO: Base labels from $BASE_LABELS_FILE" >> "$PARAMS_LOG"
+    echo "INFO: Baseline labels snapshot: $OLD_LABELS_LOCAL"
+    echo "INFO: Baseline labels snapshot: $OLD_LABELS_LOCAL" >> "$PARAMS_LOG"
+  fi
 else
-  YOLO_INIT_WEIGHTS=`download_weights "${CONFIG}"`
+  YOLO_INIT_WEIGHTS=$(download_weights "${CONFIG}")
 fi
 
 DARKNET_DIR="$BASE/darknet"
@@ -351,6 +419,29 @@ BEST_WEIGHTS_FILE="$YOLO_WEIGHTS/${CONFIG}_${EXP}_best.weights"
 # DARKNET="sudo docker run --rm --gpus all -v .:/src sherensberk/darknet:2204.550.1241-devel darknet"
 sudo docker pull glyomics/darknet:latest
 DARKNET="sudo docker run --rm --gpus all -v .:/src glyomics/darknet darknet"
+
+# If class count has increased, extract backbone-only weights via darknet partial so the
+# detection head (sized for old classes) is not loaded — it would corrupt the binary read.
+if [ -n "$WEIGHTS" ] && [ "$OLD_CLASS_COUNT" -gt 0 ] && [ "$YOLO_CLASSES" -ne "$OLD_CLASS_COUNT" ]; then
+  if [ "$YOLO_CLASSES" -lt "$OLD_CLASS_COUNT" ]; then
+    echo "ERROR: New class count ($YOLO_CLASSES) is less than old ($OLD_CLASS_COUNT)."
+    exit 1
+  fi
+  N=$(backbone_layers "$CONFIG")
+  if [ -z "$N" ]; then
+    echo "ERROR: Unknown backbone depth for config '$CONFIG' — cannot run darknet partial automatically."
+    exit 1
+  fi
+  echo "INFO: Class count changed ($OLD_CLASS_COUNT --> $YOLO_CLASSES): extracting backbone (${N} conv layers) via darknet partial..."
+  echo "INFO: Class count changed ($OLD_CLASS_COUNT --> $YOLO_CLASSES): darknet partial ($N layers)" >> "$PARAMS_LOG"
+  BACKBONE_WEIGHTS="${BASELINE_DIR}/backbone_${CONFIG}.conv.${N}"
+  $DARKNET partial "$YOLO_CONFIG" "$FULL_WEIGHTS" "$BACKBONE_WEIGHTS" "$N"
+  upload "$BACKBONE_WEIGHTS" "$DRIVEROOT/$BACKBONE_WEIGHTS"
+  YOLO_INIT_WEIGHTS="$BACKBONE_WEIGHTS"
+  CLEAR_FLAG=""
+  echo "INFO: Using backbone weights for training — detection head will be randomly initialized"
+  echo "INFO: Using backbone weights (detection head randomly initialized)" >> "$PARAMS_LOG"
+fi
 
 # echo darknet train "$TRAIN_CONFIG" "$YOLO_CONFIG" "$YOLO_INIT_WEIGHTS" -dont_show -map -random -nocolour $CONF $IOU
 echo darknet train "$TRAIN_CONFIG" "$YOLO_CONFIG" "$YOLO_INIT_WEIGHTS" -dont_show -map -random -nocolour $CLEAR_FLAG $CONF $IOU
