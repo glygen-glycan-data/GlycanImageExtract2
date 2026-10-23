@@ -1,626 +1,685 @@
 {
-    "result": {
-      "citation": "Subramanian S P, Wojtkiewicz M, Yu F, Castro C, Schuette E N, Rodriguez-Paar J, Churko J, Renavikar P, Anderson D, Mahr C, Gundry R L. Integrated Multiomics Reveals Alterations in Paucimannose and Complex Type N-Glycans in Cardiac Tissue of Patients with COVID-19. Molecular & Cellular Proteomics (MCP) 2025; 24(4): 6-14.",
-      "pmid": "39988192",
-      "figures": [
-        {
-            "caption": "Summary of snRNA-seq analysis of glycogenes in heart cells from COVID-19(+/) patients. A, schematic summary of the bio- informatic analysis of 950 glycosylation-related genes from 19 pathways interrogated from previously published snRNA-seq data (19, 20). B, relative distribution of glycogenes within individual cells of the left and right ventricular regions of the heart is presented as a radial heat map. The outer circle represents the gene expression pro\ufb01le of glycogenes having log2FC > \u00b11 and FDR <0.05. The inner circle represents the percentage contribution of each glycosylation-related pathway normalized to the total abundance. Glycogenes of N-glycan biosynthesis having 15 to 20% variation are indicated within the inner circle. The color gradients for the inner and outer circles in B correspond to the legend for glycosylation- related pathways in A and gene expression fold changes, respectively. Parts of this \ufb01gure were generated with Biorender.comMultiomics Reveals N-Glycan Alterations in COVID-19 Hearts",
-            "figure_number": "1",
-            "glycans": []
-        },
-        {
-            "caption": "Overview of experimental design for glycomics and imaging and results of histopathological analyses. A, FFPE tissue sections were analyzed by histopathology, MS-based glycomics, and lectin-based imaging. Cardiomyocytes were analyzed by MS-based glycomics. B, histopathological \ufb01ndings in COVID-19(+/\u2212) cardiac tissues showing normal cardiac tissue for COVID-19(\u2212) with intact myocyte array and COVID-19(+) tissue with cardiac hypertrophy, in\ufb02ammatory in\ufb01ltrate, focal interstitial \ufb01brosis, and fat in\ufb01ltration. Scale bar = 100 \u03bcm. Parts of this \ufb01gure were generated with Biorender.com.",
-            "figure_number": "2",
-            "glycans": []
-        },
-        {
-            "caption": "Qualitative N-glycan pro\ufb01le of cardiac tissue and isolated cardiomyocytes. A, graph of relatedness of observed N-glycan compositions identi\ufb01ed in FFPE cardiac tissue slices and isolated cardiomyocytes. Each node represents a unique glycan composition, and two adjacent nodes differ by one monosaccharide residue. Blue nodes are observed only in FFPE tissue, and purple is observed in both FFPE tissue and isolated cardiomyocytes. B, distribution of inferred N-glycan composition properties. Graphs in A and B were generated using Glyco- mpozitor (31). C, Pie charts summarizing the percentage distribution of each N-glycan class calculated from the relative abundance values. D, graphical representation of glycan types identi\ufb01ed, and modi\ufb01cations observed at the core and terminal branches.",
-            "figure_number": "3",
-            "glycans": [
-              {
-                "IUPAC": "Gal?1-?GlcNAc",
-                "accession": "G80981NI",
-                "bbox": [
-                  1212,
-                  1693,
-                  115,
-                  100
-                ],
-                "composition_str": "GlcNAc(1)Gal(1)"
-              },
-              {
-                "IUPAC": "Gal?1-?(Fuc?1-?)GlcNAc",
-                "accession": "G22725MK",
-                "bbox": [
-                  1480,
-                  1694,
-                  144,
-                  100
-                ],
-                "composition_str": "GlcNAc(1)Fuc(1)Gal(1)"
-              },
-              {
-                "IUPAC": "NeuAc?2-?Gal",
-                "accession": "G12687MD",
-                "bbox": [
-                  1613, 
-                  1672, 
-                  119, 
-                  115 
-                ],
-                "composition_str": "NeuAc(1)Gal(1)"
-              },
-              {
-                "IUPAC": "NeuAc?2-?Gal",
-                "accession": "G12687MD",
-                "bbox": [
-                  1724, 
-                  1672, 
-                  120, 
-                  116
-                ],
-                "composition_str": "NeuAc(1)Gal(1)"
-              },
-              {
-                "IUPAC": "GalNAc?1-?GlcNAc",
-                "accession": "G31801IX",
-                "bbox": [
-                  1354,
-                  1698,
-                  113,
-                  100
-                ],
-                "composition_str": "GlcNAc(1)GalNAc(1)"
-              },
-              {
-                "IUPAC": "NeuAc?2-?GalNAc?1-?GlcNAc",
-                "accession": "G92400JZ",
-                "bbox": [
-                  1862,
-                  1667,
-                  105,
-                  129
-                ],
-                "composition_str": "GlcNAc(1)NeuAc(1)GalNAc(1)"
-              },
-              {
-                "IUPAC": "Man?1-?(Man?1-?)Man?1-?GlcNAc?1-?GlcNAc",
-                "accession": "G03833LE",
-                "bbox": [
-                  1227,
-                  1182,
-                  91,
-                  178
-                ],
-                "composition_str": "GlcNAc(2)Man(3)"
-              },
-              {
-                "IUPAC": "Fuc?1-?(GlcNAc?1-?)GlcNAc",
-                "bbox": [
-                  1229,
-                  1515,
-                  84,
-                  111
-                ],
-                "composition_str": "GlcNAc(2)Fuc(1)"
-              },
-              {
-                "IUPAC": "Man?1-?(GlcNAc?1-?)(Man?1-?)Man",
-                "accession": "G53892NW",
-                "bbox": [
-                  1307,
-                  1508,
-                  191,
-                  106
-                ],
-                "composition_str": "GlcNAc(1)Man(3)"
-              },
-              {
-                "IUPAC": "Man?1-?(Man?1-?)Man?1-?(Man?1-?Man?1-?)Man?1-?GlcNAc?1-?GlcNAc",
-                "accession": "G64780OA",
-                "bbox": [
-                  1380,
-                  1179,
-                  162,
-                  171
-                ],
-                "composition_str": "GlcNAc(2)Man(6)"
-              },
-              {
-                "IUPAC": "GlcNAc?1-?Man?1-?(GlcNAc?1-?Man?1-?)Man",
-                "bbox": [
-                  1464,
-                  1498,
-                  215,
-                  122
-                ],
-                "composition_str": "GlcNAc(2)Man(3)"
-              },
-              {
-                "IUPAC": "Man?1-?(Man?1-?)Man?1-?(NeuAc?2-?Gal?1-?GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?GlcNAc",
-                "bbox": [
-                  1545,
-                  1151,
-                  179,
-                  216
-                ],
-                "composition_str": "GlcNAc(3)NeuAc(1)Man(5)Gal(1)"
-              },
-              {
-                "IUPAC": "GlcNAc?1-?Man?1-?(GlcNAc?1-?(GlcNAc?1-?)Man?1-?)Man",
-                "bbox": [
-                  1625,
-                  1491,
-                  205,
-                  131
-                ],
-                "composition_str": "GlcNAc(3)Man(3)"
-              },
-              {
-                "IUPAC": "NeuAc?2-?Gal?1-?GlcNAc?1-?Man?1-?(NeuAc?2-?Gal?1-?GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?GlcNAc",
-                "bbox": [
-                  1723,
-                  1130,
-                  149,
-                  252
-                ],
-                "composition_str": "GlcNAc(4)NeuAc(2)Man(3)Gal(2)"
-              },
-              {
-                "IUPAC": "GlcNAc?1-?(GlcNAc?1-?)Man?1-?(GlcNAc?1-?(GlcNAc?1-?)Man?1-?)Man",
-                "bbox": [
-                  1798,
-                  1473,
-                  207,
-                  162
-                ],
-                "composition_str": "GlcNAc(4)Man(3)"
-              },
-              {
-                "IUPAC": "NeuAc?2-?GalNAc?1-?GlcNAc",
-                "accession": "G92400JZ",
-                "bbox": [
-                  1882,
-                  1674,
-                  43,
-                  113
-                ],
-                "composition_str": "GlcNAc(1)NeuAc(1)GalNAc(1)"
-              }
-            ]
-        },
-        {
-          "caption": "Quantitative differences in the N-glycome of cardiac tissues (FFPE) from COVID-19(+) and COVID-19(\u2212) patients. A, compo- sitional analysis of N-glycans in cardiac tissue. Graphical results display output from differential expression analysis using Glynsight. Hex (H), HexNAc (N), Fuc (F), and Sia (S) are monosaccharide moieties that form glycan structures. Red and blue bars depict differences in relative abundance. Colored lines indicate the addition of monosaccharide moieties to a given composition. A downward trend (blue bar) in HnN2, corresponding to paucimannose, and oligo mannose indicates reduced levels, and an upward trend (red bars) corresponding to HnNnFS for complex and hybrid structures, indicates an overall increase in abundance. B, Volcano plot displaying N-glycan structures that are most signi\ufb01cantly different between cardiac tissues from each patient group.Multiomics Reveals N-Glycan Alterations in COVID-19 Hearts",
-          "figure_number": "4",
-          "glycans": [
-            {
-              "IUPAC": "Man?1-?Man?1-?GlcNAc?1-?GlcNAc",
-              "accession": "G86427WL",
-              "bbox": [
-                46,
-                1967,
-                129,
-                185
-              ],
-              "composition_str": "GlcNAc(2)Man(2)"
-            },
-            {
-              "IUPAC": "Man?1-?Man?1-?GlcNAc?1-?GlcNAc",
-              "accession": "G86427WL",
-              "bbox": [
-                162,
-                1785,
-                136,
-                193
-              ],
-              "composition_str": "GlcNAc(2)Man(2)"
-            },
-            {
-              "detpart_IUPAC": "Man?1-?GlcNAc?1-?GlcNAc",
-              "detpart_accession": "G64017CW",
-              "bbox": [
-                162,
-                1959,
-                136,
-                174
-              ],
-              "detpart_composition_str": "GlcNAc(2)Man(1)"
-            },
-            {
-              "detpart_IUPAC": "Man?1-?GlcNAc?1-?GlcNAc",
-              "detpart_accession": "G64017CW",
-              "bbox": [
-                615,
-                1769,
-                143,
-                178
-              ],
-              "detpart_composition_str": "GlcNAc(2)Man(1)"
-            },
-            {
-              "IUPAC": "Man?1-?GlcNAc?1-?GlcNAc",
-              "bbox": [
-                85,
-                1809,
-                49,
-                119
-              ],
-              "composition_str": "GlcNAc(2)Man(1)"
-            },
-            {
-              "IUPAC": "Man?1-?Man?1-?Man?1-?GlcNAc?1-?GlcNAc",
-              "accession": "G17271TR",
-              "bbox": [
-                326,
-                1766,
-                106,
-                189
-              ],
-              "composition_str": "GlcNAc(2)Man(3)"
-            },
-            {
-              "IUPAC": "Man?1-?Man?1-?Man?1-?GlcNAc?1-?GlcNAc",
-              "accession": "G17271TR",
-              "bbox": [
-                337,
-                1941,
-                87,
-                187
-              ],
-              "composition_str": "GlcNAc(2)Man(3)"
-            },
-            {
-              "IUPAC": "Fuc?1-?(Man?1-?Man?1-?Man?1-?GlcNAc?1-?)GlcNAc",
-              "accession": "G94017LW",
-              "bbox": [
-                487,
-                1760,
-                90,
-                189
-              ],
-              "composition_str": "GlcNAc(2)Fuc(1)Man(3)"
-            },
-            {
-              "IUPAC": "Fuc?1-?(Man?1-?Man?1-?Man?1-?GlcNAc?1-?)GlcNAc",
-              "accession": "G94017LW",
-              "bbox": [
-                493,
-                1925,
-                73,
-                184
-              ],
-              "composition_str": "GlcNAc(2)Fuc(1)Man(3)"
-            },
-            {
-              "IUPAC": "Man?1-?Man?1-?(Man?1-?)Man?1-?GlcNAc?1-?GlcNAc",
-              "accession": "G58858DY",
-              "bbox": [
-                638,
-                1950,
-                101,
-                164
-              ],
-              "composition_str": "GlcNAc(2)Man(4)"
-            },
-            {
-              "IUPAC": "Man?1-?Man?1-?(Man?1-?)Man?1-?GlcNAc?1-?GlcNAc",
-              "accession": "G58858DY",
-              "bbox": [
-                808,
-                1954,
-                83,
-                177
-              ],
-              "composition_str": "GlcNAc(2)Man(4)"
-            },
-            {
-              "detpart_IUPAC": "Fuc?1-?(Man?1-?(Man?1-?)Man?1-?GlcNAc?1-?)GlcNAc",
-              "detpart_accession": "G27815BZ",
-              "bbox": [
-                809,
-                1737,
-                82,
-                220
-              ],
-              "composition_str": "GlcNAc(2)Fuc(1)Man(4)",
-              "detpart_composition_str": "GlcNAc(2)Fuc(1)Man(3)"
-            },
-            {
-              "detpart_IUPAC": "Man?1-?(Man?1-?)Man?1-?(Man?1-?Man?1-?)Man?1-?GlcNAc?1-?GlcNAc",
-              "detpart_accession": "G64780OA",
-              "bbox": [
-                954,
-                1930,
-                127,
-                202
-              ],
-              "composition_str": "GlcNAc(2)Man(7)",
-              "detpart_composition_str": "GlcNAc(2)Man(6)"
-            },
-            {
-              "detpart_IUPAC": "Man?1-?(Man?1-?)Man?1-?GlcNAc?1-?GlcNAc",
-              "detpart_accession": "G03833LE",
-              "bbox": [
-                977,
-                1755,
-                86,
-                184
-              ],
-              "composition_str": "GlcNAc(2)Man(4)",
-              "detpart_composition_str": "GlcNAc(2)Man(3)"
-            },
-            {
-              "detpart_IUPAC": "Man?1-?(Man?1-?)Man?1-?(Glc?1-?Man?1-?Man?1-?Man?1-?)Man?1-?GlcNAc?1-?GlcNAc",
-              "detpart_accession": "G29250KT",
-              "bbox": [
-                1080,
-                1737,
-                199,
-                203
-              ],
-              "composition_str": "GlcNAc(2)Man(8)Glc(1)",
-              "detpart_composition_str": "GlcNAc(2)Man(7)Glc(1)"
-            },
-            {
-              "IUPAC": "Fuc?1-?(Man?1-?(Man?1-?)Man?1-?(NeuAc?2-?Gal?1-?GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?)GlcNAc",
-              "accession": "G72404VA",
-              "bbox": [
-                1101,
-                1934,
-                156,
-                212
-              ],
-              "composition_str": "GlcNAc(3)NeuAc(1)Fuc(1)Man(5)Gal(1)"
-            },
-            {
-              "IUPAC": "Fuc?1-?(Gal?1-?GlcNAc?1-?Man?1-?(GalNAc?1-?GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?)GlcNAc",
-              "accession": "G53113PI",
-              "bbox": [
-                1262,
-                1753,
-                159,
-                189
-              ],
-              "composition_str": "GlcNAc(4)Fuc(1)Man(3)GalNAc(1)Gal(1)"
-            },
-            {
-              "IUPAC": "Fuc?1-?(GalNAc?1-?GlcNAc?1-?Man?1-?(GalNAc?1-?GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?)GlcNAc",
-              "accession": "G09276VG",
-              "bbox": [
-                1266,
-                1948,
-                158,
-                186
-              ],
-              "composition_str": "GlcNAc(4)Fuc(1)Man(3)GalNAc(2)"
-            }
-          ]
-        },
-        {
-          "caption": "Quantitative differences in the N-glycome of isolated cardiomyocytes from COVID-19(+) and COVID-19(\u2212) patients. A, compositional analysis of N-glycans from cardiomyocytes. Graphical results display output from differential expression analysis using Glynsight. Hex (H), HexNAc (N), Fuc (F), and Sia (S) are monosaccharide moieties that form glycan structures. Red and blue bars depict differences in relative abundance. Colored lines indicate the addition of monosaccharide moieties to a given composition. A mixed trend in abundance was observed. Overall changes were indicative of increased complex type structures. B, Volcano plot displaying N-glycan structures that are most signi\ufb01cantly different between isolated cardiomyocytes from each patient group.Multiomics Reveals N-Glycan Alterations in COVID-19 Hearts",
-          "figure_number": "5",
-          "glycans": [
-            {
-              "IUPAC": "Fuc?1-?(Man?1-?GlcNAc?1-?)GlcNAc",
-              "accession": "G25347ZR",
-              "bbox": [
-                85,
-                1727,
-                82,
-                150
-              ],
-              "composition_str": "GlcNAc(2)Fuc(1)Man(1)"
-            },
-            {
-              "IUPAC": "Man?1-?Man?1-?(NeuAc?2-?GalNAc?1-?GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?GlcNAc",
-              "accession": "G89163OE",
-              "bbox": [
-                168,
-                1847,
-                143,
-                218
-              ],
-              "composition_str": "GlcNAc(3)NeuAc(1)Man(4)GalNAc(1)"
-            },
-            {
-              "IUPAC": "Fuc?1-?(Man?1-?Man?1-?(NeuAc?2-?GalNAc?1-?GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?)GlcNAc",
-              "bbox": [
-                287,
-                1678,
-                136,
-                223
-              ],
-              "composition_str": "GlcNAc(3)NeuAc(1)Fuc(1)Man(4)GalNAc(1)"
-            },
-            {
-              "IUPAC": "Fuc?1-?(Man?1-?(Man?1-?)Man?1-?(NeuAc?2-?GalNAc?1-?GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?)GlcNAc",
-              "bbox": [
-                415,
-                1844,
-                171,
-                218
-              ], 
-              "composition_str": "GlcNAc(3)NeuAc(1)Fuc(1)Man(5)GalNAc(1)"
-            },
-            {
-              "IUPAC": "Fuc?1-?(GlcNAc?1-?(Gal?1-?GlcNAc?1-?)Man?1-?(GlcNAc?1-?)(Gal?1-?GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?)GlcNAc",
-              "accession": "G67634VG",
-              "bbox": [
-                549,
-                1686,
-                197,
-                224
-              ],
-              "composition_str": "GlcNAc(6)Fuc(1)Man(3)Gal(2)"
-            },
-            {
-              "IUPAC": "Fuc?1-?(GlcNAc?1-?Man?1-?(NeuAc?2-?GalNAc?1-?GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?)GlcNAc",
-              "accession": "G83257QY",
-              "bbox": [
-                686,
-                1863,
-                168,
-                203
-              ],
-              "composition_str": "GlcNAc(4)NeuAc(1)Fuc(1)Man(3)GalNAc(1)"
-            },
-            {
-              "detpart_IUPAC": "Fuc?1-?(GalNAc?1-?GlcNAc?1-?Man?1-?(GalNAc?1-?GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?)GlcNAc",
-              "detpart_accession": "G09276VG",
-              "bbox": [
-                840,
-                1650,
-                145,
-                258
-              ],
-              "composition_str": "GlcNAc(4)NeuAc(1)Fuc(1)Man(3)GalNAc(2)",
-              "detpart_composition_str": "GlcNAc(4)Fuc(1)Man(3)GalNAc(2)"
-            },
-            {
-              "IUPAC": "Gal?1-?GlcNAc?1-?Man?1-?(Gal?1-?GlcNAc?1-?(Gal?1-?GlcNAc?1-?)Man?1-?)Man?1-?GlcNAc?1-?GlcNAc",
-              "accession": "G91496ML",
-              "bbox": [
-                997,
-                1826,
-                147,
-                247
-              ],
-              "composition_str": "GlcNAc(5)Man(3)Gal(3)"
-            },
-            {
-              "detpart_IUPAC": "Fuc?1-?(GlcNAc?1-?Man?1-?(GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?)GlcNAc",
-              "detpart_accession": "G72398VP",
-              "bbox": [
-                1133,
-                1641,
-                133,
-                269
-              ],
-              "composition_str": "GlcNAc(5)NeuAc(1)Fuc(1)Man(3)Gal(1)",
-              "detpart_composition_str": "GlcNAc(4)Fuc(1)Man(3)"
-            },
-            {
-              "detpart_IUPAC": "Fuc?1-?(GlcNAc?1-?Man?1-?(GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?)GlcNAc",
-              "detpart_accession": "G72398VP",
-              "bbox": [
-                1262,
-                1812,
-                131,
-                267
-              ],
-              "composition_str": "GlcNAc(5)NeuAc(1)Fuc(1)Man(3)Gal(1)",
-              "detpart_composition_str": "GlcNAc(4)Fuc(1)Man(3)"
-            }
-          ]
-        },
-        {
-          "caption": "Differences in FFPE tissue N-glycans that are independent of confounding variables. A, median normalized data were subjected to multivariate analysis to determine glycosylation changes independent of confounding factors such as age, sex, and comorbidities. Volcano plot represents differential abundance of glycans between COVID-19(\u2212) and COVID-19(+) groups. Paucimannoses were reduced exclusively due to COVID-19. B, heat map representing log2FC changes in expression of various enzymes in N-glycan biosynthesis obtained from snRNA-seq analysis (Fig. 1). LV-left ventricle, RV-right ventricle.",
-          "figure_number": "6",
-          "glycans": [
-            {
-              "detpart_IUPAC": "Man?1-?(Man?1-?)Man?1-?GlcNAc?1-?GlcNAc",
-              "detpart_accession": "G03833LE",
-              "bbox": [
-                0,
-                854,
-                62,
-                180
-              ],
-              "composition_str": "GlcNAc(2)Man(5)",
-              "detpart_composition_str": "GlcNAc(2)Man(3)"
-            },
-            {
-              "detpart_IUPAC": "Man?1-?GlcNAc?1-?GlcNAc",
-              "detpart_accession": "G64017CW",
-              "bbox": [
-                66,
-                873,
-                57,
-                152
-              ],
-              "composition_str": "GlcNAc(2)Man(3)",
-              "detpart_composition_str": "GlcNAc(2)Man(1)"
-            },
-            {
-              "IUPAC": "Man?1-?Man?1-?GlcNAc?1-?GlcNAc",
-              "accession": "G86427WL",
-              "bbox": [
-                129,
-                897,
-                54,
-                126
-              ],
-              "composition_str": "GlcNAc(2)Man(2)"
-            },
-            {
-              "IUPAC": "Man?1-?Man?1-?Man?1-?GlcNAc?1-?GlcNAc",
-              "bbox": [
-                184,
-                896,
-                71,
-                129
-              ],
-              "composition_str": "GlcNAc(2)Man(3)"
-            },
-            {
-              "IUPAC": "Man?1-?Man?1-?Man?1-?GlcNAc?1-?GlcNAc",
-              "accession": "G17271TR",
-              "bbox": [
-                274,
-                874,
-                61,
-                152
-              ],
-              "composition_str": "GlcNAc(2)Man(3)"
-            },
-            {
-              "detpart_IUPAC": "Man?1-?GlcNAc?1-?GlcNAc",
-              "detpart_accession": "G64017CW",
-              "bbox": [
-                339,
-                877,
-                54,
-                147
-              ],
-              "composition_str": "GlcNAc(2)Man(4)",
-              "detpart_composition_str": "GlcNAc(2)Man(1)"
-            },
-            {
-              "IUPAC": "Man?1-?Man?1-?Man?1-?GlcNAc?1-?(Fuc?1-?)GlcNAc",
-              "accession": "G94017LW",
-              "bbox": [
-                393,
-                892,
-                67,
-                130
-              ],
-              "composition_str": "GlcNAc(2)Fuc(1)Man(3)"
-            },
-            {
-              "IUPAC": "Man?1-?Man?1-?Man?1-?GlcNAc?1-?(Fuc?1-?)GlcNAc",
-              "accession": "G94017LW",
-              "bbox": [
-                463,
-                888,
-                75,
-                143
-              ],
-              "composition_str": "GlcNAc(2)Fuc(1)Man(3)"
-            },
-            {
-              "detpart_IUPAC": "Man?1-?GlcNAc?1-?(Fuc?1-?)GlcNAc",
-              "detpart_accession": "G25347ZR",
-              "bbox": [
-                552,
-                869,
-                53,
-                161
-              ],
-              "composition_str": "GlcNAc(2)Fuc(1)Man(4)",
-              "detpart_composition_str": "GlcNAc(2)Fuc(1)Man(1)"
-            }
-          ]
-        }
-      ]
-    }
+  "result": {
+    "citation": "Subramanian S P, Wojtkiewicz M, Yu F, Castro C, Schuette E N, Rodriguez-Paar J, Churko J, Renavikar P, Anderson D, Mahr C, Gundry R L. Integrated Multiomics Reveals Alterations in Paucimannose and Complex Type N-Glycans in Cardiac Tissue of Patients with COVID-19. Molecular & Cellular Proteomics (MCP) 2025; 24(4): 6-14.",
+    "pmid": "39988192",
+    "figures": [
+      {
+        "caption": "Summary of snRNA-seq analysis of glycogenes in heart cells from COVID-19(+/) patients. A, schematic summary of the bio- informatic analysis of 950 glycosylation-related genes from 19 pathways interrogated from previously published snRNA-seq data (19, 20). B, relative distribution of glycogenes within individual cells of the left and right ventricular regions of the heart is presented as a radial heat map. The outer circle represents the gene expression pro\ufb01le of glycogenes having log2FC > \u00b11 and FDR <0.05. The inner circle represents the percentage contribution of each glycosylation-related pathway normalized to the total abundance. Glycogenes of N-glycan biosynthesis having 15 to 20% variation are indicated within the inner circle. The color gradients for the inner and outer circles in B correspond to the legend for glycosylation- related pathways in A and gene expression fold changes, respectively. Parts of this \ufb01gure were generated with Biorender.comMultiomics Reveals N-Glycan Alterations in COVID-19 Hearts",
+        "figure_number": "1",
+        "glycans": []
+      },
+      {
+        "caption": "Overview of experimental design for glycomics and imaging and results of histopathological analyses. A, FFPE tissue sections were analyzed by histopathology, MS-based glycomics, and lectin-based imaging. Cardiomyocytes were analyzed by MS-based glycomics. B, histopathological \ufb01ndings in COVID-19(+/\u2212) cardiac tissues showing normal cardiac tissue for COVID-19(\u2212) with intact myocyte array and COVID-19(+) tissue with cardiac hypertrophy, in\ufb02ammatory in\ufb01ltrate, focal interstitial \ufb01brosis, and fat in\ufb01ltration. Scale bar = 100 \u03bcm. Parts of this \ufb01gure were generated with Biorender.com.",
+        "figure_number": "2",
+        "glycans": []
+      },
+      {
+        "caption": "Qualitative N-glycan pro\ufb01le of cardiac tissue and isolated cardiomyocytes. A, graph of relatedness of observed N-glycan compositions identi\ufb01ed in FFPE cardiac tissue slices and isolated cardiomyocytes. Each node represents a unique glycan composition, and two adjacent nodes differ by one monosaccharide residue. Blue nodes are observed only in FFPE tissue, and purple is observed in both FFPE tissue and isolated cardiomyocytes. B, distribution of inferred N-glycan composition properties. Graphs in A and B were generated using Glyco- mpozitor (31). C, Pie charts summarizing the percentage distribution of each N-glycan class calculated from the relative abundance values. D, graphical representation of glycan types identi\ufb01ed, and modi\ufb01cations observed at the core and terminal branches.",
+        "figure_number": "3",
+        "glycans": [
+          {
+            "IUPAC": "Gal?1-?GlcNAc",
+            "accession": "G80981NI",
+            "bbox": [
+              1212,
+              1693,
+              115,
+              100
+            ],
+            "composition_str": "GlcNAc(1)Gal(1)",
+            "GID": "G3.1"
+          },
+          {
+            "IUPAC": "Gal?1-?(Fuc?1-?)GlcNAc",
+            "accession": "G22725MK",
+            "bbox": [
+              1480,
+              1694,
+              144,
+              100
+            ],
+            "composition_str": "GlcNAc(1)Fuc(1)Gal(1)",
+            "GID": "G3.8"
+          },
+          {
+            "IUPAC": "NeuAc?2-?Gal",
+            "accession": "G12687MD",
+            "bbox": [
+              1613,
+              1672,
+              119,
+              115
+            ],
+            "composition_str": "NeuAc(1)Gal(1)",
+            "GID": "G3.11"
+          },
+          {
+            "IUPAC": "NeuAc?2-?Gal",
+            "accession": "G12687MD",
+            "bbox": [
+              1724,
+              1672,
+              120,
+              116
+            ],
+            "composition_str": "NeuAc(1)Gal(1)",
+            "GID": "G3.13"
+          },
+          {
+            "IUPAC": "GalNAc?1-?GlcNAc",
+            "accession": "G31801IX",
+            "bbox": [
+              1354,
+              1698,
+              113,
+              100
+            ],
+            "composition_str": "GlcNAc(1)GalNAc(1)",
+            "GID": "G3.5"
+          },
+          {
+            "IUPAC": "NeuAc?2-?GalNAc?1-?GlcNAc",
+            "accession": "G92400JZ",
+            "bbox": [
+              1862,
+              1667,
+              105,
+              129
+            ],
+            "composition_str": "GlcNAc(1)NeuAc(1)GalNAc(1)",
+            "GID": "G3.15"
+          },
+          {
+            "IUPAC": "Man?1-?(Man?1-?)Man?1-?GlcNAc?1-?GlcNAc",
+            "accession": "G03833LE",
+            "bbox": [
+              1227,
+              1182,
+              91,
+              178
+            ],
+            "composition_str": "GlcNAc(2)Man(3)",
+            "GID": "G3.2"
+          },
+          {
+            "IUPAC": "Fuc?1-?(GlcNAc?1-?)GlcNAc",
+            "accession": "G03838OG",
+            "bbox": [
+              1229,
+              1515,
+              84,
+              111
+            ],
+            "composition_str": "GlcNAc(2)Fuc(1)",
+            "GID": "G3.3"
+          },
+          {
+            "IUPAC": "Man?1-?(GlcNAc?1-?)(Man?1-?)Man",
+            "accession": "G53892NW",
+            "bbox": [
+              1307,
+              1508,
+              191,
+              106
+            ],
+            "composition_str": "GlcNAc(1)Man(3)",
+            "GID": "G3.4"
+          },
+          {
+            "IUPAC": "Man?1-?(Man?1-?)Man?1-?(Man?1-?Man?1-?)Man?1-?GlcNAc?1-?GlcNAc",
+            "accession": "G64780OA",
+            "bbox": [
+              1380,
+              1179,
+              162,
+              171
+            ],
+            "composition_str": "GlcNAc(2)Man(6)",
+            "GID": "G3.6"
+          },
+          {
+            "IUPAC": "GlcNAc?1-?Man?1-?(GlcNAc?1-?Man?1-?)Man",
+            "accession": "G99491ZK",
+            "bbox": [
+              1464,
+              1498,
+              215,
+              122
+            ],
+            "composition_str": "GlcNAc(2)Man(3)",
+            "GID": "G3.7"
+          },
+          {
+            "IUPAC": "Man?1-?(Man?1-?)Man?1-?(NeuAc?2-?Gal?1-?GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?GlcNAc",
+            "accession": "G55036HU",
+            "bbox": [
+              1545,
+              1151,
+              179,
+              216
+            ],
+            "composition_str": "GlcNAc(3)NeuAc(1)Man(5)Gal(1)",
+            "GID": "G3.9"
+          },
+          {
+            "IUPAC": "GlcNAc?1-?Man?1-?(GlcNAc?1-?(GlcNAc?1-?)Man?1-?)Man",
+            "accession": "G59034PL",
+            "bbox": [
+              1625,
+              1491,
+              205,
+              131
+            ],
+            "composition_str": "GlcNAc(3)Man(3)",
+            "GID": "G3.10"
+          },
+          {
+            "IUPAC": "NeuAc?2-?Gal?1-?GlcNAc?1-?Man?1-?(NeuAc?2-?Gal?1-?GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?GlcNAc",
+            "accession": "G97599MN",
+            "bbox": [
+              1723,
+              1130,
+              149,
+              252
+            ],
+            "composition_str": "GlcNAc(4)NeuAc(2)Man(3)Gal(2)",
+            "GID": "G3.12"
+          },
+          {
+            "IUPAC": "GlcNAc?1-?(GlcNAc?1-?)Man?1-?(GlcNAc?1-?(GlcNAc?1-?)Man?1-?)Man",
+            "accession": "G84765CZ",
+            "bbox": [
+              1798,
+              1473,
+              207,
+              162
+            ],
+            "composition_str": "GlcNAc(4)Man(3)",
+            "GID": "G3.14"
+          },
+          {
+            "IUPAC": "NeuAc?2-?GalNAc?1-?GlcNAc",
+            "accession": "G92400JZ",
+            "bbox": [
+              1882,
+              1674,
+              43,
+              113
+            ],
+            "composition_str": "GlcNAc(1)NeuAc(1)GalNAc(1)"
+          }
+        ]
+      },
+      {
+        "caption": "Quantitative differences in the N-glycome of cardiac tissues (FFPE) from COVID-19(+) and COVID-19(\u2212) patients. A, compo- sitional analysis of N-glycans in cardiac tissue. Graphical results display output from differential expression analysis using Glynsight. Hex (H), HexNAc (N), Fuc (F), and Sia (S) are monosaccharide moieties that form glycan structures. Red and blue bars depict differences in relative abundance. Colored lines indicate the addition of monosaccharide moieties to a given composition. A downward trend (blue bar) in HnN2, corresponding to paucimannose, and oligo mannose indicates reduced levels, and an upward trend (red bars) corresponding to HnNnFS for complex and hybrid structures, indicates an overall increase in abundance. B, Volcano plot displaying N-glycan structures that are most signi\ufb01cantly different between cardiac tissues from each patient group.Multiomics Reveals N-Glycan Alterations in COVID-19 Hearts",
+        "figure_number": "4",
+        "glycans": [
+          {
+            "IUPAC": "Man?1-?Man?1-?GlcNAc?1-?GlcNAc",
+            "accession": "G86427WL",
+            "bbox": [
+              46,
+              1967,
+              129,
+              185
+            ],
+            "composition_str": "GlcNAc(2)Man(2)",
+            "GID": "G4.1"
+          },
+          {
+            "IUPAC": "Man?1-?Man?1-?GlcNAc?1-?GlcNAc",
+            "accession": "G86427WL",
+            "bbox": [
+              162,
+              1785,
+              136,
+              193
+            ],
+            "composition_str": "GlcNAc(2)Man(2)",
+            "GID": "G4.3"
+          },
+          {
+            "detpart_IUPAC": "Man?1-?GlcNAc?1-?GlcNAc",
+            "detpart_accession": "G64017CW",
+            "bbox": [
+              162,
+              1959,
+              136,
+              174
+            ],
+            "detpart_composition_str": "GlcNAc(2)Man(1)",
+            "GID": "G4.4"
+          },
+          {
+            "detpart_IUPAC": "Man?1-?GlcNAc?1-?GlcNAc",
+            "detpart_accession": "G64017CW",
+            "bbox": [
+              615,
+              1769,
+              143,
+              178
+            ],
+            "detpart_composition_str": "GlcNAc(2)Man(1)",
+            "GID": "G4.9"
+          },
+          {
+            "IUPAC": "Man?1-?GlcNAc?1-?GlcNAc",
+            "accession": "G64017CW",
+            "bbox": [
+              85,
+              1809,
+              49,
+              119
+            ],
+            "composition_str": "GlcNAc(2)Man(1)",
+            "GID": "G4.2"
+          },
+          {
+            "IUPAC": "Man?1-?Man?1-?Man?1-?GlcNAc?1-?GlcNAc",
+            "accession": "G17271TR",
+            "bbox": [
+              326,
+              1766,
+              106,
+              189
+            ],
+            "composition_str": "GlcNAc(2)Man(3)",
+            "GID": "G4.5"
+          },
+          {
+            "IUPAC": "Man?1-?Man?1-?Man?1-?GlcNAc?1-?GlcNAc",
+            "accession": "G17271TR",
+            "bbox": [
+              337,
+              1941,
+              87,
+              187
+            ],
+            "composition_str": "GlcNAc(2)Man(3)",
+            "GID": "G4.6"
+          },
+          {
+            "IUPAC": "Fuc?1-?(Man?1-?Man?1-?Man?1-?GlcNAc?1-?)GlcNAc",
+            "accession": "G94017LW",
+            "bbox": [
+              487,
+              1760,
+              90,
+              189
+            ],
+            "composition_str": "GlcNAc(2)Fuc(1)Man(3)",
+            "GID": "G4.7"
+          },
+          {
+            "IUPAC": "Fuc?1-?(Man?1-?Man?1-?Man?1-?GlcNAc?1-?)GlcNAc",
+            "accession": "G94017LW",
+            "bbox": [
+              493,
+              1925,
+              73,
+              184
+            ],
+            "composition_str": "GlcNAc(2)Fuc(1)Man(3)",
+            "GID": "G4.8"
+          },
+          {
+            "IUPAC": "Man?1-?Man?1-?(Man?1-?)Man?1-?GlcNAc?1-?GlcNAc",
+            "accession": "G58858DY",
+            "bbox": [
+              638,
+              1950,
+              101,
+              164
+            ],
+            "composition_str": "GlcNAc(2)Man(4)",
+            "GID": "G4.10"
+          },
+          {
+            "IUPAC": "Man?1-?Man?1-?(Man?1-?)Man?1-?GlcNAc?1-?GlcNAc",
+            "accession": "G58858DY",
+            "bbox": [
+              808,
+              1954,
+              83,
+              177
+            ],
+            "composition_str": "GlcNAc(2)Man(4)",
+            "GID": "G4.11"
+          },
+          {
+            "detpart_IUPAC": "Fuc?1-?(Man?1-?(Man?1-?)Man?1-?GlcNAc?1-?)GlcNAc",
+            "detpart_accession": "G27815BZ",
+            "bbox": [
+              809,
+              1737,
+              82,
+              220
+            ],
+            "composition_str": "GlcNAc(2)Fuc(1)Man(4)",
+            "detpart_composition_str": "GlcNAc(2)Fuc(1)Man(3)",
+            "GID": "G4.12"
+          },
+          {
+            "detpart_IUPAC": "Man?1-?(Man?1-?)Man?1-?(Man?1-?Man?1-?)Man?1-?GlcNAc?1-?GlcNAc",
+            "detpart_accession": "G64780OA",
+            "bbox": [
+              954,
+              1930,
+              127,
+              202
+            ],
+            "composition_str": "GlcNAc(2)Man(7)",
+            "detpart_composition_str": "GlcNAc(2)Man(6)",
+            "GID": "G4.13"
+          },
+          {
+            "detpart_IUPAC": "Man?1-?(Man?1-?)Man?1-?GlcNAc?1-?GlcNAc",
+            "detpart_accession": "G03833LE",
+            "bbox": [
+              977,
+              1755,
+              86,
+              184
+            ],
+            "composition_str": "GlcNAc(2)Man(4)",
+            "detpart_composition_str": "GlcNAc(2)Man(3)",
+            "GID": "G4.14"
+          },
+          {
+            "detpart_IUPAC": "Man?1-?(Man?1-?)Man?1-?(Glc?1-?Man?1-?Man?1-?Man?1-?)Man?1-?GlcNAc?1-?GlcNAc",
+            "detpart_accession": "G29250KT",
+            "bbox": [
+              1080,
+              1737,
+              199,
+              203
+            ],
+            "composition_str": "GlcNAc(2)Man(8)Glc(1)",
+            "detpart_composition_str": "GlcNAc(2)Man(7)Glc(1)",
+            "GID": "G4.15"
+          },
+          {
+            "IUPAC": "Fuc?1-?(Man?1-?(Man?1-?)Man?1-?(NeuAc?2-?Gal?1-?GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?)GlcNAc",
+            "accession": "G72404VA",
+            "bbox": [
+              1101,
+              1934,
+              156,
+              212
+            ],
+            "composition_str": "GlcNAc(3)NeuAc(1)Fuc(1)Man(5)Gal(1)",
+            "GID": "G4.16"
+          },
+          {
+            "IUPAC": "Fuc?1-?(Gal?1-?GlcNAc?1-?Man?1-?(GalNAc?1-?GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?)GlcNAc",
+            "accession": "G53113PI",
+            "bbox": [
+              1262,
+              1753,
+              159,
+              189
+            ],
+            "composition_str": "GlcNAc(4)Fuc(1)Man(3)GalNAc(1)Gal(1)",
+            "GID": "G4.17"
+          },
+          {
+            "IUPAC": "Fuc?1-?(GalNAc?1-?GlcNAc?1-?Man?1-?(GalNAc?1-?GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?)GlcNAc",
+            "accession": "G09276VG",
+            "bbox": [
+              1266,
+              1948,
+              158,
+              186
+            ],
+            "composition_str": "GlcNAc(4)Fuc(1)Man(3)GalNAc(2)",
+            "GID": "G4.18"
+          }
+        ]
+      },
+      {
+        "caption": "Quantitative differences in the N-glycome of isolated cardiomyocytes from COVID-19(+) and COVID-19(\u2212) patients. A, compositional analysis of N-glycans from cardiomyocytes. Graphical results display output from differential expression analysis using Glynsight. Hex (H), HexNAc (N), Fuc (F), and Sia (S) are monosaccharide moieties that form glycan structures. Red and blue bars depict differences in relative abundance. Colored lines indicate the addition of monosaccharide moieties to a given composition. A mixed trend in abundance was observed. Overall changes were indicative of increased complex type structures. B, Volcano plot displaying N-glycan structures that are most signi\ufb01cantly different between isolated cardiomyocytes from each patient group.Multiomics Reveals N-Glycan Alterations in COVID-19 Hearts",
+        "figure_number": "5",
+        "glycans": [
+          {
+            "IUPAC": "Fuc?1-?(Man?1-?GlcNAc?1-?)GlcNAc",
+            "accession": "G25347ZR",
+            "bbox": [
+              85,
+              1727,
+              82,
+              150
+            ],
+            "composition_str": "GlcNAc(2)Fuc(1)Man(1)",
+            "GID": "G5.1"
+          },
+          {
+            "IUPAC": "Man?1-?Man?1-?(NeuAc?2-?GalNAc?1-?GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?GlcNAc",
+            "accession": "G89163OE",
+            "bbox": [
+              168,
+              1847,
+              143,
+              218
+            ],
+            "composition_str": "GlcNAc(3)NeuAc(1)Man(4)GalNAc(1)",
+            "GID": "G5.2"
+          },
+          {
+            "IUPAC": "Fuc?1-?(Man?1-?Man?1-?(NeuAc?2-?GalNAc?1-?GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?)GlcNAc",
+            "bbox": [
+              287,
+              1678,
+              136,
+              223
+            ],
+            "composition_str": "GlcNAc(3)NeuAc(1)Fuc(1)Man(4)GalNAc(1)",
+            "GID": "G5.3"
+          },
+          {
+            "IUPAC": "Fuc?1-?(Man?1-?(Man?1-?)Man?1-?(NeuAc?2-?GalNAc?1-?GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?)GlcNAc",
+            "bbox": [
+              415,
+              1844,
+              171,
+              218
+            ],
+            "composition_str": "GlcNAc(3)NeuAc(1)Fuc(1)Man(5)GalNAc(1)",
+            "GID": "G5.4"
+          },
+          {
+            "IUPAC": "Fuc?1-?(GlcNAc?1-?(Gal?1-?GlcNAc?1-?)Man?1-?(GlcNAc?1-?)(Gal?1-?GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?)GlcNAc",
+            "accession": "G67634VG",
+            "bbox": [
+              549,
+              1686,
+              197,
+              224
+            ],
+            "composition_str": "GlcNAc(6)Fuc(1)Man(3)Gal(2)",
+            "GID": "G5.5"
+          },
+          {
+            "IUPAC": "Fuc?1-?(GlcNAc?1-?Man?1-?(NeuAc?2-?GalNAc?1-?GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?)GlcNAc",
+            "accession": "G83257QY",
+            "bbox": [
+              686,
+              1863,
+              168,
+              203
+            ],
+            "composition_str": "GlcNAc(4)NeuAc(1)Fuc(1)Man(3)GalNAc(1)",
+            "GID": "G5.6"
+          },
+          {
+            "detpart_IUPAC": "Fuc?1-?(GalNAc?1-?GlcNAc?1-?Man?1-?(GalNAc?1-?GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?)GlcNAc",
+            "detpart_accession": "G09276VG",
+            "bbox": [
+              840,
+              1650,
+              145,
+              258
+            ],
+            "composition_str": "GlcNAc(4)NeuAc(1)Fuc(1)Man(3)GalNAc(2)",
+            "detpart_composition_str": "GlcNAc(4)Fuc(1)Man(3)GalNAc(2)",
+            "GID": "G5.7"
+          },
+          {
+            "IUPAC": "Gal?1-?GlcNAc?1-?Man?1-?(Gal?1-?GlcNAc?1-?(Gal?1-?GlcNAc?1-?)Man?1-?)Man?1-?GlcNAc?1-?GlcNAc",
+            "accession": "G91496ML",
+            "bbox": [
+              997,
+              1826,
+              147,
+              247
+            ],
+            "composition_str": "GlcNAc(5)Man(3)Gal(3)",
+            "GID": "G5.8"
+          },
+          {
+            "detpart_IUPAC": "Fuc?1-?(GlcNAc?1-?Man?1-?(GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?)GlcNAc",
+            "detpart_accession": "G72398VP",
+            "bbox": [
+              1133,
+              1641,
+              133,
+              269
+            ],
+            "composition_str": "GlcNAc(5)NeuAc(1)Fuc(1)Man(3)Gal(1)",
+            "detpart_composition_str": "GlcNAc(4)Fuc(1)Man(3)",
+            "GID": "G5.9"
+          },
+          {
+            "detpart_IUPAC": "Fuc?1-?(GlcNAc?1-?Man?1-?(GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?)GlcNAc",
+            "detpart_accession": "G72398VP",
+            "bbox": [
+              1262,
+              1812,
+              131,
+              267
+            ],
+            "composition_str": "GlcNAc(5)NeuAc(1)Fuc(1)Man(3)Gal(1)",
+            "detpart_composition_str": "GlcNAc(4)Fuc(1)Man(3)",
+            "GID": "G5.10"
+          }
+        ]
+      },
+      {
+        "caption": "Differences in FFPE tissue N-glycans that are independent of confounding variables. A, median normalized data were subjected to multivariate analysis to determine glycosylation changes independent of confounding factors such as age, sex, and comorbidities. Volcano plot represents differential abundance of glycans between COVID-19(\u2212) and COVID-19(+) groups. Paucimannoses were reduced exclusively due to COVID-19. B, heat map representing log2FC changes in expression of various enzymes in N-glycan biosynthesis obtained from snRNA-seq analysis (Fig. 1). LV-left ventricle, RV-right ventricle.",
+        "figure_number": "6",
+        "glycans": [
+          {
+            "detpart_IUPAC": "Man?1-?(Man?1-?)Man?1-?GlcNAc?1-?GlcNAc",
+            "detpart_accession": "G03833LE",
+            "bbox": [
+              0,
+              854,
+              62,
+              180
+            ],
+            "composition_str": "GlcNAc(2)Man(5)",
+            "detpart_composition_str": "GlcNAc(2)Man(3)",
+            "GID": "G6.1"
+          },
+          {
+            "detpart_IUPAC": "Man?1-?GlcNAc?1-?GlcNAc",
+            "detpart_accession": "G64017CW",
+            "bbox": [
+              66,
+              873,
+              57,
+              152
+            ],
+            "composition_str": "GlcNAc(2)Man(3)",
+            "detpart_composition_str": "GlcNAc(2)Man(1)",
+            "GID": "G6.2"
+          },
+          {
+            "IUPAC": "Man?1-?Man?1-?GlcNAc?1-?GlcNAc",
+            "accession": "G86427WL",
+            "bbox": [
+              129,
+              897,
+              54,
+              126
+            ],
+            "composition_str": "GlcNAc(2)Man(2)",
+            "GID": "G6.3"
+          },
+          {
+            "IUPAC": "Man?1-?Man?1-?Man?1-?GlcNAc?1-?GlcNAc",
+            "bbox": [
+              184,
+              896,
+              71,
+              129
+            ],
+            "composition_str": "GlcNAc(2)Man(3)",
+            "GID": "G6.4"
+          },
+          {
+            "IUPAC": "Man?1-?Man?1-?Man?1-?GlcNAc?1-?GlcNAc",
+            "accession": "G17271TR",
+            "bbox": [
+              274,
+              874,
+              61,
+              152
+            ],
+            "composition_str": "GlcNAc(2)Man(3)",
+            "GID": "G6.5"
+          },
+          {
+            "detpart_IUPAC": "Man?1-?GlcNAc?1-?GlcNAc",
+            "detpart_accession": "G64017CW",
+            "bbox": [
+              339,
+              877,
+              54,
+              147
+            ],
+            "composition_str": "GlcNAc(2)Man(4)",
+            "detpart_composition_str": "GlcNAc(2)Man(1)",
+            "GID": "G6.6"
+          },
+          {
+            "IUPAC": "Fuc?1-?(Man?1-?Man?1-?Man?1-?GlcNAc?1-?)GlcNAc",
+            "accession": "G94017LW",
+            "bbox": [
+              396,
+              879,
+              58,
+              144
+            ],
+            "composition_str": "GlcNAc(2)Fuc(1)Man(3)",
+            "GID": "G6.7"
+          },
+          {
+            "IUPAC": "Fuc?1-?(Man?1-?Man?1-?Man?1-?GlcNAc?1-?)GlcNAc",
+            "accession": "G94017LW",
+            "bbox": [
+              465,
+              887,
+              76,
+              144
+            ],
+            "composition_str": "GlcNAc(2)Fuc(1)Man(3)",
+            "GID": "G6.8"
+          },
+          {
+            "detpart_IUPAC": "Fuc?1-?(Man?1-?GlcNAc?1-?)GlcNAc",
+            "detpart_accession": "G25347ZR",
+            "bbox": [
+              551,
+              872,
+              59,
+              158
+            ],
+            "composition_str": "GlcNAc(2)Fuc(1)Man(4)",
+            "detpart_composition_str": "GlcNAc(2)Fuc(1)Man(1)",
+            "GID": "G6.9"
+          }
+        ]
+      }
+    ]
+  }
 }

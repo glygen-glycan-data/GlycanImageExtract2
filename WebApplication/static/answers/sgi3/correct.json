@@ -12,7 +12,8 @@
               446,
               186
             ],
-            "composition_str": "GlcNAc(5)NeuAc(2)Man(3)Gal(2)"
+            "composition_str": "GlcNAc(5)NeuAc(2)Man(3)Gal(2)",
+            "GID": "G1.1"
           }
         ]
       }

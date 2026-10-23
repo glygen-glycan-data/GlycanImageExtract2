@@ -14,12 +14,12 @@
         "glycans": []
       },
       {
-        "caption": "The decay profile of the IgG1 glycopeptide carrying the fucosylated glycan with 0 galactoses (H3N4F1) following the addition of PNGase F at a concentration of 2.5 U/μl. The [GP] signal was obtained by dividing the peak area of this glycopeptide by the integrated peak area of internal standard (GluFib) at each time point.",
+        "caption": "The decay profile of the IgG1 glycopeptide carrying the fucosylated glycan with 0 galactoses (H3N4F1) following the addition of PNGase F at a concentration of 2.5 U/\u03bcl. The [GP] signal was obtained by dividing the peak area of this glycopeptide by the integrated peak area of internal standard (GluFib) at each time point.",
         "figure_number": "3",
         "glycans": []
       },
       {
-        "caption": "The plot of ln[GP] vs. time for the IgG1 glycopeptide carrying the fucosylated glycan with 0 galactoses (H3N4F1). These data were obtained following the addition of PNGase F at a concentration of 2.5 U/μl. The [GP] signal was achieved by dividing the peak area of this glycopeptide by the integrated peak area of internal standard (GluFib) at each time point.",
+        "caption": "The plot of ln[GP] vs. time for the IgG1 glycopeptide carrying the fucosylated glycan with 0 galactoses (H3N4F1). These data were obtained following the addition of PNGase F at a concentration of 2.5 U/\u03bcl. The [GP] signal was achieved by dividing the peak area of this glycopeptide by the integrated peak area of internal standard (GluFib) at each time point.",
         "figure_number": "4",
         "glycans": []
       },
@@ -28,7 +28,7 @@
         "figure_number": "5",
         "glycans": [
           {
-            "IUPAC": "GlcNAc?1-?Man?1-?(GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?(Fuc?1-?)GlcNAc",
+            "IUPAC": "Fuc?1-?(GlcNAc?1-?Man?1-?(GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?)GlcNAc",
             "accession": "G72398VP",
             "bbox": [
               4,
@@ -36,10 +36,11 @@
               59,
               147
             ],
-            "composition_str": "GlcNAc(4)Fuc(1)Man(3)"
+            "composition_str": "GlcNAc(4)Fuc(1)Man(3)",
+            "GID": "G5.1"
           },
           {
-            "IUPAC": "Gal?1-?GlcNAc?1-?Man?1-?(GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?(Fuc?1-?)GlcNAc",
+            "IUPAC": "Fuc?1-?(Gal?1-?GlcNAc?1-?Man?1-?(GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?)GlcNAc",
             "accession": "G67480NQ",
             "bbox": [
               72,
@@ -47,10 +48,11 @@
               58,
               172
             ],
-            "composition_str": "GlcNAc(4)Fuc(1)Man(3)Gal(1)"
+            "composition_str": "GlcNAc(4)Fuc(1)Man(3)Gal(1)",
+            "GID": "G5.2"
           },
           {
-            "IUPAC": "Gal?1-?GlcNAc?1-?Man?1-?(Gal?1-?GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?(Fuc?1-?)GlcNAc",
+            "IUPAC": "Fuc?1-?(Gal?1-?GlcNAc?1-?Man?1-?(Gal?1-?GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?)GlcNAc",
             "accession": "G27658AJ",
             "bbox": [
               129,
@@ -58,7 +60,8 @@
               62,
               190
             ],
-            "composition_str": "GlcNAc(4)Fuc(1)Man(3)Gal(2)"
+            "composition_str": "GlcNAc(4)Fuc(1)Man(3)Gal(2)",
+            "GID": "G5.3"
           },
           {
             "IUPAC": "GlcNAc?1-?Man?1-?(GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?GlcNAc",
@@ -69,7 +72,8 @@
               58,
               148
             ],
-            "composition_str": "GlcNAc(4)Man(3)"
+            "composition_str": "GlcNAc(4)Man(3)",
+            "GID": "G5.4"
           },
           {
             "IUPAC": "Gal?1-?GlcNAc?1-?Man?1-?(GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?GlcNAc",
@@ -80,7 +84,8 @@
               60,
               181
             ],
-            "composition_str": "GlcNAc(4)Man(3)Gal(1)"
+            "composition_str": "GlcNAc(4)Man(3)Gal(1)",
+            "GID": "G5.5"
           },
           {
             "IUPAC": "Gal?1-?GlcNAc?1-?Man?1-?(Gal?1-?GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?GlcNAc",
@@ -91,10 +96,11 @@
               62,
               171
             ],
-            "composition_str": "GlcNAc(4)Man(3)Gal(2)"
+            "composition_str": "GlcNAc(4)Man(3)Gal(2)",
+            "GID": "G5.6"
           },
           {
-            "IUPAC": "GlcNAc?1-?Man?1-?(GlcNAc?1-?)(GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?(Fuc?1-?)GlcNAc",
+            "IUPAC": "Fuc?1-?(GlcNAc?1-?Man?1-?(GlcNAc?1-?)(GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?)GlcNAc",
             "accession": "G86821NY",
             "bbox": [
               421,
@@ -102,10 +108,11 @@
               91,
               147
             ],
-            "composition_str": "GlcNAc(5)Fuc(1)Man(3)"
+            "composition_str": "GlcNAc(5)Fuc(1)Man(3)",
+            "GID": "G5.7"
           },
           {
-            "IUPAC": "Gal?1-?GlcNAc?1-?Man?1-?(GlcNAc?1-?)(GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?(Fuc?1-?)GlcNAc",
+            "IUPAC": "Fuc?1-?(Gal?1-?GlcNAc?1-?Man?1-?(GlcNAc?1-?)(GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?)GlcNAc",
             "accession": "G47133WV",
             "bbox": [
               496,
@@ -113,10 +120,11 @@
               88,
               161
             ],
-            "composition_str": "GlcNAc(5)Fuc(1)Man(3)Gal(1)"
+            "composition_str": "GlcNAc(5)Fuc(1)Man(3)Gal(1)",
+            "GID": "G5.8"
           },
           {
-            "IUPAC": "Gal?1-?GlcNAc?1-?Man?1-?(GlcNAc?1-?)(Gal?1-?GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?(Fuc?1-?)GlcNAc",
+            "IUPAC": "Fuc?1-?(Gal?1-?GlcNAc?1-?Man?1-?(GlcNAc?1-?)(Gal?1-?GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?)GlcNAc",
             "accession": "G27860IO",
             "bbox": [
               568,
@@ -124,10 +132,11 @@
               93,
               188
             ],
-            "composition_str": "GlcNAc(5)Fuc(1)Man(3)Gal(2)"
+            "composition_str": "GlcNAc(5)Fuc(1)Man(3)Gal(2)",
+            "GID": "G5.9"
           },
           {
-            "IUPAC": "GlcNAc?1-?Man?1-?(NeuAc?2-?Gal?1-?GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?(Fuc?1-?)GlcNAc",
+            "IUPAC": "Fuc?1-?(GlcNAc?1-?Man?1-?(NeuAc?2-?Gal?1-?GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?)GlcNAc",
             "accession": "G21530HL",
             "bbox": [
               662,
@@ -135,10 +144,11 @@
               77,
               192
             ],
-            "composition_str": "GlcNAc(4)NeuAc(1)Fuc(1)Man(3)Gal(1)"
+            "composition_str": "GlcNAc(4)NeuAc(1)Fuc(1)Man(3)Gal(1)",
+            "GID": "G5.10"
           },
           {
-            "IUPAC": "Gal?1-?GlcNAc?1-?Man?1-?(NeuAc?2-?Gal?1-?GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?(Fuc?1-?)GlcNAc",
+            "IUPAC": "Fuc?1-?(Gal?1-?GlcNAc?1-?Man?1-?(NeuAc?2-?Gal?1-?GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?)GlcNAc",
             "accession": "G32340DX",
             "bbox": [
               728,
@@ -146,10 +156,11 @@
               85,
               201
             ],
-            "composition_str": "GlcNAc(4)NeuAc(1)Fuc(1)Man(3)Gal(2)"
+            "composition_str": "GlcNAc(4)NeuAc(1)Fuc(1)Man(3)Gal(2)",
+            "GID": "G5.11"
           },
           {
-            "IUPAC": "Gal?1-?GlcNAc?1-?Man?1-?(GlcNAc?1-?)(NeuAc?2-?Gal?1-?GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?(Fuc?1-?)GlcNAc",
+            "IUPAC": "Fuc?1-?(Gal?1-?GlcNAc?1-?Man?1-?(GlcNAc?1-?)(NeuAc?2-?Gal?1-?GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?)GlcNAc",
             "accession": "G14392SI",
             "bbox": [
               808,
@@ -157,16 +168,17 @@
               104,
               192
             ],
-            "composition_str": "GlcNAc(5)NeuAc(1)Fuc(1)Man(3)Gal(2)"
+            "composition_str": "GlcNAc(5)NeuAc(1)Fuc(1)Man(3)Gal(2)",
+            "GID": "G5.12"
           }
         ]
       },
       {
-        "caption": "Plots of ln[GP] vs. time for the fucosylated glycopeptides. These data were obtained following the addition of PNGase F at a concentration of 2.5 U/μl. The [GP] signal was achieved by dividing the peak area of this glycopeptide by the integrated peak area of internal standard (GluFib) at each time point.",
+        "caption": "Plots of ln[GP] vs. time for the fucosylated glycopeptides. These data were obtained following the addition of PNGase F at a concentration of 2.5 U/\u03bcl. The [GP] signal was achieved by dividing the peak area of this glycopeptide by the integrated peak area of internal standard (GluFib) at each time point.",
         "figure_number": "6",
         "glycans": [
           {
-            "IUPAC": "GlcNAc?1-?Man?1-?(GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?(Fuc?1-?)GlcNAc",
+            "IUPAC": "Fuc?1-?(GlcNAc?1-?Man?1-?(GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?)GlcNAc",
             "accession": "G72398VP",
             "bbox": [
               496,
@@ -174,10 +186,11 @@
               128,
               288
             ],
-            "composition_str": "GlcNAc(4)Fuc(1)Man(3)"
+            "composition_str": "GlcNAc(4)Fuc(1)Man(3)",
+            "GID": "G6.1"
           },
           {
-            "IUPAC": "Gal?1-?GlcNAc?1-?Man?1-?(GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?(Fuc?1-?)GlcNAc",
+            "IUPAC": "Fuc?1-?(Gal?1-?GlcNAc?1-?Man?1-?(GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?)GlcNAc",
             "accession": "G67480NQ",
             "bbox": [
               645,
@@ -185,10 +198,11 @@
               118,
               319
             ],
-            "composition_str": "GlcNAc(4)Fuc(1)Man(3)Gal(1)"
+            "composition_str": "GlcNAc(4)Fuc(1)Man(3)Gal(1)",
+            "GID": "G6.2"
           },
           {
-            "IUPAC": "Gal?1-?GlcNAc?1-?Man?1-?(Gal?1-?GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?(Fuc?1-?)GlcNAc",
+            "IUPAC": "Fuc?1-?(Gal?1-?GlcNAc?1-?Man?1-?(Gal?1-?GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?)GlcNAc",
             "accession": "G27658AJ",
             "bbox": [
               779,
@@ -196,12 +210,13 @@
               101,
               316
             ],
-            "composition_str": "GlcNAc(4)Fuc(1)Man(3)Gal(2)"
+            "composition_str": "GlcNAc(4)Fuc(1)Man(3)Gal(2)",
+            "GID": "G6.3"
           }
         ]
       },
       {
-        "caption": "Plots of ln[GP] vs. time for the nonfucosylated glycopeptides. These data were obtained following the addition of PNGase F at a concentration of 2.5 U/μl. The [GP] signal was achieved by dividing the peak area of this glycopeptide by the integrated peak area of internal standard (GluFib) at each time point.",
+        "caption": "Plots of ln[GP] vs. time for the nonfucosylated glycopeptides. These data were obtained following the addition of PNGase F at a concentration of 2.5 U/\u03bcl. The [GP] signal was achieved by dividing the peak area of this glycopeptide by the integrated peak area of internal standard (GluFib) at each time point.",
         "figure_number": "7",
         "glycans": [
           {
@@ -213,7 +228,8 @@
               126,
               339
             ],
-            "composition_str": "GlcNAc(4)Man(3)"
+            "composition_str": "GlcNAc(4)Man(3)",
+            "GID": "G7.1"
           },
           {
             "IUPAC": "Gal?1-?GlcNAc?1-?Man?1-?(GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?GlcNAc",
@@ -224,7 +240,8 @@
               114,
               413
             ],
-            "composition_str": "GlcNAc(4)Man(3)Gal(1)"
+            "composition_str": "GlcNAc(4)Man(3)Gal(1)",
+            "GID": "G7.2"
           },
           {
             "IUPAC": "Gal?1-?GlcNAc?1-?Man?1-?(Gal?1-?GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?GlcNAc",
@@ -235,16 +252,17 @@
               121,
               390
             ],
-            "composition_str": "GlcNAc(4)Man(3)Gal(2)"
+            "composition_str": "GlcNAc(4)Man(3)Gal(2)",
+            "GID": "G7.3"
           }
         ]
       },
       {
-        "caption": "Plots of ln[GP] vs. time for the glycopeptides whose glycans contain a bisecting-GlcNAc. These data were obtained following the addition of PNGase F at a concentration of 2.5 U/μl. The [GP] signal was obtained by dividing the peak area of this glycopeptide by the integrated peak area of internal standard (GluFib) at each time point.",
+        "caption": "Plots of ln[GP] vs. time for the glycopeptides whose glycans contain a bisecting-GlcNAc. These data were obtained following the addition of PNGase F at a concentration of 2.5 U/\u03bcl. The [GP] signal was obtained by dividing the peak area of this glycopeptide by the integrated peak area of internal standard (GluFib) at each time point.",
         "figure_number": "8",
         "glycans": [
           {
-            "IUPAC": "GlcNAc?1-?Man?1-?(GlcNAc?1-?)(GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?(Fuc?1-?)GlcNAc",
+            "IUPAC": "Fuc?1-?(GlcNAc?1-?Man?1-?(GlcNAc?1-?)(GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?)GlcNAc",
             "accession": "G86821NY",
             "bbox": [
               426,
@@ -252,10 +270,11 @@
               172,
               301
             ],
-            "composition_str": "GlcNAc(5)Fuc(1)Man(3)"
+            "composition_str": "GlcNAc(5)Fuc(1)Man(3)",
+            "GID": "G8.1"
           },
           {
-            "IUPAC": "Gal?1-?GlcNAc?1-?Man?1-?(GlcNAc?1-?)(GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?(Fuc?1-?)GlcNAc",
+            "IUPAC": "Fuc?1-?(Gal?1-?GlcNAc?1-?Man?1-?(GlcNAc?1-?)(GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?)GlcNAc",
             "accession": "G47133WV",
             "bbox": [
               592,
@@ -263,10 +282,11 @@
               162,
               368
             ],
-            "composition_str": "GlcNAc(5)Fuc(1)Man(3)Gal(1)"
+            "composition_str": "GlcNAc(5)Fuc(1)Man(3)Gal(1)",
+            "GID": "G8.2"
           },
           {
-            "IUPAC": "Gal?1-?GlcNAc?1-?Man?1-?(GlcNAc?1-?)(Gal?1-?GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?(Fuc?1-?)GlcNAc",
+            "IUPAC": "Fuc?1-?(Gal?1-?GlcNAc?1-?Man?1-?(GlcNAc?1-?)(Gal?1-?GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?)GlcNAc",
             "accession": "G27860IO",
             "bbox": [
               743,
@@ -274,16 +294,17 @@
               164,
               358
             ],
-            "composition_str": "GlcNAc(5)Fuc(1)Man(3)Gal(2)"
+            "composition_str": "GlcNAc(5)Fuc(1)Man(3)Gal(2)",
+            "GID": "G8.3"
           }
         ]
       },
       {
-        "caption": "Plots of ln[GP] vs. time for the sialylated glycopeptides. These data were obtained following the addition of PNGase F at a concentration of 2.5 U/μl. The [GP] signal was obtained by dividing the peak area of this glycopeptide by the integrated peak area of internal standard (GluFib) at each time point.",
+        "caption": "Plots of ln[GP] vs. time for the sialylated glycopeptides. These data were obtained following the addition of PNGase F at a concentration of 2.5 U/\u03bcl. The [GP] signal was obtained by dividing the peak area of this glycopeptide by the integrated peak area of internal standard (GluFib) at each time point.",
         "figure_number": "9",
         "glycans": [
           {
-            "IUPAC": "GlcNAc?1-?Man?1-?(NeuAc?2-?Gal?1-?GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?(Fuc?1-?)GlcNAc",
+            "IUPAC": "Fuc?1-?(GlcNAc?1-?Man?1-?(NeuAc?2-?Gal?1-?GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?)GlcNAc",
             "accession": "G21530HL",
             "bbox": [
               436,
@@ -291,10 +312,11 @@
               101,
               348
             ],
-            "composition_str": "GlcNAc(4)NeuAc(1)Fuc(1)Man(3)Gal(1)"
+            "composition_str": "GlcNAc(4)NeuAc(1)Fuc(1)Man(3)Gal(1)",
+            "GID": "G9.1"
           },
           {
-            "IUPAC": "Gal?1-?GlcNAc?1-?Man?1-?(NeuAc?2-?Gal?1-?GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?(Fuc?1-?)GlcNAc",
+            "IUPAC": "Fuc?1-?(Gal?1-?GlcNAc?1-?Man?1-?(NeuAc?2-?Gal?1-?GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?)GlcNAc",
             "accession": "G32340DX",
             "bbox": [
               586,
@@ -302,10 +324,11 @@
               108,
               331
             ],
-            "composition_str": "GlcNAc(4)NeuAc(1)Fuc(1)Man(3)Gal(2)"
+            "composition_str": "GlcNAc(4)NeuAc(1)Fuc(1)Man(3)Gal(2)",
+            "GID": "G9.2"
           },
           {
-            "IUPAC": "Gal?1-?GlcNAc?1-?Man?1-?(GlcNAc?1-?)(NeuAc?2-?Gal?1-?GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?(Fuc?1-?)GlcNAc",
+            "IUPAC": "Fuc?1-?(Gal?1-?GlcNAc?1-?Man?1-?(GlcNAc?1-?)(NeuAc?2-?Gal?1-?GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?)GlcNAc",
             "accession": "G14392SI",
             "bbox": [
               734,
@@ -313,7 +336,8 @@
               167,
               339
             ],
-            "composition_str": "GlcNAc(5)NeuAc(1)Fuc(1)Man(3)Gal(2)"
+            "composition_str": "GlcNAc(5)NeuAc(1)Fuc(1)Man(3)Gal(2)",
+            "GID": "G9.3"
           }
         ]
       }

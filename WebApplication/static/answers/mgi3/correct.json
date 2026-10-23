@@ -4,7 +4,7 @@
       {
         "glycans": [
           {
-            "IUPAC": "Man?1-?(Man?1-?)Man?1-?GlcNAc?1-?(Fuc?1-?)GlcNAc",
+            "IUPAC": "Fuc?1-?(Man?1-?(Man?1-?)Man?1-?GlcNAc?1-?)GlcNAc",
             "accession": "G27815BZ",
             "bbox": [
               19,
@@ -12,7 +12,8 @@
               225,
               110
             ],
-            "composition_str": "GlcNAc(2)Fuc(1)Man(3)"
+            "composition_str": "GlcNAc(2)Fuc(1)Man(3)",
+            "GID": "G1.1"
           },
           {
             "IUPAC": "Man?1-?(Man?1-?)Man?1-?(Man?1-?)Man?1-?GlcNAc?1-?GlcNAc",
@@ -23,7 +24,8 @@
               240,
               99
             ],
-            "composition_str": "GlcNAc(2)Man(5)"
+            "composition_str": "GlcNAc(2)Man(5)",
+            "GID": "G1.2"
           },
           {
             "IUPAC": "Man?1-?(Man?1-?)Man?1-?(Man?1-?Man?1-?(Man?1-?Man?1-?)Man?1-?)Man?1-?GlcNAc",
@@ -34,7 +36,8 @@
               246,
               181
             ],
-            "composition_str": "GlcNAc(1)Man(9)"
+            "composition_str": "GlcNAc(1)Man(9)",
+            "GID": "G1.3"
           }
         ]
       }

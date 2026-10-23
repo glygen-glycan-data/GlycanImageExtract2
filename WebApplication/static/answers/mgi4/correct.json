@@ -1,14 +1,14 @@
 {
   "result": {
-    "citation": "Krištić J, Zaytseva OO, Ram R, Nguyen Q, Novokmet M, Vučković F, Vilaj M, Trbojević-Akmačić I, Pezer M, Davern KM, Morahan G, Lauc G. Profiling and genetic control of the murine immunoglobulin G glycome. Nat Chem Biol. 2018;14(5):516-524.",
+    "citation": "Kri\u0161ti\u0107 J, Zaytseva OO, Ram R, Nguyen Q, Novokmet M, Vu\u010dkovi\u0107 F, Vilaj M, Trbojevi\u0107-Akma\u010di\u0107 I, Pezer M, Davern KM, Morahan G, Lauc G. Profiling and genetic control of the murine immunoglobulin G glycome. Nat Chem Biol. 2018;14(5):516-524.",
     "pmid": "29632412",
     "figures": [
       {
-        "caption": "Representative overlaid chromatograms of mouse and human IgG glycans separated by uPLC. Mouse IgG glycans (red) were separated into 26 chromatographic glycan peaks while human IgG glycans (black) were separated into 24 chromatographic glycan peaks as in Pučić et al. Shown are structural schemes of all identified glycans of mouse and human IgG. These experiments were repeated 589 times (the number of mice studied) with similar results.",
+        "caption": "Representative overlaid chromatograms of mouse and human IgG glycans separated by uPLC. Mouse IgG glycans (red) were separated into 26 chromatographic glycan peaks while human IgG glycans (black) were separated into 24 chromatographic glycan peaks as in Pu\u010di\u0107 et al. Shown are structural schemes of all identified glycans of mouse and human IgG. These experiments were repeated 589 times (the number of mice studied) with similar results.",
         "figure_number": "1",
         "glycans": [
           {
-            "detpart_IUPAC": "Man?1-?(Man?1-?)Man?1-?GlcNAc?1-?(Fuc?1-?)GlcNAc",
+            "detpart_IUPAC": "Fuc?1-?(Man?1-?(Man?1-?)Man?1-?GlcNAc?1-?)GlcNAc",
             "detpart_accession": "G27815BZ",
             "bbox": [
               0,
@@ -17,10 +17,11 @@
               223
             ],
             "composition_str": "GlcNAc(3)Fuc(1)Man(3)",
-            "detpart_composition_str": "GlcNAc(3)Fuc(1)Man(2)"
+            "detpart_composition_str": "GlcNAc(3)Fuc(1)Man(2)",
+            "GID": "G1.1"
           },
           {
-            "detpart_IUPAC": "Man?1-?(Man?1-?)Man?1-?GlcNAc?1-?(Fuc?1-?)GlcNAc",
+            "detpart_IUPAC": "Fuc?1-?(Man?1-?(Man?1-?)Man?1-?GlcNAc?1-?)GlcNAc",
             "detpart_accession": "G27815BZ",
             "bbox": [
               36,
@@ -29,7 +30,8 @@
               228
             ],
             "composition_str": "GlcNAc(3)Fuc(1)Man(3)",
-            "detpart_composition_str": "GlcNAc(3)Fuc(1)Man(2)"
+            "detpart_composition_str": "GlcNAc(3)Fuc(1)Man(2)",
+            "GID": "G1.2"
           },
           {
             "IUPAC": "GlcNAc?1-?Man?1-?(GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?GlcNAc",
@@ -40,7 +42,8 @@
               77,
               211
             ],
-            "composition_str": "GlcNAc(4)Man(3)"
+            "composition_str": "GlcNAc(4)Man(3)",
+            "GID": "G1.3"
           },
           {
             "IUPAC": "GlcNAc?1-?Man?1-?(GlcNAc?1-?)(GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?GlcNAc",
@@ -51,10 +54,11 @@
               106,
               217
             ],
-            "composition_str": "GlcNAc(5)Man(3)"
+            "composition_str": "GlcNAc(5)Man(3)",
+            "GID": "G1.4"
           },
           {
-            "IUPAC": "GlcNAc?1-?Man?1-?(GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?(Fuc?1-?)GlcNAc",
+            "IUPAC": "Fuc?1-?(GlcNAc?1-?Man?1-?(GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?)GlcNAc",
             "accession": "G72398VP",
             "bbox": [
               147,
@@ -62,7 +66,8 @@
               78,
               198
             ],
-            "composition_str": "GlcNAc(4)Fuc(1)Man(3)"
+            "composition_str": "GlcNAc(4)Fuc(1)Man(3)",
+            "GID": "G1.5"
           },
           {
             "IUPAC": "Man?1-?(Man?1-?)Man?1-?(Man?1-?)Man?1-?GlcNAc?1-?GlcNAc",
@@ -73,10 +78,11 @@
               82,
               209
             ],
-            "composition_str": "GlcNAc(2)Man(5)"
+            "composition_str": "GlcNAc(2)Man(5)",
+            "GID": "G1.6"
           },
-          {            
-            "IUPAC": "GlcNAc?1-?Man?1-?(GlcNAc?1-?)(GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?(Fuc?1-?)GlcNAc",
+          {
+            "IUPAC": "Fuc?1-?(GlcNAc?1-?Man?1-?(GlcNAc?1-?)(GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?)GlcNAc",
             "accession": "G86821NY",
             "bbox": [
               222,
@@ -84,10 +90,11 @@
               122,
               211
             ],
-            "composition_str": "GlcNAc(5)Fuc(1)Man(3)"
+            "composition_str": "GlcNAc(5)Fuc(1)Man(3)",
+            "GID": "G1.8"
           },
           {
-            "IUPAC": "GlcNAc?1-?Man?1-?(GlcNAc?1-?)(GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?(Fuc?1-?)GlcNAc",
+            "IUPAC": "Fuc?1-?(GlcNAc?1-?Man?1-?(GlcNAc?1-?)(GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?)GlcNAc",
             "accession": "G86821NY",
             "bbox": [
               237,
@@ -95,10 +102,11 @@
               102,
               197
             ],
-            "composition_str": "GlcNAc(5)Fuc(1)Man(3)"
+            "composition_str": "GlcNAc(5)Fuc(1)Man(3)",
+            "GID": "G1.7"
           },
           {
-            "IUPAC": "GlcNAc?1-?Man?1-?(GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?(Fuc?1-?)GlcNAc",
+            "IUPAC": "Fuc?1-?(GlcNAc?1-?Man?1-?(GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?)GlcNAc",
             "accession": "G72398VP",
             "bbox": [
               249,
@@ -106,7 +114,8 @@
               80,
               200
             ],
-            "composition_str": "GlcNAc(4)Fuc(1)Man(3)"
+            "composition_str": "GlcNAc(4)Fuc(1)Man(3)",
+            "GID": "G1.9"
           },
           {
             "IUPAC": "GlcNAc?1-?Man?1-?(Gal?1-?GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?GlcNAc",
@@ -117,10 +126,11 @@
               71,
               228
             ],
-            "composition_str": "GlcNAc(4)Man(3)Gal(1)"
+            "composition_str": "GlcNAc(4)Man(3)Gal(1)",
+            "GID": "G1.10"
           },
           {
-            "IUPAC": "Gal?1-?GlcNAc?1-?Man?1-?(GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?(Fuc?1-?)GlcNAc",
+            "IUPAC": "Fuc?1-?(Gal?1-?GlcNAc?1-?Man?1-?(GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?)GlcNAc",
             "accession": "G67480NQ",
             "bbox": [
               329,
@@ -128,10 +138,11 @@
               80,
               234
             ],
-            "composition_str": "GlcNAc(4)Fuc(1)Man(3)Gal(1)"
+            "composition_str": "GlcNAc(4)Fuc(1)Man(3)Gal(1)",
+            "GID": "G1.11"
           },
           {
-            "IUPAC": "Gal?1-?GlcNAc?1-?Man?1-?(GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?(Fuc?1-?)GlcNAc",
+            "IUPAC": "Fuc?1-?(Gal?1-?GlcNAc?1-?Man?1-?(GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?)GlcNAc",
             "accession": "G67480NQ",
             "bbox": [
               352,
@@ -139,10 +150,11 @@
               86,
               233
             ],
-            "composition_str": "GlcNAc(4)Fuc(1)Man(3)Gal(1)"
+            "composition_str": "GlcNAc(4)Fuc(1)Man(3)Gal(1)",
+            "GID": "G1.12"
           },
           {
-            "IUPAC": "GlcNAc?1-?Man?1-?(Gal?1-?GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?(Fuc?1-?)GlcNAc",
+            "IUPAC": "Fuc?1-?(GlcNAc?1-?Man?1-?(Gal?1-?GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?)GlcNAc",
             "accession": "G67480NQ",
             "bbox": [
               370,
@@ -150,10 +162,11 @@
               94,
               236
             ],
-            "composition_str": "GlcNAc(4)Fuc(1)Man(3)Gal(1)"
+            "composition_str": "GlcNAc(4)Fuc(1)Man(3)Gal(1)",
+            "GID": "G1.13"
           },
           {
-            "IUPAC": "GlcNAc?1-?Man?1-?(Gal?1-?GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?(Fuc?1-?)GlcNAc",
+            "IUPAC": "Fuc?1-?(GlcNAc?1-?Man?1-?(Gal?1-?GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?)GlcNAc",
             "accession": "G67480NQ",
             "bbox": [
               413,
@@ -161,10 +174,11 @@
               91,
               223
             ],
-            "composition_str": "GlcNAc(4)Fuc(1)Man(3)Gal(1)"
+            "composition_str": "GlcNAc(4)Fuc(1)Man(3)Gal(1)",
+            "GID": "G1.14"
           },
           {
-            "IUPAC": "Gal?1-?GlcNAc?1-?Man?1-?(GlcNAc?1-?)(GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?(Fuc?1-?)GlcNAc",
+            "IUPAC": "Fuc?1-?(Gal?1-?GlcNAc?1-?Man?1-?(GlcNAc?1-?)(GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?)GlcNAc",
             "accession": "G47133WV",
             "bbox": [
               414,
@@ -172,10 +186,11 @@
               107,
               214
             ],
-            "composition_str": "GlcNAc(5)Fuc(1)Man(3)Gal(1)"
+            "composition_str": "GlcNAc(5)Fuc(1)Man(3)Gal(1)",
+            "GID": "G1.15"
           },
           {
-            "IUPAC": "Gal?1-?GlcNAc?1-?Man?1-?(GlcNAc?1-?)(GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?(Fuc?1-?)GlcNAc",
+            "IUPAC": "Fuc?1-?(Gal?1-?GlcNAc?1-?Man?1-?(GlcNAc?1-?)(GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?)GlcNAc",
             "accession": "G47133WV",
             "bbox": [
               461,
@@ -183,10 +198,11 @@
               93,
               254
             ],
-            "composition_str": "GlcNAc(5)Fuc(1)Man(3)Gal(1)"
+            "composition_str": "GlcNAc(5)Fuc(1)Man(3)Gal(1)",
+            "GID": "G1.16"
           },
           {
-            "IUPAC": "GlcNAc?1-?Man?1-?(GlcNAc?1-?)(Gal?1-?GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?(Fuc?1-?)GlcNAc",
+            "IUPAC": "Fuc?1-?(GlcNAc?1-?Man?1-?(GlcNAc?1-?)(Gal?1-?GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?)GlcNAc",
             "accession": "G47133WV",
             "bbox": [
               468,
@@ -194,7 +210,8 @@
               112,
               226
             ],
-            "composition_str": "GlcNAc(5)Fuc(1)Man(3)Gal(1)"
+            "composition_str": "GlcNAc(5)Fuc(1)Man(3)Gal(1)",
+            "GID": "G1.17"
           },
           {
             "IUPAC": "Gal?1-?GlcNAc?1-?Man?1-?(Gal?1-?GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?GlcNAc",
@@ -205,10 +222,11 @@
               78,
               245
             ],
-            "composition_str": "GlcNAc(4)Man(3)Gal(2)"
+            "composition_str": "GlcNAc(4)Man(3)Gal(2)",
+            "GID": "G1.18"
           },
           {
-            "IUPAC": "Gal?1-?GlcNAc?1-?Man?1-?(Gal?1-?GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?(Fuc?1-?)GlcNAc",
+            "IUPAC": "Fuc?1-?(Gal?1-?GlcNAc?1-?Man?1-?(Gal?1-?GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?)GlcNAc",
             "accession": "G27658AJ",
             "bbox": [
               580,
@@ -216,7 +234,8 @@
               77,
               256
             ],
-            "composition_str": "GlcNAc(4)Fuc(1)Man(3)Gal(2)"
+            "composition_str": "GlcNAc(4)Fuc(1)Man(3)Gal(2)",
+            "GID": "G1.19"
           },
           {
             "IUPAC": "Gal?1-?GlcNAc?1-?Man?1-?(GlcNAc?1-?)(Gal?1-?GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?GlcNAc",
@@ -227,10 +246,11 @@
               115,
               233
             ],
-            "composition_str": "GlcNAc(5)Man(3)Gal(2)"
+            "composition_str": "GlcNAc(5)Man(3)Gal(2)",
+            "GID": "G1.20"
           },
           {
-            "IUPAC": "Gal?1-?GlcNAc?1-?Man?1-?(Gal?1-?GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?(Fuc?1-?)GlcNAc",
+            "IUPAC": "Fuc?1-?(Gal?1-?GlcNAc?1-?Man?1-?(Gal?1-?GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?)GlcNAc",
             "accession": "G27658AJ",
             "bbox": [
               694,
@@ -238,10 +258,11 @@
               87,
               224
             ],
-            "composition_str": "GlcNAc(4)Fuc(1)Man(3)Gal(2)"
+            "composition_str": "GlcNAc(4)Fuc(1)Man(3)Gal(2)",
+            "GID": "G1.21"
           },
           {
-            "IUPAC": "NeuGc?2-?Gal?1-?GlcNAc?1-?Man?1-?(GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?(Fuc?1-?)GlcNAc",
+            "IUPAC": "Fuc?1-?(NeuGc?2-?Gal?1-?GlcNAc?1-?Man?1-?(GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?)GlcNAc",
             "accession": "G98745MS",
             "bbox": [
               745,
@@ -249,10 +270,11 @@
               79,
               254
             ],
-            "composition_str": "GlcNAc(4)Fuc(1)Man(3)Gal(1)NeuGc(1)"
+            "composition_str": "GlcNAc(4)Fuc(1)Man(3)Gal(1)NeuGc(1)",
+            "GID": "G1.22"
           },
           {
-            "IUPAC": "Gal?1-?GlcNAc?1-?Man?1-?(GlcNAc?1-?)(Gal?1-?GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?(Fuc?1-?)GlcNAc",
+            "IUPAC": "Fuc?1-?(Gal?1-?GlcNAc?1-?Man?1-?(GlcNAc?1-?)(Gal?1-?GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?)GlcNAc",
             "accession": "G27860IO",
             "bbox": [
               752,
@@ -260,10 +282,11 @@
               101,
               224
             ],
-            "composition_str": "GlcNAc(5)Fuc(1)Man(3)Gal(2)"
+            "composition_str": "GlcNAc(5)Fuc(1)Man(3)Gal(2)",
+            "GID": "G1.23"
           },
           {
-            "IUPAC": "GlcNAc?1-?Man?1-?(NeuGc?2-?Gal?1-?GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?(Fuc?1-?)GlcNAc",
+            "IUPAC": "Fuc?1-?(GlcNAc?1-?Man?1-?(NeuGc?2-?Gal?1-?GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?)GlcNAc",
             "accession": "G98745MS",
             "bbox": [
               825,
@@ -271,10 +294,11 @@
               82,
               248
             ],
-            "composition_str": "GlcNAc(4)Fuc(1)Man(3)Gal(1)NeuGc(1)"
+            "composition_str": "GlcNAc(4)Fuc(1)Man(3)Gal(1)NeuGc(1)",
+            "GID": "G1.24"
           },
           {
-            "IUPAC": "GlcNAc?1-?Man?1-?(NeuAc?2-?Gal?1-?GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?(Fuc?1-?)GlcNAc",
+            "IUPAC": "Fuc?1-?(GlcNAc?1-?Man?1-?(NeuAc?2-?Gal?1-?GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?)GlcNAc",
             "accession": "G21530HL",
             "bbox": [
               837,
@@ -282,7 +306,8 @@
               93,
               257
             ],
-            "composition_str": "GlcNAc(4)NeuAc(1)Fuc(1)Man(3)Gal(1)"
+            "composition_str": "GlcNAc(4)NeuAc(1)Fuc(1)Man(3)Gal(1)",
+            "GID": "G1.25"
           },
           {
             "IUPAC": "Gal?1-?GlcNAc?1-?Man?1-?(NeuAc?2-?Gal?1-?GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?GlcNAc",
@@ -293,10 +318,11 @@
               75,
               254
             ],
-            "composition_str": "GlcNAc(4)NeuAc(1)Man(3)Gal(2)"
+            "composition_str": "GlcNAc(4)NeuAc(1)Man(3)Gal(2)",
+            "GID": "G1.26"
           },
           {
-            "detpart_IUPAC": "Gal?1-?GlcNAc?1-?Man?1-?(Gal?1-?GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?(Fuc?1-?)GlcNAc",
+            "detpart_IUPAC": "Fuc?1-?(Gal?1-?GlcNAc?1-?Man?1-?(Gal?1-?GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?)GlcNAc",
             "detpart_accession": "G27658AJ",
             "bbox": [
               984,
@@ -305,10 +331,11 @@
               264
             ],
             "composition_str": "GlcNAc(4)NeuAc(1)Fuc(1)Man(3)Gal(2)",
-            "detpart_composition_str": "GlcNAc(4)Fuc(1)Man(3)Gal(2)"
+            "detpart_composition_str": "GlcNAc(4)Fuc(1)Man(3)Gal(2)",
+            "GID": "G1.27"
           },
           {
-            "detpart_IUPAC": "Gal?1-?GlcNAc?1-?Man?1-?(Gal?1-?GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?(Fuc?1-?)GlcNAc",
+            "detpart_IUPAC": "Fuc?1-?(Gal?1-?GlcNAc?1-?Man?1-?(Gal?1-?GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?)GlcNAc",
             "detpart_accession": "G27658AJ",
             "bbox": [
               1005,
@@ -317,10 +344,11 @@
               254
             ],
             "composition_str": "GlcNAc(4)NeuAc(1)Fuc(1)Man(3)Gal(2)",
-            "detpart_composition_str": "GlcNAc(4)Fuc(1)Man(3)Gal(2)"
+            "detpart_composition_str": "GlcNAc(4)Fuc(1)Man(3)Gal(2)",
+            "GID": "G1.28"
           },
           {
-            "detpart_IUPAC": "Gal?1-?GlcNAc?1-?Man?1-?(GlcNAc?1-?)(Gal?1-?GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?(Fuc?1-?)GlcNAc",
+            "detpart_IUPAC": "Fuc?1-?(Gal?1-?GlcNAc?1-?Man?1-?(GlcNAc?1-?)(Gal?1-?GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?)GlcNAc",
             "detpart_accession": "G27860IO",
             "bbox": [
               1079,
@@ -329,10 +357,11 @@
               290
             ],
             "composition_str": "GlcNAc(5)NeuAc(1)Fuc(1)Man(3)Gal(2)",
-            "detpart_composition_str": "GlcNAc(5)Fuc(1)Man(3)Gal(2)"
+            "detpart_composition_str": "GlcNAc(5)Fuc(1)Man(3)Gal(2)",
+            "GID": "G1.29"
           },
           {
-            "detpart_IUPAC": "Gal?1-?GlcNAc?1-?Man?1-?(Gal?1-?GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?(Fuc?1-?)GlcNAc",
+            "detpart_IUPAC": "Fuc?1-?(Gal?1-?GlcNAc?1-?Man?1-?(Gal?1-?GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?)GlcNAc",
             "detpart_accession": "G27658AJ",
             "bbox": [
               1179,
@@ -341,7 +370,8 @@
               243
             ],
             "composition_str": "GlcNAc(4)NeuAc(1)Fuc(1)Man(3)Gal(3)",
-            "detpart_composition_str": "GlcNAc(5)Fuc(1)Man(3)Gal(2)"
+            "detpart_composition_str": "GlcNAc(5)Fuc(1)Man(3)Gal(2)",
+            "GID": "G1.30"
           },
           {
             "IUPAC": "NeuAc?2-?Gal?1-?GlcNAc?1-?Man?1-?(NeuAc?2-?Gal?1-?GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?GlcNAc",
@@ -352,7 +382,8 @@
               74,
               283
             ],
-            "composition_str": "GlcNAc(4)NeuAc(2)Man(3)Gal(2)"
+            "composition_str": "GlcNAc(4)NeuAc(2)Man(3)Gal(2)",
+            "GID": "G1.31"
           },
           {
             "IUPAC": "NeuAc?2-?Gal?1-?GlcNAc?1-?Man?1-?(GlcNAc?1-?)(NeuAc?2-?Gal?1-?GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?GlcNAc",
@@ -363,10 +394,11 @@
               95,
               269
             ],
-            "composition_str": "GlcNAc(5)NeuAc(2)Man(3)Gal(2)"
+            "composition_str": "GlcNAc(5)NeuAc(2)Man(3)Gal(2)",
+            "GID": "G1.32"
           },
           {
-            "IUPAC": "NeuAc?2-?Gal?1-?GlcNAc?1-?Man?1-?(NeuAc?2-?Gal?1-?GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?(Fuc?1-?)GlcNAc",
+            "IUPAC": "Fuc?1-?(NeuAc?2-?Gal?1-?GlcNAc?1-?Man?1-?(NeuAc?2-?Gal?1-?GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?)GlcNAc",
             "accession": "G69616RY",
             "bbox": [
               1370,
@@ -374,10 +406,11 @@
               91,
               275
             ],
-            "composition_str": "GlcNAc(4)NeuAc(2)Fuc(1)Man(3)Gal(2)"
+            "composition_str": "GlcNAc(4)NeuAc(2)Fuc(1)Man(3)Gal(2)",
+            "GID": "G1.34"
           },
           {
-            "IUPAC": "NeuGc?2-?Gal?1-?GlcNAc?1-?Man?1-?(NeuGc?2-?Gal?1-?GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?(Fuc?1-?)GlcNAc",
+            "IUPAC": "Fuc?1-?(NeuGc?2-?Gal?1-?GlcNAc?1-?Man?1-?(NeuGc?2-?Gal?1-?GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?)GlcNAc",
             "accession": "G98932VQ",
             "bbox": [
               1372,
@@ -385,10 +418,11 @@
               78,
               255
             ],
-            "composition_str": "GlcNAc(4)Fuc(1)Man(3)Gal(2)NeuGc(2)"
+            "composition_str": "GlcNAc(4)Fuc(1)Man(3)Gal(2)NeuGc(2)",
+            "GID": "G1.33"
           },
           {
-            "IUPAC": "NeuAc?2-?Gal?1-?GlcNAc?1-?Man?1-?(GlcNAc?1-?)(NeuAc?2-?Gal?1-?GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?(Fuc?1-?)GlcNAc",
+            "IUPAC": "Fuc?1-?(NeuAc?2-?Gal?1-?GlcNAc?1-?Man?1-?(GlcNAc?1-?)(NeuAc?2-?Gal?1-?GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?)GlcNAc",
             "accession": "G65573RJ",
             "bbox": [
               1449,
@@ -396,7 +430,8 @@
               90,
               259
             ],
-            "composition_str": "GlcNAc(5)NeuAc(2)Fuc(1)Man(3)Gal(2)"
+            "composition_str": "GlcNAc(5)NeuAc(2)Fuc(1)Man(3)Gal(2)",
+            "GID": "G1.35"
           }
         ]
       }

@@ -18,7 +18,8 @@
               74,
               173
             ],
-            "composition_str": "GlcNAc(2)Man(1)"
+            "composition_str": "GlcNAc(2)Man(1)",
+            "GID": "G3.1"
           },
           {
             "IUPAC": "Man?1-?Man?1-?GlcNAc?1-?GlcNAc",
@@ -29,7 +30,8 @@
               95,
               263
             ],
-            "composition_str": "GlcNAc(2)Man(2)"
+            "composition_str": "GlcNAc(2)Man(2)",
+            "GID": "G3.2"
           },
           {
             "IUPAC": "Man?1-?(GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?GlcNAc",
@@ -40,7 +42,8 @@
               129,
               329
             ],
-            "composition_str": "GlcNAc(3)Man(3)"
+            "composition_str": "GlcNAc(3)Man(3)",
+            "GID": "G3.3"
           },
           {
             "IUPAC": "GlcNAc?1-?Man?1-?(GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?GlcNAc",
@@ -51,7 +54,8 @@
               151,
               303
             ],
-            "composition_str": "GlcNAc(4)Man(3)"
+            "composition_str": "GlcNAc(4)Man(3)",
+            "GID": "G3.4"
           }
         ]
       },
