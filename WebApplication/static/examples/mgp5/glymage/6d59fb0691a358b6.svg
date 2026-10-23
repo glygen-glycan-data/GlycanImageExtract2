@@ -22,8 +22,8 @@
       <clipPath clipPathUnits="userSpaceOnUse" id="clipPath6:56a94eed5f4fac9ebeb6cebbbcaad38">
         <path d="M30 82 L52 82 L52 104 L30 104 L30 82 Z"/>
       </clipPath>
-      <clipPath clipPathUnits="userSpaceOnUse" id="clipPath7:298ac07866164a1e62dd995f4e7906f">
-        <path d="M41 30 L52 41 L41 52 L30 41 Z" style="fill-rule:evenodd;"/>
+      <clipPath clipPathUnits="userSpaceOnUse" id="clipPath7:fd74f5d04745e7c492172487849516">
+        <path d="M30 30 L52 30 L52 52 L30 52 L30 30 Z"/>
       </clipPath>
     </defs>
     <g style="fill:white; text-rendering:optimizeSpeed; stroke:white;">
@@ -74,7 +74,7 @@
     <g ID="l-1:4,7" data.childPositions="1" data.childResidueIndex="6" data.parentPositions="?" data.parentResidueIndex="3" data.type="Linkage" style="text-rendering:optimizeSpeed;">
       <polygon points=" 93 67 41 93" style="fill:none;"/>
     </g>
-    <g ID="l-1:4,8" data.childPositions="2" data.childResidueIndex="7" data.parentPositions="?" data.parentResidueIndex="3" data.type="Linkage" style="text-rendering:optimizeSpeed;">
+    <g ID="l-1:4,8" data.childPositions="1" data.childResidueIndex="7" data.parentPositions="?" data.parentResidueIndex="3" data.type="Linkage" style="text-rendering:optimizeSpeed;">
       <polygon points=" 93 67 41 41" style="fill:none;"/>
     </g>
     <g ID="r-1:4" data.residueAnomericState="?" data.residueChirality="D" data.residueIndex="3" data.residueName="Man" data.residueRingSize="p" data.type="Monosaccharide" style="fill:white; text-rendering:optimizeSpeed; stroke:white;">
@@ -89,11 +89,11 @@
       <rect height="22" style="clip-path:url(#clipPath6:56a94eed5f4fac9ebeb6cebbbcaad38); fill:none; stroke:black;" width="22" x="30" y="82"/>
       <rect height="22" style="fill:none; stroke:black;" width="22" x="30" y="82"/>
     </g>
-    <g ID="r-1:8" data.residueAnomericState="?" data.residueChirality="D" data.residueIndex="7" data.residueName="NeuGc" data.residueRingSize="p" data.type="Monosaccharide" style="fill:white; text-rendering:optimizeSpeed; stroke:white;">
-      <polygon points=" 41 30 52 41 41 52 30 41" style="stroke:none; clip-path:url(#clipPath7:298ac07866164a1e62dd995f4e7906f);"/>
-      <rect height="22" style="clip-path:url(#clipPath7:298ac07866164a1e62dd995f4e7906f); fill:rgb(143,204,233); stroke:none;" width="22" x="30" y="30"/>
-      <rect height="22" style="clip-path:url(#clipPath7:298ac07866164a1e62dd995f4e7906f); fill:none; stroke:black;" width="22" x="30" y="30"/>
-      <polygon points=" 41 30 52 41 41 52 30 41" style="fill:none; stroke:black;"/>
+    <g ID="r-1:8" data.residueAnomericState="?" data.residueChirality="D" data.residueIndex="7" data.residueName="GlcNAc" data.residueRingSize="p" data.type="Monosaccharide" style="fill:white; text-rendering:optimizeSpeed; stroke:white;">
+      <rect height="22" style="clip-path:url(#clipPath7:fd74f5d04745e7c492172487849516); stroke:none;" width="22" x="30" y="30"/>
+      <rect height="22" style="clip-path:url(#clipPath7:fd74f5d04745e7c492172487849516); fill:rgb(0,114,188); stroke:none;" width="22" x="30" y="30"/>
+      <rect height="22" style="clip-path:url(#clipPath7:fd74f5d04745e7c492172487849516); fill:none; stroke:black;" width="22" x="30" y="30"/>
+      <rect height="22" style="fill:none; stroke:black;" width="22" x="30" y="30"/>
     </g>
     <g ID="legend-1:0" style="text-rendering:optimizeSpeed; font-size:10; font-family:ariel, sans-serif;">
       <text style="stroke:none;" x="30" xml:space="preserve" y="221"/>
