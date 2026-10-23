@@ -14,7 +14,6 @@
     "figures": [
       {
         "annotated_image_path": "extracted_figures/annotated_figures/wrong.png",
-        "dpi": 148.1810750775855,
         "file_name": "wrong.png",
         "glycans": [
           {
@@ -33,18 +32,18 @@
             "classid": 0,
             "classlabel": "glycan",
             "composition_str": "GlcNAc(4)NeuAc(1)Fuc(1)Man(5)Gal(2)",
-            "dpi": 148.1810750775855,
             "extracted_image_path": "extracted_figures/extracted_images/wrong-1.png",
             "fig_glycan_count": 1,
             "file_name": "wrong.png",
-            "glyImage": "glymage/20e7f193cb7489374f3e48b83b840f00.svg",
+            "glyImage": "glymage/a85031b6865358b6.svg",
             "glycans": [],
-            "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?ondemandtaskid=36de33adf8d0847c",
+            "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?ondemandtaskid=36de33adf8d358b6",
             "height": 262,
             "image_count": 1,
             "image_name": "wrong-1.png",
             "image_number": 1,
             "image_path": "extracted_figures/images/wrong-1.png",
+            "image_source": "fitz",
             "linkexpl": "Extracted structure using IUPAC.",
             "monos": [
               {
@@ -558,7 +557,7 @@
                 "width": 54
               }
             ],
-            "orientation": "BT",
+            "orientation": "TB",
             "page_height": 792.0,
             "page_number": 1,
             "page_width": 612.0,
@@ -1144,6 +1143,7 @@
         "image_count": 1,
         "image_number": 1,
         "image_path": "input/wrong.png",
+        "image_source": "fitz",
         "page_height": 792.0,
         "page_number": 1,
         "page_width": 612.0,

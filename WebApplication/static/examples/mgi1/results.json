@@ -14,7 +14,6 @@
     "figures": [
       {
         "annotated_image_path": "extracted_figures/annotated_figures/2_glycans.png",
-        "dpi": 180.51131330403445,
         "file_name": "2_glycans.png",
         "glycans": [
           {
@@ -38,7 +37,7 @@
             "confidence": 0.9993990659713745,
             "extracted_image_path": "extracted_figures/extracted_images/2_glycans-1.png",
             "fig_glycan_count": 1,
-            "glyImage": "glymage/c6564ad8eb235da6eb9a7c46cfdcbc21.svg",
+            "glyImage": "glymage/9feadd2d064358b6.svg",
             "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G35465JY",
             "height": 390,
             "image_name": "2_glycans-1.png",
@@ -515,7 +514,7 @@
                 "width": 75
               }
             ],
-            "orientation": "BT",
+            "orientation": "RL",
             "rejected_roots": [
               {
                 "bbox": [
@@ -992,7 +991,7 @@
             "confidence": 0.9987050890922546,
             "extracted_image_path": "extracted_figures/extracted_images/2_glycans-2.png",
             "fig_glycan_count": 2,
-            "glyImage": "glymage/1062e7bcb3b3b971dd39512cd4624757.svg",
+            "glyImage": "glymage/bff580b7dc7358b6.svg",
             "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G66457WL",
             "height": 264,
             "image_name": "2_glycans-2.png",
@@ -1429,7 +1428,7 @@
                 "width": 75
               }
             ],
-            "orientation": "BT",
+            "orientation": "RL",
             "rejected_roots": [
               {
                 "bbox": [
@@ -1851,6 +1850,7 @@
         "image_count": 1,
         "image_number": 1,
         "image_path": "input/2_glycans.png",
+        "image_source": "fitz",
         "page_height": 792.0,
         "page_number": 1,
         "page_width": 612.0,

@@ -3,7 +3,7 @@
   "submission_detail": {
     "filename": "mass-spectrometry-glycans-fig-2.jpg",
     "submission_type": "Multi-Glycan Image",
-    "submission_mode": "Local",
+    "submission_mode": "Upload",
     "processor": "SingleImageSyntheticPDFJob",
     "id": "mgi5"
   },
@@ -14,7 +14,6 @@
     "figures": [
       {
         "annotated_image_path": "extracted_figures/annotated_figures/mass-spectrometry-glycans-fig-2.jpg",
-        "dpi": 200.35497846348179,
         "file_name": "mass-spectrometry-glycans-fig-2.jpg",
         "glycans": [
           {
@@ -38,7 +37,7 @@
             "confidence": 0.9990313053131104,
             "extracted_image_path": "extracted_figures/extracted_images/mass-spectrometry-glycans-fig-2-1.png",
             "fig_glycan_count": 1,
-            "glyImage": "glymage/aab4bbcf75ec01c5d4fe132b0fda4878.svg",
+            "glyImage": "glymage/7375fe8e384358b6.svg",
             "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G03833LE",
             "height": 256,
             "image_name": "mass-spectrometry-glycans-fig-2-1.png",
@@ -229,7 +228,7 @@
                 "width": 59
               }
             ],
-            "orientation": "BT",
+            "orientation": "RL",
             "rejected_roots": [
               {
                 "bbox": [
@@ -433,7 +432,7 @@
             "confidence": 0.9994795322418213,
             "extracted_image_path": "extracted_figures/extracted_images/mass-spectrometry-glycans-fig-2-2.png",
             "fig_glycan_count": 2,
-            "glyImage": "glymage/07dc294303cb8f18dd6631f074822641.svg",
+            "glyImage": "glymage/683a4bff2f4358b6.svg",
             "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G96108PJ",
             "height": 263,
             "image_name": "mass-spectrometry-glycans-fig-2-2.png",
@@ -664,7 +663,7 @@
                 "width": 59
               }
             ],
-            "orientation": "BT",
+            "orientation": "RL",
             "rejected_roots": [
               {
                 "bbox": [
@@ -907,7 +906,7 @@
             "confidence": 0.9962338805198669,
             "extracted_image_path": "extracted_figures/extracted_images/mass-spectrometry-glycans-fig-2-3.png",
             "fig_glycan_count": 3,
-            "glyImage": "glymage/690a1c29206a12dad1974510fee07bbb.svg",
+            "glyImage": "glymage/7f10743b4d7358b6.svg",
             "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G62257HU",
             "height": 255,
             "image_name": "mass-spectrometry-glycans-fig-2-3.png",
@@ -1220,7 +1219,7 @@
                 "width": 57
               }
             ],
-            "orientation": "BT",
+            "orientation": "RL",
             "rejected_roots": [
               {
                 "bbox": [
@@ -1541,7 +1540,7 @@
             "confidence": 0.999574601650238,
             "extracted_image_path": "extracted_figures/extracted_images/mass-spectrometry-glycans-fig-2-4.png",
             "fig_glycan_count": 4,
-            "glyImage": "glymage/6dcbc1ae50f08504df69d56f89b9ac7e.svg",
+            "glyImage": "glymage/1aa98187f62358b6.svg",
             "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G73636FD",
             "height": 309,
             "image_name": "mass-spectrometry-glycans-fig-2-4.png",
@@ -1813,7 +1812,7 @@
                 "width": 57
               }
             ],
-            "orientation": "BT",
+            "orientation": "RL",
             "rejected_roots": [
               {
                 "bbox": [
@@ -2095,7 +2094,7 @@
             "confidence": 0.999247133731842,
             "extracted_image_path": "extracted_figures/extracted_images/mass-spectrometry-glycans-fig-2-5.png",
             "fig_glycan_count": 5,
-            "glyImage": "glymage/9d74216c3fa299cce6f85951f205e9d1.svg",
+            "glyImage": "glymage/d3de5eb3f2f358b6.svg",
             "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G58858DY",
             "height": 253,
             "image_name": "mass-spectrometry-glycans-fig-2-5.png",
@@ -2327,7 +2326,7 @@
                 "width": 58
               }
             ],
-            "orientation": "BT",
+            "orientation": "RL",
             "rejected_roots": [
               {
                 "bbox": [
@@ -2588,7 +2587,7 @@
             "confidence": 0.9998098611831665,
             "extracted_image_path": "extracted_figures/extracted_images/mass-spectrometry-glycans-fig-2-6.png",
             "fig_glycan_count": 6,
-            "glyImage": "glymage/aab4bbcf75ec01c5d4fe132b0fda4878.svg",
+            "glyImage": "glymage/7375fe8e384358b6.svg",
             "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G03833LE",
             "height": 231,
             "image_name": "mass-spectrometry-glycans-fig-2-6.png",
@@ -2779,7 +2778,7 @@
                 "width": 58
               }
             ],
-            "orientation": "BT",
+            "orientation": "RL",
             "rejected_roots": [
               {
                 "bbox": [
@@ -2983,7 +2982,7 @@
             "confidence": 0.9984012842178345,
             "extracted_image_path": "extracted_figures/extracted_images/mass-spectrometry-glycans-fig-2-7.png",
             "fig_glycan_count": 7,
-            "glyImage": "glymage/b1e8c9a2a450935e26797aa02b95f088.svg",
+            "glyImage": "glymage/86778665e0b358b6.svg",
             "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G69177DS",
             "height": 305,
             "image_name": "mass-spectrometry-glycans-fig-2-7.png",
@@ -3416,7 +3415,7 @@
                 "width": 59
               }
             ],
-            "orientation": "BT",
+            "orientation": "RL",
             "rejected_roots": [
               {
                 "bbox": [
@@ -3854,7 +3853,7 @@
             "confidence": 0.9980415105819702,
             "extracted_image_path": "extracted_figures/extracted_images/mass-spectrometry-glycans-fig-2-8.png",
             "fig_glycan_count": 8,
-            "glyImage": "glymage/f9b6a1f69d5bbf0249e3d7aadc24cde8.svg",
+            "glyImage": "glymage/661f638ef3c358b6.svg",
             "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G06204HC",
             "height": 295,
             "image_name": "mass-spectrometry-glycans-fig-2-8.png",
@@ -4247,7 +4246,7 @@
                 "width": 59
               }
             ],
-            "orientation": "BT",
+            "orientation": "RL",
             "rejected_roots": [
               {
                 "bbox": [
@@ -4646,7 +4645,7 @@
             "confidence": 0.999541699886322,
             "extracted_image_path": "extracted_figures/extracted_images/mass-spectrometry-glycans-fig-2-9.png",
             "fig_glycan_count": 9,
-            "glyImage": "glymage/815041f6b4094ece6e7e3738be324a6c.svg",
+            "glyImage": "glymage/5f721322b82358b6.svg",
             "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G20045DK",
             "height": 297,
             "image_name": "mass-spectrometry-glycans-fig-2-9.png",
@@ -4999,7 +4998,7 @@
                 "width": 58
               }
             ],
-            "orientation": "BT",
+            "orientation": "RL",
             "rejected_roots": [
               {
                 "bbox": [
@@ -5359,7 +5358,7 @@
             "confidence": 0.9991109371185303,
             "extracted_image_path": "extracted_figures/extracted_images/mass-spectrometry-glycans-fig-2-10.png",
             "fig_glycan_count": 10,
-            "glyImage": "glymage/d005465d1d048afc68aadc458f773c44.svg",
+            "glyImage": "glymage/740460151e1358b6.svg",
             "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G54619MD",
             "height": 326,
             "image_name": "mass-spectrometry-glycans-fig-2-10.png",
@@ -5752,7 +5751,7 @@
                 "width": 56
               }
             ],
-            "orientation": "BT",
+            "orientation": "RL",
             "rejected_roots": [
               {
                 "bbox": [
@@ -6151,7 +6150,7 @@
             "confidence": 0.9988303780555725,
             "extracted_image_path": "extracted_figures/extracted_images/mass-spectrometry-glycans-fig-2-11.png",
             "fig_glycan_count": 11,
-            "glyImage": "glymage/f9b6a1f69d5bbf0249e3d7aadc24cde8.svg",
+            "glyImage": "glymage/661f638ef3c358b6.svg",
             "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G06204HC",
             "height": 281,
             "image_name": "mass-spectrometry-glycans-fig-2-11.png",
@@ -6544,7 +6543,7 @@
                 "width": 63
               }
             ],
-            "orientation": "BT",
+            "orientation": "RL",
             "rejected_roots": [
               {
                 "bbox": [
@@ -6943,7 +6942,7 @@
             "confidence": 0.9981980919837952,
             "extracted_image_path": "extracted_figures/extracted_images/mass-spectrometry-glycans-fig-2-12.png",
             "fig_glycan_count": 12,
-            "glyImage": "glymage/6bf6057d50d8578fae7b0ec7d595ad82.svg",
+            "glyImage": "glymage/57e610bf8df358b6.svg",
             "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G72957RE",
             "height": 285,
             "image_name": "mass-spectrometry-glycans-fig-2-12.png",
@@ -7296,7 +7295,7 @@
                 "width": 63
               }
             ],
-            "orientation": "BT",
+            "orientation": "RL",
             "rejected_roots": [
               {
                 "bbox": [
@@ -7640,6 +7639,7 @@
         "image_count": 1,
         "image_number": 1,
         "image_path": "input/mass-spectrometry-glycans-fig-2.jpg",
+        "image_source": "fitz",
         "page_height": 792.0,
         "page_number": 1,
         "page_width": 612.0,

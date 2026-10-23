@@ -14,7 +14,6 @@
     "figures": [
       {
         "annotated_image_path": "extracted_figures/annotated_figures/pr1c00245_0002.jpg",
-        "dpi": 111.26984173311672,
         "file_name": "pr1c00245_0002.jpg",
         "glycans": [
           {
@@ -38,7 +37,7 @@
             "confidence": 0.9959371089935303,
             "extracted_image_path": "extracted_figures/extracted_images/pr1c00245_0002-1.png",
             "fig_glycan_count": 1,
-            "glyImage": "glymage/6d1ab2caab8df4d6b80bfb8d73a5130f.svg",
+            "glyImage": "glymage/fc11a7a2397358b6.svg",
             "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G64017CW",
             "height": 100,
             "image_name": "pr1c00245_0002-1.png",
@@ -274,7 +273,7 @@
             "confidence": 0.9986920952796936,
             "extracted_image_path": "extracted_figures/extracted_images/pr1c00245_0002-2.png",
             "fig_glycan_count": 2,
-            "glyImage": "glymage/99a4f114794fcbf6cb731e87249070b7.svg",
+            "glyImage": "glymage/1e08c5b8b95358b6.svg",
             "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G86427WL",
             "height": 128,
             "image_name": "pr1c00245_0002-2.png",
@@ -590,7 +589,7 @@
             "confidence": 0.9996631741523743,
             "extracted_image_path": "extracted_figures/extracted_images/pr1c00245_0002-3.png",
             "fig_glycan_count": 3,
-            "glyImage": "glymage/cbdc4c48c8dccf165a262c3c8203f3b5.svg",
+            "glyImage": "glymage/4addac5bb9d358b6.svg",
             "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G59325ZF",
             "height": 144,
             "image_name": "pr1c00245_0002-3.png",
@@ -1065,7 +1064,7 @@
             "confidence": 0.9994617700576782,
             "extracted_image_path": "extracted_figures/extracted_images/pr1c00245_0002-4.png",
             "fig_glycan_count": 4,
-            "glyImage": "glymage/43be33b26df70b8d73919e0695e8eb02.svg",
+            "glyImage": "glymage/90583014944358b6.svg",
             "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G78607HP",
             "height": 155,
             "image_name": "pr1c00245_0002-4.png",
@@ -1604,6 +1603,7 @@
         "image_count": 1,
         "image_number": 1,
         "image_path": "input/pr1c00245_0002.jpg",
+        "image_source": "fitz",
         "page_height": 792.0,
         "page_number": 1,
         "page_width": 612.0,

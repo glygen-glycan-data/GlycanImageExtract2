@@ -14,12 +14,11 @@
     "figures": [
       {
         "annotated_image_path": "extracted_figures/annotated_figures/multi_glycans.png",
-        "dpi": 88.96351563796969,
         "file_name": "multi_glycans.png",
         "glycans": [
           {
             "GID": "G1.1",
-            "IUPAC": "Man?1-?(Man?1-?)Man?1-?GlcNAc?1-?(Fuc?1-?)GlcNAc",
+            "IUPAC": "Fuc?1-?(Man?1-?(Man?1-?)Man?1-?GlcNAc?1-?)GlcNAc",
             "WURCS": "WURCS=2.0/3,6,5/[a2122h-1x_1-5_2*NCC/3=O][a1122h-1x_1-5][a1221m-1x_1-5]/1-1-2-2-2-3/a?-b1_a?-f1_b?-c1_c?-d1_c?-e1",
             "accession": "G27815BZ",
             "bbox": [
@@ -38,7 +37,7 @@
             "confidence": 0.9993472099304199,
             "extracted_image_path": "extracted_figures/extracted_images/multi_glycans-1.png",
             "fig_glycan_count": 1,
-            "glyImage": "glymage/24c21452125197d710f515a7e92774a2.svg",
+            "glyImage": "glymage/095545bb9ce358b6.svg",
             "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G27815BZ",
             "height": 115,
             "image_name": "multi_glycans-1.png",
@@ -269,7 +268,7 @@
                 "width": 39
               }
             ],
-            "orientation": "BT",
+            "orientation": "LR",
             "rejected_roots": [
               {
                 "bbox": [
@@ -512,7 +511,7 @@
             "confidence": 0.9989546537399292,
             "extracted_image_path": "extracted_figures/extracted_images/multi_glycans-2.png",
             "fig_glycan_count": 2,
-            "glyImage": "glymage/6dcbc1ae50f08504df69d56f89b9ac7e.svg",
+            "glyImage": "glymage/1aa98187f62358b6.svg",
             "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G73636FD",
             "height": 93,
             "image_name": "multi_glycans-2.png",
@@ -784,7 +783,7 @@
                 "width": 22
               }
             ],
-            "orientation": "BT",
+            "orientation": "RL",
             "rejected_roots": [
               {
                 "bbox": [
@@ -1066,7 +1065,7 @@
             "confidence": 0.9994800090789795,
             "extracted_image_path": "extracted_figures/extracted_images/multi_glycans-3.png",
             "fig_glycan_count": 3,
-            "glyImage": "glymage/13d9922b859fd345bd49f419fcc81fb7.svg",
+            "glyImage": "glymage/74b50d6e5a4358b6.svg",
             "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G85612WL",
             "height": 178,
             "image_name": "multi_glycans-3.png",
@@ -1460,7 +1459,7 @@
                 "width": 24
               }
             ],
-            "orientation": "BT",
+            "orientation": "RL",
             "rejected_roots": [
               {
                 "bbox": [
@@ -1843,6 +1842,7 @@
         "image_count": 1,
         "image_number": 1,
         "image_path": "input/multi_glycans.png",
+        "image_source": "fitz",
         "page_height": 792.0,
         "page_number": 1,
         "page_width": 612.0,

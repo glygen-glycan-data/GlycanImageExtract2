@@ -14,12 +14,11 @@
     "figures": [
       {
         "annotated_image_path": "extracted_figures/annotated_figures/pdf7_extra.png",
-        "dpi": 101.28568751726456,
         "file_name": "pdf7_extra.png",
         "glycans": [
           {
             "GID": "G1.1",
-            "IUPAC": "Gal?1-?GlcNAc?1-?Man?1-?(GlcNAc?1-?)(Gal?1-?GlcNAc?1-?(Gal?1-?GlcNAc?1-?)Man?1-?)Man?1-?GlcNAc?1-?(Fuc?1-?)GlcNAc",
+            "IUPAC": "Fuc?1-?(Gal?1-?GlcNAc?1-?Man?1-?(GlcNAc?1-?)(Gal?1-?GlcNAc?1-?(Gal?1-?GlcNAc?1-?)Man?1-?)Man?1-?GlcNAc?1-?)GlcNAc",
             "WURCS": "WURCS=2.0/4,13,12/[a2122h-1x_1-5_2*NCC/3=O][a1122h-1x_1-5][a2112h-1x_1-5][a1221m-1x_1-5]/1-1-2-2-1-3-1-3-2-1-3-1-4/a?-b1_a?-m1_b?-c1_c?-d1_c?-i1_c?-l1_d?-e1_d?-g1_e?-f1_g?-h1_i?-j1_j?-k1",
             "accession": "G78130XL",
             "bbox": [
@@ -38,7 +37,7 @@
             "confidence": 0.999538242816925,
             "extracted_image_path": "extracted_figures/extracted_images/pdf7_extra-1.png",
             "fig_glycan_count": 1,
-            "glyImage": "glymage/651f575c11369f07331fae1b9a8a5ac5.svg",
+            "glyImage": "glymage/989c64fea5a358b6.svg",
             "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G78130XL",
             "height": 431,
             "image_name": "pdf7_extra-1.png",
@@ -1051,7 +1050,7 @@
           },
           {
             "GID": "G1.2",
-            "IUPAC": "Man?1-?(Man?1-?)Man?1-?(NeuAc?2-?Gal?1-?GlcNAc?1-?Gal?1-?GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?(Fuc?1-?)GlcNAc",
+            "IUPAC": "Fuc?1-?(Man?1-?(Man?1-?)Man?1-?(NeuAc?2-?Gal?1-?GlcNAc?1-?Gal?1-?GlcNAc?1-?Man?1-?)Man?1-?GlcNAc?1-?)GlcNAc",
             "WURCS": "WURCS=2.0/5,13,12/[a2122h-1x_1-5_2*NCC/3=O][a1122h-1x_1-5][a2112h-1x_1-5][Aad21122h-2x_2-6_5*NCC/3=O][a1221m-1x_1-5]/1-1-2-2-1-3-1-3-4-2-2-2-5/a?-b1_a?-m1_b?-c1_c?-d1_c?-j1_d?-e1_e?-f1_f?-g1_g?-h1_h?-i2_j?-k1_j?-l1",
             "accession": "G38382KG",
             "bbox": [
@@ -1070,7 +1069,7 @@
             "confidence": 0.9990941882133484,
             "extracted_image_path": "extracted_figures/extracted_images/pdf7_extra-2.png",
             "fig_glycan_count": 2,
-            "glyImage": "glymage/5d47a3dee0a6c95da6d7a6c799f4c93e.svg",
+            "glyImage": "glymage/89ff0315639358b6.svg",
             "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G38382KG",
             "height": 494,
             "image_name": "pdf7_extra-2.png",
@@ -2084,7 +2083,7 @@
           },
           {
             "GID": "G1.3",
-            "IUPAC": "Gal?1-?GlcNAc?1-?Man?1-?(Gal?1-?GlcNAc?1-?(NeuAc?2-?Gal?1-?GlcNAc?1-?)Man?1-?)Man?1-?GlcNAc?1-?(Fuc?1-?)GlcNAc",
+            "IUPAC": "Fuc?1-?(Gal?1-?GlcNAc?1-?Man?1-?(Gal?1-?GlcNAc?1-?(NeuAc?2-?Gal?1-?GlcNAc?1-?)Man?1-?)Man?1-?GlcNAc?1-?)GlcNAc",
             "WURCS": "WURCS=2.0/5,13,12/[a2122h-1x_1-5_2*NCC/3=O][a1122h-1x_1-5][a2112h-1x_1-5][Aad21122h-2x_2-6_5*NCC/3=O][a1221m-1x_1-5]/1-1-2-2-1-3-4-1-3-2-1-3-5/a?-b1_a?-m1_b?-c1_c?-d1_c?-j1_d?-e1_d?-h1_e?-f1_f?-g2_h?-i1_j?-k1_k?-l1",
             "accession": "G66420HM",
             "bbox": [
@@ -2103,7 +2102,7 @@
             "confidence": 0.9997454285621643,
             "extracted_image_path": "extracted_figures/extracted_images/pdf7_extra-3.png",
             "fig_glycan_count": 3,
-            "glyImage": "glymage/51c089f9b9020109b0a3a514ddf69e6f.svg",
+            "glyImage": "glymage/651a077da82358b6.svg",
             "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G66420HM",
             "height": 484,
             "image_name": "pdf7_extra-3.png",
@@ -3120,6 +3119,7 @@
         "image_count": 1,
         "image_number": 1,
         "image_path": "input/pdf7_extra.png",
+        "image_source": "fitz",
         "page_height": 792.0,
         "page_number": 1,
         "page_width": 612.0,
