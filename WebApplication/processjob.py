@@ -312,7 +312,7 @@ class MultiImageJob:
                 glymage_jobs.append((idx, 
                     self.glymage_client.submit_glymage(
                         seq=glycan.get('composition_str'), 
-                        orientation=glycan.glycan_orientation()
+                        orientation="RL",
                     )
                 ))
 
@@ -346,7 +346,7 @@ class MultiImageJob:
                         self.glymage_client.submit_glymage(
                             seq=glycan.get('IUPAC'), # need IUPAC even though we have accession
                                                      # because IUPAC encodes branch order
-                            orientation=glycan.glycan_orientation(),
+                            orientation=glycan.get('orientation',"RL"),
                         )
                     ))  
                 else:
@@ -355,7 +355,7 @@ class MultiImageJob:
                     glymage_jobs.append((glycan_idx, 
                         self.glymage_client.submit_glymage(
                             seq=glycan.get('IUPAC'), 
-                            orientation=glycan.glycan_orientation()
+                            orientation=glycan.get('orientation',"RL"),
                         )
                     ))
 

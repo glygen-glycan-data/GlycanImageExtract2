@@ -20,20 +20,16 @@ from . distproc import DistributedProcessing as dp
 
 class GlycanExtractorPipeline():
     
-    pipeline_stages = ['figure','glycan']
-
-    # defaults = {
-    #     'figure_steps': [],
-    #     'glycan_steps': [],
-    # }
+    pipeline_stages = ['figure','glycan','postprocess']
 
     def __init__(self,**kwargs):
 
         # shifted it inside - so that a new instance of defaults 
-        # is created with ever new class initailization - otherwise the same class variable was getting modfied
+        # is created with every new class initailization - otherwise the same class variable was getting modfied
         self.defaults = {
             'figure_steps': [],
             'glycan_steps': [],
+            'postprocess_steps': [],
         }
 
         self.steps = {}
@@ -42,16 +38,16 @@ class GlycanExtractorPipeline():
 
     # step should be a finder instance
     def add_step(self,stage,step):
-        assert stage in ("figure","glycan"), "Bad stage specification: "+stage
+        assert stage in self.pipeline_stages, "Bad stage specification: "+stage
         self.steps[stage].append(step)
             
     def get_steps(self,stage):
-        assert stage in ("figure","glycan"), "Bad stage specification: "+stage
+        assert stage in self.pipeline_stages, "Bad stage specification: "+stage
         return self.steps.get(stage, None)
             
     # steps should be a list of finder instances, shallow copy!
     def set_steps(self,stage,steps):
-        assert stage in ("figure","glycan"), "Bad stage specification: "+stage
+        assert stage in self.pipeline_stages, "Bad stage specification: "+stage
         self.steps[stage] = list(steps) if steps else []
 
     # Shallow clone, finders should be stateless
@@ -62,10 +58,9 @@ class GlycanExtractorPipeline():
         return gep
 
     def clear(self):
-        for figstep in self.steps['figure']:
-            figstep.clear()
-        for glystep in self.steps['glycan']:
-            glystep.clear()
+        for stage in self.pipeline_stages:
+            for step in self.steps[stage]:
+                step.clear()
     
     def run(self,image,progress_callback=None, **kwargs):
         # empty figure semantics
@@ -90,6 +85,17 @@ class GlycanExtractorPipeline():
             if progress_callback:
                 progress_callback(stage="GLYCAN",checkpoint="DONE",index=i+1,nglycan=nglycan, **kwargs)
 
+        if len(self.steps['postprocess']) > 0:
+
+            if progress_callback:
+                progress_callback(stage="POSTPROCESS",checkpoint="START",nglycan=nglycan, **kwargs)
+
+            for figstep in self.steps['postprocess']:
+                figstep.execute(figure_semantics)
+
+            if progress_callback:
+                progress_callback(stage="POSTPROCESS",checkpoint="DONE",nglycan=nglycan, **kwargs)
+
         if progress_callback:
             progress_callback(stage="PIPELINE",checkpoint="DONE",nglycan=nglycan, **kwargs)
 
@@ -108,7 +114,7 @@ class GlycanExtractorPipeline():
         
         if len(self.steps['glycan']) == 0:
 
-            # special case for testing glycan finders
+            # special case for testing glycan box finders
             assert boxesonly == True
 
             for figstep in self.steps['figure'][:-1]:
@@ -120,21 +126,39 @@ class GlycanExtractorPipeline():
             # Why does this function have inconsistent return values?
             return result,figure_semantics
         
-        # typical case
+        elif len(self.steps['postprocess']) == 0:
         
-        for figstep in self.steps['figure']:
-            figstep.execute(figure_semantics)
+            # component models (semantics or boxes) trained on
+            # synthetic simple glycan images or extracted (cleaned) 
+            # single glycan images.
 
-        final_step = self.steps['glycan'][-1]
+            for figstep in self.steps['figure']:
+                figstep.execute(figure_semantics)
 
-        result =  None
-        for glycan_semantics in figure_semantics.glycans():
-            for glystep in self.steps['glycan'][:-1]:
-                glystep.execute(glycan_semantics)
-            result = (final_step.execute(glycan_semantics,boxesonly=boxesonly),glycan_semantics)
-            break
+            final_step = self.steps['glycan'][-1]
 
-        return result
+            result =  None
+            for glycan_semantics in figure_semantics.glycans():
+                for glystep in self.steps['glycan'][:-1]:
+                    glystep.execute(glycan_semantics)
+                result = (final_step.execute(glycan_semantics,boxesonly=boxesonly),glycan_semantics)
+                break
+            return result
+
+        else:
+            # full pipeline
+
+            for figstep in self.steps['figure']:
+                figstep.execute(figure_semantics)
+
+            for glycan_semantics in figure_semantics.glycans():
+                for glystep in self.steps['glycan']:
+                    glystep.execute(glycan_semantics)
+
+            for figstep in self.steps['postprocess']:
+                figstep.execute(figure_semantics)
+
+            return figure_semantics.glycans(),figure_semantics
 
 class Config_Manager(object):
 

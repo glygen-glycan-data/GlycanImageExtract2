@@ -462,6 +462,7 @@ class FigureSemantics(ImageSemantics):
     
     def reset_glycans(self):
         self.set('glycans',[])
+        self.unset('rejected_glycans')
     
     def set_glycans(self, accepted, rejected=[]):
         self.reset_glycans()

@@ -100,7 +100,20 @@ class SingleBest(ObjectFilter):
             return objlist[0:1],objlist[1:]
         return [],objlist
 
-
+class MinConfidence(ObjectFilter):
+    def __init__(self,minconf=0.0):
+        self.minconf = minconf
+    def filter(self, objlist):
+        accept,reject = [],[]
+        if len(objlist) == 0:
+            return [],[]
+        for obj in objlist:
+            if obj.get('confidence',1.0) >= self.minconf:
+                accept.append(obj)
+            else:
+                reject.append(obj)
+        return accept,reject
+        
 # Similar to DiscardClass - but this only keeps one single
 # root incase multiple roots were detected - maybe we dont dont need 
 # this implementation of the class anymore?
