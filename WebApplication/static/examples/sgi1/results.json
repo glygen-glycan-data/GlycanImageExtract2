@@ -3,7 +3,7 @@
   "submission_detail": {
     "filename": "f4003b0298c8e8f4576146bd232601e0.png",
     "submission_type": "Simple Glycan Image",
-    "submission_mode": "Upload",
+    "submission_mode": "URL",
     "processor": "SimpleImageSyntheticPDFJob",
     "id": "sgi1"
   },
@@ -37,7 +37,7 @@
             "extracted_image_path": "extracted_figures/extracted_images/f4003b0298c8e8f4576146bd232601e0-1.png",
             "fig_glycan_count": 1,
             "file_name": "f4003b0298c8e8f4576146bd232601e0.png",
-            "glyImage": "glymage/e8a63ff6f3f358b6.svg",
+            "glyImage": "glymage/e8a63ff6f3f0847c.svg",
             "glycans": [],
             "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G18718DW",
             "height": 212,

@@ -2,7 +2,6 @@
   {
     "annotated_image_path": "extracted_figures/annotated_figures/pr1c00245_0001.jpg",
     "caption": "Workflow of the GlycoHybridSeq algorithm.",
-    "dpi": 118.44150872401403,
     "figure_label": "Figure",
     "figure_number": "1",
     "file_name": "pr1c00245_0001.jpg",
@@ -11,6 +10,7 @@
     "image_count": 1,
     "image_number": 1,
     "image_path": "extracted_figures/figures/pr1c00245_0001.jpg",
+    "image_source": "fitz",
     "page_height": 792.0,
     "page_number": 2,
     "page_width": 612.0,
@@ -28,7 +28,6 @@
   {
     "annotated_image_path": "extracted_figures/annotated_figures/pr1c00245_0002.jpg",
     "caption": "An example of annotated glycopeptide spectrum, where peaks annotated as b/c/y/z ions are colored as purple, and those annotated as Y ions as red.",
-    "dpi": 111.26984173311672,
     "figure_label": "Figure",
     "figure_number": "2",
     "file_name": "pr1c00245_0002.jpg",
@@ -54,7 +53,7 @@
         "confidence": 0.9959371089935303,
         "extracted_image_path": "extracted_figures/extracted_images/pr1c00245_0002-1.png",
         "fig_glycan_count": 1,
-        "glyImage": "glymage/6d1ab2caab8df4d6b80bfb8d73a5130f.svg",
+        "glyImage": "glymage/fc11a7a23970847c.svg",
         "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G64017CW",
         "height": 100,
         "image_name": "pr1c00245_0002-1.png",
@@ -63,67 +62,46 @@
         "monos": [
           {
             "bbox": [
-              2,
-              65,
-              21,
+              0,
+              18,
+              25,
               22
             ],
             "center": [
               12.5,
-              76.0
+              29.0
             ],
-            "classid": 3,
-            "classlabel": "GlcNAc",
-            "confidence": 0.9963933825492859,
+            "classid": 5,
+            "classlabel": "Man",
+            "confidence": 0.999268114566803,
             "height": 22,
             "id": 1,
-            "links": [
-              {
-                "bbox": [
-                  2,
-                  43,
-                  22,
-                  43
-                ],
-                "center": [
-                  13.0,
-                  64.5
-                ],
-                "child_bond": 1,
-                "classid": 0,
-                "classlabel": "link",
-                "confidence": 0.9997294545173645,
-                "from_id": 1,
-                "height": 43,
-                "to_id": 2,
-                "width": 22
-              }
-            ],
-            "symbol": "GlcNAc",
-            "width": 21
+            "links": [],
+            "symbol": "Man",
+            "width": 25
           },
           {
             "bbox": [
               1,
-              43,
+              42,
               23,
-              21
+              22
             ],
             "center": [
               12.5,
-              53.5
+              53.0
             ],
             "classid": 3,
             "classlabel": "GlcNAc",
-            "confidence": 0.9929171204566956,
-            "height": 21,
+            "confidence": 0.9991104602813721,
+            "height": 22,
             "id": 2,
             "links": [
               {
                 "bbox": [
-                  2,
+                  0,
                   20,
-                  21,
+                  25,
                   42
                 ],
                 "center": [
@@ -133,11 +111,11 @@
                 "child_bond": 1,
                 "classid": 0,
                 "classlabel": "link",
-                "confidence": 0.9998427629470825,
+                "confidence": 0.9999910593032837,
                 "from_id": 2,
                 "height": 42,
-                "to_id": 3,
-                "width": 21
+                "to_id": 1,
+                "width": 25
               }
             ],
             "symbol": "GlcNAc",
@@ -145,50 +123,71 @@
           },
           {
             "bbox": [
-              0,
-              19,
-              25,
-              21
+              1,
+              65,
+              23,
+              22
             ],
             "center": [
               12.5,
-              29.5
+              76.0
             ],
-            "classid": 5,
-            "classlabel": "Man",
-            "confidence": 0.9869742393493652,
-            "height": 21,
+            "classid": 3,
+            "classlabel": "GlcNAc",
+            "confidence": 0.9987842440605164,
+            "height": 22,
             "id": 3,
-            "links": [],
-            "symbol": "Man",
-            "width": 25
+            "links": [
+              {
+                "bbox": [
+                  1,
+                  44,
+                  23,
+                  42
+                ],
+                "center": [
+                  12.5,
+                  65.0
+                ],
+                "child_bond": 1,
+                "classid": 0,
+                "classlabel": "link",
+                "confidence": 0.9999896287918091,
+                "from_id": 3,
+                "height": 42,
+                "to_id": 2,
+                "width": 23
+              }
+            ],
+            "symbol": "GlcNAc",
+            "width": 23
           }
         ],
         "orientation": "BT",
         "rejected_roots": [
           {
             "bbox": [
-              3,
-              18,
-              22,
-              22
+              1,
+              19,
+              24,
+              21
             ],
             "center": [
-              14.0,
-              29.0
+              13.0,
+              29.5
             ],
             "classid": 0,
             "classlabel": "redend",
-            "confidence": 0.06948679685592651,
-            "height": 22,
-            "mono_id": 3,
-            "width": 22
+            "confidence": 0.0015875697135925293,
+            "height": 21,
+            "mono_id": 1,
+            "width": 24
           },
           {
             "bbox": [
-              2,
+              1,
               42,
-              21,
+              23,
               22
             ],
             "center": [
@@ -197,36 +196,62 @@
             ],
             "classid": 0,
             "classlabel": "redend",
-            "confidence": 0.0067400336265563965,
+            "confidence": 0.0009899735450744629,
             "height": 22,
             "mono_id": 2,
-            "width": 21
+            "width": 23
+          }
+        ],
+        "rejected_undirected_links": [
+          {
+            "link": {
+              "bbox": [
+                5,
+                17,
+                20,
+                48
+              ],
+              "center": [
+                15.0,
+                41.0
+              ],
+              "classid": 0,
+              "classlabel": "link",
+              "confidence": 0.37907129526138306,
+              "height": 48,
+              "mono_ids": [
+                1,
+                2
+              ],
+              "width": 20
+            },
+            "reason": "duplicate link/mono_ids pairs found."
           }
         ],
         "root": {
           "bbox": [
-            2,
-            66,
-            20,
-            21
+            1,
+            64,
+            24,
+            23
           ],
           "center": [
-            12.0,
-            76.5
+            13.0,
+            75.5
           ],
           "classid": 0,
           "classlabel": "redend",
-          "confidence": 0.7682761549949646,
-          "height": 21,
-          "mono_id": 1,
-          "width": 20
+          "confidence": 0.9973194599151611,
+          "height": 23,
+          "mono_id": 3,
+          "width": 24
         },
         "undirected_links": [
           {
             "bbox": [
-              2,
+              0,
               20,
-              21,
+              25,
               42
             ],
             "center": [
@@ -235,34 +260,34 @@
             ],
             "classid": 0,
             "classlabel": "link",
-            "confidence": 0.9998427629470825,
+            "confidence": 0.9999910593032837,
+            "height": 42,
+            "mono_ids": [
+              1,
+              2
+            ],
+            "width": 25
+          },
+          {
+            "bbox": [
+              1,
+              44,
+              23,
+              42
+            ],
+            "center": [
+              12.5,
+              65.0
+            ],
+            "classid": 0,
+            "classlabel": "link",
+            "confidence": 0.9999896287918091,
             "height": 42,
             "mono_ids": [
               2,
               3
             ],
-            "width": 21
-          },
-          {
-            "bbox": [
-              2,
-              43,
-              22,
-              43
-            ],
-            "center": [
-              13.0,
-              64.5
-            ],
-            "classid": 0,
-            "classlabel": "link",
-            "confidence": 0.9997294545173645,
-            "height": 43,
-            "mono_ids": [
-              1,
-              2
-            ],
-            "width": 22
+            "width": 23
           }
         ],
         "width": 25
@@ -288,7 +313,7 @@
         "confidence": 0.9986920952796936,
         "extracted_image_path": "extracted_figures/extracted_images/pr1c00245_0002-2.png",
         "fig_glycan_count": 2,
-        "glyImage": "glymage/99a4f114794fcbf6cb731e87249070b7.svg",
+        "glyImage": "glymage/1e08c5b8b950847c.svg",
         "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G86427WL",
         "height": 128,
         "image_name": "pr1c00245_0002-2.png",
@@ -297,68 +322,27 @@
         "monos": [
           {
             "bbox": [
-              19,
-              91,
-              19,
-              19
+              18,
+              66,
+              21,
+              21
             ],
             "center": [
               28.5,
-              100.5
-            ],
-            "classid": 3,
-            "classlabel": "GlcNAc",
-            "confidence": 0.9999736547470093,
-            "height": 19,
-            "id": 1,
-            "links": [
-              {
-                "bbox": [
-                  19,
-                  67,
-                  19,
-                  43
-                ],
-                "center": [
-                  28.5,
-                  88.5
-                ],
-                "child_bond": 1,
-                "classid": 0,
-                "classlabel": "link",
-                "confidence": 0.9999754428863525,
-                "from_id": 1,
-                "height": 43,
-                "to_id": 2,
-                "width": 19
-              }
-            ],
-            "symbol": "GlcNAc",
-            "width": 19
-          },
-          {
-            "bbox": [
-              18,
-              67,
-              20,
-              19
-            ],
-            "center": [
-              28.0,
               76.5
             ],
             "classid": 3,
             "classlabel": "GlcNAc",
-            "confidence": 0.9999405145645142,
-            "height": 19,
-            "id": 2,
+            "confidence": 0.9999516010284424,
+            "height": 21,
+            "id": 1,
             "links": [
               {
                 "bbox": [
-                  19,
-                  43,
-                  20,
-                  44
+                  18,
+                  42,
+                  22,
+                  46
                 ],
                 "center": [
                   29.0,
@@ -367,63 +351,63 @@
                 "child_bond": 1,
                 "classid": 0,
                 "classlabel": "link",
-                "confidence": 0.9999730587005615,
-                "from_id": 2,
-                "height": 44,
-                "to_id": 3,
-                "width": 20
+                "confidence": 0.9999810457229614,
+                "from_id": 1,
+                "height": 46,
+                "to_id": 4,
+                "width": 22
               }
             ],
             "symbol": "GlcNAc",
-            "width": 20
+            "width": 21
           },
           {
             "bbox": [
-              19,
-              43,
+              18,
+              90,
               21,
               21
             ],
             "center": [
-              29.5,
-              53.5
+              28.5,
+              100.5
             ],
-            "classid": 5,
-            "classlabel": "Man",
-            "confidence": 0.9992217421531677,
+            "classid": 3,
+            "classlabel": "GlcNAc",
+            "confidence": 0.9999327659606934,
             "height": 21,
-            "id": 3,
+            "id": 2,
             "links": [
               {
                 "bbox": [
-                  5,
-                  19,
-                  32,
+                  18,
+                  66,
+                  22,
                   45
                 ],
                 "center": [
-                  21.0,
-                  41.5
+                  29.0,
+                  88.5
                 ],
                 "child_bond": 1,
                 "classid": 0,
                 "classlabel": "link",
-                "confidence": 0.8953038454055786,
-                "from_id": 3,
+                "confidence": 0.9999383687973022,
+                "from_id": 2,
                 "height": 45,
-                "to_id": 4,
-                "width": 32
+                "to_id": 1,
+                "width": 22
               }
             ],
-            "symbol": "Man",
+            "symbol": "GlcNAc",
             "width": 21
           },
           {
             "bbox": [
               5,
-              19,
+              18,
               23,
-              22
+              24
             ],
             "center": [
               16.5,
@@ -431,10 +415,51 @@
             ],
             "classid": 5,
             "classlabel": "Man",
-            "confidence": 0.9979647994041443,
-            "height": 22,
-            "id": 4,
+            "confidence": 0.9997614026069641,
+            "height": 24,
+            "id": 3,
             "links": [],
+            "symbol": "Man",
+            "width": 23
+          },
+          {
+            "bbox": [
+              18,
+              42,
+              23,
+              23
+            ],
+            "center": [
+              29.5,
+              53.5
+            ],
+            "classid": 5,
+            "classlabel": "Man",
+            "confidence": 0.9995227456092834,
+            "height": 23,
+            "id": 4,
+            "links": [
+              {
+                "bbox": [
+                  6,
+                  19,
+                  35,
+                  46
+                ],
+                "center": [
+                  23.5,
+                  42.0
+                ],
+                "child_bond": 1,
+                "classid": 0,
+                "classlabel": "link",
+                "confidence": 0.9938626289367676,
+                "from_id": 4,
+                "height": 46,
+                "to_id": 3,
+                "width": 35
+              }
+            ],
             "symbol": "Man",
             "width": 23
           }
@@ -443,64 +468,64 @@
         "rejected_roots": [
           {
             "bbox": [
-              6,
+              5,
               19,
-              21,
+              22,
               22
             ],
             "center": [
-              16.5,
+              16.0,
               30.0
             ],
             "classid": 0,
             "classlabel": "redend",
-            "confidence": 0.005714356899261475,
+            "confidence": 0.00024837255477905273,
             "height": 22,
-            "mono_id": 4,
-            "width": 21
+            "mono_id": 3,
+            "width": 22
           },
           {
             "bbox": [
               18,
-              68,
-              19,
-              19
+              42,
+              23,
+              22
             ],
             "center": [
-              27.5,
-              77.5
+              29.5,
+              53.0
             ],
             "classid": 0,
             "classlabel": "redend",
-            "confidence": 0.0005612969398498535,
-            "height": 19,
-            "mono_id": 2,
-            "width": 19
+            "confidence": 0.0001919269561767578,
+            "height": 22,
+            "mono_id": 4,
+            "width": 23
           },
           {
             "bbox": [
-              19,
-              44,
-              20,
-              20
+              18,
+              66,
+              22,
+              22
             ],
             "center": [
               29.0,
-              54.0
+              77.0
             ],
             "classid": 0,
             "classlabel": "redend",
-            "confidence": 0.00024431943893432617,
-            "height": 20,
-            "mono_id": 3,
-            "width": 20
+            "confidence": 0.00010728836059570312,
+            "height": 22,
+            "mono_id": 1,
+            "width": 22
           }
         ],
         "root": {
           "bbox": [
-            19,
+            18,
             90,
-            19,
+            21,
             21
           ],
           "center": [
@@ -509,39 +534,18 @@
           ],
           "classid": 0,
           "classlabel": "redend",
-          "confidence": 0.9819698929786682,
+          "confidence": 0.9999097585678101,
           "height": 21,
-          "mono_id": 1,
-          "width": 19
+          "mono_id": 2,
+          "width": 21
         },
         "undirected_links": [
           {
             "bbox": [
-              19,
-              67,
-              19,
-              43
-            ],
-            "center": [
-              28.5,
-              88.5
-            ],
-            "classid": 0,
-            "classlabel": "link",
-            "confidence": 0.9999754428863525,
-            "height": 43,
-            "mono_ids": [
-              1,
-              2
-            ],
-            "width": 19
-          },
-          {
-            "bbox": [
-              19,
-              43,
-              20,
-              44
+              18,
+              42,
+              22,
+              46
             ],
             "center": [
               29.0,
@@ -549,34 +553,55 @@
             ],
             "classid": 0,
             "classlabel": "link",
-            "confidence": 0.9999730587005615,
-            "height": 44,
+            "confidence": 0.9999810457229614,
+            "height": 46,
             "mono_ids": [
-              2,
-              3
+              1,
+              4
             ],
-            "width": 20
+            "width": 22
           },
           {
             "bbox": [
-              5,
-              19,
-              32,
+              18,
+              66,
+              22,
               45
             ],
             "center": [
-              21.0,
-              41.5
+              29.0,
+              88.5
             ],
             "classid": 0,
             "classlabel": "link",
-            "confidence": 0.8953038454055786,
+            "confidence": 0.9999383687973022,
             "height": 45,
+            "mono_ids": [
+              1,
+              2
+            ],
+            "width": 22
+          },
+          {
+            "bbox": [
+              6,
+              19,
+              35,
+              46
+            ],
+            "center": [
+              23.5,
+              42.0
+            ],
+            "classid": 0,
+            "classlabel": "link",
+            "confidence": 0.9938626289367676,
+            "height": 46,
             "mono_ids": [
               3,
               4
             ],
-            "width": 32
+            "width": 35
           }
         ],
         "width": 49
@@ -602,7 +627,7 @@
         "confidence": 0.9996631741523743,
         "extracted_image_path": "extracted_figures/extracted_images/pr1c00245_0002-3.png",
         "fig_glycan_count": 3,
-        "glyImage": "glymage/cbdc4c48c8dccf165a262c3c8203f3b5.svg",
+        "glyImage": "glymage/4addac5bb9d0847c.svg",
         "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G59325ZF",
         "height": 144,
         "image_name": "pr1c00245_0002-3.png",
@@ -611,19 +636,19 @@
         "monos": [
           {
             "bbox": [
-              24,
-              57,
-              20,
-              20
+              22,
+              56,
+              23,
+              22
             ],
             "center": [
-              34.0,
+              33.5,
               67.0
             ],
             "classid": 5,
             "classlabel": "Man",
-            "confidence": 0.9999409914016724,
-            "height": 20,
+            "confidence": 0.9999833106994629,
+            "height": 22,
             "id": 1,
             "links": [
               {
@@ -631,51 +656,92 @@
                   10,
                   33,
                   35,
-                  45
+                  46
                 ],
                 "center": [
                   27.5,
+                  56.0
+                ],
+                "child_bond": 1,
+                "classid": 0,
+                "classlabel": "link",
+                "confidence": 0.999976396560669,
+                "from_id": 1,
+                "height": 46,
+                "to_id": 2,
+                "width": 35
+              },
+              {
+                "bbox": [
+                  22,
+                  32,
+                  40,
+                  47
+                ],
+                "center": [
+                  42.0,
                   55.5
                 ],
                 "child_bond": 1,
                 "classid": 0,
                 "classlabel": "link",
-                "confidence": 0.9998143315315247,
+                "confidence": 0.9999206066131592,
                 "from_id": 1,
-                "height": 45,
-                "to_id": 5,
-                "width": 35
-              },
+                "height": 47,
+                "to_id": 6,
+                "width": 40
+              }
+            ],
+            "symbol": "Man",
+            "width": 23
+          },
+          {
+            "bbox": [
+              10,
+              33,
+              22,
+              22
+            ],
+            "center": [
+              21.0,
+              44.0
+            ],
+            "classid": 5,
+            "classlabel": "Man",
+            "confidence": 0.9999715089797974,
+            "height": 22,
+            "id": 2,
+            "links": [
               {
                 "bbox": [
+                  11,
+                  10,
                   21,
-                  32,
-                  41,
-                  46
+                  44
                 ],
                 "center": [
-                  41.5,
-                  55.0
+                  21.5,
+                  32.0
                 ],
                 "child_bond": 1,
                 "classid": 0,
                 "classlabel": "link",
-                "confidence": 0.998668372631073,
-                "from_id": 1,
-                "height": 46,
-                "to_id": 6,
-                "width": 41
+                "confidence": 0.9999804496765137,
+                "from_id": 2,
+                "height": 44,
+                "to_id": 4,
+                "width": 21
               }
             ],
             "symbol": "Man",
-            "width": 20
+            "width": 22
           },
           {
             "bbox": [
-              24,
-              81,
-              19,
-              19
+              23,
+              80,
+              21,
+              21
             ],
             "center": [
               33.5,
@@ -683,256 +749,215 @@
             ],
             "classid": 3,
             "classlabel": "GlcNAc",
-            "confidence": 0.9999407529830933,
-            "height": 19,
-            "id": 2,
+            "confidence": 0.9999711513519287,
+            "height": 21,
+            "id": 3,
             "links": [
               {
                 "bbox": [
-                  24,
-                  57,
-                  19,
+                  22,
+                  56,
+                  22,
                   45
                 ],
                 "center": [
-                  33.5,
-                  79.5
+                  33.0,
+                  78.5
                 ],
                 "child_bond": 1,
                 "classid": 0,
                 "classlabel": "link",
-                "confidence": 0.9999346733093262,
-                "from_id": 2,
+                "confidence": 0.9999927282333374,
+                "from_id": 3,
                 "height": 45,
                 "to_id": 1,
-                "width": 19
+                "width": 22
               }
             ],
             "symbol": "GlcNAc",
-            "width": 19
+            "width": 21
           },
           {
             "bbox": [
-              12,
               11,
-              19,
-              18
+              10,
+              21,
+              21
             ],
             "center": [
               21.5,
-              20.0
+              20.5
             ],
             "classid": 3,
             "classlabel": "GlcNAc",
-            "confidence": 0.9999327659606934,
-            "height": 18,
-            "id": 3,
+            "confidence": 0.9999653100967407,
+            "height": 21,
+            "id": 4,
             "links": [],
             "symbol": "GlcNAc",
-            "width": 19
+            "width": 21
           },
           {
             "bbox": [
               23,
-              104,
-              20,
-              20
+              103,
+              21,
+              21
             ],
             "center": [
-              33.0,
-              114.0
+              33.5,
+              113.5
             ],
             "classid": 3,
             "classlabel": "GlcNAc",
-            "confidence": 0.9999206066131592,
-            "height": 20,
-            "id": 4,
-            "links": [
-              {
-                "bbox": [
-                  24,
-                  81,
-                  19,
-                  44
-                ],
-                "center": [
-                  33.5,
-                  103.0
-                ],
-                "child_bond": 1,
-                "classid": 0,
-                "classlabel": "link",
-                "confidence": 0.9999233484268188,
-                "from_id": 4,
-                "height": 44,
-                "to_id": 2,
-                "width": 19
-              }
-            ],
-            "symbol": "GlcNAc",
-            "width": 20
-          },
-          {
-            "bbox": [
-              11,
-              34,
-              20,
-              19
-            ],
-            "center": [
-              21.0,
-              43.5
-            ],
-            "classid": 5,
-            "classlabel": "Man",
-            "confidence": 0.9997440576553345,
-            "height": 19,
+            "confidence": 0.9999477863311768,
+            "height": 21,
             "id": 5,
             "links": [
               {
                 "bbox": [
-                  12,
-                  11,
-                  19,
-                  43
+                  22,
+                  79,
+                  22,
+                  47
                 ],
                 "center": [
-                  21.5,
-                  32.5
+                  33.0,
+                  102.5
                 ],
                 "child_bond": 1,
                 "classid": 0,
                 "classlabel": "link",
-                "confidence": 0.9999538660049438,
+                "confidence": 0.9999767541885376,
                 "from_id": 5,
-                "height": 43,
+                "height": 47,
                 "to_id": 3,
-                "width": 19
+                "width": 22
               }
             ],
-            "symbol": "Man",
-            "width": 20
+            "symbol": "GlcNAc",
+            "width": 21
           },
           {
             "bbox": [
-              41,
-              34,
-              20,
-              20
+              39,
+              32,
+              23,
+              23
             ],
             "center": [
-              51.0,
-              44.0
+              50.5,
+              43.5
             ],
             "classid": 5,
             "classlabel": "Man",
-            "confidence": 0.9991858601570129,
-            "height": 20,
+            "confidence": 0.9998664855957031,
+            "height": 23,
             "id": 6,
             "links": [],
             "symbol": "Man",
-            "width": 20
+            "width": 23
           }
         ],
         "orientation": "BT",
         "rejected_roots": [
           {
             "bbox": [
-              12,
-              11,
-              20,
-              19
+              40,
+              32,
+              23,
+              24
             ],
             "center": [
-              22.0,
-              20.5
-            ],
-            "classid": 0,
-            "classlabel": "redend",
-            "confidence": 0.01301342248916626,
-            "height": 19,
-            "mono_id": 3,
-            "width": 20
-          },
-          {
-            "bbox": [
-              42,
-              34,
-              20,
-              21
-            ],
-            "center": [
-              52.0,
-              44.5
-            ],
-            "classid": 0,
-            "classlabel": "redend",
-            "confidence": 0.001228034496307373,
-            "height": 21,
-            "mono_id": 6,
-            "width": 20
-          },
-          {
-            "bbox": [
-              12,
-              34,
-              20,
-              20
-            ],
-            "center": [
-              22.0,
+              51.5,
               44.0
             ],
             "classid": 0,
             "classlabel": "redend",
-            "confidence": 0.0002053976058959961,
-            "height": 20,
-            "mono_id": 5,
-            "width": 20
+            "confidence": 9.751319885253906e-05,
+            "height": 24,
+            "mono_id": 6,
+            "width": 23
           },
           {
             "bbox": [
-              24,
-              57,
-              20,
+              22,
+              80,
+              22,
               21
             ],
             "center": [
-              34.0,
-              67.5
-            ],
-            "classid": 0,
-            "classlabel": "redend",
-            "confidence": 8.83340835571289e-05,
-            "height": 21,
-            "mono_id": 1,
-            "width": 20
-          },
-          {
-            "bbox": [
-              24,
-              81,
-              19,
-              19
-            ],
-            "center": [
-              33.5,
+              33.0,
               90.5
             ],
             "classid": 0,
             "classlabel": "redend",
-            "confidence": 6.723403930664062e-05,
-            "height": 19,
+            "confidence": 5.459785461425781e-05,
+            "height": 21,
+            "mono_id": 3,
+            "width": 22
+          },
+          {
+            "bbox": [
+              11,
+              10,
+              21,
+              21
+            ],
+            "center": [
+              21.5,
+              20.5
+            ],
+            "classid": 0,
+            "classlabel": "redend",
+            "confidence": 4.8279762268066406e-05,
+            "height": 21,
+            "mono_id": 4,
+            "width": 21
+          },
+          {
+            "bbox": [
+              22,
+              56,
+              23,
+              23
+            ],
+            "center": [
+              33.5,
+              67.5
+            ],
+            "classid": 0,
+            "classlabel": "redend",
+            "confidence": 3.6597251892089844e-05,
+            "height": 23,
+            "mono_id": 1,
+            "width": 23
+          },
+          {
+            "bbox": [
+              10,
+              33,
+              23,
+              22
+            ],
+            "center": [
+              21.5,
+              44.0
+            ],
+            "classid": 0,
+            "classlabel": "redend",
+            "confidence": 2.6464462280273438e-05,
+            "height": 22,
             "mono_id": 2,
-            "width": 19
+            "width": 23
           }
         ],
         "root": {
           "bbox": [
-            24,
-            105,
-            18,
-            19
+            23,
+            104,
+            20,
+            21
           ],
           "center": [
             33.0,
@@ -940,116 +965,116 @@
           ],
           "classid": 0,
           "classlabel": "redend",
-          "confidence": 0.9978823065757751,
-          "height": 19,
-          "mono_id": 4,
-          "width": 18
+          "confidence": 0.9999279975891113,
+          "height": 21,
+          "mono_id": 5,
+          "width": 20
         },
         "undirected_links": [
           {
             "bbox": [
-              12,
-              11,
-              19,
-              43
-            ],
-            "center": [
-              21.5,
-              32.5
-            ],
-            "classid": 0,
-            "classlabel": "link",
-            "confidence": 0.9999538660049438,
-            "height": 43,
-            "mono_ids": [
-              3,
-              5
-            ],
-            "width": 19
-          },
-          {
-            "bbox": [
-              24,
-              57,
-              19,
+              22,
+              56,
+              22,
               45
             ],
             "center": [
-              33.5,
-              79.5
+              33.0,
+              78.5
             ],
             "classid": 0,
             "classlabel": "link",
-            "confidence": 0.9999346733093262,
+            "confidence": 0.9999927282333374,
             "height": 45,
             "mono_ids": [
               1,
-              2
+              3
             ],
-            "width": 19
+            "width": 22
           },
           {
             "bbox": [
-              24,
-              81,
-              19,
+              11,
+              10,
+              21,
               44
             ],
             "center": [
-              33.5,
-              103.0
+              21.5,
+              32.0
             ],
             "classid": 0,
             "classlabel": "link",
-            "confidence": 0.9999233484268188,
+            "confidence": 0.9999804496765137,
             "height": 44,
             "mono_ids": [
               2,
               4
             ],
-            "width": 19
+            "width": 21
+          },
+          {
+            "bbox": [
+              22,
+              79,
+              22,
+              47
+            ],
+            "center": [
+              33.0,
+              102.5
+            ],
+            "classid": 0,
+            "classlabel": "link",
+            "confidence": 0.9999767541885376,
+            "height": 47,
+            "mono_ids": [
+              3,
+              5
+            ],
+            "width": 22
           },
           {
             "bbox": [
               10,
               33,
               35,
-              45
+              46
             ],
             "center": [
               27.5,
-              55.5
+              56.0
             ],
             "classid": 0,
             "classlabel": "link",
-            "confidence": 0.9998143315315247,
-            "height": 45,
+            "confidence": 0.999976396560669,
+            "height": 46,
             "mono_ids": [
               1,
-              5
+              2
             ],
             "width": 35
           },
           {
             "bbox": [
-              21,
+              22,
               32,
-              41,
-              46
+              40,
+              47
             ],
             "center": [
-              41.5,
-              55.0
+              42.0,
+              55.5
             ],
             "classid": 0,
             "classlabel": "link",
-            "confidence": 0.998668372631073,
-            "height": 46,
+            "confidence": 0.9999206066131592,
+            "height": 47,
             "mono_ids": [
               1,
               6
             ],
-            "width": 41
+            "width": 40
           }
         ],
         "width": 65
@@ -1075,7 +1100,7 @@
         "confidence": 0.9994617700576782,
         "extracted_image_path": "extracted_figures/extracted_images/pr1c00245_0002-4.png",
         "fig_glycan_count": 4,
-        "glyImage": "glymage/43be33b26df70b8d73919e0695e8eb02.svg",
+        "glyImage": "glymage/905830149440847c.svg",
         "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G78607HP",
         "height": 155,
         "image_name": "pr1c00245_0002-4.png",
@@ -1084,190 +1109,88 @@
         "monos": [
           {
             "bbox": [
-              22,
-              115,
-              19,
-              19
+              8,
+              43,
+              23,
+              22
             ],
             "center": [
-              31.5,
-              124.5
-            ],
-            "classid": 3,
-            "classlabel": "GlcNAc",
-            "confidence": 0.9999526739120483,
-            "height": 19,
-            "id": 1,
-            "links": [
-              {
-                "bbox": [
-                  22,
-                  90,
-                  19,
-                  44
-                ],
-                "center": [
-                  31.5,
-                  112.0
-                ],
-                "child_bond": 1,
-                "classid": 0,
-                "classlabel": "link",
-                "confidence": 0.9998712539672852,
-                "from_id": 1,
-                "height": 44,
-                "to_id": 4,
-                "width": 19
-              }
-            ],
-            "symbol": "GlcNAc",
-            "width": 19
-          },
-          {
-            "bbox": [
-              39,
-              20,
-              19,
-              19
-            ],
-            "center": [
-              48.5,
-              29.5
-            ],
-            "classid": 3,
-            "classlabel": "GlcNAc",
-            "confidence": 0.9999349117279053,
-            "height": 19,
-            "id": 2,
-            "links": [],
-            "symbol": "GlcNAc",
-            "width": 19
-          },
-          {
-            "bbox": [
-              39,
-              44,
-              21,
-              20
-            ],
-            "center": [
-              49.5,
+              19.5,
               54.0
             ],
             "classid": 5,
             "classlabel": "Man",
-            "confidence": 0.999933123588562,
-            "height": 20,
-            "id": 3,
+            "confidence": 0.9999774694442749,
+            "height": 22,
+            "id": 1,
             "links": [
               {
                 "bbox": [
-                  39,
-                  20,
-                  20,
-                  44
+                  9,
+                  19,
+                  22,
+                  46
                 ],
                 "center": [
-                  49.0,
+                  20.0,
                   42.0
                 ],
                 "child_bond": 1,
                 "classid": 0,
                 "classlabel": "link",
-                "confidence": 0.9996001124382019,
-                "from_id": 3,
-                "height": 44,
-                "to_id": 2,
-                "width": 20
+                "confidence": 0.9999406337738037,
+                "from_id": 1,
+                "height": 46,
+                "to_id": 7,
+                "width": 22
               }
             ],
             "symbol": "Man",
-            "width": 21
+            "width": 23
           },
           {
             "bbox": [
-              22,
-              92,
-              19,
-              18
+              20,
+              66,
+              23,
+              23
             ],
             "center": [
               31.5,
-              101.0
+              77.5
             ],
-            "classid": 3,
-            "classlabel": "GlcNAc",
-            "confidence": 0.9999160766601562,
-            "height": 18,
-            "id": 4,
+            "classid": 5,
+            "classlabel": "Man",
+            "confidence": 0.9999746084213257,
+            "height": 23,
+            "id": 2,
             "links": [
               {
                 "bbox": [
-                  22,
-                  67,
-                  19,
-                  45
+                  9,
+                  43,
+                  34,
+                  46
                 ],
                 "center": [
-                  31.5,
-                  89.5
+                  26.0,
+                  66.0
                 ],
                 "child_bond": 1,
                 "classid": 0,
                 "classlabel": "link",
-                "confidence": 0.9997346997261047,
-                "from_id": 4,
-                "height": 45,
-                "to_id": 6,
-                "width": 19
-              }
-            ],
-            "symbol": "GlcNAc",
-            "width": 19
-          },
-          {
-            "bbox": [
-              10,
-              21,
-              20,
-              19
-            ],
-            "center": [
-              20.0,
-              30.5
-            ],
-            "classid": 3,
-            "classlabel": "GlcNAc",
-            "confidence": 0.9998993873596191,
-            "height": 19,
-            "id": 5,
-            "links": [],
-            "symbol": "GlcNAc",
-            "width": 20
-          },
-          {
-            "bbox": [
-              21,
-              67,
-              21,
-              20
-            ],
-            "center": [
-              31.5,
-              77.0
-            ],
-            "classid": 5,
-            "classlabel": "Man",
-            "confidence": 0.9998724460601807,
-            "height": 20,
-            "id": 6,
-            "links": [
+                "confidence": 0.9999314546585083,
+                "from_id": 2,
+                "height": 46,
+                "to_id": 1,
+                "width": 34
+              },
               {
                 "bbox": [
                   19,
-                  43,
                   42,
-                  44
+                  42,
+                  46
                 ],
                 "center": [
                   40.0,
@@ -1276,75 +1199,177 @@
                 "child_bond": 1,
                 "classid": 0,
                 "classlabel": "link",
-                "confidence": 0.9976222515106201,
-                "from_id": 6,
-                "height": 44,
+                "confidence": 0.999337375164032,
+                "from_id": 2,
+                "height": 46,
                 "to_id": 3,
                 "width": 42
-              },
-              {
-                "bbox": [
-                  10,
-                  43,
-                  33,
-                  45
-                ],
-                "center": [
-                  26.5,
-                  65.5
-                ],
-                "child_bond": 1,
-                "classid": 0,
-                "classlabel": "link",
-                "confidence": 0.9924302697181702,
-                "from_id": 6,
-                "height": 45,
-                "to_id": 7,
-                "width": 33
               }
             ],
             "symbol": "Man",
-            "width": 21
+            "width": 23
           },
           {
             "bbox": [
-              9,
-              44,
-              21,
-              21
+              37,
+              43,
+              24,
+              22
             ],
             "center": [
-              19.5,
-              54.5
+              49.0,
+              54.0
             ],
             "classid": 5,
             "classlabel": "Man",
-            "confidence": 0.9994131326675415,
-            "height": 21,
-            "id": 7,
+            "confidence": 0.9999712705612183,
+            "height": 22,
+            "id": 3,
             "links": [
               {
                 "bbox": [
-                  10,
-                  20,
+                  38,
                   19,
-                  44
+                  22,
+                  46
                 ],
                 "center": [
-                  19.5,
+                  49.0,
                   42.0
                 ],
                 "child_bond": 1,
                 "classid": 0,
                 "classlabel": "link",
-                "confidence": 0.9997352957725525,
-                "from_id": 7,
-                "height": 44,
-                "to_id": 5,
-                "width": 19
+                "confidence": 0.999903678894043,
+                "from_id": 3,
+                "height": 46,
+                "to_id": 6,
+                "width": 22
               }
             ],
             "symbol": "Man",
+            "width": 24
+          },
+          {
+            "bbox": [
+              21,
+              90,
+              22,
+              21
+            ],
+            "center": [
+              32.0,
+              100.5
+            ],
+            "classid": 3,
+            "classlabel": "GlcNAc",
+            "confidence": 0.9999688863754272,
+            "height": 21,
+            "id": 4,
+            "links": [
+              {
+                "bbox": [
+                  20,
+                  66,
+                  22,
+                  47
+                ],
+                "center": [
+                  31.0,
+                  89.5
+                ],
+                "child_bond": 1,
+                "classid": 0,
+                "classlabel": "link",
+                "confidence": 0.9999752044677734,
+                "from_id": 4,
+                "height": 47,
+                "to_id": 2,
+                "width": 22
+              }
+            ],
+            "symbol": "GlcNAc",
+            "width": 22
+          },
+          {
+            "bbox": [
+              21,
+              113,
+              21,
+              21
+            ],
+            "center": [
+              31.5,
+              123.5
+            ],
+            "classid": 3,
+            "classlabel": "GlcNAc",
+            "confidence": 0.9999566078186035,
+            "height": 21,
+            "id": 5,
+            "links": [
+              {
+                "bbox": [
+                  21,
+                  90,
+                  21,
+                  46
+                ],
+                "center": [
+                  31.5,
+                  113.0
+                ],
+                "child_bond": 1,
+                "classid": 0,
+                "classlabel": "link",
+                "confidence": 0.9999344348907471,
+                "from_id": 5,
+                "height": 46,
+                "to_id": 4,
+                "width": 21
+              }
+            ],
+            "symbol": "GlcNAc",
+            "width": 21
+          },
+          {
+            "bbox": [
+              38,
+              19,
+              22,
+              22
+            ],
+            "center": [
+              49.0,
+              30.0
+            ],
+            "classid": 3,
+            "classlabel": "GlcNAc",
+            "confidence": 0.9998866319656372,
+            "height": 22,
+            "id": 6,
+            "links": [],
+            "symbol": "GlcNAc",
+            "width": 22
+          },
+          {
+            "bbox": [
+              9,
+              20,
+              21,
+              21
+            ],
+            "center": [
+              19.5,
+              30.5
+            ],
+            "classid": 3,
+            "classlabel": "GlcNAc",
+            "confidence": 0.999809741973877,
+            "height": 21,
+            "id": 7,
+            "links": [],
+            "symbol": "GlcNAc",
             "width": 21
           }
         ],
@@ -1352,201 +1377,222 @@
         "rejected_roots": [
           {
             "bbox": [
-              39,
-              20,
-              20,
-              20
-            ],
-            "center": [
-              49.0,
-              30.0
-            ],
-            "classid": 0,
-            "classlabel": "redend",
-            "confidence": 0.0019088983535766602,
-            "height": 20,
-            "mono_id": 2,
-            "width": 20
-          },
-          {
-            "bbox": [
-              10,
-              20,
+              38,
               19,
-              20
-            ],
-            "center": [
-              19.5,
-              30.0
-            ],
-            "classid": 0,
-            "classlabel": "redend",
-            "confidence": 0.00043255090713500977,
-            "height": 20,
-            "mono_id": 5,
-            "width": 19
-          },
-          {
-            "bbox": [
-              22,
-              67,
-              20,
+              23,
               21
             ],
             "center": [
-              32.0,
+              49.5,
+              29.5
+            ],
+            "classid": 0,
+            "classlabel": "redend",
+            "confidence": 6.830692291259766e-05,
+            "height": 21,
+            "mono_id": 6,
+            "width": 23
+          },
+          {
+            "bbox": [
+              37,
+              43,
+              24,
+              22
+            ],
+            "center": [
+              49.0,
+              54.0
+            ],
+            "classid": 0,
+            "classlabel": "redend",
+            "confidence": 5.8650970458984375e-05,
+            "height": 22,
+            "mono_id": 3,
+            "width": 24
+          },
+          {
+            "bbox": [
+              8,
+              43,
+              22,
+              21
+            ],
+            "center": [
+              19.0,
+              53.5
+            ],
+            "classid": 0,
+            "classlabel": "redend",
+            "confidence": 4.1484832763671875e-05,
+            "height": 21,
+            "mono_id": 1,
+            "width": 22
+          },
+          {
+            "bbox": [
+              20,
+              66,
+              23,
+              23
+            ],
+            "center": [
+              31.5,
               77.5
             ],
             "classid": 0,
             "classlabel": "redend",
-            "confidence": 0.00023943185806274414,
-            "height": 21,
-            "mono_id": 6,
-            "width": 20
+            "confidence": 4.0650367736816406e-05,
+            "height": 23,
+            "mono_id": 2,
+            "width": 23
           },
           {
             "bbox": [
               9,
-              44,
               20,
-              20
+              21,
+              21
             ],
             "center": [
-              19.0,
-              54.0
+              19.5,
+              30.5
             ],
             "classid": 0,
             "classlabel": "redend",
-            "confidence": 0.00020247697830200195,
-            "height": 20,
+            "confidence": 3.7789344787597656e-05,
+            "height": 21,
             "mono_id": 7,
-            "width": 20
+            "width": 21
           },
           {
             "bbox": [
-              39,
-              44,
-              20,
-              20
+              21,
+              90,
+              21,
+              21
             ],
             "center": [
-              49.0,
-              54.0
-            ],
-            "classid": 0,
-            "classlabel": "redend",
-            "confidence": 0.00019353628158569336,
-            "height": 20,
-            "mono_id": 3,
-            "width": 20
-          },
-          {
-            "bbox": [
-              22,
-              91,
-              18,
-              19
-            ],
-            "center": [
-              31.0,
+              31.5,
               100.5
             ],
             "classid": 0,
             "classlabel": "redend",
-            "confidence": 7.069110870361328e-05,
-            "height": 19,
+            "confidence": 3.254413604736328e-05,
+            "height": 21,
             "mono_id": 4,
-            "width": 18
+            "width": 21
           }
         ],
         "root": {
           "bbox": [
-            22,
-            115,
-            18,
-            19
+            21,
+            113,
+            20,
+            22
           ],
           "center": [
             31.0,
-            124.5
+            124.0
           ],
           "classid": 0,
           "classlabel": "redend",
-          "confidence": 0.9921287894248962,
-          "height": 19,
-          "mono_id": 1,
-          "width": 18
+          "confidence": 0.9999539852142334,
+          "height": 22,
+          "mono_id": 5,
+          "width": 20
         },
         "undirected_links": [
           {
             "bbox": [
-              22,
-              90,
-              19,
-              44
-            ],
-            "center": [
-              31.5,
-              112.0
-            ],
-            "classid": 0,
-            "classlabel": "link",
-            "confidence": 0.9998712539672852,
-            "height": 44,
-            "mono_ids": [
-              1,
-              4
-            ],
-            "width": 19
-          },
-          {
-            "bbox": [
-              10,
               20,
-              19,
-              44
-            ],
-            "center": [
-              19.5,
-              42.0
-            ],
-            "classid": 0,
-            "classlabel": "link",
-            "confidence": 0.9997352957725525,
-            "height": 44,
-            "mono_ids": [
-              5,
-              7
-            ],
-            "width": 19
-          },
-          {
-            "bbox": [
+              66,
               22,
-              67,
-              19,
-              45
+              47
             ],
             "center": [
-              31.5,
+              31.0,
               89.5
             ],
             "classid": 0,
             "classlabel": "link",
-            "confidence": 0.9997346997261047,
-            "height": 45,
+            "confidence": 0.9999752044677734,
+            "height": 47,
             "mono_ids": [
-              4,
-              6
+              2,
+              4
             ],
-            "width": 19
+            "width": 22
           },
           {
             "bbox": [
-              39,
-              20,
-              20,
-              44
+              9,
+              19,
+              22,
+              46
+            ],
+            "center": [
+              20.0,
+              42.0
+            ],
+            "classid": 0,
+            "classlabel": "link",
+            "confidence": 0.9999406337738037,
+            "height": 46,
+            "mono_ids": [
+              1,
+              7
+            ],
+            "width": 22
+          },
+          {
+            "bbox": [
+              21,
+              90,
+              21,
+              46
+            ],
+            "center": [
+              31.5,
+              113.0
+            ],
+            "classid": 0,
+            "classlabel": "link",
+            "confidence": 0.9999344348907471,
+            "height": 46,
+            "mono_ids": [
+              4,
+              5
+            ],
+            "width": 21
+          },
+          {
+            "bbox": [
+              9,
+              43,
+              34,
+              46
+            ],
+            "center": [
+              26.0,
+              66.0
+            ],
+            "classid": 0,
+            "classlabel": "link",
+            "confidence": 0.9999314546585083,
+            "height": 46,
+            "mono_ids": [
+              1,
+              2
+            ],
+            "width": 34
+          },
+          {
+            "bbox": [
+              38,
+              19,
+              22,
+              46
             ],
             "center": [
               49.0,
@@ -1554,20 +1600,20 @@
             ],
             "classid": 0,
             "classlabel": "link",
-            "confidence": 0.9996001124382019,
-            "height": 44,
+            "confidence": 0.999903678894043,
+            "height": 46,
             "mono_ids": [
-              2,
-              3
+              3,
+              6
             ],
-            "width": 20
+            "width": 22
           },
           {
             "bbox": [
               19,
-              43,
               42,
-              44
+              42,
+              46
             ],
             "center": [
               40.0,
@@ -1575,34 +1621,13 @@
             ],
             "classid": 0,
             "classlabel": "link",
-            "confidence": 0.9976222515106201,
-            "height": 44,
+            "confidence": 0.999337375164032,
+            "height": 46,
             "mono_ids": [
-              3,
-              6
+              2,
+              3
             ],
             "width": 42
-          },
-          {
-            "bbox": [
-              10,
-              43,
-              33,
-              45
-            ],
-            "center": [
-              26.5,
-              65.5
-            ],
-            "classid": 0,
-            "classlabel": "link",
-            "confidence": 0.9924302697181702,
-            "height": 45,
-            "mono_ids": [
-              6,
-              7
-            ],
-            "width": 33
           }
         ],
         "width": 66
@@ -1612,6 +1637,7 @@
     "image_count": 2,
     "image_number": 1,
     "image_path": "extracted_figures/figures/pr1c00245_0002.jpg",
+    "image_source": "fitz",
     "page_height": 792.0,
     "page_number": 3,
     "page_width": 612.0,
@@ -1629,7 +1655,6 @@
   {
     "annotated_image_path": "extracted_figures/annotated_figures/pr1c00245_0003.jpg",
     "caption": "Comparison of (A) unique peptide sequences, (B) unique glycopeptides, and (C) spectra identified by GlycoHybridSeq, Byonic, and MSFragger, respectively.",
-    "dpi": 98.57119596179606,
     "figure_label": "Figure",
     "figure_number": "3",
     "file_name": "pr1c00245_0003.jpg",
@@ -1638,6 +1663,7 @@
     "image_count": 3,
     "image_number": 1,
     "image_path": "extracted_figures/figures/pr1c00245_0003.jpg",
+    "image_source": "fitz",
     "page_height": 792.0,
     "page_number": 4,
     "page_width": 612.0,
@@ -1655,7 +1681,6 @@
   {
     "annotated_image_path": "extracted_figures/annotated_figures/pr1c00245_0004.jpg",
     "caption": "Two EThcD spectra with high cosine similarity were identified as two different glycopeptides by Byonic.",
-    "dpi": 98.08979943498261,
     "figure_label": "Figure",
     "figure_number": "4",
     "file_name": "pr1c00245_0004.jpg",
@@ -1664,6 +1689,7 @@
     "image_count": 4,
     "image_number": 1,
     "image_path": "extracted_figures/figures/pr1c00245_0004.jpg",
+    "image_source": "fitz",
     "page_height": 792.0,
     "page_number": 5,
     "page_width": 612.0,

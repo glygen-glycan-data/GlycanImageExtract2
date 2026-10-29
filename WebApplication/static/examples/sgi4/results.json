@@ -3,7 +3,7 @@
   "submission_detail": {
     "filename": "G16150CJ.png",
     "submission_type": "Simple Glycan Image",
-    "submission_mode": "Upload",
+    "submission_mode": "URL",
     "processor": "SimpleImageSyntheticPDFJob",
     "id": "sgi4"
   },
@@ -37,7 +37,7 @@
             "extracted_image_path": "extracted_figures/extracted_images/G16150CJ-1.png",
             "fig_glycan_count": 1,
             "file_name": "G16150CJ.png",
-            "glyImage": "glymage/380e47a715b358b6.svg",
+            "glyImage": "glymage/380e47a715b0847c.svg",
             "glycans": [],
             "gnomeurl": "https://gnome.glyomics.org/StructureBrowser.html?focus=G05314WL",
             "height": 166,
