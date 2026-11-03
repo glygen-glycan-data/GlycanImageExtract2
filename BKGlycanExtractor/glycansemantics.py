@@ -4,6 +4,10 @@ class for generating data for IUPAC.
 from .finder import Finder
 from .glycanannotator import Config
 from .model_evaluator import GlycanCompare
+from .object_filters import ObjectFilter, MinConfidence
+
+from collections import defaultdict
+import sys
 
 class Glycan_Base(Finder):
     finder_class = 'Glycan_Semantics'
@@ -111,5 +115,76 @@ class Known_Glycan(Glycan_Base):
     def find_boxes(self):
         pass
 
-
+class Figure_Postprocessor(Finder):
     
+    def __init__(self,**kwargs):
+        super().__init__(name=kwargs.get('name'),
+                         cfgmgr=kwargs.get('cfgmgr'))
+        
+    def set_results(self, figure_semantics, accepted, rejected):
+        figure_semantics.set_glycans(accepted, rejected)
+
+    def find_objects(self, obj):
+        # no box steps needed for post-processing, just 
+        # filter or manipulate the glycans
+        obj_list = obj.glycans()
+        obj_list.sort(key=lambda o: -o.get('confidence',0.0))
+        accepted, rejected = self.filter_objects(obj_list)
+        self.set_results(obj, accepted, rejected)
+
+class GlycanModifierFilter(ObjectFilter):
+    def recompute_iupac(glycan):
+        glycan.unset('IUPAC')
+        glycan.unset('composition_str')
+        glycan.reset_glycan_errors()
+        YOLO_Glycan().find_objects(glycan)
+
+class GlycanOrientationFilter(GlycanModifierFilter):
+    def __init__(self, mode="ERROR", cutoff=5, majority=0.75):
+        assert mode in ("ERROR","CORRECT")
+        self.mode = mode
+        self.cutoff = cutoff
+        self.majority = majority
+
+    def filter(self, glycans):
+        freq = defaultdict(int)
+        for glycan in glycans:
+            if not glycan.has_glycan_errors() and \
+                glycan.get('IUPAC',""):            
+                    orientation = glycan.get('orientation')
+                    if orientation is not None:
+                        freq[orientation] += 1
+        
+        total = sum(freq.values())
+        if total <= self.cutoff:
+            # do nothing
+            return glycans, []
+        maxor = max(freq, key=freq.get, default=None)
+        if freq[maxor]/total < self.majority:
+            # do nothing
+            return glycans, []
+
+        # use the majority orientation to flag or correct 
+        # glycans likely to be misoriented
+        for i,glycan in enumerate(glycans):
+            if not glycan.has_glycan_errors() and \
+                glycan.get('IUPAC',""):
+                    if glycan.get('orientation') != maxor:
+                        if self.mode == "ERROR":
+                            glycan.add_glycan_error(f"Orientation mismatch: {glycan.get('orientation')} vs majority {maxor}")
+                        elif self.mode == "CORRECT":
+                            glycan.log(f"setting correct orientation from {glycan.get('orientation')} to {maxor}")
+                            # potentially, change the redend and allow the 
+                            # IUPAC computation to fix the orientation
+                            # and call self.recompute_iupac(glycan) to 
+                            # update all derived results.
+                            glycan.set('orientation',maxor)
+        
+        return glycans, []
+
+class GlycanMinConfidence(Figure_Postprocessor):
+    filters = [ MinConfidence(0.5) ]
+
+class GlycanOrientation(Figure_Postprocessor):
+    filters = [ GlycanOrientationFilter(mode="ERROR") ]
+

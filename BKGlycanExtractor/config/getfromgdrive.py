@@ -20,9 +20,10 @@ def download_fileids_from_google_drive(fid, destination_dir, path, configs, extn
             if not sec.startswith("Pipeline:"):
                 continue
             name = sec.split(':',1)[1]
-            if pipelines == "*" or name in pipelines:
+            if pipelines == "*" or name in pipelines or any(re.search(p,name) for p in pipelines):
                 finders.update(config.get(sec,'figure_steps',fallback='').split(','))
                 finders.update(config.get(sec,'glycan_steps',fallback='').split(','))
+                finders.update(config.get(sec,'postprocess_steps',fallback='').split(','))
         # print(finders)
         for f in finders:
             for key in ("weights","config"):
