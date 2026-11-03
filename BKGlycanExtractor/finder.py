@@ -304,6 +304,11 @@ class KnownFinder(Finder):
                 elif data_points[0] == '#':
                     key = data_points[1][:-1]
                     value = ' '.join(data_points[2:])
+                    if key == 'root':
+                        try:
+                            value = int(value)
+                        except ValueError:
+                            pass
                     current_glycan[key] = value
 
             # if map file has the root - then use that 
@@ -408,6 +413,7 @@ class YOLOFinder(YOLOModel,Finder):
         labels_file = weights_file.replace("weights","labels")
         labels = [ s.strip() for s in open(labels_file).read().split() ]
         Finder.__init__(self,name=kwargs.get('name'),cfgmgr=kwargs.get('cfgmgr'),labels=labels)
+        self.label_substitutions = {}
         self.params.update(dict(
             config = Config.get_param('config', Config.CONFIGFILE, kwargs, self.defaults),
             weights = weights_file,
@@ -441,7 +447,10 @@ class YOLOFinder(YOLOModel,Finder):
         boxes = self.get_YOLO_output(image)
         # add classlabel here instead of YoloModel
         for box in boxes:
-            box.set('classlabel',self.box_label(box))
+            label = self.box_label(box)
+            if self.label_substitutions:
+                label = self.label_substitutions.get(label, label)
+            box.set('classlabel',label)
         return sorted(boxes, key=lambda box: float(box.get('confidence',0.0)), reverse=True)
 
     @toboxes

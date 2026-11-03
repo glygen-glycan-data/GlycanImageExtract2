@@ -110,7 +110,7 @@ class KnownGlycanBoxes(KnownFinder,GlycanFinder):
 
         # Note: map_dict data structure can store single/multiple glycans.
         for glycan in map_dict['glycans']:
-            
+            # useful when build_training_data is used, to select the type of labels from TSV
             if self.label_type:
                 # classlabel = glycan.get(self.label_type,self.default_label)
                 classlabel = glycan.get(self.label_type)
@@ -121,9 +121,13 @@ class KnownGlycanBoxes(KnownFinder,GlycanFinder):
                         continue
                     if self.label_substitutions:
                         classlabel = self.label_substitutions.get(classlabel, classlabel)
-
             else:   
                 classlabel = glycan.get('classlabel')
+                # useful for overall label substitution for Known glycan finder.
+                # Create a derieved class and add a label_substitutions dict as desired.
+                # Useful for collapsing different glycan labels into a singluar 'glycan' label
+                if classlabel and self.label_substitutions:
+                    classlabel = self.label_substitutions.get(classlabel, classlabel)
                 
             if classlabel is None or not str(classlabel).strip():
                 continue
@@ -138,7 +142,7 @@ class KnownGlycanBoxes(KnownFinder,GlycanFinder):
 
     def box_to_object(self,box,obj):
         return GlycanSemantics(figure=obj.image(),box=box,**box.items())
-        
+
 # handles one/many glycans
 class CleanGlycanImage(Finder,GlycanFinder):
 
